@@ -28,6 +28,43 @@
 
 - `-random-ip` - Указать в качстве цели рандомные айпи, в качестве параметра передавайте количество рандомный айпи.
 
+```
+d8b   db d88888b .d8888.  .o88b.  .d8b.         j88D  
+888o  88 88'     88'  YP d8P  Y8 d8' `8b       j8~88  
+88V8o 88 88ooooo `8bo.   8P      88ooo88      j8' 88  
+88 V8o88 88~~~~~   `Y8b. 8b      88~~~88      V88888D 
+88  V888 88.     db   8D Y8b  d8 88   88          88  
+VP   V8P Y88888P `8888Y'  `Y88P' YP   YP          VP  
+
+nesca4: Remaster NEtwork SCAnner.
+
+usage: ./nesca4 [flags]
+
+arguments target:
+  -ip <1,2,3>            Set ip target.
+  -cidr <1,2,3>          Set cidr target.
+  -import-ip <path>      Set ips on target from file.
+  -import-cidr <path>    Set cidr on target from file.
+  -random-ip <count>     Set random ips target.
+
+arguments ports:
+  -ports, -p <1,2,3>     Set ports on scan.
+
+arguments speed:
+  -threads, -T <count>   Set threads for scan.
+  -timeout, -t <ms>      Set timeout for scan.
+
+arguments dns-scan:
+  -dns-scan <.dns>       On dns-scan and set domain 1 level.
+  -dns-length <count>    Edit length generating domain.
+  -dns-dict <dict>       Edit dictionary for generation.
+
+arguments output:
+  -db                    On debug mode, save and display not even working hosts.
+  -error                 On display errors.
+  -txt <path>            Save result to text document.
+  -log-set <count>       Change change the value of ips after which, will be displayed information about how much is left.
+```
 ## Порты
 Для указания портов есть эти аргументы:
 
