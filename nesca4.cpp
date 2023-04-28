@@ -1155,7 +1155,7 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
         else {
             std::lock_guard<std::mutex> guard(mtx);
             std::string result_txt = "[" + std::string(get_time()) + "][DB] " + ip + ":" + std::to_string(port) + " [CLOSED]";
-            std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [DB] " + red_html + ip + ":" + std::to_string(port) + " [CLOSED]" + reset_color;
+            std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [DB] " + yellow_html + ip + ":" + std::to_string(port) + " [CLOSED]" + reset_color;
             if (argp.debug){
                 if (argp.txt){
                     int temp = write_line(argp.txt_save, result_txt);
