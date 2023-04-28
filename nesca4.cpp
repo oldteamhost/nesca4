@@ -1,7 +1,7 @@
 // by oldteam & lomaster
 // license GPL-3.0
 //
-
+//
 #include <cstdio>
 #include <iostream>
 #include <bitset>
