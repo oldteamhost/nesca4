@@ -61,8 +61,7 @@ size_t clear_callback(void *buffer, size_t size, size_t nmemb, void *userp);
 // scan
 std::string get_dns_ip(const char* ip);
 int tcp_scan_port(const char *ip, int port, int timeout_ms);
-void scan_ports(const std::string& ip, const std::vector<int>& ports, int timeout_ms);
-void scan_all_ports(const std::vector<std::string>& result, const std::vector<int>& ports, int timeout_ms, int num_threads);
+void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, int timeout_ms);
 int dns_scan(std::string domain, std::string domain_1level);
 std::vector<int> tcp_scan_ports(const std::vector<std::string>& ips, const std::vector<int>& ports, int timeout_ms);
 
@@ -316,6 +315,7 @@ int main(int argc, char** argv){
 
         // start dns_scan
         if (argp.dns_scan){
+            argp.timeout_ms = 100;
             std::mutex mtx;
             for (int i = 0; i < argp._threads; i++) {
             std::thread([&](){
@@ -329,17 +329,19 @@ int main(int argc, char** argv){
                     if (test == 0) {
                         if (argp.debug) {
                             std::lock_guard<std::mutex> lock(mtx);
-                                result_print = "[" + std::string(get_time()) + "][BA] " + result + " FAILED";
+                                result_print = "[" + std::string(get_time()) + "] [BA] " + result + " FAILED";
                                 std::string *result_printp = &result_print;
                                 if (argp.txt){
                                     int temp = write_line(argp.txt_save, *result_printp);
                                 }
+                                std::cout << yellow_html;
                                 std::cout << result_print << std::endl;
+                                std::cout << reset_color;
                         }
                     }
                     else {
                         std::lock_guard<std::mutex> lock(mtx);
-                            result_print = "[" + std::string(get_time()) + "][BA] " + result + " T: " + get_html_title(result);
+                            std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + result + reset_color + gray_nesca + " T: " + golder_rod + get_html_title(result) + reset_color;
                             std::string *result_printp = &result_print;
                             if (argp.txt){
                                 int temp = write_line(argp.txt_save, *result_printp);
@@ -357,9 +359,6 @@ int main(int argc, char** argv){
     // end dns_scan
 
     // start tcp_scan_port
-    
-    int ip_count = 0;
-    int ip_temp = 0;
     std::vector<std::string> result;
     
     if (argp.ip_scan){
@@ -371,11 +370,38 @@ int main(int argc, char** argv){
     }
     else if (argp.random_ip){
         argp.ip_scan = true;
+        for (int i = 0; i < argp.random_ip_count; i++){
+            std::string random_temp = generate_ipv4();
+            result.push_back(random_temp);
+        }
     }
 
+    std::vector<std::thread> threads;
+    long ip_count = 0;
+    int size = result.size();
+    for (const auto& ip : result) {
+        threads.emplace_back(processing_tcp_scan_ports, ip, argp.ports, argp.timeout_ms);
+        ip_count++;
 
-    scan_all_ports(result, argp.ports, argp.timeout_ms, argp._threads);
+        if (ip_count % argp.log_set == 0){
+            std::string result_print = "[" + std::string(get_time()) + "][NB] " + std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs scanned.";
+            std::cout << yellow_html;
+            std::cout << result_print << std::endl;
+            std::cout << reset_color;
+        }
+
+        if (ip_count % argp._threads == 0) {
+            for (auto& t : threads) {
+                t.join();
+            }
+            threads.clear();
+        }
+    }
+    for (auto& t : threads) {
+        t.join();
+    }
     // end tcp_scan_port
+
     return 0;
 }
 
@@ -499,7 +525,27 @@ int tcp_scan_port(const char *ip, int port, int timeout_ms){
     timeout.tv_sec = timeout_ms / 1000;
     timeout.tv_usec = (timeout_ms % 1000) * 1000;
 
+    if (FD_ISSET(sock, &fds) && timeout.tv_sec <! 0 && timeout.tv_usec <! 0){
+#ifdef _WIN32
+        closesocket(sock);
+        WSACleanup();
+#else
+        close(sock);
+#endif
+        return -4;
+    }
+
     ret = select(sock + 1, NULL, &fds, NULL, &timeout);
+
+    if (ret == -1){
+#ifdef _WIN32
+        closesocket(sock);
+        WSACleanup();
+#else
+        close(sock);
+#endif
+        return -5;
+    }
 
     if (ret == 0) {  
 #ifdef _WIN32
@@ -530,6 +576,7 @@ int tcp_scan_port(const char *ip, int port, int timeout_ms){
         close(sock);
 #endif
         return 1;
+
         }
         else {
 #ifdef _WIN32
@@ -540,6 +587,7 @@ int tcp_scan_port(const char *ip, int port, int timeout_ms){
 #endif
             return -3;
         }
+
     }
 
     int err = 0;
@@ -563,17 +611,6 @@ int tcp_scan_port(const char *ip, int port, int timeout_ms){
         close(sock);
 #endif
     return 1;
-}
-
-std::vector<int> tcp_scan_ports(const std::vector<std::string>& ips, const std::vector<int>& ports, int timeout_ms) {
-    std::vector<int> results;
-    for (const auto& ip : ips) {
-        for (const auto& port : ports) {
-            int result = tcp_scan_port(ip.c_str(), port, timeout_ms);
-            results.push_back(result);
-        }
-    }
-    return results;
 }
 
 size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userdata) {
@@ -655,7 +692,7 @@ double measure_ping_time(const char* node, int port){
         curl_easy_setopt(curl, CURLOPT_ACCEPTTIMEOUT_MS, 500L);
         curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 1L);
         curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 5L);
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, 5000L);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, 3000L);
         curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, curl_callback);
         curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
@@ -1023,7 +1060,7 @@ std::vector<std::string> split_string_string(const std::string& str, char delimi
     result.push_back(str.substr(pos));
     return result;
 }
-void scan_ports(const std::string& ip, const std::vector<int>& ports, int timeout_ms){
+void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, int timeout_ms){
     for (const auto& port : ports) {
         int result = tcp_scan_port(ip.c_str(), port, timeout_ms);
         if (result == 0) {
@@ -1056,34 +1093,6 @@ void scan_ports(const std::string& ip, const std::vector<int>& ports, int timeou
                 std::cout << reset_color;
             }
         }
-    }
-}
-
-void scan_all_ports(const std::vector<std::string>& result, const std::vector<int>& ports, int timeout_ms, int num_threads){
-    std::vector<std::thread> threads;
-    long ip_count = 0;
-    int size = result.size();
-    for (const auto& ip : result) {
-        threads.emplace_back(scan_ports, ip, ports, timeout_ms);
-        ip_count++;
-
-        if (ip_count % argp.log_set == 0){
-            std::string result_print = "[" + std::string(get_time()) + "][NB] " + std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs scanned.";
-            std::cout << yellow_html;
-            std::cout << result_print << std::endl;
-            std::cout << reset_color;
-        }
-
-        if (ip_count % num_threads == 0) {
-            
-            for (auto& t : threads) {
-                t.join();
-            }
-            threads.clear();
-        }
-    }
-    for (auto& t : threads) {
-        t.join();
     }
 }
 
