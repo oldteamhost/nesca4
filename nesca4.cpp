@@ -1124,12 +1124,19 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 std::string result_txt = "[" + std::string(get_time()) + "] [BA] " + result + " T: " + get_html_title(ip);
 
                 std::lock_guard<std::mutex> guard(mtx);
+                if (argp.txt){
+                    int temp = write_line(argp.txt_save, result_txt);
+                }
                 std::cout << result_print << std::endl;
             }
             else {
                 std::string result = ip + ":" + std::to_string(port);
                 std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + result + reset_color;
-                std::string result_print_txt = "[" + std::string(get_time()) + "] [BA] "+ result;
+                std::string result_txt = "[" + std::string(get_time()) + "] [BA] "+ result;
+                
+                if (argp.txt){
+                    int temp = write_line(argp.txt_save, result_txt);
+                }
 
                 std::lock_guard<std::mutex> guard(mtx);
                 std::cout << result_print << std::endl;
@@ -1138,7 +1145,7 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
         }
         else if (result == -1 || result == -2 || result == -3){
             if (argp.print_errors){
-                std::string result_print = "[" + std::string(get_time()) + "][NB] " + ip + " ERROR: " + std::to_string(result);
+                std::string result_print = "[" + std::string(get_time()) + "][NB] " + ip + " [ERROR]: " + std::to_string(result);
                 std::lock_guard<std::mutex> guard(mtx);
                 std::cout << red_html;
                 std::cout << result_print << std::endl;
@@ -1147,10 +1154,13 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
         }
         else {
             std::lock_guard<std::mutex> guard(mtx);
+            std::string result_txt = "[" + std::string(get_time()) + "][DB] " + ip + ":" + std::to_string(port) + " [CLOSED]";
+            std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [DB] " + red_html + ip + ":" + std::to_string(port) + " [CLOSED]" + reset_color;
             if (argp.debug){
-                std::cout << yellow_html;
-                std::cout << "Port " << port << " on " << ip << " is closed" << std::endl;
-                std::cout << reset_color;
+                if (argp.txt){
+                    int temp = write_line(argp.txt_save, result_txt);
+                }
+                std::cout << result_print << std::endl;
             }
         }
     }
