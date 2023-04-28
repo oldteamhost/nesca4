@@ -37,6 +37,7 @@
 #define VERSION "1165-build"
 #define DELIMITER ','
 
+std::string logo_red = "\033[38;2;255;100;100m";
 std::string gray_nesca = "\033[38;2;112;112;112m";
 std::string golder_rod = "\033[38;2;218;165;32m";
 std::string sea_green = "\033[38;2;60;179;113;4m";
@@ -114,11 +115,15 @@ class arguments_program{
         bool random_ip;
         int log_set = 200;
         bool dns_scan;
+        bool print_help_menu;
         bool ip_scan;
         bool ip_cidr_scan;
         bool debug;
+        bool warning_threads;
         bool txt;
+        bool color_off;
         int random_ip_count;
+        int threads_temp;
         int dns_scan_domain_count = 5;
         int timeout_ms = 300;
         int _threads = 20;
@@ -132,9 +137,18 @@ arguments_program argp;
 const char* run;
 
 int main(int argc, char** argv){
+
     if (check_ansi_support() != true){
         std::cout << "You terminal don`t support ansi colors!\n";
+        logo_red = "";
+        gray_nesca = "";
+        golder_rod = "";
+        sea_green =  "";
+        green_html = "";
+        red_html =  "";
+        yellow_html = "";
     }
+
     print_logo();
 
     run = argv[0];
@@ -161,14 +175,15 @@ int main(int argc, char** argv){
         {"dns-length", required_argument, 0, 20},
         {"dns-dict", required_argument, 0, 21},
         {"txt", required_argument, 0, 22},
+        {"debug", no_argument, 0, 27},
+        {"er", no_argument, 0, 28},
+        {"no-color", no_argument, 0, 26},
         {"log-set", required_argument, 0, 24},
 
         {"help", no_argument, 0, 'h'},
         {"version", no_argument, 0, 'v'},
         {"ports", no_argument, 0, 'p'},
 
-        {"ping-off", no_argument, 0, 15},
-        {"cf", no_argument, 0, 16},
         {"dns-off", no_argument, 0, 17},
         {"db", no_argument, 0, 7},
         {"error", no_argument, 0, 25},
@@ -189,8 +204,7 @@ int main(int argc, char** argv){
     while ((rez = getopt_long_only(argc, argv, short_options, long_options, &option_index)) != EOF) {
         switch (rez) {
             case 'h':
-                help_menu();
-                return 0;
+                argp.print_help_menu = true;
                 break;
             case 'v':
                 std::cout << VERSION << std::endl;
@@ -208,10 +222,10 @@ int main(int argc, char** argv){
 
                     argp.ports = _ports;
                 }
-                else if (argp.ports_temp == "100"){
+                else if (argp.ports_temp == "top100"){
                     argp.ports = {80, 443, 22, 21, 25, 3389, 110, 143, 53, 445, 139, 3306, 8080, 
                         1723, 111, 995, 993, 5900, 1025, 587, 8888, 199, 1720, 465, 548, 113, 81,
-                        6001, 10000, 514, 5060, 179, 1026, 2000, 8443, 8000, 444, 1433, 1900, 2001,
+                        6001, 10000, 514, 5060, 179, 1026, 23, 8443, 8000, 444, 1433, 1900, 2001,
                         1027, 49152, 2049, 1028, 1029, 5901, 32768, 1434, 3283, 5800, 389, 53, 17988,
                         106, 5666, 1725, 465, 995, 548, 7, 123, 389, 113, 37, 427, 8001, 427, 1726,
                         49153, 2002, 515, 1030, 1031, 1032, 1033, 1034, 1035, 1036, 1037, 1038, 1039,
@@ -219,10 +233,13 @@ int main(int argc, char** argv){
                         1053, 1054, 1055, 1056, 1057, 1058, 1059, 1060, 1061, 1062, 1063, 1064, 1065,
                         1066, 1067, 1068, 1069, 1070, 1071, 1072, 1073, 1074, 1075, 1076, 1077};
                 }
-                else if (argp.ports_temp == "50"){
+                else if (argp.ports_temp == "top50"){
                     argp.ports = {80, 443, 22, 21, 25, 3389, 110, 143, 53, 445, 139, 3306, 8080, 1723,
                         111, 995, 993, 5900, 1025, 587, 8888, 199, 1720, 465, 548, 113, 81, 6001, 10000,
-                        514, 5060, 179, 1026, 2000, 8443, 8000, 444, 1433, 1900, 2001, 1027, 49152, 2049, 1028, 1029, 5901, 32768, 1434, 3283}; 
+                        514, 5060, 179, 1026, 23, 8443, 8000, 444, 1433, 1900, 2001, 1027, 49152, 2049, 1028, 1029, 5901, 32768, 1434, 3283}; 
+                }
+                else if (argp.ports_temp == "nesca"){
+                    argp.ports = {};
                 }
                 else {
                     argp.ports = split_string_int(argp.ports_temp, DELIMITER);
@@ -261,17 +278,12 @@ int main(int argc, char** argv){
                 break;
           case 'T':
                 if (atoi(optarg) >= 200){
-                    char what;
-                    std::cout << red_html;
-                    std::cout << "[" << get_time() << "]" << "[WARING] You set " << optarg << " threads, this can severely overload a weak cpu, are you sure you want to continue? (y,n): ";
-                    std::cin >> what;
-                    std::cout << reset_color;
-
-                    if (what != 'y'){
-                        return 0;
-                    }
+                    argp.warning_threads = true;
+                    argp.threads_temp = atoi(optarg);
                 }
-                argp._threads = atoi(optarg);
+                else {
+                    argp._threads = atoi(optarg);
+                }
                 break;
 
            case 19:
@@ -301,17 +313,54 @@ int main(int argc, char** argv){
            case 25:
               argp.print_errors = true;
               break;
+           case 26:
+           {
+               logo_red = "";
+               gray_nesca = "";
+               golder_rod = "";
+               sea_green =  "";
+               green_html = "";
+               red_html =  "";
+               yellow_html = ""; break;
+           }
+           case 27:
+               argp.debug = true;
+               break;
+           case 28:
+               argp.print_errors = true;
+               break;
         }
     }
+
+    if (argp.print_help_menu){
+        help_menu();
+        return 0;
+    }
+
+    if (argp.warning_threads){
+        char what;
+        std::cout << red_html;
+        std::cout << "[" << get_time() << "]" << "[WARING] You set " << argp.threads_temp << " threads, this can severely overload a weak cpu, are you sure you want to continue? (y,n): ";
+        std::cin >> what;
+        std::cout << reset_color;
+
+        if (what != 'y'){
+            return 0;
+        }
+        else {
+            argp._threads = argp.threads_temp;
+        }
+    }
+
             
-            checking_default_files();
+    checking_default_files();
 
-            argp.logins = write_file("passwd/logins.txt");
-            argp.passwords = write_file("passwd/passwords.txt");
+    argp.logins = write_file("passwd/logins.txt");
+    argp.passwords = write_file("passwd/passwords.txt");
 
-            std::cout << green_html;
-            std::cout << "[" << get_time() << "]" << "[OK] Starting " << argp._threads << " threads...\n\n";
-            std::cout << reset_color;
+    std::cout << green_html;
+    std::cout << "[" << get_time() << "]" << "[OK] Starting " << argp._threads << " threads...\n\n";
+    std::cout << reset_color;
 
         // start dns_scan
         if (argp.dns_scan){
@@ -331,9 +380,11 @@ int main(int argc, char** argv){
                             std::lock_guard<std::mutex> lock(mtx);
                                 result_print = "[" + std::string(get_time()) + "] [BA] " + result + " FAILED";
                                 std::string *result_printp = &result_print;
+
                                 if (argp.txt){
                                     int temp = write_line(argp.txt_save, *result_printp);
                                 }
+
                                 std::cout << yellow_html;
                                 std::cout << result_print << std::endl;
                                 std::cout << reset_color;
@@ -341,12 +392,13 @@ int main(int argc, char** argv){
                     }
                     else {
                         std::lock_guard<std::mutex> lock(mtx);
-                            std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + result + reset_color + gray_nesca + " T: " + golder_rod + get_html_title(result) + reset_color;
-                            std::string *result_printp = &result_print;
+                            std::string result_print_color = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + result + reset_color + gray_nesca + " T: " + golder_rod + get_html_title(result) + reset_color;
+                            std::string result_txt = "[" + std::string(get_time()) + "] [BA] " + result + " T: " + get_html_title(result);
+                            std::string *result_printp = &result_txt;
                             if (argp.txt){
                                 int temp = write_line(argp.txt_save, *result_printp);
                             }
-                            std::cout << result_print << std::endl;
+                            std::cout << result_print_color << std::endl;
                     }
                 }
             }).detach();
@@ -354,7 +406,9 @@ int main(int argc, char** argv){
                 delay_ms(argp.timeout_ms);
         }
         std::getchar();
+        std::cout << green_html;
         std::cout << "\nStoping threads...\n";
+        std::cout << reset_color;
     }
     // end dns_scan
 
@@ -1067,12 +1121,16 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
             if (port == 80 || port == 8080 || port == 8081 || port == 8888){
                 std::string result = ip + ":" + std::to_string(port);
                 std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + result + reset_color + gray_nesca + " T: " + golder_rod + get_html_title(ip) + reset_color;
+                std::string result_txt = "[" + std::string(get_time()) + "] [BA] " + result + " T: " + get_html_title(ip);
+
                 std::lock_guard<std::mutex> guard(mtx);
                 std::cout << result_print << std::endl;
             }
             else {
                 std::string result = ip + ":" + std::to_string(port);
                 std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + result + reset_color;
+                std::string result_print_txt = "[" + std::string(get_time()) + "] [BA] "+ result;
+
                 std::lock_guard<std::mutex> guard(mtx);
                 std::cout << result_print << std::endl;
             }
@@ -1082,7 +1140,9 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
             if (argp.print_errors){
                 std::string result_print = "[" + std::string(get_time()) + "][NB] " + ip + " ERROR: " + std::to_string(result);
                 std::lock_guard<std::mutex> guard(mtx);
+                std::cout << red_html;
                 std::cout << result_print << std::endl;
+                std::cout << reset_color;
             }
         }
         else {
@@ -1128,38 +1188,48 @@ bool check_ansi_support(void){
 }
 
 void help_menu(void){
-    puts("nesca4: Remaster NEtwork SCAnner.\n");
-
+    std::cout << golder_rod;
     std::cout << "usage: " << run << " [flags]\n";
+    std::cout << reset_color;
 
+    std:: cout << sea_green;
     std::cout << "\narguments target:" << std::endl;
+    std::cout << reset_color;
     std::cout << "  -ip <1,2,3>            Set ip target.\n";
     std::cout << "  -cidr <1,2,3>          Set cidr target.\n";
     std::cout << "  -import-ip <path>      Set ips on target from file.\n";
     std::cout << "  -import-cidr <path>    Set cidr on target from file.\n";
     std::cout << "  -random-ip <count>     Set random ips target.\n";
 
+    std::cout << sea_green;
     std::cout << "\narguments ports:" << std::endl;
+    std::cout << reset_color;
     std::cout << "  -ports, -p <1,2,3>     Set ports on scan.\n";
 
+    std::cout << sea_green;
     std::cout << "\narguments speed:" << std::endl;
+    std::cout << reset_color;
     std::cout << "  -threads, -T <count>   Set threads for scan.\n";
     std::cout << "  -timeout, -t <ms>      Set timeout for scan.\n";
 
+    std::cout << sea_green;
     std::cout << "\narguments dns-scan:" << std::endl;
+    std::cout << reset_color;
     std::cout << "  -dns-scan <.dns>       On dns-scan and set domain 1 level.\n";
     std::cout << "  -dns-length <count>    Edit length generating domain.\n";
     std::cout << "  -dns-dict <dict>       Edit dictionary for generation.\n";
 
+    std::cout << sea_green;
     std::cout << "\narguments output:" << std::endl;
-    std::cout << "  -db                    On debug mode, save and display not even working hosts.\n";
-    std::cout << "  -error                 On display errors.\n";
-    std::cout << "  -txt <path>            Save result to text document.\n";
+    std::cout << reset_color;
+    std::cout << "  -db, -debug            On debug mode, save and display not even working hosts.\n";
+    std::cout << "  -er, -error            On display errors.\n";
+    std::cout << "  -no-color              Disable colors.\n";
     std::cout << "  -log-set <count>       Change change the value of ips after which, will be displayed information about how much is left.\n";
+    std::cout << "  -txt <path>            Save result to text document.\n";
 }
 
 void print_logo(void){
-    std::cout << "\e[1;37m";
     std::cout << "d8b   db d88888b .d8888.  .o88b.  .d8b.         j88D  \n";
     std::cout << "888o  88 88'     88'  YP d8P  Y8 d8' `8b       j8~88  \n"; 
     std::cout << "88V8o 88 88ooooo `8bo.   8P      88ooo88      j8' 88  \n";
