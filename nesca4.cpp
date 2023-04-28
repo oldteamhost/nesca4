@@ -18,13 +18,13 @@
 #include <sstream>
 #include <string.h>
 #include <curl/curl.h>
-#include <libssh/libssh.h>
 #include <vector>
 #include <fstream>
 
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <Windows.h>
 #pragma comment(lib, "ws2_32.lib")
 #else
 #include <sys/socket.h>
@@ -71,7 +71,6 @@ double measure_ping_time(const char* node, int port);
 long get_response_code(const char *node);
 std::string get_html_title(std::string node);
 std::vector<std::string> brute_ftp(const std::string& ip, const std::vector<std::string>& logins, const std::vector<std::string>& passwords);
-std::vector<std::string> brute_sftp(const std::string& ip, const std::vector<std::string>& logins, const std::vector<std::string>& passwords);
 void check_net(void);
 
 // files
@@ -79,7 +78,6 @@ std::vector<std::string> write_file(const std::string& filename);
 int write_line(std::string, std::string line);
 bool check_file(const char* path);
 int get_count_lines(const char* path);
-void parallel_dns_scan(int thread_count, int domain_count, const std::string& domain);
 void checking_default_files(void);
 
 // other
@@ -474,19 +472,23 @@ int tcp_scan_port(const char *ip, int port, int timeout_ms){
     int ret = connect(sock, (struct sockaddr *)&target, sizeof(target));
 
     if (ret == 0) {
-        close(sock);
-        #ifdef _WIN32
+#ifdef _WIN32
+        closesocket(sock);
         WSACleanup();
-        #endif
+#else
+        close(sock);
+#endif
         return 0;
     }
 
     if (ret < 0 && errno != EINPROGRESS) {
         if (errno == ECONNREFUSED) {
-            close(sock);
-            #ifdef _WIN32
-            WSACleanup();
-            #endif
+#ifdef _WIN32
+        closesocket(sock);
+        WSACleanup();
+#else
+        close(sock);
+#endif
             return 2;
         }
     }
@@ -499,35 +501,43 @@ int tcp_scan_port(const char *ip, int port, int timeout_ms){
 
     ret = select(sock + 1, NULL, &fds, NULL, &timeout);
 
-    if (ret == 0) {
-        close(sock);
-        #ifdef _WIN32
+    if (ret == 0) {  
+#ifdef _WIN32
+        closesocket(sock);
         WSACleanup();
-        #endif
+#else
+        close(sock);
+#endif
         return 1;
     }
 
     if (ret < 0) {
         if (errno == EAGAIN) {
-            close(sock);
-            #ifdef _WIN32
-            WSACleanup();
-            #endif
+#ifdef _WIN32
+        closesocket(sock);
+        WSACleanup();
+#else
+        close(sock);
+#endif
             return 2;
         }
 
         if (errno == ECONNREFUSED) {
-            close(sock);
-            #ifdef _WIN32
-            WSACleanup();
-            #endif
-            return 1;
+#ifdef _WIN32
+        closesocket(sock);
+        WSACleanup();
+#else
+        close(sock);
+#endif
+        return 1;
         }
         else {
-            close(sock);
-            #ifdef _WIN32
-            WSACleanup();
-            #endif
+#ifdef _WIN32
+        closesocket(sock);
+        WSACleanup();
+#else
+        close(sock);
+#endif
             return -3;
         }
     }
@@ -537,17 +547,21 @@ int tcp_scan_port(const char *ip, int port, int timeout_ms){
     getsockopt(sock, SOL_SOCKET, SO_ERROR, &err, &len);
 
     if (err == 0 && FD_ISSET(sock, &fds)) {
-        close(sock);
-        #ifdef _WIN32
+#ifdef _WIN32
+        closesocket(sock);
         WSACleanup();
-        #endif
+#else
+        close(sock);
+#endif
         return 0;
     }
 
-    close(sock);
-    #ifdef _WIN32
-    WSACleanup();
-    #endif
+#ifdef _WIN32
+        closesocket(sock);
+        WSACleanup();
+#else
+        close(sock);
+#endif
     return 1;
 }
 
@@ -785,45 +799,6 @@ std::vector<std::string> brute_ftp(const std::string& ip, const std::vector<std:
     return result;
 }
 
-std::vector<std::string> brute_sftp(const std::string& ip, const std::vector<std::string>& logins, const std::vector<std::string>& passwords){
-    std::vector<std::string> result;
-    ssh_session ssh = ssh_new();
-
-    if (!ssh) {
-        return result;
-    }
-
-    ssh_options_set(ssh, SSH_OPTIONS_HOST, ip.c_str());
-    ssh_options_set(ssh, SSH_OPTIONS_USER, "");
-    ssh_options_set(ssh, SSH_OPTIONS_LOG_VERBOSITY, SSH_LOG_NONE);
-    ssh_options_set(ssh, SSH_OPTIONS_STRICTHOSTKEYCHECK, 0);
-    ssh_options_set(ssh, SSH_OPTIONS_PORT_STR, "22");
-
-    int rc = ssh_connect(ssh);
-    if (rc != SSH_OK) {
-        ssh_disconnect(ssh);
-        ssh_free(ssh);
-        return result;
-    }
-
-    for (const auto& login : logins) {
-        for (const auto& password : passwords) {
-            rc = ssh_userauth_password(ssh, login.c_str(), password.c_str());
-            if (rc == SSH_AUTH_SUCCESS) {
-                result.push_back(login);
-                result.push_back(password);
-                ssh_disconnect(ssh);
-                ssh_free(ssh);
-                return result;
-            }
-        }
-    }
-
-    ssh_disconnect(ssh);
-    ssh_free(ssh);
-    return result;
-}
-
 const char* generate_ipv6(int num_octets){
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -979,10 +954,14 @@ const char* get_time(){
 }
 
 void delay_ms(int milliseconds){
+#ifdef _WIN32
+    Sleep(milliseconds);
+#else
     struct timespec ts;
     ts.tv_sec = milliseconds / 1000;
     ts.tv_nsec = (milliseconds % 1000) * 1000000;
     nanosleep(&ts, NULL);
+#endif
 }
 
 std::vector<std::string> cidr_to_ips(const std::vector<std::string>& cidr_list) {

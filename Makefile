@@ -1,4 +1,4 @@
-flags=-lcurl -lssh -pthread
+flags=-lcurl -pthread
 compile=g++
 
 nesca4: nesca4.o
