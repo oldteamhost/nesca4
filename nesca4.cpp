@@ -115,7 +115,7 @@ class arguments_program{
         std::vector<int> ports;
 
         bool random_ip;
-        int log_set = 100;
+        int log_set = 200;
         bool dns_scan;
         bool ip_scan;
         bool ip_cidr_scan;
@@ -123,8 +123,8 @@ class arguments_program{
         bool txt;
         int random_ip_count;
         int dns_scan_domain_count = 5;
-        int timeout_ms = 55;
-        int _threads = 1;
+        int timeout_ms = 300;
+        int _threads = 20;
         bool timeout;
         int random_version = 4;
         bool print_errors;
@@ -247,8 +247,8 @@ int main(int argc, char** argv){
             }
             case 3:
             {
-                argp.ip_cidr_scan = true;
-                argp.path_cidr = optarg;
+               argp.ip_cidr_scan = true;
+               argp.path_cidr = optarg;
                break;
             }
            case 5:
@@ -266,7 +266,7 @@ int main(int argc, char** argv){
                 if (atoi(optarg) >= 200){
                     char what;
                     std::cout << red_html;
-                    std::cout << "[" << get_time() << "]" << "[WARING] You set " << optarg << " threads, this can severely overload a weak processor, are you sure you want to continue? (y,n): ";
+                    std::cout << "[" << get_time() << "]" << "[WARING] You set " << optarg << " threads, this can severely overload a weak cpu, are you sure you want to continue? (y,n): ";
                     std::cin >> what;
                     std::cout << reset_color;
 
@@ -306,6 +306,7 @@ int main(int argc, char** argv){
               break;
         }
     }
+            
             checking_default_files();
 
             argp.logins = write_file("passwd/logins.txt");
@@ -358,6 +359,9 @@ int main(int argc, char** argv){
     // end dns_scan
 
     // start tcp_scan_port
+    
+    int ip_count = 0;
+    int ip_temp = 0;
     std::vector<std::string> result;
     
     if (argp.ip_scan){
@@ -371,8 +375,6 @@ int main(int argc, char** argv){
         argp.ip_scan = true;
     }
 
-    int ip_count = 0;
-    int ip_temp = 0;
 
     scan_all_ports(result, argp.ports, argp.timeout_ms, argp._threads);
     // end tcp_scan_port
@@ -887,42 +889,58 @@ int get_count_lines(const char* path){
 }
 
 void checking_default_files(void){
-    std::cout << green_html;
     const char* path0 = "ip.txt";
     const char* path1 = "passwd/logins.txt";
     const char* path2 = "passwd/passwords.txt";
 
     if (argp.ip_cidr_scan){
        if (check_file(argp.path_cidr)){
-            std::cout << "[" << get_time() << "]" << "[OK] " << argp.path_cidr << " (" << get_count_lines(argp.path_cidr) << ") entries" << std::endl;
+            std::cout << green_html;
+            if (argp.ip_cidr_scan){
+                std::cout << "[" << get_time() << "]" << "[OK] " << argp.path_cidr << " (" << get_count_lines(argp.path_cidr) << ") entries" << std::endl;
+            }
+            else {
+                std::cout << "[" << get_time() << "]" << "[OK] " << argp.path_cidr << " (" << get_count_lines(argp.path_cidr) << ") entries" << std::endl;
+            }
             argp.ip_cidr = write_file(argp.path_cidr);  
        }
        else {
+            std::cout << yellow_html;
             std::cout << "[" << get_time() << "]" << "[FAILED] " << argp.path_cidr << " (" << get_count_lines(argp.path_cidr) << ") entries" << std::endl;
+            std::cout << reset_color;
        }
     }
 
     if (argp.ip_scan){
        if (check_file(argp.path_ips)){
+            std::cout << green_html;
             std::cout << "[" << get_time() << "]" << "[OK] " << argp.path_ips << " (" << get_count_lines(argp.path_ips) << ") entries" << std::endl;
             argp._ip = write_file(argp.path_ips);  
        }
        else {
+            std::cout << yellow_html;
             std::cout << "[" << get_time() << "]" << "[FAILED] " << argp.path_ips << " (" << get_count_lines(argp.path_ips) << ") entries" << std::endl;
+            std::cout << reset_color;
        }
     }
 
     if (check_file(path1)){
+       std::cout << green_html;
        std::cout << "[" << get_time() << "]" << "[OK] " << path1 << " (" << get_count_lines(path1) << ") entries" << std::endl;
     }
     else {
+        std::cout << yellow_html;
         std::cout << "[" << get_time() << "]" << "[FAILED] " << path1 << " (" << get_count_lines(path1) << ") entries" << std::endl;
+        std::cout << reset_color;
     }
     if (check_file(path2)){
+        std::cout << green_html;
         std::cout << "[" << get_time() << "]" << "[OK] " << path2 << " (" << get_count_lines(path2) << ") entries" << std::endl;
     }
     else {
+        std::cout << yellow_html;
         std::cout << "[" << get_time() << "]" << "[FAILED] " << path2 << " (" << get_count_lines(path2) << ") entries" << std::endl;
+        std::cout << reset_color;
     }
     std::cout << reset_color;
 }
@@ -1054,7 +1072,9 @@ void scan_ports(const std::string& ip, const std::vector<int>& ports, int timeou
         else {
             std::lock_guard<std::mutex> guard(mtx);
             if (argp.debug){
+                std::cout << yellow_html;
                 std::cout << "Port " << port << " on " << ip << " is closed" << std::endl;
+                std::cout << reset_color;
             }
         }
     }
@@ -1074,7 +1094,6 @@ void scan_all_ports(const std::vector<std::string>& result, const std::vector<in
             std::cout << result_print << std::endl;
             std::cout << reset_color;
         }
-
 
         if (ip_count % num_threads == 0) {
             
@@ -1161,5 +1180,4 @@ void print_logo(void){
     std::cout << "VP   V8P Y88888P `8888Y'  `Y88P' YP   YP          VP  \n";
     std::cout << reset_color;
     std::cout << std::endl;
-
 }
