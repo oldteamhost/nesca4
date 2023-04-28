@@ -2,10 +2,12 @@
 // by oldteam & lomaster
 // license GPL-3.0
 // // // // // // // // // 
+
 #include <cstdio>
 #include <iostream>
 #include <bitset>
 #include <getopt.h>
+#include <netdb.h>
 #include <ostream>
 #include <mutex>
 #include <thread>
@@ -32,8 +34,17 @@
 #include <errno.h>
 #endif
 
-#define VERSION "1183-build lomaster & oldteam"
+#define VERSION "1165-build"
 #define DELIMITER ','
+
+std::string gray_nesca = "\033[38;2;112;112;112m";
+std::string golder_rod = "\033[38;2;218;165;32m";
+std::string sea_green = "\033[38;2;60;179;113;4m";
+std::string green_html = "\033[38;2;45;235;65m";
+std::string red_html = "\033[38;2;240;50;55m";
+std::string yellow_html = "\033[38;2;240;215;75m";
+
+std::string reset_color = "\033[0m";
 
 std::mutex mtx;
 
@@ -55,7 +66,7 @@ void scan_all_ports(const std::vector<std::string>& result, const std::vector<in
 int dns_scan(std::string domain, std::string domain_1level);
 std::vector<int> tcp_scan_ports(const std::vector<std::string>& ips, const std::vector<int>& ports, int timeout_ms);
 
-// func curl
+// func curg
 double measure_ping_time(const char* node, int port);
 long get_response_code(const char *node);
 std::string get_html_title(std::string node);
@@ -74,7 +85,9 @@ void checking_default_files(void);
 // other
 std::string generate_random_str(int len, std::string dictionary);
 std::vector<std::string> cidr_to_ips(const std::vector<std::string>& cidr_list);
+bool check_ansi_support(void);
 void delay_ms(int milliseconds);
+void print_logo(void);
 const char* get_time();
 const char* generate_ipv6(int num_octets);
 const char* generate_ipv4(void);
@@ -96,6 +109,9 @@ class arguments_program{
         std::vector<std::string> ip_cidr;
         std::vector<std::string> logins;
         std::vector<std::string> passwords;
+
+        const char* path_cidr;
+        const char* path_ips;
         std::vector<int> ports;
 
         bool random_ip;
@@ -111,11 +127,20 @@ class arguments_program{
         int _threads = 1;
         bool timeout;
         int random_version = 4;
+        bool print_errors;
         bool brute;
 };
 arguments_program argp;
 
+const char* run;
+
 int main(int argc, char** argv){
+    if (check_ansi_support() != true){
+        std::cout << "You terminal don`t support ansi colors!\n";
+    }
+    print_logo();
+
+    run = argv[0];
     const char* short_options = "hvt:T:p:";
     const struct option long_options[] = {
 
@@ -149,6 +174,7 @@ int main(int argc, char** argv){
         {"cf", no_argument, 0, 16},
         {"dns-off", no_argument, 0, 17},
         {"db", no_argument, 0, 7},
+        {"error", no_argument, 0, 25},
         {"ftp-brute", no_argument, 0, 9},
         {"ssh-brute", no_argument, 0, 10},
         {"ft", no_argument, 0, 18},
@@ -222,30 +248,9 @@ int main(int argc, char** argv){
             case 3:
             {
                 argp.ip_cidr_scan = true;
-                argp.ip_cidr = write_file(optarg);  
-
-                if (check_file(optarg)){
-                    std::cout << "[" << get_time() << "]" << "[OK] " << optarg << " (" << get_count_lines(optarg) << ") entries" << std::endl;
-                }
-                else {
-                    std::cout << "[" << get_time() << "] " << "[-] " << optarg << " (" << get_count_lines(optarg) << ") entries" << std::endl;
-                }
-                break;
+                argp.path_cidr = optarg;
+               break;
             }
-            case 4:
-            {
-                if (atoi(optarg) == 6){
-                    argp.random_version = 6;
-                }
-                else if (atoi(optarg) == 4){
-                    argp.random_version = 4;
-                }
-                else {
-                    std::cout << "random-vn: only 4, or 6.\n";
-                    return 0;
-                }
-                break;
-           } 
            case 5:
                 argp.random_ip = true;
                 argp.random_ip_count = atoi(optarg); 
@@ -257,10 +262,21 @@ int main(int argc, char** argv){
                 argp.timeout = true;
                 argp.timeout_ms = atoi(optarg);
                 break;
+          case 'T':
+                if (atoi(optarg) >= 200){
+                    char what;
+                    std::cout << red_html;
+                    std::cout << "[" << get_time() << "]" << "[WARING] You set " << optarg << " threads, this can severely overload a weak processor, are you sure you want to continue? (y,n): ";
+                    std::cin >> what;
+                    std::cout << reset_color;
 
-           case 'T':
+                    if (what != 'y'){
+                        return 0;
+                    }
+                }
                 argp._threads = atoi(optarg);
                 break;
+
            case 19:
                 argp.dns_scan = true;
                 argp.domain_1level = optarg;
@@ -279,28 +295,25 @@ int main(int argc, char** argv){
            case 23:
            {
                argp.ip_scan = true;
-               argp._ip = write_file(optarg);
-
-               if (check_file(optarg)){
-                   std::cout << "[" << get_time() << "]" << "[OK] " << optarg << " (" << get_count_lines(optarg) << ") entries" << std::endl;
-               }
-               else {
-                   std::cout << "[" << get_time() << "] " << "[-] " << optarg << " (" << get_count_lines(optarg) << ") entries" << std::endl;
-               }
+               argp.path_ips = optarg;
                break;
            }
            case 24:
               argp.log_set = atoi(optarg);
               break;
+           case 25:
+              argp.print_errors = true;
+              break;
         }
     }
-
             checking_default_files();
 
             argp.logins = write_file("passwd/logins.txt");
             argp.passwords = write_file("passwd/passwords.txt");
 
+            std::cout << green_html;
             std::cout << "[" << get_time() << "]" << "[OK] Starting " << argp._threads << " threads...\n\n";
+            std::cout << reset_color;
 
         // start dns_scan
         if (argp.dns_scan){
@@ -327,7 +340,7 @@ int main(int argc, char** argv){
                     }
                     else {
                         std::lock_guard<std::mutex> lock(mtx);
-                            result_print = "[" + std::string(get_time()) + "][BA] " + result + " T: \"" + get_html_title(result) + "\"";
+                            result_print = "[" + std::string(get_time()) + "][BA] " + result + " T: " + get_html_title(result);
                             std::string *result_printp = &result_print;
                             if (argp.txt){
                                 int temp = write_line(argp.txt_save, *result_printp);
@@ -431,7 +444,7 @@ int tcp_scan_port(const char *ip, int port, int timeout_ms){
     int iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
 
     if (iResult != 0) {
-        return -3;
+        return -1;
     }
     #endif
 
@@ -674,12 +687,12 @@ std::string get_html_title(std::string node){
     CURL* curl = curl_easy_init();
 
     if (curl == nullptr) {
-        return "";
+        return "N/A";
     }
 
     if (!curl) {
         curl_easy_cleanup(curl);
-        return "";
+        return "N/A";
     }
 
     std::string response_string;
@@ -692,7 +705,7 @@ std::string get_html_title(std::string node){
 
     if (res != CURLE_OK) {
         curl_easy_cleanup(curl);
-        return "";
+        return "N/A";
     }
 
     char* content_type;
@@ -700,7 +713,7 @@ std::string get_html_title(std::string node){
 
     if (res != CURLE_OK || content_type == nullptr) {
         curl_easy_cleanup(curl);
-        return "";
+        return "N/A";
     }
 
     std::string title_tag_open = "<title>";
@@ -709,19 +722,20 @@ std::string get_html_title(std::string node){
     size_t title_start = response_string.find(title_tag_open);
     if (title_start == std::string::npos) {
         curl_easy_cleanup(curl);
-        return "";
+        return "N/A";
     }
     title_start += title_tag_open.length();
 
     size_t title_end = response_string.find(title_tag_close, title_start);
     if (title_end == std::string::npos) {
         curl_easy_cleanup(curl);
-        return "";
+        return "N/A";
     }
 
     std::string title = response_string.substr(title_start, title_end - title_start);
+    std::string return_value = "\"" + title + "\"";
     curl_easy_cleanup(curl);
-    return title;
+    return return_value;
 }
 
 std::vector<std::string> brute_ftp(const std::string& ip, const std::vector<std::string>& logins, const std::vector<std::string>& passwords){
@@ -873,9 +887,30 @@ int get_count_lines(const char* path){
 }
 
 void checking_default_files(void){
+    std::cout << green_html;
     const char* path0 = "ip.txt";
     const char* path1 = "passwd/logins.txt";
     const char* path2 = "passwd/passwords.txt";
+
+    if (argp.ip_cidr_scan){
+       if (check_file(argp.path_cidr)){
+            std::cout << "[" << get_time() << "]" << "[OK] " << argp.path_cidr << " (" << get_count_lines(argp.path_cidr) << ") entries" << std::endl;
+            argp.ip_cidr = write_file(argp.path_cidr);  
+       }
+       else {
+            std::cout << "[" << get_time() << "]" << "[FAILED] " << argp.path_cidr << " (" << get_count_lines(argp.path_cidr) << ") entries" << std::endl;
+       }
+    }
+
+    if (argp.ip_scan){
+       if (check_file(argp.path_ips)){
+            std::cout << "[" << get_time() << "]" << "[OK] " << argp.path_ips << " (" << get_count_lines(argp.path_ips) << ") entries" << std::endl;
+            argp._ip = write_file(argp.path_ips);  
+       }
+       else {
+            std::cout << "[" << get_time() << "]" << "[FAILED] " << argp.path_ips << " (" << get_count_lines(argp.path_ips) << ") entries" << std::endl;
+       }
+    }
 
     if (check_file(path1)){
        std::cout << "[" << get_time() << "]" << "[OK] " << path1 << " (" << get_count_lines(path1) << ") entries" << std::endl;
@@ -889,6 +924,7 @@ void checking_default_files(void){
     else {
         std::cout << "[" << get_time() << "]" << "[FAILED] " << path2 << " (" << get_count_lines(path2) << ") entries" << std::endl;
     }
+    std::cout << reset_color;
 }
 
 int write_line(std::string path, std::string line){
@@ -994,85 +1030,26 @@ void scan_ports(const std::string& ip, const std::vector<int>& ports, int timeou
     for (const auto& port : ports) {
         int result = tcp_scan_port(ip.c_str(), port, timeout_ms);
         if (result == 0) {
-                if (port == 80 || port == 8080 || port == 8081 || port == 8888){
-                    std::string result = "http://" + ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][HTTP] " + result + " T: \"" + get_html_title(ip) + "\"";
-                    std::lock_guard<std::mutex> guard(mtx);
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 20 || port == 21){
-                    std::string result = "ftp://" + ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][FTP] " + result;
-                    std::lock_guard<std::mutex> guard(mtx);
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 7){
-                    std::string result = ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][ECHO] " + result;
-                    std::lock_guard<std::mutex> guard(mtx);
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 25565){
-                    std::string result = ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][MINECRAFT] " + result;
-                    std::lock_guard<std::mutex> guard(mtx);
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 143){
-                    std::string result = ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][IMAP] " + result;
-                    std::lock_guard<std::mutex> guard(mtx);
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 22){
-                    std::string result = "sftp://" + ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][SSH] " + result;
-                    std::lock_guard<std::mutex> guard(mtx);
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 53){
-                    std::string result = ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][DNS] " + result;
-                    std::lock_guard<std::mutex> guard(mtx);
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 443){
-                    std::string result = "https://" + ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][HTTPS] " + result + " T: \"" + get_html_title(ip) + "\"";
-                    std::lock_guard<std::mutex> guard(mtx);
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 8000){
-                    std::string result = ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][HIKVISION] " + result;
-                    std::lock_guard<std::mutex> guard(mtx);
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 23){
-                    std::string result = ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][TELNET] " + result;
-                    std::lock_guard<std::mutex> guard(mtx);
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 25){
-                    std::string result = ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][SMTP] " + result;
-                    std::lock_guard<std::mutex> guard(mtx);
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 113){
-                    std::string result = ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][AUTH] " + result;
-                    std::lock_guard<std::mutex> guard(mtx);
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 37777){
-                    std::string result = ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][RVI] " + result;
-                    std::lock_guard<std::mutex> guard(mtx);
-                    std::cout << result_print << std::endl;
-                }
+            if (port == 80 || port == 8080 || port == 8081 || port == 8888){
+                std::string result = ip + ":" + std::to_string(port);
+                std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + result + reset_color + gray_nesca + " T: " + golder_rod + get_html_title(ip) + reset_color;
+                std::lock_guard<std::mutex> guard(mtx);
+                std::cout << result_print << std::endl;
+            }
+            else {
+                std::string result = ip + ":" + std::to_string(port);
+                std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + result + reset_color;
+                std::lock_guard<std::mutex> guard(mtx);
+                std::cout << result_print << std::endl;
+            }
 
+        }
+        else if (result == -1 || result == -2 || result == -3){
+            if (argp.print_errors){
+                std::string result_print = "[" + std::string(get_time()) + "][NB] " + ip + " ERROR: " + std::to_string(result);
+                std::lock_guard<std::mutex> guard(mtx);
+                std::cout << result_print << std::endl;
+            }
         }
         else {
             std::lock_guard<std::mutex> guard(mtx);
@@ -1085,16 +1062,22 @@ void scan_ports(const std::string& ip, const std::vector<int>& ports, int timeou
 
 void scan_all_ports(const std::vector<std::string>& result, const std::vector<int>& ports, int timeout_ms, int num_threads){
     std::vector<std::thread> threads;
-    int ip_count = 0;
+    long ip_count = 0;
     int size = result.size();
     for (const auto& ip : result) {
-        if (ip_count % argp.log_set == 0){
-            std::string result_print = "[" + std::string(get_time()) + "][NB] " + std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs scanned.";
-            std::cout << result_print << std::endl;
-        }
         threads.emplace_back(scan_ports, ip, ports, timeout_ms);
         ip_count++;
+
+        if (ip_count % argp.log_set == 0){
+            std::string result_print = "[" + std::string(get_time()) + "][NB] " + std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs scanned.";
+            std::cout << yellow_html;
+            std::cout << result_print << std::endl;
+            std::cout << reset_color;
+        }
+
+
         if (ip_count % num_threads == 0) {
+            
             for (auto& t : threads) {
                 t.join();
             }
@@ -1106,6 +1089,77 @@ void scan_all_ports(const std::vector<std::string>& result, const std::vector<in
     }
 }
 
+bool check_ansi_support(void){
+    #ifdef _WIN32
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut == INVALID_HANDLE_VALUE)
+    {
+        return false;
+    }
+
+    DWORD dwMode = 0;
+    if (!GetConsoleMode(hOut, &dwMode))
+    {
+        return false;
+    }
+
+    if (dwMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+    {
+        return true;
+    }
+
+    return false;
+    #else
+    const char* envValue = std::getenv("TERM");
+    if (envValue == nullptr)
+    {
+        return false;
+    }
+
+    return std::string(envValue).find("xterm") != std::string::npos;
+    #endif
+}
+
 void help_menu(void){
-    puts("Hello");
+    puts("nesca4: Remaster NEtwork SCAnner.\n");
+
+    std::cout << "usage: " << run << " [flags]\n";
+
+    std::cout << "\narguments target:" << std::endl;
+    std::cout << "  -ip <1,2,3>            Set ip target.\n";
+    std::cout << "  -cidr <1,2,3>          Set cidr target.\n";
+    std::cout << "  -import-ip <path>      Set ips on target from file.\n";
+    std::cout << "  -import-cidr <path>    Set cidr on target from file.\n";
+    std::cout << "  -random-ip <count>     Set random ips target.\n";
+
+    std::cout << "\narguments ports:" << std::endl;
+    std::cout << "  -ports, -p <1,2,3>     Set ports on scan.\n";
+
+    std::cout << "\narguments speed:" << std::endl;
+    std::cout << "  -threads, -T <count>   Set threads for scan.\n";
+    std::cout << "  -timeout, -t <ms>      Set timeout for scan.\n";
+
+    std::cout << "\narguments dns-scan:" << std::endl;
+    std::cout << "  -dns-scan <.dns>       On dns-scan and set domain 1 level.\n";
+    std::cout << "  -dns-length <count>    Edit length generating domain.\n";
+    std::cout << "  -dns-dict <dict>       Edit dictionary for generation.\n";
+
+    std::cout << "\narguments output:" << std::endl;
+    std::cout << "  -db                    On debug mode, save and display not even working hosts.\n";
+    std::cout << "  -error                 On display errors.\n";
+    std::cout << "  -txt <path>            Save result to text document.\n";
+    std::cout << "  -log-set <count>       Change change the value of ips after which, will be displayed information about how much is left.\n";
+}
+
+void print_logo(void){
+    std::cout << "\e[1;37m";
+    std::cout << "d8b   db d88888b .d8888.  .o88b.  .d8b.         j88D  \n";
+    std::cout << "888o  88 88'     88'  YP d8P  Y8 d8' `8b       j8~88  \n"; 
+    std::cout << "88V8o 88 88ooooo `8bo.   8P      88ooo88      j8' 88  \n";
+    std::cout << "88 V8o88 88~~~~~   `Y8b. 8b      88~~~88      V88888D \n";
+    std::cout << "88  V888 88.     db   8D Y8b  d8 88   88          88  \n";
+    std::cout << "VP   V8P Y88888P `8888Y'  `Y88P' YP   YP          VP  \n";
+    std::cout << reset_color;
+    std::cout << std::endl;
+
 }
