@@ -10,6 +10,7 @@
 #include <ostream>
 #include <mutex>
 #include <thread>
+#include <algorithm> 
 #include <random>
 #include <string>
 #include <cstring>
@@ -35,6 +36,8 @@
 #define VERSION "1183-build lomaster & oldteam"
 #define DELIMITER ','
 
+std::mutex mtx;
+
 // main
 void help_menu(void);
 
@@ -48,6 +51,8 @@ size_t clear_callback(void *buffer, size_t size, size_t nmemb, void *userp);
 // scan
 std::string get_dns_ip(const char* ip);
 int tcp_scan_port(const char *ip, int port, int timeout_ms);
+void scan_ports(const std::string& ip, const std::vector<int>& ports, int timeout_ms);
+void scan_all_ports(const std::vector<std::string>& result, const std::vector<int>& ports, int timeout_ms, int num_threads);
 int dns_scan(std::string domain, std::string domain_1level);
 std::vector<int> tcp_scan_ports(const std::vector<std::string>& ips, const std::vector<int>& ports, int timeout_ms);
 
@@ -128,8 +133,8 @@ int main(int argc, char** argv){
 
         {"ftp-pass", required_argument, 0, 11},
         {"ftp-login", required_argument, 0, 12},
-        {"ssl-login", required_argument, 0, 13},
-        {"ssl-pass", required_argument, 0, 14},
+        {"ssh-login", required_argument, 0, 13},
+        {"ssh-pass", required_argument, 0, 14},
 
         {"dns-scan", required_argument, 0, 19},
         {"dns-length", required_argument, 0, 20},
@@ -146,7 +151,7 @@ int main(int argc, char** argv){
         {"dns-off", no_argument, 0, 17},
         {"db", no_argument, 0, 7},
         {"ftp-brute", no_argument, 0, 9},
-        {"ssl-brute", no_argument, 0, 10},
+        {"ssh-brute", no_argument, 0, 10},
         {"ft", no_argument, 0, 18},
         {0,0,0,0}
     };
@@ -353,184 +358,13 @@ int main(int argc, char** argv){
     else if (argp.random_ip){
         argp.ip_scan = true;
     }
-    
+
     int ip_count = 0;
     int ip_temp = 0;
 
-    for (const auto& ip : result) {
-        int size = result.size();
-
-        if (ip_count % argp.log_set == 0){
-            std::string result_print = "[" + std::string(get_time()) + "][NB] " + std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs scanned.";
-            std::cout << result_print << std::endl;
-        }
- 
-        for (const auto& port : argp.ports) {
-            int result = tcp_scan_port(ip.c_str(), port, argp.timeout_ms);
-
-            if (result == 0) {
-                if (port == 80 || port == 8080 || port == 8081 || port == 8888){
-                    std::string result = "http://" + ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][HTTP] " + result + " T: \"" + get_html_title(ip) + "\"";
-                    std::cout << result_print << std::endl;
-                }
-
-                if (port == 20 || port == 21){
-                    std::string result = "ftp://" + ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][FTP] " + result;
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 7){
-                    std::string result = ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][ECHO] " + result;
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 25565){
-                    std::string result = ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][MINECRAFT] " + result;
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 143){
-                    std::string result = ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][IMAP] " + result;
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 22){
-                    std::string result = "sftp://" + ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][SSH] " + result;
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 53){
-                    std::string result = ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][DNS] " + result;
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 443){
-                    std::string result = "https://" + ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][HTTPS] " + result + " T: \"" + get_html_title(ip) + "\"";
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 8000){
-                    std::string result = ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][HIKVISION] " + result;
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 23){
-                    std::string result = ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][TELNET] " + result;
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 25){
-                    std::string result = ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][SMTP] " + result;
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 113){
-                    std::string result = ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][AUTH] " + result;
-                    std::cout << result_print << std::endl;
-                }
-                if (port == 37777){
-                    std::string result = ip + ":" + std::to_string(port);
-                    std::string result_print = "[" + std::string(get_time()) + "][RVI] " + result;
-                    std::cout << result_print << std::endl;
-                }
-
-                /*
-                if (port == 21 || port == 20){
-                    std::vector<std::string> result = brute_sftp(ip, argp.logins, argp.passwords);
-
-                    if (result.empty()) {
-                        std::cout << "Unable to connect to server\n";
-                    } 
-                    else {
-                        std::cout << "Successfully connected to server with credentials:\n";
-                        std::cout << "Login: " << result[0] << "\n";
-                        std::cout << "Password: " << result[1] << "\n";
-                    }
-                }
-                */
-
-            } 
-            else if (result == 1) {
-                if (argp.debug){
-                    std::cout << ip << " closed " << port << std::endl;
-                }
-                // closed
-            } 
-            else if (result == 2) {
-                if (argp.debug){
-                    std::cout << ip << " filter " << port << std::endl;
-                }
-            } 
-            else {
-                if (argp.debug){
-                    std::cout << ip << " error " << port << std::endl;
-                }
-            }
-
-        }
-        ip_count++;
-    }
+    scan_all_ports(result, argp.ports, argp.timeout_ms, argp._threads);
     // end tcp_scan_port
     return 0;
-
-   /* 
-    for (const auto& line : argp._ip){
-        double responce_time = measure_ping_time(line.c_str(), 80);
-
-        if (responce_time != -1){
-            if (responce_time != 2){
-                std::cout << "Status: access | Ping: " << responce_time << "ms\n";
-            }
-        }
-        else {
-             std::cout << "Status: failed | Ping: " << responce_time << "ms\t    | ";
-             if (responce_time == -2){
-                std::cout << "Error: info check!\n";
-             }
-             else if (responce_time == EOF){
-                std::cout << "Error: connection failed!\n";
-            }
-        }
-
-        std::string lol = get_dns_ip(line.c_str());
-        std::cout << lol << std::endl;
-        int scan = tcp_scan_port(line.c_str(), 21, 100);
-
-        if (scan == 0){
-            printf("Port %d is open on %s\n", 21, line.c_str());
-        }
-        if (scan == 2){
-            printf("Port %d is filter on %s\n", 21, line.c_str());
-        }
-        if (scan == 1){
-            printf("Port %d is closed on %s\n", 21, line.c_str());
-        }
-
-
-        std::vector<std::string> successful_creds = brute_ftp(line, argp.logins, argp.passwords);
-
-        if (!successful_creds.empty()) {
-        std::cout << "Successful login and password: " << successful_creds[0] << std::endl;
-        } else {
-            std::cout << "Could not find a valid login and password combination" << std::endl;
-        }
-
-    }
-
-    std::vector<std::string> result = brute_sftp(ip, logins, passwords);
-
-    if (result.empty()) {
-        std::cout << "Unable to connect to server\n";
-    } else {
-        std::cout << "Successfully connected to server with credentials:\n";
-        std::cout << "Login: " << result[0] << "\n";
-        std::cout << "Password: " << result[1] << "\n";
-    }
-
-    return 0;
-    */
 }
 
 std::vector<std::string>write_file(const std::string& filename){
@@ -1156,6 +990,121 @@ std::vector<std::string> split_string_string(const std::string& str, char delimi
     }
     result.push_back(str.substr(pos));
     return result;
+}
+void scan_ports(const std::string& ip, const std::vector<int>& ports, int timeout_ms){
+    for (const auto& port : ports) {
+        int result = tcp_scan_port(ip.c_str(), port, timeout_ms);
+        if (result == 0) {
+                if (port == 80 || port == 8080 || port == 8081 || port == 8888){
+                    std::string result = "http://" + ip + ":" + std::to_string(port);
+                    std::string result_print = "[" + std::string(get_time()) + "][HTTP] " + result + " T: \"" + get_html_title(ip) + "\"";
+                    std::lock_guard<std::mutex> guard(mtx);
+                    std::cout << result_print << std::endl;
+                }
+                if (port == 20 || port == 21){
+                    std::string result = "ftp://" + ip + ":" + std::to_string(port);
+                    std::string result_print = "[" + std::string(get_time()) + "][FTP] " + result;
+                    std::lock_guard<std::mutex> guard(mtx);
+                    std::cout << result_print << std::endl;
+                }
+                if (port == 7){
+                    std::string result = ip + ":" + std::to_string(port);
+                    std::string result_print = "[" + std::string(get_time()) + "][ECHO] " + result;
+                    std::lock_guard<std::mutex> guard(mtx);
+                    std::cout << result_print << std::endl;
+                }
+                if (port == 25565){
+                    std::string result = ip + ":" + std::to_string(port);
+                    std::string result_print = "[" + std::string(get_time()) + "][MINECRAFT] " + result;
+                    std::lock_guard<std::mutex> guard(mtx);
+                    std::cout << result_print << std::endl;
+                }
+                if (port == 143){
+                    std::string result = ip + ":" + std::to_string(port);
+                    std::string result_print = "[" + std::string(get_time()) + "][IMAP] " + result;
+                    std::lock_guard<std::mutex> guard(mtx);
+                    std::cout << result_print << std::endl;
+                }
+                if (port == 22){
+                    std::string result = "sftp://" + ip + ":" + std::to_string(port);
+                    std::string result_print = "[" + std::string(get_time()) + "][SSH] " + result;
+                    std::lock_guard<std::mutex> guard(mtx);
+                    std::cout << result_print << std::endl;
+                }
+                if (port == 53){
+                    std::string result = ip + ":" + std::to_string(port);
+                    std::string result_print = "[" + std::string(get_time()) + "][DNS] " + result;
+                    std::lock_guard<std::mutex> guard(mtx);
+                    std::cout << result_print << std::endl;
+                }
+                if (port == 443){
+                    std::string result = "https://" + ip + ":" + std::to_string(port);
+                    std::string result_print = "[" + std::string(get_time()) + "][HTTPS] " + result + " T: \"" + get_html_title(ip) + "\"";
+                    std::lock_guard<std::mutex> guard(mtx);
+                    std::cout << result_print << std::endl;
+                }
+                if (port == 8000){
+                    std::string result = ip + ":" + std::to_string(port);
+                    std::string result_print = "[" + std::string(get_time()) + "][HIKVISION] " + result;
+                    std::lock_guard<std::mutex> guard(mtx);
+                    std::cout << result_print << std::endl;
+                }
+                if (port == 23){
+                    std::string result = ip + ":" + std::to_string(port);
+                    std::string result_print = "[" + std::string(get_time()) + "][TELNET] " + result;
+                    std::lock_guard<std::mutex> guard(mtx);
+                    std::cout << result_print << std::endl;
+                }
+                if (port == 25){
+                    std::string result = ip + ":" + std::to_string(port);
+                    std::string result_print = "[" + std::string(get_time()) + "][SMTP] " + result;
+                    std::lock_guard<std::mutex> guard(mtx);
+                    std::cout << result_print << std::endl;
+                }
+                if (port == 113){
+                    std::string result = ip + ":" + std::to_string(port);
+                    std::string result_print = "[" + std::string(get_time()) + "][AUTH] " + result;
+                    std::lock_guard<std::mutex> guard(mtx);
+                    std::cout << result_print << std::endl;
+                }
+                if (port == 37777){
+                    std::string result = ip + ":" + std::to_string(port);
+                    std::string result_print = "[" + std::string(get_time()) + "][RVI] " + result;
+                    std::lock_guard<std::mutex> guard(mtx);
+                    std::cout << result_print << std::endl;
+                }
+
+        }
+        else {
+            std::lock_guard<std::mutex> guard(mtx);
+            if (argp.debug){
+                std::cout << "Port " << port << " on " << ip << " is closed" << std::endl;
+            }
+        }
+    }
+}
+
+void scan_all_ports(const std::vector<std::string>& result, const std::vector<int>& ports, int timeout_ms, int num_threads){
+    std::vector<std::thread> threads;
+    int ip_count = 0;
+    int size = result.size();
+    for (const auto& ip : result) {
+        if (ip_count % argp.log_set == 0){
+            std::string result_print = "[" + std::string(get_time()) + "][NB] " + std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs scanned.";
+            std::cout << result_print << std::endl;
+        }
+        threads.emplace_back(scan_ports, ip, ports, timeout_ms);
+        ip_count++;
+        if (ip_count % num_threads == 0) {
+            for (auto& t : threads) {
+                t.join();
+            }
+            threads.clear();
+        }
+    }
+    for (auto& t : threads) {
+        t.join();
+    }
 }
 
 void help_menu(void){
