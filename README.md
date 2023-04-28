@@ -125,7 +125,3 @@ arguments output:
 - `-ssh-brute` - Включить брутфорс `ssh`.
 - `-ssh-login` - Аналогично `ftp-login`, стандартно: `passwd/ssh_logins.txt`
 - `-ssh-pass` - Аналогично `ftp-pass`, стандартно: `passwd/ssh_passwords`
-
-
-
-
