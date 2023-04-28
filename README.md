@@ -27,8 +27,6 @@ d8b   db d88888b .d8888.  .o88b.  .d8b.         j88D
 88  V888 88.     db   8D Y8b  d8 88   88          88  
 VP   V8P Y88888P `8888Y'  `Y88P' YP   YP          VP  
 
-nesca4: Remaster NEtwork SCAnner.
-
 usage: ./nesca4 [flags]
 
 arguments target:
@@ -51,10 +49,11 @@ arguments dns-scan:
   -dns-dict <dict>       Edit dictionary for generation.
 
 arguments output:
-  -db                    On debug mode, save and display not even working hosts.
-  -error                 On display errors.
-  -txt <path>            Save result to text document.
+  -db, -debug            On debug mode, save and display not even working hosts.
+  -er, -error            On display errors.
+  -no-color              Disable colors.
   -log-set <count>       Change change the value of ips after which, will be displayed information about how much is left.
+  -txt <path>            Save result to text document.
 ```
 
 # Документация
