@@ -34,7 +34,7 @@
 #include <errno.h>
 #endif
 
-#define VERSION "1165-build"
+#define VERSION "1251-build"
 #define DELIMITER ','
 
 std::string logo_red = "\033[38;2;255;100;100m";
