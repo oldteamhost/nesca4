@@ -48,6 +48,7 @@
 + Добавлены filter ports в debug.
 + Добавлен обход фаервола сканирования.
 + Добавлены аргументы ftp-brute-log и ftp-brute-verbose.
++ Добавлена поддержка импорта и сканирования ip диапазонов.
 
 # Все рабочие функции
 ```
@@ -63,8 +64,10 @@ usage: ./nesca4 [flags]
 arguments target:
   -ip <1,2,3>            Set ip target.
   -cidr <1,2,3>          Set cidr target.
+  -range <1,2,3>         Set range target.
   -import-ip <path>      Set ips on target from file.
   -import-cidr <path>    Set cidr on target from file.
+  -import-range <path>   Set range on target from file.
   -random-ip <count>     Set random ips target.
 
 arguments ports:

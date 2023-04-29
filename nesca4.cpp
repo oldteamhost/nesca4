@@ -85,6 +85,7 @@ void checking_default_files(void);
 // other
 std::string generate_random_str(int len, std::string dictionary);
 std::vector<std::string> cidr_to_ips(const std::vector<std::string>& cidr_list);
+std::vector<std::string> range_to_ips(const std::vector<std::string>& ip_ranges);
 bool check_ansi_support(void);
 void delay_ms(int milliseconds);
 void print_logo(void);
@@ -105,45 +106,50 @@ class arguments_program{
 
         std::vector<std::string> _ip;
         std::vector<std::string> ip_cidr;
+        std::vector<std::string> ip_range;
+
         std::vector<std::string> logins;
         std::vector<std::string> passwords;
 
+        const char* path_range;
         const char* path_cidr;
         const char* path_ips;
-
         const char* path_ftp_login = "passwd/logins.txt";
         const char* path_ftp_pass = "passwd/passwords.txt";
+
+        int random_ip_count;
+        int log_set = 200;
+        int threads_temp;
+        int dns_scan_domain_count = 5;
+        int timeout_ms = 300;
+        int _threads = 20;
 
         std::vector<int> ports;
 
         bool random_ip;
-        int log_set = 200;
         bool dns_scan;
         bool print_help_menu;
         bool ip_scan_import;
         bool ip_scan;
         bool ip_cidr_scan;
         bool ip_cidr_scan_import;
+        bool ip_range_scan;
+        bool ip_range_scan_import;
+
         bool debug;
         bool warning_threads;
         bool ping_off;
         bool txt;
         bool color_off;
-        int random_ip_count;
         bool ftp_brute_log;
         bool ftp_brute_verbose;
-        int threads_temp;
-        int dns_scan_domain_count = 5;
-        int timeout_ms = 300;
-        int _threads = 20;
         bool timeout;
-        int random_version = 4;
         bool print_errors;
         bool off_ftp_brute;
 };
 arguments_program argp;
 
-const char* run;
+const char* run; // for help menu
 
 int main(int argc, char** argv){
     if (check_ansi_support() != true){
@@ -168,8 +174,10 @@ int main(int argc, char** argv){
 
         {"ip", required_argument, 0, 1},
         {"cidr", required_argument, 0, 2},
+        {"range", required_argument, 0, 33},
         {"import-ip", required_argument, 0, 23},
         {"import-cidr", required_argument, 0, 3},
+        {"import-range", required_argument, 0, 32},
 
         {"random-vn", required_argument, 0, 4},
         {"random-ip", required_argument, 0, 5},
@@ -271,6 +279,14 @@ int main(int argc, char** argv){
                argp.path_cidr = optarg;
                break;
             }
+           case 33:
+               argp.ip_range_scan = true;
+               argp.ip_range = split_string_string(optarg, DELIMITER);
+               break;
+           case 32:
+               argp.ip_range_scan_import = true;
+               argp.path_range = optarg;
+               break;
            case 5:
                 argp.random_ip = true;
                 argp.random_ip_count = atoi(optarg); 
@@ -442,6 +458,10 @@ int main(int argc, char** argv){
     if (argp.ip_scan_import || argp.ip_scan){
         result = argp._ip;
     } 
+    else if (argp.ip_range_scan || argp.ip_range_scan_import){
+        std::vector<std::string> range_convert = range_to_ips(argp.ip_range);
+        result = range_convert;
+    }
     else if (argp.ip_cidr_scan_import || argp.ip_cidr_scan){
         std::vector<std::string> cidr_convert = cidr_to_ips(argp.ip_cidr);
         result = cidr_convert;
@@ -1011,6 +1031,25 @@ void checking_default_files(void){
        }
     }
 
+    if (argp.ip_range_scan_import){
+        if (check_file(argp.path_range)){
+            std::cout << green_html;
+
+            if (argp.ip_range_scan){
+                std::cout << "[" << get_time() << "]" << "[OK] " << argp.path_range << " (" << get_count_lines(argp.path_range) << ") entries" << std::endl;
+            }
+            else {
+                std::cout << "[" << get_time() << "]" << "[OK] " << argp.path_range << " (" << get_count_lines(argp.path_range) << ") entries" << std::endl;
+            }
+            argp.ip_range = write_file(argp.path_range);
+        }
+        else {
+            std::cout << yellow_html;
+            std::cout << "[" << get_time() << "]" << "[FAILED] " << argp.path_range << " (" << get_count_lines(argp.path_range) << ") entries" << std::endl;
+            std::cout << reset_color;
+        }
+    }
+
     if (argp.ip_scan_import){
        if (check_file(argp.path_ips)){
             std::cout << green_html;
@@ -1306,6 +1345,35 @@ int check_node_available(const char* node){
     close(sock);
     return 0;
 }
+
+std::vector<std::string> range_to_ips(const std::vector<std::string>& ip_ranges){
+    std::vector<std::string> result;
+    for (const auto& range : ip_ranges) {
+        std::istringstream iss(range);
+        std::string start_ip_str, end_ip_str;
+        std::getline(iss, start_ip_str, '-');
+        std::getline(iss, end_ip_str);
+
+        unsigned int start_ip = 0;
+        unsigned int end_ip = 0;
+        int octet = 0;
+        for (std::istringstream ss(start_ip_str); std::getline(ss, start_ip_str, '.'); ++octet) {
+            start_ip |= (std::stoi(start_ip_str) << ((3 - octet) * 8));
+        }
+        octet = 0;
+        for (std::istringstream ss(end_ip_str); std::getline(ss, end_ip_str, '.'); ++octet) {
+            end_ip |= (std::stoi(end_ip_str) << ((3 - octet) * 8));
+        }
+
+        for (unsigned int i = start_ip; i <= end_ip; ++i) {
+            std::stringstream ss;
+            ss << ((i >> 24) & 0xFF) << '.' << ((i >> 16) & 0xFF) << '.' << ((i >> 8) & 0xFF) << '.' << (i & 0xFF);
+            result.push_back(ss.str());
+        }
+    }
+    return result;
+}
+
 void help_menu(void){
     std::cout << golder_rod;
     std::cout << "usage: " << run << " [flags]\n";
@@ -1316,8 +1384,10 @@ void help_menu(void){
     std::cout << reset_color;
     std::cout << "  -ip <1,2,3>            Set ip target.\n";
     std::cout << "  -cidr <1,2,3>          Set cidr target.\n";
+    std::cout << "  -range <1,2,3>         Set range target.\n";
     std::cout << "  -import-ip <path>      Set ips on target from file.\n";
     std::cout << "  -import-cidr <path>    Set cidr on target from file.\n";
+    std::cout << "  -import-range <path>   Set range on target from file.\n";
     std::cout << "  -random-ip <count>     Set random ips target.\n";
 
     std::cout << sea_green;
