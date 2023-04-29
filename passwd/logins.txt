@@ -1,8 +1,8 @@
 admin
 ftp
+root
 user
 12345
-root
 administrator
 1234
 123

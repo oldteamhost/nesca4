@@ -34,7 +34,7 @@
 #include <errno.h>
 #endif
 
-#define VERSION "1251-build"
+#define VERSION "1278-build"
 #define DELIMITER ','
 
 std::string logo_red = "\033[38;2;255;100;100m";
@@ -132,7 +132,7 @@ class arguments_program{
         bool timeout;
         int random_version = 4;
         bool print_errors;
-        bool brute;
+        bool ftp_brute;
 };
 arguments_program argp;
 
@@ -275,6 +275,9 @@ int main(int argc, char** argv){
            case 7:
                 argp.debug = true;
                 break;
+           case 9:
+                argp.ftp_brute = true;
+                break;
            case 't':
                 argp.timeout = true;
                 argp.timeout_ms = atoi(optarg);
@@ -331,6 +334,7 @@ int main(int argc, char** argv){
                break;
            case 28:
                argp.print_errors = true;
+               argp.ftp_brute = true;
                break;
         }
     }
@@ -847,28 +851,27 @@ std::string get_html_title(std::string node){
     curl_easy_cleanup(curl);
     return return_value;
 }
-
 std::vector<std::string> brute_ftp(const std::string& ip, const std::vector<std::string>& logins, const std::vector<std::string>& passwords){
     std::vector<std::string> result;
-
     CURL* curl = curl_easy_init();
+    bool success = false;
+
     if (curl) {
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
-
         curl_easy_setopt(curl, CURLOPT_USERNAME, "");
         curl_easy_setopt(curl, CURLOPT_PASSWORD, "");
-
-    // curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-
+        // curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+        curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 1L);
+        curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1L);
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
         curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
-
         curl_easy_setopt(curl, CURLOPT_FTPPORT, "-");
-        curl_easy_setopt(curl, CURLOPT_FTP_RESPONSE_TIMEOUT, 30L);
+        curl_easy_setopt(curl, CURLOPT_FTP_RESPONSE_TIMEOUT, 15L);
         curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
         curl_easy_setopt(curl, CURLOPT_FTP_USE_EPSV, 1L);
         curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 1L);
-        curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 30L);
+        curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 15L);
 
         std::string url = "ftp://" + ip;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
@@ -880,16 +883,23 @@ std::vector<std::string> brute_ftp(const std::string& ip, const std::vector<std:
 
                 CURLcode res = curl_easy_perform(curl);
                 if (res == CURLE_OK) {
-                    result.push_back(login + " - " + password);
+                    result.push_back(login + ":" + password + "@");
+                    success = true; 
                     break;
                 }
             }
+            if (success){
+                break;
+            }
         }
-
-        curl_easy_cleanup(curl);
     }
 
     curl_easy_cleanup(curl);
+
+    if (!success){
+        return {""};
+    }
+
     return result;
 }
 
@@ -1122,17 +1132,40 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
         int result = tcp_scan_port(ip.c_str(), port, timeout_ms);
         if (result == 0) {
             if (port == 80 || port == 8080 || port == 8081 || port == 8888){
+                std::lock_guard<std::mutex> guard(mtx);
+
                 std::string result = ip + ":" + std::to_string(port);
                 std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + result + reset_color + gray_nesca + " T: " + golder_rod + get_html_title(ip) + reset_color;
                 std::string result_txt = "[" + std::string(get_time()) + "] [BA] " + result + " T: " + get_html_title(ip);
 
-                std::lock_guard<std::mutex> guard(mtx);
                 if (argp.txt){
                     int temp = write_line(argp.txt_save, result_txt);
                 }
                 std::cout << result_print << std::endl;
             }
+            else if (port == 20 || port == 21){
+                std::lock_guard<std::mutex> guard(mtx);
+
+                std::string result = ip + ":" + std::to_string(port);
+                std::string result_print_brute = "[" + std::string(get_time()) + "][FTP] " + ip + " [BRUTEFORCE]";
+                std::vector<std::string> brute_temp = brute_ftp(ip, argp.logins, argp.passwords);
+                std::string result_txt = "[" + std::string(get_time()) + "] [FTP] " + brute_temp[0] + result;
+                std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + brute_temp[0] + result + reset_color;
+
+                std::cout << yellow_html;
+                std::cout << result_print_brute << std::endl;
+                std::cout << reset_color;
+
+                if (argp.txt){
+                    int temp = write_line(argp.txt_save, result_txt);
+                }
+
+                std::cout << result_print << std::endl;
+
+            }
             else {
+                std::lock_guard<std::mutex> guard(mtx);
+
                 std::string result = ip + ":" + std::to_string(port);
                 std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + result + reset_color;
                 std::string result_txt = "[" + std::string(get_time()) + "] [BA] "+ result;
@@ -1141,15 +1174,14 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     int temp = write_line(argp.txt_save, result_txt);
                 }
 
-                std::lock_guard<std::mutex> guard(mtx);
                 std::cout << result_print << std::endl;
             }
 
         }
         else if (result == -1 || result == -2 || result == -3){
             if (argp.print_errors){
-                std::string result_print = "[" + std::string(get_time()) + "][NB] " + ip + " [ERROR]: " + std::to_string(result);
                 std::lock_guard<std::mutex> guard(mtx);
+                std::string result_print = "[" + std::string(get_time()) + "][NB] " + ip + " [ERROR]: " + std::to_string(result);
                 std::cout << red_html;
                 std::cout << result_print << std::endl;
                 std::cout << reset_color;
