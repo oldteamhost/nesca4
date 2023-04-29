@@ -7,6 +7,32 @@
 
 ![alt text](https://i.imgur.com/xoJQ2N5.png)
 
+# COMPILE
+#### Debian 11:
+```
+    sudo apt install g++ make git
+    sudo apt-get install libcurl4-openssl-dev
+    git clone https://github.com/oldteamhost/nesca4
+    cd nesca4
+    make
+```
+#### Arch linux:
+```
+    sudo pacman -S curl git
+    git clone https://github.com/oldteamhost/nesca4
+    cd nesca4
+    make
+```
+#### Windows:
+```
+    Скачать MinGW
+    Подлинковать libcurl - https://curl.se/windows/
+    Скачать архив с репозиторием - https://github.com/oldteamhost/nesca4/archive/refs/heads/main.zip
+    Распокавать
+    cd nesca4
+    make
+```
+
 # UPDATE
 + Добавлена многопоточность для сканирования портов.
 + Добавлены оригинальные цвета с nesca3.
@@ -17,13 +43,13 @@
 + Оптимизированы цвета.
 + Добавлены цвета в help menu.
 + Добавлено сохранение в txt для сканирования портов.
-+ Настроен debug для сканирования поротов.
-+ Добавлен брутфорс FTP
-+ Добавлены filter ports в debug
-+ Добавлен обход фаервола сканирования
-+ Добавлены аргументы ftp-brute-log и ftp-brute-verbose
++ Настроен debug для сканирования портов.
++ Добавлен брутфорс FTP.
++ Добавлены filter ports в debug.
++ Добавлен обход фаервола сканирования.
++ Добавлены аргументы ftp-brute-log и ftp-brute-verbose.
 
-Все рабочие функции:
+# Все рабочие функции
 ```
 d8b   db d88888b .d8888.  .o88b.  .d8b.         j88D  
 888o  88 88'     88'  YP d8P  Y8 d8' `8b       j8~88  
