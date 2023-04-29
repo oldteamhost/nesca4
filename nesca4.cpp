@@ -110,6 +110,10 @@ class arguments_program{
 
         const char* path_cidr;
         const char* path_ips;
+
+        const char* path_ftp_login = "passwd/logins.txt";
+        const char* path_ftp_pass = "passwd/passwords.txt";
+
         std::vector<int> ports;
 
         bool random_ip;
@@ -132,7 +136,7 @@ class arguments_program{
         bool timeout;
         int random_version = 4;
         bool print_errors;
-        bool ftp_brute;
+        bool off_ftp_brute;
 };
 arguments_program argp;
 
@@ -168,10 +172,8 @@ int main(int argc, char** argv){
         {"random-vn", required_argument, 0, 4},
         {"random-ip", required_argument, 0, 5},
 
-        {"ftp-pass", required_argument, 0, 11},
         {"ftp-login", required_argument, 0, 12},
-        {"ssh-login", required_argument, 0, 13},
-        {"ssh-pass", required_argument, 0, 14},
+        {"ftp-pass", required_argument, 0, 11},
 
         {"dns-scan", required_argument, 0, 19},
         {"dns-length", required_argument, 0, 20},
@@ -189,9 +191,7 @@ int main(int argc, char** argv){
         {"dns-off", no_argument, 0, 17},
         {"db", no_argument, 0, 7},
         {"error", no_argument, 0, 25},
-        {"ftp-brute", no_argument, 0, 9},
-        {"ssh-brute", no_argument, 0, 10},
-        {"ft", no_argument, 0, 18},
+        {"no-ftp-brute", no_argument, 0, 9},
         {0,0,0,0}
     };
 
@@ -276,7 +276,13 @@ int main(int argc, char** argv){
                 argp.debug = true;
                 break;
            case 9:
-                argp.ftp_brute = true;
+                argp.off_ftp_brute = true;
+                break;
+           case 12:
+                argp.path_ftp_login = optarg;
+                break;
+           case 11:
+                argp.path_ftp_pass = optarg;
                 break;
            case 't':
                 argp.timeout = true;
@@ -334,7 +340,6 @@ int main(int argc, char** argv){
                break;
            case 28:
                argp.print_errors = true;
-               argp.ftp_brute = true;
                break;
         }
     }
@@ -362,8 +367,8 @@ int main(int argc, char** argv){
             
     checking_default_files();
 
-    argp.logins = write_file("passwd/logins.txt");
-    argp.passwords = write_file("passwd/passwords.txt");
+    argp.logins = write_file(argp.path_ftp_login);
+    argp.passwords = write_file(argp.path_ftp_pass);
 
     std::cout << green_html;
     std::cout << "[" << get_time() << "]" << "[OK] Starting " << argp._threads << " threads...\n\n";
@@ -969,8 +974,6 @@ int get_count_lines(const char* path){
 
 void checking_default_files(void){
     const char* path0 = "ip.txt";
-    const char* path1 = "passwd/logins.txt";
-    const char* path2 = "passwd/passwords.txt";
 
     if (argp.ip_cidr_scan_import){
        if (check_file(argp.path_cidr)){
@@ -1003,22 +1006,22 @@ void checking_default_files(void){
        }
     }
 
-    if (check_file(path1)){
+    if (check_file(argp.path_ftp_login)){
        std::cout << green_html;
-       std::cout << "[" << get_time() << "]" << "[OK] " << path1 << " (" << get_count_lines(path1) << ") entries" << std::endl;
+       std::cout << "[" << get_time() << "]" << "[OK] " << argp.path_ftp_login << " (" << get_count_lines(argp.path_ftp_login) << ") entries" << std::endl;
     }
     else {
         std::cout << yellow_html;
-        std::cout << "[" << get_time() << "]" << "[FAILED] " << path1 << " (" << get_count_lines(path1) << ") entries" << std::endl;
+        std::cout << "[" << get_time() << "]" << "[FAILED] " << argp.path_ftp_login << " (" << get_count_lines(argp.path_ftp_login) << ") entries" << std::endl;
         std::cout << reset_color;
     }
-    if (check_file(path2)){
+    if (check_file(argp.path_ftp_pass)){
         std::cout << green_html;
-        std::cout << "[" << get_time() << "]" << "[OK] " << path2 << " (" << get_count_lines(path2) << ") entries" << std::endl;
+        std::cout << "[" << get_time() << "]" << "[OK] " << argp.path_ftp_pass << " (" << get_count_lines(argp.path_ftp_pass) << ") entries" << std::endl;
     }
     else {
         std::cout << yellow_html;
-        std::cout << "[" << get_time() << "]" << "[FAILED] " << path2 << " (" << get_count_lines(path2) << ") entries" << std::endl;
+        std::cout << "[" << get_time() << "]" << "[FAILED] " << argp.path_ftp_pass << " (" << get_count_lines(argp.path_ftp_pass) << ") entries" << std::endl;
         std::cout << reset_color;
     }
     std::cout << reset_color;
@@ -1257,6 +1260,13 @@ void help_menu(void){
     std::cout << reset_color;
     std::cout << "  -threads, -T <count>   Set threads for scan.\n";
     std::cout << "  -timeout, -t <ms>      Set timeout for scan.\n";
+
+    std::cout << sea_green;
+    std::cout << "\narguments bruteforce:" << std::endl;
+    std::cout << reset_color;
+    std::cout << "  -no-ftp-brute          Off bruteforce ftp.\n";
+    std::cout << "  -ftp-login             Set path for ftp logins.\n";
+    std::cout << "  -ftp-pass              Set path for ftp password.\n";
 
     std::cout << sea_green;
     std::cout << "\narguments dns-scan:" << std::endl;
