@@ -40,11 +40,17 @@ arguments target:
   -random-ip <count>     Set random ips target.
 
 arguments ports:
-  -ports, -p <1,2,3>     Set ports on scan.
+  -ports, -p <1,2,3>  Set ports on scan.
+     - example ports: all, nesca, top100, top50
 
 arguments speed:
   -threads, -T <count>   Set threads for scan.
   -timeout, -t <ms>      Set timeout for scan.
+
+arguments bruteforce:
+  -no-ftp-brute          Off bruteforce ftp.
+  -ftp-login             Set path for ftp logins.
+  -ftp-pass              Set path for ftp password.
 
 arguments dns-scan:
   -dns-scan <.dns>       On dns-scan and set domain 1 level.
