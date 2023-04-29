@@ -4,6 +4,7 @@
 // // // // // // // // // 
 
 #include <cstdio>
+#include <cstdlib>
 #include <iostream>
 #include <chrono>
 #include <bitset>
@@ -73,7 +74,6 @@ double measure_ping_time(const char* node, int port);
 long get_response_code(const char *node);
 std::string get_html_title(std::string node);
 std::vector<std::string> brute_ftp(const std::string& ip, const std::vector<std::string>& logins, const std::vector<std::string>& passwords, int brute_log, int verbose);
-void check_net(void);
 
 // files
 std::vector<std::string> write_file(const std::string& filename);
@@ -101,7 +101,9 @@ class arguments_program{
     public:
         std::string ports_temp;
         std::string domain_1level;
+        std::vector<std::string> hosts_test;
         std::string txt_save;
+        std::string tcp_ping_mode;
         std::string dns_dictionary = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
         std::vector<std::string> _ip;
@@ -118,6 +120,8 @@ class arguments_program{
         const char* path_ftp_pass = "passwd/passwords.txt";
 
         int random_ip_count;
+        int octets;
+        int generate_count;
         int log_set = 200;
         int threads_temp;
         int dns_scan_domain_count = 5;
@@ -146,6 +150,14 @@ class arguments_program{
         bool timeout;
         bool print_errors;
         bool off_ftp_brute;
+
+        bool generation_test;
+
+        bool host_testing;
+        bool response_code_test;
+        bool tcp_ping_test;
+        bool generate_ipv4_test;
+        bool generate_ipv6_test;
 };
 arguments_program argp;
 
@@ -164,8 +176,8 @@ int main(int argc, char** argv){
     }
 
     print_logo();
-
     run = argv[0];
+
     const char* short_options = "hvt:T:p:";
     const struct option long_options[] = {
 
@@ -179,7 +191,6 @@ int main(int argc, char** argv){
         {"import-cidr", required_argument, 0, 3},
         {"import-range", required_argument, 0, 32},
 
-        {"random-vn", required_argument, 0, 4},
         {"random-ip", required_argument, 0, 5},
 
         {"ftp-login", required_argument, 0, 12},
@@ -205,6 +216,13 @@ int main(int argc, char** argv){
         {"db", no_argument, 0, 7},
         {"error", no_argument, 0, 25},
         {"no-ftp-brute", no_argument, 0, 9},
+
+        {"response-code", no_argument, 0, 35},
+        {"gen-ipv4", no_argument, 0, 36},
+        {"host-test", required_argument, 0, 34},
+        {"tcp-ping", required_argument, 0, 37},
+        {"gen-count", required_argument, 0, 38},
+        {"gen-ipv6", required_argument, 0, 39},
         {0,0,0,0}
     };
 
@@ -369,11 +387,134 @@ int main(int argc, char** argv){
            case 31:
                argp.ftp_brute_verbose = true;
                break;
+           case 34:
+               argp.host_testing = true;
+               argp.hosts_test = split_string_string(optarg, DELIMITER);
+               break;
+           case 35:
+               argp.response_code_test = true;
+               break;
+           case 36:
+               argp.generation_test = true;
+               argp.generate_ipv4_test = true;
+               break;
+           case 37:
+               argp.tcp_ping_test = true;
+               argp.tcp_ping_mode = optarg;
+               break;
+           case 38:
+               argp.generate_count = atoi(optarg);
+               break;
+           case 39:
+           {
+               argp.generation_test = true;
+               argp.generate_ipv6_test = true;
+               argp.octets = atoi(optarg);
+               break;
+           }
         }
     }
 
     if (argp.print_help_menu){
         help_menu();
+        return 0;
+    }
+
+    if (argp.host_testing){
+        if (argp.response_code_test){
+            for (int i = 0; i < argp.hosts_test.size(); i++){
+            std::ostringstream strs;
+            strs << get_response_code(argp.hosts_test[i].c_str());
+            std::string code = strs.str();
+            std::string result_print = gray_nesca + "[" + std::string(get_time()) + "][TT] " + sea_green + argp.hosts_test[i] + reset_color + gray_nesca + " C: " + golder_rod + code + reset_color;
+            std::cout << result_print << std::endl;
+            }
+        }
+        if (argp.tcp_ping_test){
+            if (argp.tcp_ping_mode == "live" || argp.tcp_ping_mode == "1"){
+                for (;;){
+                    std::ostringstream strs;
+                    double ping_temp = measure_ping_time(argp.hosts_test[0].c_str(), 80);
+                    strs << ping_temp;
+                    std::string ping = strs.str();
+                    if (ping_temp != -1){
+                        if (ping_temp != -2){
+                            std::string result_print = gray_nesca + "[" + std::string(get_time()) + "][TT] " + sea_green + argp.hosts_test[0] + reset_color + gray_nesca + " P: " + golder_rod + ping + "ms" + reset_color;
+                            std::cout << result_print << std::endl;
+                        }
+                    }
+                    else {
+                        std::cout << red_html;
+                        std::string result_print;
+                        result_print = "[" + std::string(get_time()) + "][TT] " + argp.hosts_test[0] + " P: down";
+
+                        if (ping_temp == -2){
+                            result_print = "[" + std::string(get_time()) + "][TT][ERROR]: info check failed!";
+                        }
+                        else if (ping_temp == -3){
+                            result_print = "[" + std::string(get_time()) + "][TT][ERROR]: connection failed!!";
+                        }
+
+                        std::cout << result_print << std::endl;
+                        std::cout << reset_color;
+                    }
+                    delay_ms(argp.timeout_ms);
+                }
+            }
+            else if (argp.tcp_ping_mode == "default" || argp.tcp_ping_mode == "0") {
+                for (int i = 0; i < argp.hosts_test.size(); i++){
+                    std::ostringstream strs;
+                    double ping_temp = measure_ping_time(argp.hosts_test[i].c_str(), 80);
+                    strs << ping_temp;
+                    std::string ping = strs.str();
+
+                    if (ping_temp != -1){
+                        if (ping_temp != -2){
+                            std::string result_print = gray_nesca + "[" + std::string(get_time()) + "][TT] " + sea_green + argp.hosts_test[i] + reset_color + gray_nesca + " P: " + golder_rod + ping + "ms" + reset_color;
+                            std::cout << result_print << std::endl;
+                        }
+                    }
+
+                    else {
+                        std::cout << red_html;
+                        std::string result_print;
+                        result_print = "[" + std::string(get_time()) + "][TT] " + argp.hosts_test[i] + " P: down";
+
+                        if (ping_temp == -2){
+                            result_print = "[" + std::string(get_time()) + "][TT][ERROR]: info check failed!";
+                        }
+                        else if (ping_temp == -3){
+                            result_print = "[" + std::string(get_time()) + "][TT][ERROR]: connection failed!!";
+                        }
+
+                        std::cout << result_print << std::endl;
+                        std::cout << reset_color;
+                        delay_ms(argp.timeout_ms);
+                    }
+                }
+            }
+            else {
+                std::string result_print = "[" + std::string(get_time()) + "][TT][ERROR]: ping mode not found! Only (0,1) aka (default, live).";
+                std::cout << red_html;
+                std::cout << result_print << std::endl;
+                std::cout << reset_color;
+           }
+        }
+        return 0;
+    }
+    if (argp.generation_test){
+        if (argp.generate_ipv4_test){
+            for (int i = 1; i <= argp.generate_count; i++){
+                std::string result_print = gray_nesca + "[" + std::string(get_time()) + "][TT]: "+ reset_color + sea_green + generate_ipv4() + reset_color;
+                std::cout << result_print << std::endl;
+            }
+        }
+        if (argp.generate_ipv6_test){
+            for (int i = 1; i <= argp.generate_count; i++){
+                std::string result_print = gray_nesca + "[" + std::string(get_time()) + "][TT]: "+ reset_color + sea_green + generate_ipv6(argp.octets) + reset_color;
+                std::cout << result_print << std::endl;
+            }
+        }
         return 0;
     }
 
@@ -759,14 +900,6 @@ long get_response_code(const char *node){
     return response_code;
 }
 
-void check_net(void){
-   int temp = get_response_code("google.com");
-
-   if (temp == 0){
-        printf("ERROR: net connection failed");
-        exit(1);
-   }
-}
 double measure_ping_time(const char* node, int port){
     double total_time = 0.0;
     CURL *curl = curl_easy_init();
@@ -817,10 +950,10 @@ double measure_ping_time(const char* node, int port){
 int dns_scan(std::string domain, std::string domain_1level){
     std::string result = domain + domain_1level;
 
-     double responce_time = measure_ping_time(result.c_str(), 80);
-     if (responce_time != -1){
-         if (responce_time != 2){
-             if (responce_time != EOF){
+     double response_time = measure_ping_time(result.c_str(), 80);
+     if (response_time != -1){
+         if (response_time != 2){
+             if (response_time != EOF){
                  return 1; // success
              }
          }
@@ -1202,8 +1335,8 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 }
 
                 std::string result = ip + ":" + std::to_string(port);
-                std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + result + reset_color + gray_nesca + " T: " + golder_rod + get_html_title(ip) + reset_color;
-                std::string result_txt = "[" + std::string(get_time()) + "] [BA] " + result + " T: " + get_html_title(ip);
+                std::string result_print = gray_nesca + "[" + std::string(get_time()) + "][BA] " + sea_green + result + reset_color + gray_nesca + " T: " + golder_rod + get_html_title(ip) + reset_color;
+                std::string result_txt = "[" + std::string(get_time()) + "][BA] " + result + " T: " + get_html_title(ip);
 
                 std::lock_guard<std::mutex> guard(mtx);
                 if (argp.txt){
@@ -1228,16 +1361,16 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     std::cout << reset_color;
 
                     brute_temp = brute_ftp(ip, argp.logins, argp.passwords, argp.ftp_brute_log, argp.ftp_brute_verbose);
-                    result_txt = "[" + std::string(get_time()) + "] [FTP] " + brute_temp[0] + result;
+                    result_txt = "[" + std::string(get_time()) + "][FTP] " + brute_temp[0] + result;
                 }
                 else {
-                    result_txt = "[" + std::string(get_time()) + "] [FTP] " + result;
+                    result_txt = "[" + std::string(get_time()) + "][FTP] " + result;
                 }
                 if (argp.off_ftp_brute != true){
-                    result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + brute_temp[0] + result + reset_color;
+                    result_print = gray_nesca + "[" + std::string(get_time()) + "][BA] " + sea_green + brute_temp[0] + result + reset_color;
                 }
                 else {
-                    result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + result + reset_color;
+                    result_print = gray_nesca + "[" + std::string(get_time()) + "][BA] " + sea_green + result + reset_color;
                 }
                 if (argp.txt){
                     int temp = write_line(argp.txt_save, result_txt);
@@ -1249,8 +1382,8 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
             }
             else{
                 std::string result = ip + ":" + std::to_string(port);
-                std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + result + reset_color;
-                std::string result_txt = "[" + std::string(get_time()) + "] [BA] "+ result;
+                std::string result_print = gray_nesca + "[" + std::string(get_time()) + "][BA] " + sea_green + result + reset_color;
+                std::string result_txt = "[" + std::string(get_time()) + "][BA] "+ result;
                 
                 std::lock_guard<std::mutex> guard(mtx);
                 if (argp.txt){
@@ -1272,7 +1405,7 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
         else if (result == 1) {
             if (argp.debug){
                 std::string result_txt = "[" + std::string(get_time()) + "][DB] " + ip + ":" + std::to_string(port) + " [CLOSED]";
-                std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [DB] " + yellow_html + ip + ":" + std::to_string(port) + " [CLOSED]" + reset_color;
+                std::string result_print = gray_nesca + "[" + std::string(get_time()) + "][DB] " + yellow_html + ip + ":" + std::to_string(port) + " [CLOSED]" + reset_color;
                 std::lock_guard<std::mutex> guard(mtx);
                 if (argp.txt){
                     int temp = write_line(argp.txt_save, result_txt);
@@ -1283,7 +1416,7 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
         else if (result == 2){
             if (argp.debug){
                 std::string result_txt = "[" + std::string(get_time()) + "][DB] " + ip + ":" + std::to_string(port) + " [FILTER]";
-                std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [DB] " + yellow_html + ip + ":" + std::to_string(port) + " [FILTER]" + reset_color;
+                std::string result_print = gray_nesca + "[" + std::string(get_time()) + "][DB] " + yellow_html + ip + ":" + std::to_string(port) + " [FILTER]" + reset_color;
                 std::lock_guard<std::mutex> guard(mtx);
 
                 std::cout << result_print << std::endl;
@@ -1426,6 +1559,19 @@ void help_menu(void){
     std::cout << "  -no-color              Disable colors.\n";
     std::cout << "  -log-set <count>       Change change the value of ips after which, will be displayed information about how much is left.\n";
     std::cout << "  -txt <path>            Save result to text document.\n";
+
+    std::cout << sea_green;
+    std::cout << "\narguments testing:" << std::endl;
+    std::cout << reset_color;
+    std::cout << "  -host-test <1,2,3>     Set host for testing.\n";
+    std::cout << "  -response-code         Get response code from host.\n";
+    std::cout << "  -tcp-ping <mode>       Get response time from host, modes (live) or (default).\n";
+    std::cout << sea_green;
+    std::cout << "\narguments generation:" << std::endl;
+    std::cout << reset_color;
+    std::cout << "  -gen-count <count>     Set count for generation.\n";
+    std::cout << "  -gen-ipv6 <octets>     Generate ip version 6.\n";
+    std::cout << "  -gen-ipv4              Generate ip version 4.\n";
 }
 
 void print_logo(void){

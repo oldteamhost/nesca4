@@ -49,6 +49,8 @@
 + Добавлен обход фаервола сканирования.
 + Добавлены аргументы ftp-brute-log и ftp-brute-verbose.
 + Добавлена поддержка импорта и сканирования ip диапазонов.
++ Добавлены новые аргумент: -host-test -tcp-ping -response-code -gen-count -gen-ipv4 -gen-ipv6.
++ Добавлены новые разделы testing и generation.
 
 # Все рабочие функции
 ```
@@ -96,6 +98,16 @@ arguments output:
   -no-color              Disable colors.
   -log-set <count>       Change change the value of ips after which, will be displayed information about how much is left.
   -txt <path>            Save result to text document.
+
+arguments testing:
+  -host-test <1,2,3>     Set host for testing.
+  -response-code         Get response code from host.
+  -tcp-ping <mode>       Get response time from host, modes (live) or (default).
+
+arguments generation:
+  -gen-count <count>     Set count for generation.
+  -gen-ipv6 <octets>     Generate ip version 6.
+  -gen-ipv4              Generate ip version 4.
 ```
 
 # Документация
