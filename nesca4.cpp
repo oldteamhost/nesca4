@@ -7,8 +7,6 @@
 #include <iostream>
 #include <bitset>
 #include <getopt.h>
-#include <netdb.h>
-#include <ostream>
 #include <mutex>
 #include <thread>
 #include <algorithm> 
@@ -30,6 +28,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <netdb.h>
 #include <unistd.h>
 #include <errno.h>
 #endif
