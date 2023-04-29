@@ -20,7 +20,8 @@
 + Настроен debug для сканирования поротов.
 + Добавлен брутфорс FTP
 + Добавлены filter ports в debug
-
++ Добавлен обход фаервола сканирования
++ Добавлены аргументы ftp-brute-log и ftp-brute-verbose
 
 Все рабочие функции:
 ```
@@ -51,7 +52,9 @@ arguments speed:
 arguments bruteforce:
   -no-ftp-brute          Off bruteforce ftp.
   -ftp-login             Set path for ftp logins.
-  -ftp-pass              Set path for ftp password.
+  -ftp-pass              Set path for ftp passwords.
+  -ftp-brute-log         Display bruteforce ftp info.
+  -ftp-brute-verbose     Display bruteforce ftp all info.
 
 arguments dns-scan:
   -dns-scan <.dns>       On dns-scan and set domain 1 level.

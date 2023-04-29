@@ -5,6 +5,7 @@
 
 #include <cstdio>
 #include <iostream>
+#include <chrono>
 #include <bitset>
 #include <getopt.h>
 #include <mutex>
@@ -29,6 +30,8 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <netinet/in.h>
+#include <netinet/ip_icmp.h>
 #include <unistd.h>
 #include <errno.h>
 #endif
@@ -63,12 +66,13 @@ std::string get_dns_ip(const char* ip);
 int tcp_scan_port(const char *ip, int port, int timeout_ms);
 void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, int timeout_ms);
 int dns_scan(std::string domain, std::string domain_1level);
+int check_node_available(const char* node);
 
 // func curg
 double measure_ping_time(const char* node, int port);
 long get_response_code(const char *node);
 std::string get_html_title(std::string node);
-std::vector<std::string> brute_ftp(const std::string& ip, const std::vector<std::string>& logins, const std::vector<std::string>& passwords);
+std::vector<std::string> brute_ftp(const std::string& ip, const std::vector<std::string>& logins, const std::vector<std::string>& passwords, int brute_log, int verbose);
 void check_net(void);
 
 // files
@@ -122,9 +126,12 @@ class arguments_program{
         bool ip_cidr_scan_import;
         bool debug;
         bool warning_threads;
+        bool ping_off;
         bool txt;
         bool color_off;
         int random_ip_count;
+        bool ftp_brute_log;
+        bool ftp_brute_verbose;
         int threads_temp;
         int dns_scan_domain_count = 5;
         int timeout_ms = 300;
@@ -139,7 +146,6 @@ arguments_program argp;
 const char* run;
 
 int main(int argc, char** argv){
-
     if (check_ansi_support() != true){
         std::cout << "You terminal don`t support ansi colors!\n";
         logo_red = "";
@@ -170,6 +176,8 @@ int main(int argc, char** argv){
 
         {"ftp-login", required_argument, 0, 12},
         {"ftp-pass", required_argument, 0, 11},
+        {"ftp-brute-log", no_argument, 0, 30},
+        {"ftp-brute-verbose", no_argument, 0, 31},
 
         {"dns-scan", required_argument, 0, 19},
         {"dns-length", required_argument, 0, 20},
@@ -177,6 +185,7 @@ int main(int argc, char** argv){
         {"txt", required_argument, 0, 22},
         {"debug", no_argument, 0, 27},
         {"er", no_argument, 0, 28},
+        {"no-ping", no_argument, 0, 29},
         {"no-color", no_argument, 0, 26},
         {"log-set", required_argument, 0, 24},
 
@@ -335,6 +344,15 @@ int main(int argc, char** argv){
            case 28:
                argp.print_errors = true;
                break;
+           case 29:
+               argp.ping_off = true;
+               break;
+           case 30:
+               argp.ftp_brute_log = true;
+               break;
+           case 31:
+               argp.ftp_brute_verbose = true;
+               break;
         }
     }
 
@@ -358,7 +376,7 @@ int main(int argc, char** argv){
         }
     }
 
-            
+                
     checking_default_files();
 
     argp.logins = write_file(argp.path_ftp_login);
@@ -546,15 +564,12 @@ int tcp_scan_port(const char *ip, int port, int timeout_ms){
     target.sin_port = htons(port);
 
     int ip_bin = inet_pton(AF_INET, ip, &target.sin_addr);
-
     if (ip_bin == 0){
         return -2;
     }
 
-    #ifndef _WIN32
     int flags = fcntl(sock, F_GETFL, 0);
     fcntl(sock, F_SETFL, flags | O_NONBLOCK);
-    #endif
 
     int ret = connect(sock, (struct sockaddr *)&target, sizeof(target));
 
@@ -851,7 +866,7 @@ std::string get_html_title(std::string node){
     curl_easy_cleanup(curl);
     return return_value;
 }
-std::vector<std::string> brute_ftp(const std::string& ip, const std::vector<std::string>& logins, const std::vector<std::string>& passwords){
+std::vector<std::string> brute_ftp(const std::string& ip, const std::vector<std::string>& logins, const std::vector<std::string>& passwords, int brute_log, int verbose){
     std::vector<std::string> result;
     CURL* curl = curl_easy_init();
     bool success = false;
@@ -860,7 +875,9 @@ std::vector<std::string> brute_ftp(const std::string& ip, const std::vector<std:
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
         curl_easy_setopt(curl, CURLOPT_USERNAME, "");
         curl_easy_setopt(curl, CURLOPT_PASSWORD, "");
-        // curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+        if (verbose){
+            curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+        }
         curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 1L);
         curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1L);
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
@@ -878,6 +895,12 @@ std::vector<std::string> brute_ftp(const std::string& ip, const std::vector<std:
 
         for (const auto& login : logins) {
             for (const auto& password : passwords) {
+                if (brute_log){
+                    std::string result_print_brute = "[" + std::string(get_time()) + "][FTP]     try: " + login + "@" + password + " [BRUTEFORCE]";
+                    std::cout << yellow_html;
+                    std::cout << result_print_brute << std::endl;
+                    std::cout << reset_color;
+                }
                 curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
                 curl_easy_setopt(curl, CURLOPT_PASSWORD, password.c_str());
 
@@ -1129,7 +1152,16 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
     for (const auto& port : ports) {
         int result = tcp_scan_port(ip.c_str(), port, timeout_ms);
         if (result == 0) {
-            if (port == 80 || port == 8080 || port == 8081 || port == 8888){
+            if (port == 80 || port == 8080 || port == 8081 || port == 8888 || port == 8008){
+
+                if (argp.ping_off != true){
+                    double temp_ping = measure_ping_time(ip.c_str(), port);
+
+                    if (temp_ping == -1 || temp_ping == -2){
+                        return;
+                    }
+                }
+
                 std::string result = ip + ":" + std::to_string(port);
                 std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + result + reset_color + gray_nesca + " T: " + golder_rod + get_html_title(ip) + reset_color;
                 std::string result_txt = "[" + std::string(get_time()) + "] [BA] " + result + " T: " + get_html_title(ip);
@@ -1151,7 +1183,12 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
 
                 if (argp.off_ftp_brute != true){
                     result_print_brute = "[" + std::string(get_time()) + "][FTP] " + ip + " [BRUTEFORCE]";
-                    brute_temp = brute_ftp(ip, argp.logins, argp.passwords);
+
+                    std::cout << yellow_html;
+                    std::cout << result_print_brute << std::endl;
+                    std::cout << reset_color;
+
+                    brute_temp = brute_ftp(ip, argp.logins, argp.passwords, argp.ftp_brute_log, argp.ftp_brute_verbose);
                     result_txt = "[" + std::string(get_time()) + "] [FTP] " + brute_temp[0] + result;
                 }
                 else {
@@ -1163,13 +1200,6 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 else {
                     result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + result + reset_color;
                 }
-
-                if (argp.off_ftp_brute != true){
-                    std::cout << yellow_html;
-                    std::cout << result_print_brute << std::endl;
-                    std::cout << reset_color;
-                }
-
                 if (argp.txt){
                     int temp = write_line(argp.txt_save, result_txt);
                 }
@@ -1254,6 +1284,28 @@ bool check_ansi_support(void){
     #endif
 }
 
+int check_node_available(const char* node){
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+
+    if (sock < 0) {
+        perror("socket");
+        return false;
+    }
+
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(0);
+    addr.sin_addr.s_addr = inet_addr(node);
+
+    if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+        close(sock);
+        return 1;
+    }
+
+    close(sock);
+    return 0;
+}
 void help_menu(void){
     std::cout << golder_rod;
     std::cout << "usage: " << run << " [flags]\n";
@@ -1286,6 +1338,8 @@ void help_menu(void){
     std::cout << "  -no-ftp-brute          Off bruteforce ftp.\n";
     std::cout << "  -ftp-login             Set path for ftp logins.\n";
     std::cout << "  -ftp-pass              Set path for ftp passwords.\n";
+    std::cout << "  -ftp-brute-log         Display bruteforce ftp info.\n";
+    std::cout << "  -ftp-brute-verbose     Display bruteforce ftp all info.\n";
 
     std::cout << sea_green;
     std::cout << "\narguments dns-scan:" << std::endl;
