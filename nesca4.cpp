@@ -116,8 +116,10 @@ class arguments_program{
         int log_set = 200;
         bool dns_scan;
         bool print_help_menu;
+        bool ip_scan_import;
         bool ip_scan;
         bool ip_cidr_scan;
+        bool ip_cidr_scan_import;
         bool debug;
         bool warning_threads;
         bool txt;
@@ -125,7 +127,7 @@ class arguments_program{
         int random_ip_count;
         int threads_temp;
         int dns_scan_domain_count = 5;
-        int timeout_ms = 300;
+        int timeout_ms = 2000;
         int _threads = 20;
         bool timeout;
         int random_version = 4;
@@ -239,7 +241,7 @@ int main(int argc, char** argv){
                         514, 5060, 179, 1026, 23, 8443, 8000, 444, 1433, 1900, 2001, 1027, 49152, 2049, 1028, 1029, 5901, 32768, 1434, 3283}; 
                 }
                 else if (argp.ports_temp == "nesca"){
-                    argp.ports = {};
+                    argp.ports = {80,81,88,8080,8081,60001,60002,8008,8888,554,9000,3536,21};
                 }
                 else {
                     argp.ports = split_string_int(argp.ports_temp, DELIMITER);
@@ -248,6 +250,7 @@ int main(int argc, char** argv){
             }
             case 1:
             {
+                argp.ip_scan = true;
                 argp.ip_temp = optarg; argp.ip_scan = true;
                 argp._ip = split_string_string(argp.ip_temp, DELIMITER);
                 break;
@@ -261,7 +264,7 @@ int main(int argc, char** argv){
             }
             case 3:
             {
-               argp.ip_cidr_scan = true;
+               argp.ip_cidr_scan_import = true;
                argp.path_cidr = optarg;
                break;
             }
@@ -303,7 +306,7 @@ int main(int argc, char** argv){
                 break;
            case 23:
            {
-               argp.ip_scan = true;
+               argp.ip_scan_import = true;
                argp.path_ips = optarg;
                break;
            }
@@ -415,10 +418,10 @@ int main(int argc, char** argv){
     // start tcp_scan_port
     std::vector<std::string> result;
     
-    if (argp.ip_scan){
+    if (argp.ip_scan_import || argp.ip_scan){
         result = argp._ip;
     } 
-    else if (argp.ip_cidr_scan){
+    else if (argp.ip_cidr_scan_import || argp.ip_cidr_scan){
         std::vector<std::string> cidr_convert = cidr_to_ips(argp.ip_cidr);
         result = cidr_convert;
     }
@@ -959,7 +962,7 @@ void checking_default_files(void){
     const char* path1 = "passwd/logins.txt";
     const char* path2 = "passwd/passwords.txt";
 
-    if (argp.ip_cidr_scan){
+    if (argp.ip_cidr_scan_import){
        if (check_file(argp.path_cidr)){
             std::cout << green_html;
             if (argp.ip_cidr_scan){
@@ -977,7 +980,7 @@ void checking_default_files(void){
        }
     }
 
-    if (argp.ip_scan){
+    if (argp.ip_scan_import){
        if (check_file(argp.path_ips)){
             std::cout << green_html;
             std::cout << "[" << get_time() << "]" << "[OK] " << argp.path_ips << " (" << get_count_lines(argp.path_ips) << ") entries" << std::endl;
@@ -1214,7 +1217,8 @@ void help_menu(void){
     std::cout << sea_green;
     std::cout << "\narguments ports:" << std::endl;
     std::cout << reset_color;
-    std::cout << "  -ports, -p <1,2,3>     Set ports on scan.\n";
+    std::cout << "  -ports, -p <1,2,3>  Set ports on scan.\n";
+    std::cout << "     - example ports: all, nesca, top100, top50\n";
 
     std::cout << sea_green;
     std::cout << "\narguments speed:" << std::endl;
