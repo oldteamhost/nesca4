@@ -1150,14 +1150,31 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 std::lock_guard<std::mutex> guard(mtx);
 
                 std::string result = ip + ":" + std::to_string(port);
-                std::string result_print_brute = "[" + std::string(get_time()) + "][FTP] " + ip + " [BRUTEFORCE]";
-                std::vector<std::string> brute_temp = brute_ftp(ip, argp.logins, argp.passwords);
-                std::string result_txt = "[" + std::string(get_time()) + "] [FTP] " + brute_temp[0] + result;
-                std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + brute_temp[0] + result + reset_color;
+                std::string result_print_brute;
+                std::string result_txt;
+                std::vector<std::string> brute_temp;
+                std::string result_print;
 
-                std::cout << yellow_html;
-                std::cout << result_print_brute << std::endl;
-                std::cout << reset_color;
+                if (argp.off_ftp_brute != true){
+                    result_print_brute = "[" + std::string(get_time()) + "][FTP] " + ip + " [BRUTEFORCE]";
+                    brute_temp = brute_ftp(ip, argp.logins, argp.passwords);
+                    result_txt = "[" + std::string(get_time()) + "] [FTP] " + brute_temp[0] + result;
+                }
+                else {
+                    result_txt = "[" + std::string(get_time()) + "] [FTP] " + result;
+                }
+                if (argp.off_ftp_brute != true){
+                    result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + brute_temp[0] + result + reset_color;
+                }
+                else {
+                    result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + result + reset_color;
+                }
+
+                if (argp.off_ftp_brute != true){
+                    std::cout << yellow_html;
+                    std::cout << result_print_brute << std::endl;
+                    std::cout << reset_color;
+                }
 
                 if (argp.txt){
                     int temp = write_line(argp.txt_save, result_txt);
@@ -1266,7 +1283,7 @@ void help_menu(void){
     std::cout << reset_color;
     std::cout << "  -no-ftp-brute          Off bruteforce ftp.\n";
     std::cout << "  -ftp-login             Set path for ftp logins.\n";
-    std::cout << "  -ftp-pass              Set path for ftp password.\n";
+    std::cout << "  -ftp-pass              Set path for ftp passwords.\n";
 
     std::cout << sea_green;
     std::cout << "\narguments dns-scan:" << std::endl;
