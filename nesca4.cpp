@@ -63,7 +63,6 @@ std::string get_dns_ip(const char* ip);
 int tcp_scan_port(const char *ip, int port, int timeout_ms);
 void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, int timeout_ms);
 int dns_scan(std::string domain, std::string domain_1level);
-std::vector<int> tcp_scan_ports(const std::vector<std::string>& ips, const std::vector<int>& ports, int timeout_ms);
 
 // func curg
 double measure_ping_time(const char* node, int port);
@@ -95,8 +94,6 @@ std::vector<std::string> split_string_string(const std::string& str, char delimi
 
 class arguments_program{
     public:
-        std::string ip_temp;
-        std::string ip_range_temp;
         std::string ports_temp;
         std::string domain_1level;
         std::string txt_save;
@@ -130,7 +127,7 @@ class arguments_program{
         int random_ip_count;
         int threads_temp;
         int dns_scan_domain_count = 5;
-        int timeout_ms = 2000;
+        int timeout_ms = 300;
         int _threads = 20;
         bool timeout;
         int random_version = 4;
@@ -250,15 +247,13 @@ int main(int argc, char** argv){
             case 1:
             {
                 argp.ip_scan = true;
-                argp.ip_temp = optarg; argp.ip_scan = true;
-                argp._ip = split_string_string(argp.ip_temp, DELIMITER);
+                argp._ip = split_string_string(optarg, DELIMITER);
                 break;
             }
             case 2:
             {
-                argp.ip_range_temp = optarg; 
                 argp.ip_cidr_scan = true;
-                argp.ip_cidr = split_string_string(argp.ip_range_temp, DELIMITER);
+                argp.ip_cidr = split_string_string(optarg, DELIMITER);
                 break;
             }
             case 3:
@@ -402,7 +397,7 @@ int main(int argc, char** argv){
                         }
                     }
                     else {
-                        std::lock_guard<std::mutex> lock(mtx);
+                            std::lock_guard<std::mutex> lock(mtx);
                             std::string result_print_color = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + result + reset_color + gray_nesca + " T: " + golder_rod + get_html_title(result) + reset_color;
                             std::string result_txt = "[" + std::string(get_time()) + "] [BA] " + result + " T: " + get_html_title(result);
                             std::string *result_printp = &result_txt;
@@ -449,6 +444,7 @@ int main(int argc, char** argv){
         ip_count++;
 
         if (ip_count % argp.log_set == 0){
+            std::lock_guard<std::mutex> lock(mtx);
             std::string result_print = "[" + std::string(get_time()) + "][NB] " + std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs scanned.";
             std::cout << yellow_html;
             std::cout << result_print << std::endl;
@@ -1134,12 +1130,11 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
         int result = tcp_scan_port(ip.c_str(), port, timeout_ms);
         if (result == 0) {
             if (port == 80 || port == 8080 || port == 8081 || port == 8888){
-                std::lock_guard<std::mutex> guard(mtx);
-
                 std::string result = ip + ":" + std::to_string(port);
                 std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + result + reset_color + gray_nesca + " T: " + golder_rod + get_html_title(ip) + reset_color;
                 std::string result_txt = "[" + std::string(get_time()) + "] [BA] " + result + " T: " + get_html_title(ip);
 
+                std::lock_guard<std::mutex> guard(mtx);
                 if (argp.txt){
                     int temp = write_line(argp.txt_save, result_txt);
                 }
@@ -1179,41 +1174,49 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     int temp = write_line(argp.txt_save, result_txt);
                 }
 
+
                 std::cout << result_print << std::endl;
 
             }
-            else {
-                std::lock_guard<std::mutex> guard(mtx);
-
+            else{
                 std::string result = ip + ":" + std::to_string(port);
                 std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [BA] " + sea_green + result + reset_color;
                 std::string result_txt = "[" + std::string(get_time()) + "] [BA] "+ result;
                 
+                std::lock_guard<std::mutex> guard(mtx);
                 if (argp.txt){
                     int temp = write_line(argp.txt_save, result_txt);
                 }
 
                 std::cout << result_print << std::endl;
             }
-
         }
         else if (result == -1 || result == -2 || result == -3){
             if (argp.print_errors){
-                std::lock_guard<std::mutex> guard(mtx);
                 std::string result_print = "[" + std::string(get_time()) + "][NB] " + ip + " [ERROR]: " + std::to_string(result);
+                std::lock_guard<std::mutex> guard(mtx);
                 std::cout << red_html;
                 std::cout << result_print << std::endl;
                 std::cout << reset_color;
             }
         }
-        else {
-            std::lock_guard<std::mutex> guard(mtx);
-            std::string result_txt = "[" + std::string(get_time()) + "][DB] " + ip + ":" + std::to_string(port) + " [CLOSED]";
-            std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [DB] " + yellow_html + ip + ":" + std::to_string(port) + " [CLOSED]" + reset_color;
+        else if (result == 1) {
             if (argp.debug){
+                std::string result_txt = "[" + std::string(get_time()) + "][DB] " + ip + ":" + std::to_string(port) + " [CLOSED]";
+                std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [DB] " + yellow_html + ip + ":" + std::to_string(port) + " [CLOSED]" + reset_color;
+                std::lock_guard<std::mutex> guard(mtx);
                 if (argp.txt){
                     int temp = write_line(argp.txt_save, result_txt);
                 }
+                std::cout << result_print << std::endl;
+            }
+        }
+        else if (result == 2){
+            if (argp.debug){
+                std::string result_txt = "[" + std::string(get_time()) + "][DB] " + ip + ":" + std::to_string(port) + " [FILTER]";
+                std::string result_print = gray_nesca + "[" + std::string(get_time()) + "] [DB] " + yellow_html + ip + ":" + std::to_string(port) + " [FILTER]" + reset_color;
+                std::lock_guard<std::mutex> guard(mtx);
+
                 std::cout << result_print << std::endl;
             }
         }
