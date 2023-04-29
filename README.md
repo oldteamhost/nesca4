@@ -95,7 +95,7 @@ arguments sftp bruteforce:
   -sftp-pass              Set path for sftp passwords.
   -sftp-brute-log         Display bruteforce sftp info.
   -sftp-brute-verbose     Display bruteforce sftp all info.
-  -sftp-brute-known-hosts  Reading known_host for connection.
+  -sftp-brute-known-hosts Reading known_host for connection.
 
 arguments dns-scan:
   -dns-scan <.dns>       On dns-scan and set domain 1 level.

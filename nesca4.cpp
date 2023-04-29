@@ -1718,7 +1718,7 @@ void help_menu(void){
     std::cout << "  -sftp-pass              Set path for sftp passwords.\n";
     std::cout << "  -sftp-brute-log         Display bruteforce sftp info.\n";
     std::cout << "  -sftp-brute-verbose     Display bruteforce sftp all info.\n";
-    std::cout << "  -sftp-brute-known-hosts  Reading known_host for connection.\n";
+    std::cout << "  -sftp-brute-known-hosts Reading known_host for connection.\n";
 
     std::cout << sea_green;
     std::cout << "\narguments dns-scan:" << std::endl;
