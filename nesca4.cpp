@@ -57,6 +57,7 @@ void help_menu(void);
 
 // curl write
 size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userdata);
+size_t write_callback_ssh(void* ptr, size_t size, size_t nmemb, std::string* data);
 size_t write_callback_plus(char* buf, size_t size, size_t nmemb, void* up);
 size_t write_callback_http(char* ptr, size_t size, size_t nmemb, void* userdata);
 size_t curl_callback(void *contents, size_t size, size_t nmemb, void *userp);
@@ -73,7 +74,10 @@ int check_node_available(const char* node);
 double measure_ping_time(const char* node, int port);
 long get_response_code(const char *node);
 std::string get_html_title(std::string node);
+
+// brute
 std::vector<std::string> brute_ftp(const std::string& ip, const std::vector<std::string>& logins, const std::vector<std::string>& passwords, int brute_log, int verbose);
+std::vector<std::string> brute_ssh(const std::string& ip, const std::vector<std::string>& logins, const std::vector<std::string>& passwords, int brute_log, int verbose, int know_hosts);
 
 // files
 std::vector<std::string> write_file(const std::string& filename);
@@ -110,14 +114,20 @@ class arguments_program{
         std::vector<std::string> ip_cidr;
         std::vector<std::string> ip_range;
 
-        std::vector<std::string> logins;
-        std::vector<std::string> passwords;
+        std::vector<std::string> ftp_logins;
+        std::vector<std::string> ftp_passwords;
+
+        std::vector<std::string> sftp_logins;
+        std::vector<std::string> sftp_passwords;
 
         const char* path_range;
         const char* path_cidr;
         const char* path_ips;
-        const char* path_ftp_login = "passwd/logins.txt";
-        const char* path_ftp_pass = "passwd/passwords.txt";
+
+        const char* path_ftp_login = "passwd/ftp_logins.txt";
+        const char* path_ftp_pass = "passwd/ftp_passwords.txt";
+        const char* path_sftp_login = "passwd/sftp_logins.txt";
+        const char* path_sftp_pass = "passwd/sftp_passwords.txt";
 
         int random_ip_count;
         int octets;
@@ -146,10 +156,14 @@ class arguments_program{
         bool txt;
         bool color_off;
         bool ftp_brute_log;
+        bool sftp_brute_log;
+        bool sftp_using_know_hosts;
         bool ftp_brute_verbose;
+        bool sftp_brute_verbose;
         bool timeout;
         bool print_errors;
         bool off_ftp_brute;
+        bool off_sftp_brute;
 
         bool generation_test;
 
@@ -197,6 +211,13 @@ int main(int argc, char** argv){
         {"ftp-pass", required_argument, 0, 11},
         {"ftp-brute-log", no_argument, 0, 30},
         {"ftp-brute-verbose", no_argument, 0, 31},
+
+        {"sftp-login", required_argument, 0, 40},
+        {"sftp-pass", required_argument, 0, 41},
+        {"sftp-brute-log", no_argument, 0, 42},
+        {"sftp-brute-verbose", no_argument, 0, 43},
+        {"sftp-brute-off", no_argument, 0, 44},
+        {"sftp-brute-known-hosts", no_argument, 0, 45},
 
         {"dns-scan", required_argument, 0, 19},
         {"dns-length", required_argument, 0, 20},
@@ -320,6 +341,24 @@ int main(int argc, char** argv){
                 break;
            case 11:
                 argp.path_ftp_pass = optarg;
+                break;
+           case 40:
+                argp.path_sftp_login = optarg;
+                break;
+           case 41:
+                argp.path_sftp_pass = optarg;
+                break;
+           case 42:
+                argp.sftp_brute_log = true;
+                break;
+           case 43:
+                argp.sftp_brute_verbose = true;
+                break;
+           case 44:
+                argp.off_sftp_brute = true;
+                break;
+           case 45:
+                argp.sftp_using_know_hosts = true;
                 break;
            case 't':
                 argp.timeout = true;
@@ -536,8 +575,11 @@ int main(int argc, char** argv){
                 
     checking_default_files();
 
-    argp.logins = write_file(argp.path_ftp_login);
-    argp.passwords = write_file(argp.path_ftp_pass);
+    argp.ftp_logins = write_file(argp.path_ftp_login);
+    argp.ftp_passwords = write_file(argp.path_ftp_pass);
+
+    argp.sftp_logins = write_file(argp.path_sftp_login);
+    argp.sftp_passwords = write_file(argp.path_sftp_pass);
 
     std::cout << green_html;
     std::cout << "[" << get_time() << "]" << "[OK] Starting " << argp._threads << " threads...\n\n";
@@ -874,6 +916,11 @@ size_t clear_callback(void *buffer, size_t size, size_t nmemb, void *userp){
     return size * nmemb;
 }
 
+size_t write_callback_ssh(void* ptr, size_t size, size_t nmemb, std::string* data){
+    data->append((char*)ptr, size * nmemb);
+    return size * nmemb;
+}
+
 long get_response_code(const char *node){
     CURL *curl = curl_easy_init();
 
@@ -1033,7 +1080,7 @@ std::vector<std::string> brute_ftp(const std::string& ip, const std::vector<std:
         }
         curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 1L);
         curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1L);
-        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 15L);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
         curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
         curl_easy_setopt(curl, CURLOPT_FTPPORT, "-");
@@ -1076,6 +1123,68 @@ std::vector<std::string> brute_ftp(const std::string& ip, const std::vector<std:
         return {""};
     }
 
+    return result;
+}
+
+std::vector<std::string> brute_ssh(const std::string& ip, const std::vector<std::string>& logins, const std::vector<std::string>& passwords, int brute_log, int verbose, int know_hosts) {
+    std::vector<std::string> result;
+    CURL* curl = curl_easy_init();
+    bool success = false;
+    if (curl) {
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+        curl_easy_setopt(curl, CURLOPT_USERNAME, "");
+        curl_easy_setopt(curl, CURLOPT_PASSWORD, "");
+        if (verbose) {
+            curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+        }
+        curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 1L);
+        curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 1L);
+        curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1L);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 15L);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+        curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
+        curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 1L);
+        curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 15L);
+        curl_easy_setopt(curl, CURLOPT_SSH_AUTH_TYPES, CURLSSH_AUTH_PASSWORD);
+        if (know_hosts){
+            curl_easy_setopt(curl, CURLOPT_SSH_HOST_PUBLIC_KEY_MD5, "serverkeymd5");
+            curl_easy_setopt(curl, CURLOPT_SSH_KNOWNHOSTS, "/path/to/known_hosts");
+        }
+        else {
+            curl_easy_setopt(curl, CURLOPT_SSH_HOST_PUBLIC_KEY_MD5, "");
+        }
+        curl_easy_setopt(curl, CURLOPT_DNS_CACHE_TIMEOUT, 15L);
+        curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
+        std::string url = "sftp://" + ip;
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        for (const auto& login : logins) {
+            for (const auto& password : passwords) {
+                if (brute_log) {
+                    std::cout << yellow_html;
+                    std::string result_print_brute = "[" + std::string(get_time()) + "][SSH]     try: " + login + "@" + password + " [BRUTEFORCE]";
+                    std::cout << result_print_brute << std::endl;
+                    std::cout << reset_color;
+                }
+                curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
+                curl_easy_setopt(curl, CURLOPT_PASSWORD, password.c_str());
+                CURLcode res = curl_easy_perform(curl);
+                if (res == CURLE_OK) {
+                    result.push_back(login + ":" + password + "@");
+                    success = true;
+                    break;
+                }
+            }
+            if (success) {
+                break;
+            }
+        }
+        curl_easy_cleanup(curl);
+    }
+    if (!success) {
+        return {""};
+    }
     return result;
 }
 
@@ -1199,6 +1308,7 @@ void checking_default_files(void){
     if (check_file(argp.path_ftp_login)){
        std::cout << green_html;
        std::cout << "[" << get_time() << "]" << "[OK] " << argp.path_ftp_login << " (" << get_count_lines(argp.path_ftp_login) << ") entries" << std::endl;
+        std::cout << reset_color;
     }
     else {
         std::cout << yellow_html;
@@ -1208,10 +1318,31 @@ void checking_default_files(void){
     if (check_file(argp.path_ftp_pass)){
         std::cout << green_html;
         std::cout << "[" << get_time() << "]" << "[OK] " << argp.path_ftp_pass << " (" << get_count_lines(argp.path_ftp_pass) << ") entries" << std::endl;
+        std::cout << reset_color;
     }
     else {
         std::cout << yellow_html;
         std::cout << "[" << get_time() << "]" << "[FAILED] " << argp.path_ftp_pass << " (" << get_count_lines(argp.path_ftp_pass) << ") entries" << std::endl;
+        std::cout << reset_color;
+    }
+    if (check_file(argp.path_sftp_login)){
+       std::cout << green_html;
+       std::cout << "[" << get_time() << "]" << "[OK] " << argp.path_sftp_login << " (" << get_count_lines(argp.path_sftp_login) << ") entries" << std::endl;
+       std::cout << reset_color;
+    }
+    else {
+        std::cout << yellow_html;
+        std::cout << "[" << get_time() << "]" << "[FAILED] " << argp.path_sftp_login << " (" << get_count_lines(argp.path_sftp_login) << ") entries" << std::endl;
+        std::cout << reset_color;
+    }
+    if (check_file(argp.path_sftp_pass)){
+       std::cout << green_html;
+       std::cout << "[" << get_time() << "]" << "[OK] " << argp.path_sftp_pass << " (" << get_count_lines(argp.path_sftp_pass) << ") entries" << std::endl;
+       std::cout << reset_color;
+    }
+    else {
+        std::cout << yellow_html;
+        std::cout << "[" << get_time() << "]" << "[FAILED] " << argp.path_sftp_pass << " (" << get_count_lines(argp.path_sftp_pass) << ") entries" << std::endl;
         std::cout << reset_color;
     }
     std::cout << reset_color;
@@ -1360,7 +1491,7 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     std::cout << result_print_brute << std::endl;
                     std::cout << reset_color;
 
-                    brute_temp = brute_ftp(ip, argp.logins, argp.passwords, argp.ftp_brute_log, argp.ftp_brute_verbose);
+                    brute_temp = brute_ftp(ip, argp.ftp_logins, argp.ftp_passwords, argp.ftp_brute_log, argp.ftp_brute_verbose);
                     result_txt = "[" + std::string(get_time()) + "][FTP] " + brute_temp[0] + result;
                 }
                 else {
@@ -1379,6 +1510,41 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
 
                 std::cout << result_print << std::endl;
 
+            }
+            else if (port == 22){
+                std::lock_guard<std::mutex> guard(mtx);
+
+                std::string result = ip + ":" + std::to_string(port);
+                std::string result_print_brute;
+                std::string result_txt;
+                std::vector<std::string> brute_temp;
+                std::string result_print;
+
+                if (argp.off_sftp_brute != true){
+                    result_print_brute = "[" + std::string(get_time()) + "][SFTP] " + ip + " [BRUTEFORCE]";
+
+                    std::cout << yellow_html;
+                    std::cout << result_print_brute << std::endl;
+                    std::cout << reset_color;
+
+                    brute_temp = brute_ssh(ip, argp.sftp_logins, argp.sftp_passwords, argp.sftp_brute_log, argp.sftp_brute_verbose, argp.sftp_using_know_hosts);
+                    result_txt = "[" + std::string(get_time()) + "][SFTP] " + brute_temp[0] + result;
+                }
+                else {
+                    result_txt = "[" + std::string(get_time()) + "][SFTP] " + result;
+                }
+                if (argp.off_sftp_brute != true){
+                    result_print = gray_nesca + "[" + std::string(get_time()) + "][BA] " + sea_green + brute_temp[0] + result + reset_color;
+                }
+                else {
+                    result_print = gray_nesca + "[" + std::string(get_time()) + "][BA] " + sea_green + result + reset_color;
+                }
+                if (argp.txt){
+                    int temp = write_line(argp.txt_save, result_txt);
+                }
+
+
+                std::cout << result_print << std::endl;
             }
             else{
                 std::string result = ip + ":" + std::to_string(port);
@@ -1536,13 +1702,23 @@ void help_menu(void){
     std::cout << "  -timeout, -t <ms>      Set timeout for scan.\n";
 
     std::cout << sea_green;
-    std::cout << "\narguments bruteforce:" << std::endl;
+    std::cout << "\narguments ftp bruteforce:" << std::endl;
     std::cout << reset_color;
     std::cout << "  -no-ftp-brute          Off bruteforce ftp.\n";
     std::cout << "  -ftp-login             Set path for ftp logins.\n";
     std::cout << "  -ftp-pass              Set path for ftp passwords.\n";
     std::cout << "  -ftp-brute-log         Display bruteforce ftp info.\n";
     std::cout << "  -ftp-brute-verbose     Display bruteforce ftp all info.\n";
+
+    std::cout << sea_green;
+    std::cout << "\narguments sftp bruteforce:" << std::endl;
+    std::cout << reset_color;
+    std::cout << "  -no-sftp-brute          Off bruteforce sftp.\n";
+    std::cout << "  -sftp-login             Set path for sftp logins.\n";
+    std::cout << "  -sftp-pass              Set path for sftp passwords.\n";
+    std::cout << "  -sftp-brute-log         Display bruteforce sftp info.\n";
+    std::cout << "  -sftp-brute-verbose     Display bruteforce sftp all info.\n";
+    std::cout << "  -sftp-brute-known-hosts  Reading known_host for connection.\n";
 
     std::cout << sea_green;
     std::cout << "\narguments dns-scan:" << std::endl;
@@ -1566,6 +1742,7 @@ void help_menu(void){
     std::cout << "  -host-test <1,2,3>     Set host for testing.\n";
     std::cout << "  -response-code         Get response code from host.\n";
     std::cout << "  -tcp-ping <mode>       Get response time from host, modes (live) or (default).\n";
+
     std::cout << sea_green;
     std::cout << "\narguments generation:" << std::endl;
     std::cout << reset_color;

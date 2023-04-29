@@ -49,8 +49,10 @@
 + Добавлен обход фаервола сканирования.
 + Добавлены аргументы ftp-brute-log и ftp-brute-verbose.
 + Добавлена поддержка импорта и сканирования ip диапазонов.
-+ Добавлены новые аргумент: -host-test -tcp-ping -response-code -gen-count -gen-ipv4 -gen-ipv6.
++ Добавлены новые аргументы: -host-test -tcp-ping -response-code -gen-count -gen-ipv4 -gen-ipv6.
 + Добавлены новые разделы testing и generation.
++ Добавлен брутфорс ssh AKA sftp.
++ Добавлен аргумент -sftp-brute-known-hosts для прорки доверенных ключей.
 
 # Все рабочие функции
 ```
@@ -80,12 +82,20 @@ arguments speed:
   -threads, -T <count>   Set threads for scan.
   -timeout, -t <ms>      Set timeout for scan.
 
-arguments bruteforce:
+arguments ftp bruteforce:
   -no-ftp-brute          Off bruteforce ftp.
   -ftp-login             Set path for ftp logins.
   -ftp-pass              Set path for ftp passwords.
   -ftp-brute-log         Display bruteforce ftp info.
   -ftp-brute-verbose     Display bruteforce ftp all info.
+
+arguments sftp bruteforce:
+  -no-sftp-brute          Off bruteforce sftp.
+  -sftp-login             Set path for sftp logins.
+  -sftp-pass              Set path for sftp passwords.
+  -sftp-brute-log         Display bruteforce sftp info.
+  -sftp-brute-verbose     Display bruteforce sftp all info.
+  -sftp-brute-known-hosts  Reading known_host for connection.
 
 arguments dns-scan:
   -dns-scan <.dns>       On dns-scan and set domain 1 level.
