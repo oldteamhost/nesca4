@@ -88,9 +88,9 @@ arguments speed:
 arguments bruteforce:
   -brute-login <ss,path> Set path for <ss> logins.
   -brute-pass <ss,path>  Set path for <ss> passwords.
-  -brute-verbose <ss>    Display bruteforce <ss> all info.
-  -brute-log <ss>        Display bruteforce <ss> info.
-  -no-brute <ss>         Disable <ss> bruteforce.
+  -brute-verbose <ss1,2> Display bruteforce <ss> all info.
+  -brute-log <ss1,2>     Display bruteforce <ss> info.
+  -no-brute <ss1,2>      Disable <ss> bruteforce.
 
 arguments other bruteforce:
   -sftp-brute-known-hosts Reading known_host for connection.
