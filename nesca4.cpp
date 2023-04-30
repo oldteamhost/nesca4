@@ -8,9 +8,10 @@
 #include <iostream>
 #include <chrono>
 #include <bitset>
+#include <future>
+#include <thread>
 #include <getopt.h>
 #include <mutex>
-#include <thread>
 #include <algorithm> 
 #include <random>
 #include <string>
@@ -76,9 +77,14 @@ long get_response_code(const char *node);
 std::string get_html_title(std::string node);
 
 // brute
-std::vector<std::string> brute_ftp(const std::string& ip, const std::vector<std::string>& logins, const std::vector<std::string>& passwords, int brute_log, int verbose);
-std::vector<std::string> brute_ssh(const std::string& ip, const std::vector<std::string>& logins, const std::vector<std::string>& passwords, int brute_log, int verbose, int know_hosts);
-std::vector<std::string> brute_rtsp(const std::string& ip, const std::vector<std::string>& logins, const std::vector<std::string>& passwords, int brute_log, int verbose);
+std::string brute_ftp(const std::string ip, const std::string login, const std::string pass, int brute_log, int verbose);
+std::string threads_brute_ftp(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose);
+
+std::string brute_ssh(const std::string& ip, const std::string login, const std::string pass, int brute_log, int verbose, int known_hosts);
+std::string threads_brute_ssh(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int known_hosts);
+
+std::string brute_rtsp(std::string ip, std::string login, std::string pass, int brute_log, int verbose);
+std::string threads_brute_rtsp(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose);
 
 // files
 std::vector<std::string> write_file(const std::string& filename);
@@ -140,6 +146,7 @@ class arguments_program{
         int random_ip_count;
         int octets;
         int generate_count;
+        int brute_timeout_ms = 10;
         int log_set = 200;
         int threads_temp;
         int dns_scan_domain_count = 5;
@@ -180,6 +187,10 @@ class arguments_program{
         bool off_ftp_brute;
         bool off_sftp_brute;
         bool off_rtsp_brute;
+
+        bool ftp_only;
+        bool sftp_only;
+        bool rtsp_only;
 
         bool generation_test;
 
@@ -230,6 +241,8 @@ int main(int argc, char** argv){
         {"brute-log", required_argument, 0, 30},
         {"brute-verbose", required_argument, 0, 31},
         {"brute-off", required_argument, 0, 44},
+        {"brute-only", required_argument, 0, 46},
+        {"brute-timeout", required_argument, 0, 47},
 
         {"sftp-brute-known-hosts", no_argument, 0, 45},
 
@@ -381,6 +394,11 @@ int main(int argc, char** argv){
                     else if (what[i] == "rtsp"){
                         argp.rtsp_brute_log = true;
                     }
+                    else if (what[i] == "all"){
+                        argp.ftp_brute_log = true;
+                        argp.sftp_brute_log = true;
+                        argp.rtsp_brute_log = true;
+                    }
                     else {
                         break;
                     }
@@ -400,6 +418,11 @@ int main(int argc, char** argv){
                         argp.sftp_brute_verbose = true;
                     }
                     else if (what[i] == "rtsp"){
+                        argp.rtsp_brute_verbose = true;
+                    }
+                    else if (what[i] == "all"){
+                        argp.ftp_brute_verbose = true;
+                        argp.sftp_brute_verbose = true;
                         argp.rtsp_brute_verbose = true;
                     }
                     else {
@@ -423,14 +446,46 @@ int main(int argc, char** argv){
                    else if (what[i] == "rtsp"){
                        argp.off_rtsp_brute = true;
                    }
+                   else if (what[i] == "all"){
+                       argp.off_ftp_brute = true;
+                       argp.off_sftp_brute = true;
+                       argp.off_rtsp_brute = true;
+                   }
                    else {
-                       // goto
                        break;
                    }
                }
 
                break;
            }
+           case 46:
+           {
+               std::vector<std::string> what = split_string_string(optarg, DELIMITER);
+
+               for (int i = 0; i < what.size(); i++){
+                   if (what[i] == "ftp"){
+                       argp.ftp_only = true;
+                   }
+                   else if (what[i] == "sftp"){
+                       argp.sftp_only = true;
+                   }
+                   else if (what[i] == "rtsp"){
+                       argp.rtsp_only = true;
+                   }
+                   else if (what[i] == "all"){
+                       argp.sftp_only = true;
+                       argp.ftp_only = true;
+                       argp.rtsp_only = true;
+                   }
+                   else {
+                       break;
+                   }
+               }
+               break;
+           }
+           case 47:
+               argp.brute_timeout_ms = atoi(optarg);
+               break;
            case 33:
                argp.ip_range_scan = true;
                argp.ip_range = split_string_string(optarg, DELIMITER);
@@ -1153,8 +1208,8 @@ std::string get_html_title(std::string node){
     curl_easy_cleanup(curl);
     return return_value;
 }
-std::vector<std::string> brute_ftp(const std::string& ip, const std::vector<std::string>& logins, const std::vector<std::string>& passwords, int brute_log, int verbose){
-    std::vector<std::string> result;
+std::string brute_ftp(const std::string ip, const std::string login, const std::string pass, int brute_log, int verbose){
+    std::string result;
     CURL* curl = curl_easy_init();
     bool success = false;
 
@@ -1179,51 +1234,70 @@ std::vector<std::string> brute_ftp(const std::string& ip, const std::vector<std:
 
         std::string url = "ftp://" + ip;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        if (brute_log){
+            std::string result_print_brute = "[" + std::string(get_time()) + "][FTP]     try: " + login + "@" + pass + " [BRUTEFORCE]";
+            std::cout << yellow_html;
+            std::cout << result_print_brute << std::endl;
+            std::cout << reset_color;
+        }
+        curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
+        curl_easy_setopt(curl, CURLOPT_PASSWORD, pass.c_str());
 
-        for (const auto& login : logins) {
-            for (const auto& password : passwords) {
-                if (brute_log){
-                    std::string result_print_brute = "[" + std::string(get_time()) + "][FTP]     try: " + login + "@" + password + " [BRUTEFORCE]";
-                    std::cout << yellow_html;
-                    std::cout << result_print_brute << std::endl;
-                    std::cout << reset_color;
-                }
-                curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
-                curl_easy_setopt(curl, CURLOPT_PASSWORD, password.c_str());
+        CURLcode res = curl_easy_perform(curl);
+        if (res == CURLE_OK) {
+            result = login + ":" + pass + "@";
+            curl_easy_cleanup(curl);
+            return result;
+        }
+        else {
+            curl_easy_cleanup(curl);
+            return "";
+        }
+    }
+    curl_easy_cleanup(curl);
+    return "";
+}
 
-                CURLcode res = curl_easy_perform(curl);
-                if (res == CURLE_OK) {
-                    result.push_back(login + ":" + password + "@");
-                    success = true; 
-                    break;
+std::string threads_brute_ftp(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose) {
+    std::vector<std::thread> threads;
+    std::vector<std::string> results;
+
+    for (const auto& login : logins) {
+        for (const auto& password : passwords) {
+            delay_ms(argp.brute_timeout_ms);
+            threads.emplace_back([ip, login, password, brute_log, verbose, &results]() {
+                std::string temp = brute_ftp(ip, login, password, brute_log, verbose);
+                if (!temp.empty() && temp.length() > 3) {
+                    results.push_back(temp);
                 }
-            }
-            if (success){
-                break;
-            }
+            });
         }
     }
 
-    curl_easy_cleanup(curl);
-
-    if (!success){
-        return {""};
+    for (auto& thread : threads) {
+        thread.join();
     }
 
-    return result;
+    if (!results.empty()) {
+        return results[0];
+    } else {
+        return "";
+    }
 }
 
-std::vector<std::string> brute_ssh(const std::string& ip, const std::vector<std::string>& logins, const std::vector<std::string>& passwords, int brute_log, int verbose, int know_hosts) {
-    std::vector<std::string> result;
+std::string brute_ssh(const std::string& ip, const std::string login, const std::string pass, int brute_log, int verbose, int known_hosts){
+    std::string result;
     CURL* curl = curl_easy_init();
     bool success = false;
     if (curl) {
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
         curl_easy_setopt(curl, CURLOPT_USERNAME, "");
         curl_easy_setopt(curl, CURLOPT_PASSWORD, "");
-        if (verbose) {
+
+        if (verbose){
             curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
         }
+
         curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 1L);
         curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 1L);
         curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1L);
@@ -1235,52 +1309,77 @@ std::vector<std::string> brute_ssh(const std::string& ip, const std::vector<std:
         curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 1L);
         curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 15L);
         curl_easy_setopt(curl, CURLOPT_SSH_AUTH_TYPES, CURLSSH_AUTH_PASSWORD);
-        if (know_hosts){
+
+        if (known_hosts){
             curl_easy_setopt(curl, CURLOPT_SSH_HOST_PUBLIC_KEY_MD5, "serverkeymd5");
             curl_easy_setopt(curl, CURLOPT_SSH_KNOWNHOSTS, "/path/to/known_hosts");
         }
         else {
             curl_easy_setopt(curl, CURLOPT_SSH_HOST_PUBLIC_KEY_MD5, "");
         }
+
         curl_easy_setopt(curl, CURLOPT_DNS_CACHE_TIMEOUT, 15L);
         curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
         std::string url = "sftp://" + ip;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        for (const auto& login : logins) {
-            for (const auto& password : passwords) {
-                if (brute_log) {
-                    std::cout << yellow_html;
-                    std::string result_print_brute = "[" + std::string(get_time()) + "][SSH]     try: " + login + "@" + password + " [BRUTEFORCE]";
-                    std::cout << result_print_brute << std::endl;
-                    std::cout << reset_color;
-                }
-                curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
-                curl_easy_setopt(curl, CURLOPT_PASSWORD, password.c_str());
-                CURLcode res = curl_easy_perform(curl);
-                if (res == CURLE_OK) {
-                    result.push_back(login + ":" + password + "@");
-                    success = true;
-                    break;
-                }
-            }
-            if (success) {
-                break;
-            }
+
+        if (brute_log) {
+            std::cout << yellow_html;
+            std::string result_print_brute = "[" + std::string(get_time()) + "][SSH]     try: " + login + "@" + pass + " [BRUTEFORCE]";
+            std::cout << result_print_brute << std::endl;
+            std::cout << reset_color;
         }
-        curl_easy_cleanup(curl);
+
+        curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
+        curl_easy_setopt(curl, CURLOPT_PASSWORD, pass.c_str());
+
+        CURLcode res = curl_easy_perform(curl);
+
+        if (res == CURLE_OK) {
+            result = (login + ":" + pass + "@");
+            curl_easy_cleanup(curl);
+            return result;
+        }
+        else {
+            curl_easy_cleanup(curl);
+            return "";
+        }
     }
-    if (!success) {
-        return {""};
-    }
-    return result;
+    curl_easy_cleanup(curl);
+    return "";
 }
-std::vector<std::string> brute_rtsp(const std::string& ip, const std::vector<std::string>& logins, const std::vector<std::string>& passwords, int brute_log, int verbose){
+
+std::string threads_brute_ssh(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int known_hosts) {
+    std::vector<std::thread> threads;
+    std::vector<std::string> results;
+
+    for (const auto& login : logins) {
+        for (const auto& password : passwords) {
+            delay_ms(argp.brute_timeout_ms);
+            threads.emplace_back([ip, login, password, brute_log, verbose, known_hosts, &results]() {
+                std::string temp = brute_ssh(ip, login, password, brute_log, verbose, known_hosts);
+                if (!temp.empty() && temp.length() > 3) {
+                    results.push_back(temp);
+                }
+            });
+        }
+    }
+
+    for (auto& thread : threads) {
+        thread.join();
+    }
+
+    if (!results.empty()) {
+        return results[0];
+    } else {
+        return "";
+    }
+}
+
+std::string brute_rtsp(std::string ip, std::string login, std::string pass, int brute_log, int verbose){
+    std::string result;
     curl_global_init(CURL_GLOBAL_ALL);
-
     CURL* curl = curl_easy_init();
-
-    std::vector<std::string> result;
-    bool success = false;
 
     if (curl)
     {
@@ -1302,46 +1401,56 @@ std::vector<std::string> brute_rtsp(const std::string& ip, const std::vector<std
         std::string url = "rtsp://" + ip;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
-        for (const auto& login : logins)
-        {
-            for (const auto& password : passwords)
-            {
-                if (brute_log)
-                {
-                    std::string result_print_brute = "[" + std::string(get_time()) + "][RTSP]    try: " + login + "@" + password + " [BRUTEFORCE]";
-                    std::cout << yellow_html;
-                    std::cout << result_print_brute << std::endl;
-                    std::cout << reset_color;
-                }
-                curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
-                curl_easy_setopt(curl, CURLOPT_PASSWORD, password.c_str());
 
-                CURLcode res = curl_easy_perform(curl);
-
-                if (res == CURLE_OK)
-                {
-                    result.push_back("rtsp://" + login + ":" + password + "@");
-                    success = true;
-                    break;
-                }
-            }
-            if (success)
-            {
-                break;
-            }
+        if (brute_log){
+            std::string result_print_brute = "[" + std::string(get_time()) + "][RTSP]    try: " + login + "@" + pass + " [BRUTEFORCE]";
+            std::cout << yellow_html;
+            std::cout << result_print_brute << std::endl;
+            std::cout << reset_color;
         }
+        curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
+        curl_easy_setopt(curl, CURLOPT_PASSWORD, pass.c_str());
 
-        curl_easy_cleanup(curl);
+        CURLcode res = curl_easy_perform(curl);
+
+        if (res == CURLE_OK){
+            result = "rtsp://" + login + ":" + pass + "@";
+            curl_easy_cleanup(curl);
+            return result;
+        }
+        else {
+            curl_easy_cleanup(curl);
+            return "";
+        }
     }
-
     curl_global_cleanup();
+    return "";
+}
+std::string threads_brute_rtsp(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose) {
+    std::vector<std::thread> threads;
+    std::vector<std::string> results;
 
-    if (!success)
-    {
-        return {""};
+    for (const auto& login : logins) {
+        for (const auto& password : passwords) {
+            delay_ms(argp.brute_timeout_ms);
+            threads.emplace_back([ip, login, password, brute_log, verbose, &results]() {
+                std::string temp = brute_rtsp(ip, login, password, brute_log, verbose);
+                if (!temp.empty() && temp.length() > 3) {
+                    results.push_back(temp);
+                }
+            });
+        }
     }
 
-    return result;
+    for (auto& thread : threads) {
+        thread.join();
+    }
+
+    if (!results.empty()) {
+        return results[0];
+    } else {
+        return "";
+    }
 }
 
 const char* generate_ipv6(int num_octets){
@@ -1660,7 +1769,7 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 std::string result = ip + ":" + std::to_string(port);
                 std::string result_print_brute;
                 std::string result_txt;
-                std::vector<std::string> brute_temp;
+                std::string brute_temp;
                 std::string result_print;
 
                 if (argp.off_ftp_brute != true){
@@ -1670,14 +1779,21 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     std::cout << result_print_brute << std::endl;
                     std::cout << reset_color;
 
-                    brute_temp = brute_ftp(ip, argp.ftp_logins, argp.ftp_passwords, argp.ftp_brute_log, argp.ftp_brute_verbose);
-                    result_txt = "[" + std::string(get_time()) + "][FTP]:" + brute_temp[0] + result;
+                    brute_temp = threads_brute_ftp(ip, argp.ftp_logins, argp.ftp_passwords, argp.ftp_brute_log, argp.ftp_brute_verbose);
+                    result_txt = "[" + std::string(get_time()) + "][FTP]:" + brute_temp + result;
                 }
                 else {
                     result_txt = "[" + std::string(get_time()) + "][FTP]:" + result;
                 }
                 if (argp.off_ftp_brute != true){
-                    result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + brute_temp[0] + result + reset_color;
+                    if (argp.ftp_only){
+                        if (brute_temp.length() > 1){
+                            result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + brute_temp + result + reset_color;
+                        }
+                    }
+                    else {
+                        result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + brute_temp + result + reset_color + "\n";
+                    }
                 }
                 else {
                     result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + result + reset_color;
@@ -1687,7 +1803,7 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 }
 
 
-                std::cout << result_print << std::endl;
+                std::cout << result_print;
 
             }
             else if (port == 22){
@@ -1696,7 +1812,7 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 std::string result = ip + ":" + std::to_string(port);
                 std::string result_print_brute;
                 std::string result_txt;
-                std::vector<std::string> brute_temp;
+                std::string brute_temp;
                 std::string result_print;
 
                 if (argp.off_sftp_brute != true){
@@ -1706,24 +1822,30 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     std::cout << result_print_brute << std::endl;
                     std::cout << reset_color;
 
-                    brute_temp = brute_ssh(ip, argp.sftp_logins, argp.sftp_passwords, argp.sftp_brute_log, argp.sftp_brute_verbose, argp.sftp_using_know_hosts);
-                    result_txt = "[" + std::string(get_time()) + "][SFTP]:" + brute_temp[0] + result;
+                    brute_temp = threads_brute_ssh(ip, argp.sftp_logins, argp.sftp_passwords, argp.sftp_brute_log, argp.sftp_brute_verbose, argp.sftp_using_know_hosts);
+                    result_txt = "[" + std::string(get_time()) + "][SFTP]:" + brute_temp + result;
                 }
                 else {
                     result_txt = "[" + std::string(get_time()) + "][SFTP]:" + result;
                 }
                 if (argp.off_sftp_brute != true){
-                    result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + brute_temp[0] + result + reset_color;
+                    if (argp.sftp_only){
+                        if (brute_temp.length() > 1){
+                            result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + brute_temp + result + reset_color;
+                        }
+                    }
+                    else {
+                        result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + brute_temp + result + reset_color + "\n";
+                    }
                 }
                 else {
-                    result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + result + reset_color;
+                    result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + result + reset_color + "\n";
                 }
                 if (argp.txt){
                     int temp = write_line(argp.txt_save, result_txt);
                 }
 
-
-                std::cout << result_print << std::endl;
+                std::cout << result_print;
             }
             else if (port == 554){
                 std::lock_guard<std::mutex> guard(mtx);
@@ -1731,7 +1853,7 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 std::string result = ip + ":" + std::to_string(port);
                 std::string result_print_brute;
                 std::string result_txt;
-                std::vector<std::string> brute_temp;
+                std::string brute_temp;
                 std::string result_print;
 
                 if (argp.off_rtsp_brute != true){
@@ -1740,15 +1862,21 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     std::cout << yellow_html;
                     std::cout << result_print_brute << std::endl;
                     std::cout << reset_color;
-
-                    brute_temp = brute_rtsp(ip, argp.rtsp_logins, argp.rtsp_passwords, argp.rtsp_brute_log, argp.rtsp_brute_verbose);
-                    result_txt = "[" + std::string(get_time()) + "][RTSP]:" + brute_temp[0] + result;
+                    brute_temp = threads_brute_rtsp(ip, argp.rtsp_logins, argp.rtsp_passwords, argp.rtsp_brute_log, argp.rtsp_brute_verbose);
+                    result_txt = "[" + std::string(get_time()) + "][RTSP]:" + brute_temp + result;
                 }
                 else {
                     result_txt = "[" + std::string(get_time()) + "][RTSP]:" + result;
                 }
                 if (argp.off_rtsp_brute != true){
-                    result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + brute_temp[0] + result + reset_color;
+                    if (argp.rtsp_only){
+                        if (brute_temp.length() > 1){
+                            result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + brute_temp + result + reset_color;
+                        }
+                    }
+                    else {
+                        result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + brute_temp + result + reset_color + "\n";
+                    }
                 }
                 else {
                     result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + result + reset_color;
@@ -1757,7 +1885,7 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     int temp = write_line(argp.txt_save, result_txt);
                 }
 
-                std::cout << result_print << std::endl;
+                std::cout << result_print;
             }
             else{
                 std::string result = ip + ":" + std::to_string(port);
@@ -1905,8 +2033,8 @@ void help_menu(void){
     std::cout << sea_green;
     std::cout << "\narguments ports:" << std::endl;
     std::cout << reset_color;
-    std::cout << "  -ports, -p <1,2,3>  Set ports on scan.\n";
-    std::cout << "     - example ports: all, nesca, top100, top50\n";
+    std::cout << "  -ports, -p <1,2,3>     Set ports on scan.\n";
+    std::cout << "     - example ports:    all, nesca, top100, top50\n";
 
     std::cout << sea_green;
     std::cout << "\narguments speed:" << std::endl;
@@ -1919,13 +2047,15 @@ void help_menu(void){
     std::cout << reset_color;
     std::cout << "  -brute-login <ss,path> Set path for <ss> logins.\n";
     std::cout << "  -brute-pass <ss,path>  Set path for <ss> passwords.\n";
-    std::cout << "  -brute-verbose <ss>    Display bruteforce <ss> all info.\n";
-    std::cout << "  -brute-log <ss>        Display bruteforce <ss> info.\n";
-    std::cout << "  -no-brute <ss>         Disable <ss> bruteforce.\n";
+    std::cout << "  -brute-timeout <ms>    Edit brute timout.\n";
+    std::cout << "  -brute-only <ss,2>     Display only success <ss> bruteforce.\n";
+    std::cout << "  -no-brute <ss,2>       Disable <ss> bruteforce.\n";
 
     std::cout << sea_green;
     std::cout << "\narguments other bruteforce:" << std::endl;
     std::cout << reset_color;
+    std::cout << "  -brute-verbose <ss,2>  Display bruteforce <ss> all info.\n";
+    std::cout << "  -brute-log <ss,2>      Display bruteforce <ss> info.\n";
     std::cout << "  -sftp-brute-known-hosts Reading known_host for connection.\n";
 
     std::cout << sea_green;

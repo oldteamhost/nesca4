@@ -56,7 +56,10 @@
 + Добавлен аргумент -sftp-brute-known-hosts для прорки доверенных ключей.
 + Добавлен брутфорс RTSP.
 + Убраны ненужные брутфорс аргументы, добавлены более автономные.
-+ Исправлено segmentation error при откючение RTSP
++ Исправлено segmentation error при откючение RTSP.
++ Добавлены потоки для брутфорса FTP, SSH, RTSP.
++ Добавлен новый аргумент, -brute-timeout.
++ Исправлена максимальная задержка брутфорса в 25секунд.
 
 # Все рабочие функции
 ```
@@ -79,8 +82,8 @@ arguments target:
   -random-ip <count>     Set random ips target.
 
 arguments ports:
-  -ports, -p <1,2,3>  Set ports on scan.
-     - example ports: all, nesca, top100, top50
+  -ports, -p <1,2,3>     Set ports on scan.
+     - example ports:    all, nesca, top100, top50
 
 arguments speed:
   -threads, -T <count>   Set threads for scan.
@@ -89,11 +92,13 @@ arguments speed:
 arguments bruteforce:
   -brute-login <ss,path> Set path for <ss> logins.
   -brute-pass <ss,path>  Set path for <ss> passwords.
-  -brute-verbose <ss1,2> Display bruteforce <ss> all info.
-  -brute-log <ss1,2>     Display bruteforce <ss> info.
-  -no-brute <ss1,2>      Disable <ss> bruteforce.
+  -brute-timeout <ms>    Edit brute timout.
+  -brute-only <ss,2>     Display only success <ss> bruteforce.
+  -no-brute <ss,2>       Disable <ss> bruteforce.
 
 arguments other bruteforce:
+  -brute-verbose <ss,2>  Display bruteforce <ss> all info.
+  -brute-log <ss,2>      Display bruteforce <ss> info.
   -sftp-brute-known-hosts Reading known_host for connection.
 
 arguments dns-scan:
@@ -131,6 +136,10 @@ arguments generation:
 
 - По стандарту для сканирования `портов` и `DNS` стоят `20 потоков`.
 
+## Потоки при брутфорсе
+Для брутфорса выделяються отдельные потоки, на каждую комбинацию логина и пароля, свой поток. За счёт этого максимальная задержка подбора, которую
+я смогу поймать равна `25 секунд`.
+
 ## Таймаут
 Для указания задержки при работе любого процесса в `nesca4` служит аргумент `-timeout`, который принимает
 количество милисекунд в параметр. При сканирование портов от него зависит точность, и нагрузка на процессор.
@@ -139,6 +148,10 @@ arguments generation:
 - При сканирование портов по стандарту `timeout` стоит в `2 секунды` AKA `2000 милисекунд`.
 - При сканирование `DNS` по стандарт стоит в `100 милисекунд`.
 - При других других задачах, сохраняеться значение в `2 секунды` AKA `200 милисекунд`.
+
+### Таймаут при брутфорсе
+За этот таймаут отвечает отдельный аргумент `-brute-timeout`, которые аналогично принимает количество милисекунд.
+По стандарту стоят `10 милисекунд`. Тут слишком много ставить не нужно.
 
 ## Цель
 Для указания цели в `nesca4` есть 7 аргументов, давайте их разберём:
