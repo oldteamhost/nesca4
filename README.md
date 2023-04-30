@@ -54,6 +54,8 @@
 + Добавлены новые разделы testing и generation.
 + Добавлен брутфорс ssh AKA sftp.
 + Добавлен аргумент -sftp-brute-known-hosts для прорки доверенных ключей.
++ Добавлен брутфорс RTSP.
++ Убраны ненужные брутфорс аргументы, добавлены более автономные.
 
 # Все рабочие функции
 ```
@@ -83,19 +85,14 @@ arguments speed:
   -threads, -T <count>   Set threads for scan.
   -timeout, -t <ms>      Set timeout for scan.
 
-arguments ftp bruteforce:
-  -no-ftp-brute          Off bruteforce ftp.
-  -ftp-login             Set path for ftp logins.
-  -ftp-pass              Set path for ftp passwords.
-  -ftp-brute-log         Display bruteforce ftp info.
-  -ftp-brute-verbose     Display bruteforce ftp all info.
+arguments bruteforce:
+  -brute-login <ss,path> Set path for <ss> logins.
+  -brute-pass <ss,path>  Set path for <ss> passwords.
+  -brute-verbose <ss>    Display bruteforce <ss> all info.
+  -brute-log <ss>        Display bruteforce <ss> info.
+  -no-brute <ss>         Disable <ss> bruteforce.
 
-arguments sftp bruteforce:
-  -no-sftp-brute          Off bruteforce sftp.
-  -sftp-login             Set path for sftp logins.
-  -sftp-pass              Set path for sftp passwords.
-  -sftp-brute-log         Display bruteforce sftp info.
-  -sftp-brute-verbose     Display bruteforce sftp all info.
+arguments other bruteforce:
   -sftp-brute-known-hosts Reading known_host for connection.
 
 arguments dns-scan:

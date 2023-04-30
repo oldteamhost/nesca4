@@ -1,0 +1,10 @@
+admin
+ftp
+root
+user
+12345
+administrator
+qwerty
+qwerty123
+1234
+123
