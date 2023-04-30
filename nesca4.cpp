@@ -189,12 +189,14 @@ class arguments_program{
         bool off_rtsp_brute;
 
         bool ftp_only;
+        bool no_mutex;
         bool sftp_only;
         bool rtsp_only;
 
         bool generation_test;
 
         bool host_testing;
+        bool thread_on_port;
         bool response_code_test;
         bool tcp_ping_test;
         bool generate_ipv4_test;
@@ -240,6 +242,7 @@ int main(int argc, char** argv){
 
         {"brute-log", required_argument, 0, 30},
         {"brute-verbose", required_argument, 0, 31},
+        {"thread-on-port", no_argument, 0, 48},
         {"brute-off", required_argument, 0, 44},
         {"brute-only", required_argument, 0, 46},
         {"brute-timeout", required_argument, 0, 47},
@@ -260,7 +263,6 @@ int main(int argc, char** argv){
         {"version", no_argument, 0, 'v'},
         {"ports", no_argument, 0, 'p'},
 
-        {"dns-off", no_argument, 0, 17},
         {"db", no_argument, 0, 7},
         {"error", no_argument, 0, 25},
 
@@ -485,6 +487,9 @@ int main(int argc, char** argv){
            }
            case 47:
                argp.brute_timeout_ms = atoi(optarg);
+               break;
+           case 48:
+               argp.thread_on_port = true;
                break;
            case 33:
                argp.ip_range_scan = true;
@@ -733,27 +738,27 @@ int main(int argc, char** argv){
                     if (test == 0) {
                         if (argp.debug) {
                             std::lock_guard<std::mutex> lock(mtx);
-                                result_print = "[" + std::string(get_time()) + "] [BA] " + result + " FAILED";
-                                std::string *result_printp = &result_print;
+                            result_print = "[" + std::string(get_time()) + "] [BA] " + result + " FAILED";
+                            std::string *result_printp = &result_print;
 
-                                if (argp.txt){
-                                    int temp = write_line(argp.txt_save, *result_printp);
-                                }
-
-                                std::cout << yellow_html;
-                                std::cout << result_print << std::endl;
-                                std::cout << reset_color;
-                        }
-                    }
-                    else {
-                            std::lock_guard<std::mutex> lock(mtx);
-                            std::string result_print_color = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + result + reset_color + gray_nesca + " T: " + golder_rod + get_html_title(result) + reset_color;
-                            std::string result_txt = "[" + std::string(get_time()) + "][BA]:" + result + " T: " + get_html_title(result);
-                            std::string *result_printp = &result_txt;
                             if (argp.txt){
                                 int temp = write_line(argp.txt_save, *result_printp);
                             }
-                            std::cout << result_print_color << std::endl;
+
+                            std::cout << yellow_html;
+                            std::cout << result_print << std::endl;
+                            std::cout << reset_color;
+                        }
+                    }
+                    else {
+                        std::lock_guard<std::mutex> lock(mtx);
+                        std::string result_print_color = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + result + reset_color + gray_nesca + " T: " + golder_rod + get_html_title(result) + reset_color;
+                        std::string result_txt = "[" + std::string(get_time()) + "][BA]:" + result + " T: " + get_html_title(result);
+                        std::string *result_printp = &result_txt;
+                        if (argp.txt){
+                            int temp = write_line(argp.txt_save, *result_printp);
+                        }
+                        std::cout << result_print_color << std::endl;
                     }
                 }
             }).detach();
@@ -800,6 +805,7 @@ int main(int argc, char** argv){
     }
 
     std::vector<std::thread> threads;
+
     long ip_count = 0;
     int size = result.size();
     for (const auto& ip : result) {
