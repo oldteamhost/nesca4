@@ -162,6 +162,7 @@ class arguments_program{
         bool warning_threads;
         bool ping_off;
         bool txt;
+        bool html;
         bool color_off;
 
         bool ftp_brute_log;
@@ -344,7 +345,6 @@ int main(int argc, char** argv){
                    argp.path_rtsp_login = what_convert;
                }
                else {
-                   // goto
                    break;
               }
 
@@ -364,7 +364,6 @@ int main(int argc, char** argv){
                    argp.path_rtsp_pass = what_convert;
                }
                else {
-                   // goto
                    break;
               }
                break;
@@ -383,7 +382,6 @@ int main(int argc, char** argv){
                         argp.rtsp_brute_log = true;
                     }
                     else {
-                        // goto
                         break;
                     }
                 }
@@ -405,7 +403,6 @@ int main(int argc, char** argv){
                         argp.rtsp_brute_verbose = true;
                     }
                     else {
-                        // goto
                         break;
                     }
                 }
@@ -659,15 +656,6 @@ int main(int argc, char** argv){
     }
 
 
-    argp.ftp_logins = write_file(argp.path_ftp_login);
-    argp.ftp_passwords = write_file(argp.path_ftp_pass);
-
-    argp.sftp_logins = write_file(argp.path_sftp_login);
-    argp.sftp_passwords = write_file(argp.path_sftp_pass);
-
-    argp.rtsp_logins = write_file(argp.path_rtsp_login);
-    argp.rtsp_passwords = write_file(argp.path_rtsp_pass);
-
     checking_default_files();
 
     std::cout << green_html;
@@ -725,6 +713,16 @@ int main(int argc, char** argv){
     // end dns_scan
 
     // start tcp_scan_port
+
+    argp.ftp_logins = write_file(argp.path_ftp_login);
+    argp.ftp_passwords = write_file(argp.path_ftp_pass);
+
+    argp.sftp_logins = write_file(argp.path_sftp_login);
+    argp.sftp_passwords = write_file(argp.path_sftp_pass);
+
+    argp.rtsp_logins = write_file(argp.path_rtsp_login);
+    argp.rtsp_passwords = write_file(argp.path_rtsp_pass);
+
     std::vector<std::string> result;
     
     if (argp.ip_scan_import || argp.ip_scan){
@@ -1327,7 +1325,6 @@ std::vector<std::string> brute_rtsp(const std::string& ip, const std::vector<std
                     break;
                 }
             }
-
             if (success)
             {
                 break;
@@ -1750,7 +1747,7 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 else {
                     result_txt = "[" + std::string(get_time()) + "][RTSP]:" + result;
                 }
-                if (argp.off_sftp_brute != true){
+                if (argp.off_rtsp_brute != true){
                     result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + brute_temp[0] + result + reset_color;
                 }
                 else {
