@@ -1,0 +1,52 @@
+#include "include/generation.h"
+#include <random>
+#include <cstring>
+#include <sstream>
+
+const char* generate_ipv6(int num_octets){
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(0, 65535);
+
+    static char ip[40];
+    std::stringstream ss;
+    for (int i = 0; i < num_octets; i++) {
+        ss << std::hex << distrib(gen);
+        if (i < num_octets - 1) ss << ":";
+    }
+    std::string ip_str = ss.str();
+    strcpy(ip, ip_str.c_str());
+    return ip;
+}
+
+const char* generate_ipv4(void){
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(0, 255);
+
+    static char ip[16];
+    std::stringstream ss;
+    for (int i = 0; i < 4; i++) {
+        ss << distrib(gen);
+        if (i < 3) ss << ".";
+    }
+    std::string ip_str = ss.str();
+    strcpy(ip, ip_str.c_str());
+    return ip;
+}
+
+std::string generate_random_str(int len, std::string dictionary){
+    std::string result;
+
+    std::random_device rd;
+    std::mt19937 engine(rd());
+
+    std::uniform_int_distribution<int> dist(0, dictionary.length() - 1);
+
+    for (int i = 0; i < len; i++) {
+        result += dictionary[dist(engine)];
+    }
+
+    return result;
+}
+
