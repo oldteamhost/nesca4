@@ -1,7 +1,12 @@
 #include "include/networktool.h"
 #include "include/callbacks.h"
+#include "include/other.h"
 #include <curl/curl.h>
+#include <sstream>
+#include <algorithm>
+#include <cctype>
 #include <cstring>
+#include <vector>
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -18,6 +23,9 @@
 #include <unistd.h>
 #include <errno.h>
 #endif
+
+std::string reset_color2 = "\033[0m";
+std::string yellow_html2 = "\033[38;2;240;215;75m";
 
 std::string get_dns_ip(const char* ip){
     struct addrinfo hints, *result = nullptr;
@@ -184,3 +192,98 @@ std::string get_html_title(std::string node){
     curl_easy_cleanup(curl);
     return return_value;
 }
+
+
+std::string get_paths_from_ip_address(const std::string& ip){
+    CURL* curl = curl_easy_init();
+  std::string path;
+  if (curl) {
+    curl_easy_setopt(curl, CURLOPT_URL, ("http://" + ip).c_str());
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L); 
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+
+    CURLcode res = curl_easy_perform(curl);
+
+    if (res == CURLE_OK) {
+      char* redirect_url;
+      curl_easy_getinfo(curl, CURLINFO_REDIRECT_URL, &redirect_url);
+      if (redirect_url) {
+        std::cout << "Redirected to: " << redirect_url << std::endl;
+      }
+
+      char* effective_url;
+      curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &effective_url);
+      if (effective_url) {
+        std::string url(effective_url);
+        size_t pos = url.find_last_of("/");
+        if (pos != std::string::npos) {
+          path = "/" + url.substr(pos + 1);
+        }
+      }
+    } 
+    curl_easy_cleanup(curl);
+    return "";
+
+  }
+  curl_easy_cleanup(curl);
+  return path;
+}
+
+std::string send_http_request(std::string url){
+    CURL* curl = curl_easy_init();
+
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+
+    std::string response_string;
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback_request);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_string);
+
+    CURLcode res = curl_easy_perform(curl);
+
+    if (res != CURLE_OK) {
+        return "";
+    }
+
+    curl_easy_cleanup(curl);
+
+    return response_string;
+}
+
+std::string parse_content_from_meta(const std::string& html){
+    std::string htmll = html;
+    std::transform(htmll.begin(), htmll.end(), htmll.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+
+    std::string url = "";
+    std::string tagStart = "<meta";
+    std::string tagEnd = ">";
+    std::string httpEquiv = "http-equiv=\"refresh\"";
+    std::string content = "content=\"";
+    size_t metaPos = htmll.find(tagStart);
+
+    while (metaPos != std::string::npos) {
+        size_t tagEndPos = htmll.find(tagEnd, metaPos);
+        std::string metaTag = htmll.substr(metaPos, tagEndPos - metaPos + 1);
+        size_t httpEquivPos = metaTag.find(httpEquiv);
+        if (httpEquivPos != std::string::npos) {
+            size_t contentPos = metaTag.find(content);
+            if (contentPos != std::string::npos) {
+                size_t urlStartPos = contentPos + content.length();
+                size_t urlEndPos = metaTag.find("\"", urlStartPos);
+                url = metaTag.substr(urlStartPos, urlEndPos - urlStartPos);
+                std::vector<std::string> url_prefixes = {"0; url=", "0;url=", "1; url=",
+                                                        "1;url=", "2; url", "2;url=",
+                                                        "0.0; url=", "0.0;url=", "12; url=", "12;url="};
+                for (auto& prefix : url_prefixes){
+                    if (url.compare(0, prefix.length(), prefix) == 0) {
+                        url.erase(0, prefix.length());
+                    }
+                }
+                break;
+            }
+        }
+        metaPos = htmll.find(tagStart, tagEndPos);
+    }
+    return url;
+}
+

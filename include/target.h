@@ -1,3 +1,6 @@
+#ifndef TARGET_H
+#define TARGET_H
+
 #include <iostream>
 #include <vector>
 
@@ -10,3 +13,4 @@ std::vector<int> split_string_int(const std::string& str, char delimiter);
 // split string
 std::vector<std::string> split_string_string(const std::string& str, char delimiter);
 
+#endif

@@ -3,9 +3,11 @@
 // license GPL-3.0
 // // // // // // // // // 
 
+#include <cstddef>
 #include <iostream>
 #include <chrono>
 #include <future>
+#include <netdb.h>
 #include <thread>
 #include <getopt.h>
 #include <mutex>
@@ -28,6 +30,7 @@
 #define DELIMITER ','
 
 std::mutex mtx;
+checking_finds cfs;
 
 std::string logo_red = "\033[38;2;255;100;100m";
 std::string gray_nesca = "\033[38;2;112;112;112m";
@@ -65,6 +68,9 @@ class arguments_program{
         std::vector<std::string> sftp_logins;
         std::vector<std::string> sftp_passwords;
 
+        std::vector<std::string> http_logins;
+        std::vector<std::string> http_passwords;
+
         const char* path_range;
         const char* path_cidr;
         const char* path_ips;
@@ -77,6 +83,9 @@ class arguments_program{
 
         std::string path_rtsp_login = "passwd/rtsp_logins.txt";
         std::string path_rtsp_pass = "passwd/rtsp_passwords.txt";
+
+        std::string path_http_login = "passwd/http_logins.txt";
+        std::string path_http_pass = "passwd/http_passwords.txt";
 
         int random_ip_count;
         int octets;
@@ -111,10 +120,12 @@ class arguments_program{
         bool ftp_brute_log;
         bool sftp_brute_log;
         bool rtsp_brute_log;
+        bool http_brute_log;
 
         bool ftp_brute_verbose;
         bool sftp_brute_verbose;
         bool rtsp_brute_verbose;
+        bool http_brute_verbose;
 
         bool sftp_using_know_hosts;
 
@@ -123,10 +134,12 @@ class arguments_program{
         bool off_ftp_brute;
         bool off_sftp_brute;
         bool off_rtsp_brute;
+        bool off_http_brute;
 
         bool ftp_only;
-        bool no_mutex;
+        bool no_get_path;
         bool sftp_only;
+        bool http_only;
         bool rtsp_only;
 
         bool generation_test;
@@ -192,6 +205,7 @@ int main(int argc, char** argv){
         {"debug", no_argument, 0, 27},
         {"on-get-dns", no_argument, 0, 8},
         {"er", no_argument, 0, 28},
+        {"no-get-path", no_argument, 0, 50},
         {"no-ping", no_argument, 0, 29},
         {"no-color", no_argument, 0, 26},
         {"log-set", required_argument, 0, 24},
@@ -272,6 +286,9 @@ int main(int argc, char** argv){
                else if (what[0] == "rtsp"){
                    argp.path_rtsp_login = what_convert;
                }
+               else if (what[0] == "http"){
+                   argp.path_http_login = what_convert;
+               }
                else {
                    break;
               }
@@ -291,6 +308,9 @@ int main(int argc, char** argv){
                else if (what[0] == "rtsp"){
                    argp.path_rtsp_pass = what_convert;
                }
+               else if (what[0] == "http"){
+                   argp.path_http_pass = what_convert;
+               }
                else {
                    break;
               }
@@ -309,10 +329,14 @@ int main(int argc, char** argv){
                     else if (what[i] == "rtsp"){
                         argp.rtsp_brute_log = true;
                     }
+                    else if (what[i] == "http"){
+                        argp.http_brute_log = true;
+                    }
                     else if (what[i] == "all"){
                         argp.ftp_brute_log = true;
                         argp.sftp_brute_log = true;
                         argp.rtsp_brute_log = true;
+                        argp.http_brute_log = true;
                     }
                     else {
                         break;
@@ -335,10 +359,14 @@ int main(int argc, char** argv){
                     else if (what[i] == "rtsp"){
                         argp.rtsp_brute_verbose = true;
                     }
+                    else if (what[i] == "http"){
+                        argp.http_brute_verbose = true;
+                    }
                     else if (what[i] == "all"){
                         argp.ftp_brute_verbose = true;
                         argp.sftp_brute_verbose = true;
                         argp.rtsp_brute_verbose = true;
+                        argp.http_brute_verbose = true;
                     }
                     else {
                         break;
@@ -361,10 +389,14 @@ int main(int argc, char** argv){
                    else if (what[i] == "rtsp"){
                        argp.off_rtsp_brute = true;
                    }
+                   else if (what[i] == "http"){
+                       argp.off_http_brute = true;
+                   }
                    else if (what[i] == "all"){
                        argp.off_ftp_brute = true;
                        argp.off_sftp_brute = true;
                        argp.off_rtsp_brute = true;
+                       argp.off_http_brute = true;
                    }
                    else {
                        break;
@@ -387,10 +419,14 @@ int main(int argc, char** argv){
                    else if (what[i] == "rtsp"){
                        argp.rtsp_only = true;
                    }
+                   else if (what[i] == "http"){
+                       argp.http_only = true;
+                   }
                    else if (what[i] == "all"){
                        argp.sftp_only = true;
                        argp.ftp_only = true;
                        argp.rtsp_only = true;
+                       argp.http_only = true;
                    }
                    else {
                        break;
@@ -508,6 +544,9 @@ int main(int argc, char** argv){
                argp.octets = atoi(optarg);
                break;
            }
+           case 50:
+               argp.no_get_path = true;
+               break;
         }
     }
 
@@ -618,6 +657,7 @@ int main(int argc, char** argv){
         char what;
         std::cout << red_html;
         std::cout << "[" << get_time() << "]" << "[WARING]:You set " << argp.threads_temp << " threads, this can severely overload a weak cpu, are you sure you want to continue? (y,n): ";
+
         std::cin >> what;
         std::cout << reset_color;
 
@@ -695,6 +735,9 @@ int main(int argc, char** argv){
 
     argp.rtsp_logins = write_file(argp.path_rtsp_login);
     argp.rtsp_passwords = write_file(argp.path_rtsp_pass);
+
+    argp.http_logins = write_file(argp.path_http_login);
+    argp.http_passwords = write_file(argp.path_http_pass);
 
     std::vector<std::string> result;
     
@@ -804,7 +847,7 @@ void checking_default_files(void){
     if (check_file(argp.path_ftp_login.c_str())){
        std::cout << green_html;
        std::cout << "[" << get_time() << "]" << "[OK]:FTP logins loaded (" << get_count_lines(argp.path_ftp_login.c_str()) << ") entries" << std::endl;
-        std::cout << reset_color;
+       std::cout << reset_color;
     }
     else {
         std::cout << yellow_html;
@@ -821,10 +864,30 @@ void checking_default_files(void){
         std::cout << "[" << get_time() << "]" << "[FAILED]:" << argp.path_ftp_pass << " (" << get_count_lines(argp.path_ftp_pass.c_str()) << ") entries" << std::endl;
         std::cout << reset_color;
     }
+    if (check_file(argp.path_http_login.c_str())){
+       std::cout << green_html;
+       std::cout << "[" << get_time() << "]" << "[OK]:HTTP logins loaded (" << get_count_lines(argp.path_http_login.c_str()) << ") entries" << std::endl;
+       std::cout << reset_color;
+    }
+    else {
+        std::cout << yellow_html;
+        std::cout << "[" << get_time() << "]" << "[FAILED]:" << argp.path_http_login << " (" << get_count_lines(argp.path_http_login.c_str()) << ") entries" << std::endl;
+        std::cout << reset_color;
+    }
+    if (check_file(argp.path_http_pass.c_str())){
+       std::cout << green_html;
+       std::cout << "[" << get_time() << "]" << "[OK]:HTTP passwords loaded (" << get_count_lines(argp.path_http_pass.c_str()) << ") entries" << std::endl;
+       std::cout << reset_color;
+    }
+    else {
+        std::cout << yellow_html;
+        std::cout << "[" << get_time() << "]" << "[FAILED]:" << argp.path_http_pass << " (" << get_count_lines(argp.path_http_pass.c_str()) << ") entries" << std::endl;
+        std::cout << reset_color;
+    }
 
     if (check_file(argp.path_sftp_login.c_str())){
        std::cout << green_html;
-       std::cout << "[" << get_time() << "]" << "[OK]:SFTP logins loaded (" << get_count_lines(argp.path_sftp_login.c_str()) << ") entries" << std::endl;
+       std::cout << "[" << get_time() << "]" << "[OK]:SSH logins loaded (" << get_count_lines(argp.path_sftp_login.c_str()) << ") entries" << std::endl;
        std::cout << reset_color;
     }
     else {
@@ -834,7 +897,7 @@ void checking_default_files(void){
     }
     if (check_file(argp.path_sftp_pass.c_str())){
        std::cout << green_html;
-       std::cout << "[" << get_time() << "]" << "[OK]:SFTP passwords loaded (" << get_count_lines(argp.path_sftp_pass.c_str()) << ") entries" << std::endl;
+       std::cout << "[" << get_time() << "]" << "[OK]:SSH passwords loaded (" << get_count_lines(argp.path_sftp_pass.c_str()) << ") entries" << std::endl;
        std::cout << reset_color;
     }
     else {
@@ -871,7 +934,7 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
     for (const auto& port : ports) {
         int result = tcp_scan_port(ip.c_str(), port, timeout_ms);
         if (result == 0) {
-            if (port == 80 || port == 8080 || port == 8081 || port == 8888 || port == 8008){
+            if (port == 80 || port == 81 || port == 8080 || port == 8081 || port == 8888 || port == 8008){
 
                 if (argp.ping_off != true){
                     double temp_ping = measure_ping_time(ip.c_str(), port);
@@ -881,7 +944,51 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     }
                 }
 
-                std::string result = ip + ":" + std::to_string(port);
+                std::string result = "http://" + ip + ":" + std::to_string(port);
+                std::string redirect;
+                if (argp.no_get_path != true){
+                    // getting method 1 from content location:
+                    std::string path = get_paths_from_ip_address(ip);
+
+                    if (path.length() > 1){
+                        redirect = "http://" + ip + ":" + std::to_string(port) + path;
+                    }
+                    else {
+                        // getting method 2 from http-equiv
+                        std::string code = send_http_request(ip);
+                        std::string path1 = parse_content_from_meta(code);
+                        std::string paste_;
+
+                        if (path1.length() > 1) {
+                            redirect = parse_content_from_meta("http://" + code);
+
+                            // clean redirect    
+                            std::vector<std::string> pos_clean = {"http://", "https://", ip};
+                            size_t finding0 = redirect.find("http://");
+                            size_t finding1 = redirect.find("https://");
+                            size_t finding2 = redirect.find("ip");
+
+                            if (finding1 == std::string::npos && finding1 == std::string::npos && finding2 == std::string::npos){
+                                if (redirect[0] != '/'){
+                                    paste_ = "http://" + ip + ":" + std::to_string(port) + "/";
+                                }
+                                else {
+                                    paste_ = "http://" + ip + ":" + std::to_string(port);
+                                }
+
+                                redirect.insert(0, paste_);
+                            }
+                        }
+                    }
+
+                    std::string axis_camera = cfs.check_axis_camera(path);
+                    std::string basic_auth = cfs.check_basic_auth(path);
+
+                    if (basic_auth.length() > 1 || axis_camera.length() > 1){
+                    }
+                   // threads_brute_http(result, argp.http_logins, argp.http_passwords, argp.http_brute_log, argp.http_brute_verbose, argp.brute_timeout_ms);
+                }
+              
                 std::string result_print;
                 if (argp.no_get_dns){
                     result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + result + reset_color + gray_nesca + " T: " + golder_rod + get_html_title(ip) + reset_color + gray_nesca + " D: " + sea_green + get_dns_ip(ip.c_str()) + reset_color;
@@ -896,6 +1003,13 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     int temp = write_line(argp.txt_save, result_txt);
                 }
                 std::cout << result_print << std::endl;
+                if (argp.no_get_path != true && redirect.length() != result.length()){
+                    if (redirect.length() != 0){
+                        std::cout << yellow_html;
+                        std::cout << "[" << get_time() << "][^] Redirect to: " << redirect << std::endl;
+                        std::cout << reset_color;
+                    }
+                }
             }
             else if (port == 20 || port == 21){
                 std::lock_guard<std::mutex> guard(mtx);
@@ -1123,6 +1237,7 @@ void help_menu(void){
     std::cout << "  -db, -debug            On debug mode, save and display not even working hosts.\n";
     std::cout << "  -er, -error            On display errors.\n";
     std::cout << "  -no-color              Disable colors.\n";
+    std::cout << "  -no-get-path           Disable getting paths.\n";
     std::cout << "  -on-get-dns            On get dns for scanning ports.\n";
     std::cout << "  -log-set <count>       Change change the value of ips after which, will be displayed information about how much is left.\n";
     std::cout << "  -txt <path>            Save result to text document.\n";

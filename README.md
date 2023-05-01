@@ -60,8 +60,15 @@
 + Добавлены потоки для брутфорса FTP, SSH, RTSP.
 + Добавлен новый аргумент, -brute-timeout.
 + Исправлена максимальная задержка брутфорса в 25секунд.
-+ Программа разделена по файлам, до этого весь код был в одном)
-+ Добавлен аргумент -on-get-dns
++ Программа разделена по файлам, до этого весь код был в одном).
++ Добавлен аргумент -on-get-dns.
++ Добавлено два метода парсинга для абсолютных.
++ Добавлено распозвование и парсинг абсолютных путей.
++ Исправлены ошибки парсинга путей, и пердусмотрены любые моменты.
++ Добавлен новый аргумент -no-get-path
+
+# Баги
+- Задержка на порту во время сканирования может достигать 5 минут.
 
 # Все рабочие функции
 ```
@@ -112,6 +119,8 @@ arguments output:
   -db, -debug            On debug mode, save and display not even working hosts.
   -er, -error            On display errors.
   -no-color              Disable colors.
+  -no-get-path           Disable getting paths.
+  -on-get-dns            On get dns for scanning ports.
   -log-set <count>       Change change the value of ips after which, will be displayed information about how much is left.
   -txt <path>            Save result to text document.
 

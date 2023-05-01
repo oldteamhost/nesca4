@@ -1,3 +1,6 @@
+#ifndef OTHER_H
+#define OTHER_H
+
 #include <vector>
 #include <iostream>
 
@@ -11,3 +14,5 @@ bool check_ansi_support(void);
 std::vector<int> write_ports(std::string mode);
 // print help menu
 void logo(void);
+
+#endif

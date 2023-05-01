@@ -1,3 +1,6 @@
+#ifndef FILES_H
+#define FILES_H
+
 #include <iostream>
 #include <vector>
 
@@ -9,3 +12,5 @@ int write_line(std::string, std::string line);
 bool check_file(const char* path);
 // get count lines
 int get_count_lines(const char* path);
+
+#endif

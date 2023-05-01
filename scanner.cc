@@ -1,5 +1,7 @@
 #include "include/scanner.h"
 #include "include/networktool.h"
+#include <cstddef>
+#include <vector>
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -15,6 +17,8 @@
 #include <unistd.h>
 #include <errno.h>
 #endif
+
+checking_finds cf;
 
 int tcp_scan_port(const char *ip, int port, int timeout_ms){
     int sock;
@@ -158,8 +162,7 @@ int tcp_scan_port(const char *ip, int port, int timeout_ms){
     }
 
 #ifdef _WIN32
-        closesocket(sock);
-        WSACleanup();
+        closesocket(sock); WSACleanup();
 #else
         close(sock);
 #endif
@@ -182,4 +185,30 @@ int dns_scan(std::string domain, std::string domain_1level){
     }
 
     return -1; // error
+}
+
+std::string checking_finds::check_axis_camera(std::string ip){
+    bool status = false;
+
+    for (auto& path : cf.axis_path){
+        size_t pos = ip.find(path);
+        if (pos != std::string::npos){
+            status = true;
+            return path;
+        }
+    }
+    return "";
+}
+
+std::string checking_finds::check_basic_auth(std::string ip){
+    bool status = false;
+
+    for (auto& path : cf.basic_auth_paths){
+        size_t pos = ip.find(path);
+        if (pos != std::string::npos){
+            status = true;
+            return path;
+        }
+    }
+    return "";
 }
