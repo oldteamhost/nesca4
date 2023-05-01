@@ -140,8 +140,10 @@ class arguments_program{
 
         bool ftp_only;
         bool no_get_path;
+        bool get_path_log;
         bool sftp_only;
         bool http_only;
+        bool fix_get_path;
         bool rtsp_only;
 
         bool generation_test;
@@ -208,6 +210,8 @@ int main(int argc, char** argv){
         {"on-get-dns", no_argument, 0, 8},
         {"er", no_argument, 0, 28},
         {"no-get-path", no_argument, 0, 50},
+        {"get-path-log", no_argument, 0, 53},
+        {"fix-get-path", no_argument, 0, 52},
         {"on-http-response", no_argument, 0, 51},
         {"no-ping", no_argument, 0, 29},
         {"no-color", no_argument, 0, 26},
@@ -552,6 +556,12 @@ int main(int argc, char** argv){
                break;
            case 51:
                argp.get_response = true;
+               break;
+           case 52:
+               argp.fix_get_path = true;
+               break;
+           case 53:
+               argp.get_path_log = true;
                break;
         }
     }
@@ -960,30 +970,41 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
 
                 if (argp.no_get_path != true){
 
+                    if (argp.get_path_log){
+                        std::cout << yellow_html;
+                        std::cout << "[" << get_time() << "][LOG] 1 method: parse location\n";
+                        std::cout << reset_color;
+                    }
                     // getting method 1 location
-                    // std::cout << "1 parse location\n";
                     std::string path_location = parse_location(headers);
                     if (path_location.length() > 1){
                         status_path = true;
-                        std::string paste_;
-                        size_t finding0 = path_location.find("http://");
-                        size_t finding1 = path_location.find("https://");
-                        size_t finding2 = path_location.find(":" + std::to_string(port));
-    
-                        if (finding1 != std::string::npos || finding0 != std::string::npos){
-                            if (finding2 == std::string::npos){
-                                redirect = path_location;
-                            }
+                        if (argp.fix_get_path){
+                            status_path = true;
+                            redirect = path_location;
+
                         }
                         else {
-                            if (path_location[0] != '/'){
-                                paste_ = "http://" + ip + ":" + std::to_string(port) + "/" + path_location;
+                            std::string paste_;
+                            size_t finding0 = path_location.find("http://");
+                            size_t finding1 = path_location.find("https://");
+                            size_t finding2 = path_location.find(":" + std::to_string(port));
+    
+                            if (finding1 != std::string::npos || finding0 != std::string::npos){
+                                if (finding2 == std::string::npos){
+                                    redirect = path_location;
+                                }
                             }
                             else {
-                                paste_ = "http://" + ip + ":" + std::to_string(port) + path_location;
+                                if (path_location[0] != '/'){
+                                    paste_ = "http://" + ip + ":" + std::to_string(port) + "/" + path_location;
+                                }
+                                else {
+                                    paste_ = "http://" + ip + ":" + std::to_string(port) + path_location;
+                                }
+                                redirect.insert(0, paste_);
+                                redirect = paste_;
                             }
-                            redirect.insert(0, paste_);
-                            redirect = paste_;
                         }
                     }
                     else {
@@ -991,31 +1012,40 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     }
 
                     if (status_path != true) {
-                        // getting method 2 from http-equiv
-                        // std::cout << "2 parse http equiv\n";
+                        if (argp.get_path_log){
+                            std::cout << yellow_html;
+                            std::cout << "[" << get_time() << "][LOG] 2 method: parse http equiv\n";
+                            std::cout << reset_color;
+                        }
                         std::string path_http = parse_content_from_meta("http://" + code);
                         if (path_http.length() > 1){
-                            status_path = true;
-                            std::string paste_;
-
-                            size_t finding0 = path_http.find("http://");
-                            size_t finding1 = path_http.find("https://");
-                            size_t finding2 = path_http.find(":" + std::to_string(port));
-
-                            if (finding1 != std::string::npos || finding0 != std::string::npos){
-                                if (finding2 == std::string::npos){
-                                    redirect = path_http;
-                                }
+                            if (argp.fix_get_path){
+                                status_path = true;
+                                redirect = path_http;
                             }
                             else {
-                                if (path_http[0] != '/'){
-                                    paste_ = "http://" + ip + ":" + std::to_string(port) + "/" + path_http;
+                                status_path = true;
+                                std::string paste_;
+
+                                size_t finding0 = path_http.find("http://");
+                                size_t finding1 = path_http.find("https://");
+                                size_t finding2 = path_http.find(":" + std::to_string(port));
+
+                                if (finding1 != std::string::npos || finding0 != std::string::npos){
+                                    if (finding2 == std::string::npos){
+                                        redirect = path_http;
+                                    }
                                 }
                                 else {
-                                    paste_ = "http://" + ip + ":" + std::to_string(port) + path_http;
+                                    if (path_http[0] != '/'){
+                                        paste_ = "http://" + ip + ":" + std::to_string(port) + "/" + path_http;
+                                    }
+                                    else {
+                                        paste_ = "http://" + ip + ":" + std::to_string(port) + path_http;
+                                    }
+                                    redirect.insert(0, paste_);
+                                    redirect = paste_;
                                 }
-                                redirect.insert(0, paste_);
-                                redirect = paste_;
                             }
                         }
                         else {
@@ -1025,31 +1055,42 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     if (status_path != true){
                         // getting method 3 from js
                         // std::cout << "3 parse js\n";
+                        if (argp.get_path_log){
+                            std::cout << yellow_html;
+                            std::cout << "[" << get_time() << "][LOG] 3 method: parse window.location.href\n";
+                            std::cout << reset_color;
+                        }
                         std::string path_js = parse_url_from_js(code);
                         if (path_js.length() > 3){
-                            status_path = true;
-
-                            std::string paste_;
-
-                            // clean redirect    
-                            size_t finding0 = path_js.find("http://");
-                            size_t finding1 = path_js.find("https://");
-                            size_t finding2 = path_js.find(":" + std::to_string(port));
-
-                            if (finding1 != std::string::npos || finding0 != std::string::npos){
-                                if (finding2 == std::string::npos){
-                                    redirect = path_js;
-                                }
+                            if (argp.fix_get_path){
+                                status_path = true;
+                                redirect = path_js;
                             }
                             else {
-                                if (path_js[0] != '/'){
-                                    paste_ = "http://" + ip + ":" + std::to_string(port) + "/" + path_js;
+                                status_path = true;
+
+                                std::string paste_;
+
+                                // clean redirect    
+                                size_t finding0 = path_js.find("http://");
+                                size_t finding1 = path_js.find("https://");
+                                size_t finding2 = path_js.find(":" + std::to_string(port));
+
+                                if (finding1 != std::string::npos || finding0 != std::string::npos){
+                                    if (finding2 == std::string::npos){
+                                        redirect = path_js;
+                                    }
                                 }
                                 else {
-                                    paste_ = "http://" + ip + ":" + std::to_string(port) + path_js;
+                                    if (path_js[0] != '/'){
+                                        paste_ = "http://" + ip + ":" + std::to_string(port) + "/" + path_js;
+                                    }
+                                    else {
+                                        paste_ = "http://" + ip + ":" + std::to_string(port) + path_js;
+                                    }
+                                    redirect.insert(0, paste_);
+                                    redirect = paste_;
                                 }
-                                redirect.insert(0, paste_);
-                                redirect = paste_;
                             }
                         }
                         else {
@@ -1059,28 +1100,39 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     if (status_path != true){
                         // std::cout << "4 parse content location\n";
                         // getting method 4 from content location
+                        if (argp.get_path_log){
+                            std::cout << yellow_html;
+                            std::cout << "[" << get_time() << "][LOG] 4 method: parse content location\n";
+                            std::cout << reset_color;
+                        }
                         std::string path_content_location = parse_content_location(headers);
                         if (path_content_location.length() > 1){
-                            status_path = true;
-                            std::string paste_;
-                            size_t finding0 = path_content_location.find("http://");
-                            size_t finding1 = path_content_location.find("https://");
-                            size_t finding2 = path_content_location.find(":" + std::to_string(port));
-
-                            if (finding1 != std::string::npos || finding0 != std::string::npos){
-                                if (finding2 == std::string::npos){
+                                if (argp.fix_get_path){
+                                    status_path = true;
                                     redirect = path_content_location;
                                 }
-                            }
-                            else {
-                                if (path_content_location[0] != '/'){
-                                    paste_ = "http://" + ip + ":" + std::to_string(port) + "/" + path_content_location;
+                                else {
+                                status_path = true;
+                                std::string paste_;
+                                size_t finding0 = path_content_location.find("http://");
+                                size_t finding1 = path_content_location.find("https://");
+                                size_t finding2 = path_content_location.find(":" + std::to_string(port));
+
+                                if (finding1 != std::string::npos || finding0 != std::string::npos){
+                                    if (finding2 == std::string::npos){
+                                        redirect = path_content_location;
+                                    }
                                 }
                                 else {
-                                    paste_ = "http://" + ip + ":" + std::to_string(port) + path_content_location;
+                                    if (path_content_location[0] != '/'){
+                                        paste_ = "http://" + ip + ":" + std::to_string(port) + "/" + path_content_location;
+                                    }
+                                    else {
+                                        paste_ = "http://" + ip + ":" + std::to_string(port) + path_content_location;
+                                    }
+                                    redirect.insert(0, paste_);
+                                    redirect = paste_;
                                 }
-                                redirect.insert(0, paste_);
-                                redirect = paste_;
                             }
                         }
                         else {
@@ -1115,10 +1167,21 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 }
                 std::cout << result_print << std::endl;
                 if (argp.no_get_path != true && redirect.length() != default_result.length()){
-                    if (redirect.length() != 0){
-                        std::cout << yellow_html;
-                        std::cout << "[" << get_time() << "][^] Redirect to: " << redirect << std::endl;
-                        std::cout << reset_color;
+                    if (argp.fix_get_path){
+                            if (redirect.length() != 0){
+                                std::cout << yellow_html;
+                                std::cout << "[" << get_time() << "][^] Redirect to: " << redirect << std::endl;
+                                std::cout << reset_color;
+                            }
+                    }
+                    else {
+                        if (redirect.length() != default_result.length()){
+                            if (redirect.length() != 0){
+                                std::cout << yellow_html;
+                                std::cout << "[" << get_time() << "][^] Redirect to: " << redirect << std::endl;
+                                std::cout << reset_color;
+                            }
+                        }
                     }
                 }
                 if (argp.get_response){
@@ -1354,6 +1417,8 @@ void help_menu(void){
     std::cout << "  -er, -error            On display errors.\n";
     std::cout << "  -no-color              Disable colors.\n";
     std::cout << "  -no-get-path           Disable getting paths.\n";
+    std::cout << "  -get-path-log          Display paths method log.\n";
+    std::cout << "  -fix-get-path          Display paths no processing (original).\n";
     std::cout << "  -on-get-dns            On get dns for scanning ports.\n";
     std::cout << "  -on-http-response      On print response from port 80.\n";
     std::cout << "  -log-set <count>       Change change the value of ips after which, will be displayed information about how much is left.\n";
