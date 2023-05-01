@@ -1149,17 +1149,21 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 }
               
                 std::string result_print;
+                std::string result_txt;
                 std::string dns;
                 if (argp.no_get_dns){
                     dns = get_dns_ip(ip.c_str());
                     result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + result + reset_color + gray_nesca + " T: " + golder_rod + get_html_title(ip) + reset_color + gray_nesca + " D: " + sea_green + dns + reset_color;
+                    result_txt = "[" + std::string(get_time()) + "][BA]:" + result + " T: " + get_html_title(ip) + " D: " + dns;
                 }
                 else {
                     result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + result + reset_color + gray_nesca + " T: " + golder_rod + get_html_title(ip) + reset_color;
+                    result_txt = "[" + std::string(get_time()) + "][BA]:" + result + " T: " + get_html_title(ip);
 
                 }
-
-                std::string result_txt = "[" + std::string(get_time()) + "][BA]:" + result + " T: " + get_html_title(ip);
+                if (argp.txt){
+                    write_line(argp.txt_save, result_txt);
+                }
 
                 std::lock_guard<std::mutex> guard(mtx);
                 if (argp.txt){
@@ -1167,18 +1171,21 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 }
                 std::cout << result_print << std::endl;
                 if (argp.no_get_path != true && redirect.length() != default_result.length()){
+                    std::string redirect_result = "[" + std::string(get_time()) + "][^] Redirect to: " + redirect;
                     if (argp.fix_get_path){
                             if (redirect.length() != 0){
                                 std::cout << yellow_html;
-                                std::cout << "[" << get_time() << "][^] Redirect to: " << redirect << std::endl;
+                                std::cout << redirect_result << std::endl;
                                 std::cout << reset_color;
+                                write_line(argp.txt_save, redirect_result);
                             }
                     }
                     else {
                         if (redirect.length() != default_result.length()){
                             if (redirect.length() != 0){
                                 std::cout << yellow_html;
-                                std::cout << "[" << get_time() << "][^] Redirect to: " << redirect << std::endl;
+                                std::cout << redirect_result << std::endl;
+                                write_line(argp.txt_save, redirect_result);
                                 std::cout << reset_color;
                             }
                         }
@@ -1187,6 +1194,9 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 if (argp.get_response){
                     std::cout << yellow_html;
                     std::cout << code << std::endl;
+                    if (argp.txt){
+                        write_line(argp.txt_save, code);
+                    }
                     std::cout << reset_color;
                 }
             }
@@ -1207,23 +1217,23 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     std::cout << reset_color;
 
                     brute_temp = threads_brute_ftp(ip, argp.ftp_logins, argp.ftp_passwords, argp.ftp_brute_log, argp.ftp_brute_verbose, argp.brute_timeout_ms);
-                    result_txt = "[" + std::string(get_time()) + "][FTP]:" + brute_temp + result;
+                    result_txt = "[" + std::string(get_time()) + "][FTP]:" + "ftp://" + brute_temp + result;
                 }
                 else {
-                    result_txt = "[" + std::string(get_time()) + "][FTP]:" + result;
+                    result_txt = "[" + std::string(get_time()) + "][FTP]:" + "ftp://" + result;
                 }
                 if (argp.off_ftp_brute != true){
                     if (argp.ftp_only){
                         if (brute_temp.length() > 1){
-                            result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + brute_temp + result + reset_color;
+                            result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + "ftp://" + brute_temp + result + reset_color;
                         }
                     }
                     else {
-                        result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + brute_temp + result + reset_color + "\n";
+                        result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + "ftp://" + brute_temp + result + reset_color + "\n";
                     }
                 }
                 else {
-                    result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + result + reset_color;
+                    result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + "ftp://" + result + reset_color;
                 }
                 if (argp.txt){
                     int temp = write_line(argp.txt_save, result_txt);
@@ -1250,23 +1260,23 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     std::cout << reset_color;
 
                     brute_temp = threads_brute_ssh(ip, argp.sftp_logins, argp.sftp_passwords, argp.sftp_brute_log, argp.sftp_brute_verbose, argp.sftp_using_know_hosts, argp.brute_timeout_ms);
-                    result_txt = "[" + std::string(get_time()) + "][SFTP]:" + brute_temp + result;
+                    result_txt = "[" + std::string(get_time()) + "][SFTP]:" + "sftp://" + brute_temp + result;
                 }
                 else {
-                    result_txt = "[" + std::string(get_time()) + "][SFTP]:" + result;
+                    result_txt = "[" + std::string(get_time()) + "][SFTP]:" + "sftp://" + result;
                 }
                 if (argp.off_sftp_brute != true){
                     if (argp.sftp_only){
                         if (brute_temp.length() > 1){
-                            result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + brute_temp + result + reset_color;
+                            result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + "sftp://" + brute_temp + result + reset_color;
                         }
                     }
                     else {
-                        result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + brute_temp + result + reset_color + "\n";
+                        result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + "sftp://" + brute_temp + result + reset_color + "\n";
                     }
                 }
                 else {
-                    result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + result + reset_color + "\n";
+                    result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + "sftp://" + result + reset_color + "\n";
                 }
                 if (argp.txt){
                     int temp = write_line(argp.txt_save, result_txt);
@@ -1290,23 +1300,23 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     std::cout << result_print_brute << std::endl;
                     std::cout << reset_color;
                     brute_temp = threads_brute_rtsp(ip, argp.rtsp_logins, argp.rtsp_passwords, argp.rtsp_brute_log, argp.rtsp_brute_verbose, argp.brute_timeout_ms);
-                    result_txt = "[" + std::string(get_time()) + "][RTSP]:" + brute_temp + result;
+                    result_txt = "[" + std::string(get_time()) + "][RTSP]:" + "rtsp://" + brute_temp + result;
                 }
                 else {
-                    result_txt = "[" + std::string(get_time()) + "][RTSP]:" + result;
+                    result_txt = "[" + std::string(get_time()) + "][RTSP]:" + "rtsp://" + result;
                 }
                 if (argp.off_rtsp_brute != true){
                     if (argp.rtsp_only){
                         if (brute_temp.length() > 1){
-                            result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + brute_temp + result + reset_color;
+                            result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + "rtsp://" + brute_temp + result + reset_color;
                         }
                     }
                     else {
-                        result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + brute_temp + result + reset_color + "\n";
+                        result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + "rtsp://" + brute_temp + result + reset_color + "\n";
                     }
                 }
                 else {
-                    result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + result + reset_color;
+                    result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + "rtsp://" + result + reset_color;
                 }
                 if (argp.txt){
                     int temp = write_line(argp.txt_save, result_txt);

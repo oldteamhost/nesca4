@@ -4,6 +4,7 @@
 #include <curl/curl.h>
 #include <sstream>
 #include <regex>
+#include <future>
 #include <cstring>
 #include <cstddef>
 #include <string>
@@ -199,43 +200,42 @@ std::string get_html_title(std::string node){
 
 std::string parse_content_from_meta(const std::string& html) {
     std::string htmll = html;
-    std::transform(htmll.begin(), htmll.end(), htmll.begin(),
-                   [](unsigned char c) { return std::tolower(c); });
+    std::transform(htmll.begin(), htmll.end(), htmll.begin(), [](unsigned char c) { return std::tolower(c); });
+
     std::regex meta_regex("<meta.*?http-equiv=\"refresh\".*?content=\"(.*?)\"", std::regex::icase);
     std::smatch meta_match;
-    if (std::regex_search(htmll, meta_match, meta_regex)) {
-        std::string url = meta_match[1].str();
-        std::vector<std::string> url_prefixes = {"0; url=", "0;url=", "1; url=", "1;url=", "2; url", "2;url=", "0.0; url=", "0.0;url=", "12; url=", "12;url="};
-        for (auto& prefix : url_prefixes) {
-            if (url.compare(0, prefix.length(), prefix) == 0) {
-                url.erase(0, prefix.length());
+
+    std::future<std::string> future_result = std::async(std::launch::async, [&]() -> std::string {
+        if (std::regex_search(htmll, meta_match, meta_regex)) {
+            std::string url = meta_match[1].str();
+
+            std::vector<std::string> url_prefixes = {"0; url=", "0;url=", "1; url=", "1;url=", "2; url", "2;url=", "0.0; url=", "0.0;url=", "12; url=", "12;url="};
+            for (auto& prefix : url_prefixes) {
+                if (url.compare(0, prefix.length(), prefix) == 0) {
+                    url.erase(0, prefix.length());
+                }
             }
+            return url;
         }
-        return url;
-    }
-    return "";
+        return "";
+    });
+
+    return future_result.get();
 } 
 
 std::string get_headers(const std::string node){
-    CURL* curl = curl_easy_init();
     std::string header;
-
+    CURL* curl = curl_easy_init();
     if (curl) {
         curl_easy_setopt(curl, CURLOPT_URL, node.c_str());
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
         curl_easy_setopt(curl, CURLOPT_HEADER, 1L);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback_headers);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &header);
-
-        CURLcode res = curl_easy_perform(curl);
-
-        if (res != CURLE_OK) {
-            return "";
-        }
-
+        auto res = std::async(std::launch::async, curl_easy_perform, curl);
+        res.wait();
         curl_easy_cleanup(curl);
     }
-
     return header;
 }
 
@@ -244,11 +244,14 @@ std::string parse_content_location(const std::string& header)
     std::regex regex_content_location("Content-Location:\\s*(.+)\r\n");
     std::smatch match;
 
-    if (std::regex_search(header, match, regex_content_location) && match.size() > 1) {
-        return match[1].str();
-    }
+    std::future<std::string> future_result = std::async(std::launch::async, [&]() -> std::string {
+        if (std::regex_search(header, match, regex_content_location) && match.size() > 1) {
+            return match[1].str();
+        }
+        return "";
+    });
 
-    return "";
+    return future_result.get();
 }
 
 std::string parse_location(const std::string& header)
@@ -256,11 +259,16 @@ std::string parse_location(const std::string& header)
     std::regex regex_location("Location:\\s*(.+)\r\n");
     std::smatch match;
 
+    std::future<std::string> future_result = std::async(std::launch::async, [&]() -> std::string {
     if (std::regex_search(header, match, regex_location) && match.size() > 1) {
         return match[1].str();
     }
-
     return "";
+    });
+
+    std::string result = future_result.get();
+
+    return result;
 }
 
 std::string send_http_request(std::string url){
@@ -286,8 +294,13 @@ std::string send_http_request(std::string url){
 std::string parse_url_from_js(const std::string& html){
     std::regex regex("window\\.location\\.href\\s*=\\s*\"(.*?)\"");
     std::smatch match;
-    if (std::regex_search(html, match, regex)) {
-        return match[1];
-    }
-    return "";
+
+    std::future<std::string> future_result = std::async(std::launch::async, [&]() -> std::string {
+        if (std::regex_search(html, match, regex)) {
+            return match[1];
+        }
+        return "";
+    });
+
+    return future_result.get();
 }

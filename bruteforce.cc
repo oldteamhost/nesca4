@@ -213,7 +213,7 @@ std::string brute_rtsp(const std::string ip, const std::string login, const std:
         CURLcode res = curl_easy_perform(curl);
 
         if (res == CURLE_OK){
-            result = "rtsp://" + login + ":" + pass + "@";
+            result = login + ":" + pass + "@";
             curl_easy_cleanup(curl);
             return result;
         }
