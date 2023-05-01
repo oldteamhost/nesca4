@@ -129,7 +129,10 @@ arguments output:
   -er, -error            On display errors.
   -no-color              Disable colors.
   -no-get-path           Disable getting paths.
+  -get-path-log          Display paths method log.
+  -fix-get-path          Display paths no processing (original).
   -on-get-dns            On get dns for scanning ports.
+  -on-http-response      On print response from port 80.
   -log-set <count>       Change change the value of ips after which, will be displayed information about how much is left.
   -txt <path>            Save result to text document.
 
