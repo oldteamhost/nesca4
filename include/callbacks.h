@@ -3,6 +3,7 @@
 
 #include <iostream>
 
+size_t write_callback_headers(char *ptr, size_t size, size_t nmemb, void *userdata);
 size_t write_callback_request(char* buf, size_t size, size_t nmemb, void* up);
 size_t write_callback_auth(char* buf, size_t size, size_t nmemb, void* userdata);
 size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userdata);

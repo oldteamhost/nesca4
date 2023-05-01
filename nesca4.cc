@@ -8,6 +8,7 @@
 #include <chrono>
 #include <future>
 #include <netdb.h>
+#include <sys/stat.h>
 #include <thread>
 #include <getopt.h>
 #include <mutex>
@@ -114,6 +115,7 @@ class arguments_program{
         bool ping_off;
         bool no_get_dns;
         bool txt;
+        bool get_response;
         bool html;
         bool color_off;
 
@@ -206,6 +208,7 @@ int main(int argc, char** argv){
         {"on-get-dns", no_argument, 0, 8},
         {"er", no_argument, 0, 28},
         {"no-get-path", no_argument, 0, 50},
+        {"on-http-response", no_argument, 0, 51},
         {"no-ping", no_argument, 0, 29},
         {"no-color", no_argument, 0, 26},
         {"log-set", required_argument, 0, 24},
@@ -546,6 +549,9 @@ int main(int argc, char** argv){
            }
            case 50:
                argp.no_get_path = true;
+               break;
+           case 51:
+               argp.get_response = true;
                break;
         }
     }
@@ -944,58 +950,163 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     }
                 }
 
-                std::string result = "http://" + ip + ":" + std::to_string(port);
-                std::string redirect;
-                if (argp.no_get_path != true){
-                    // getting method 1 from content location:
-                    std::string path = get_paths_from_ip_address(ip);
+                bool status_path = false;
 
-                    if (path.length() > 1){
-                        redirect = "http://" + ip + ":" + std::to_string(port) + path;
+                std::string result = "http://" + ip + ":" + std::to_string(port);
+                std::string code = send_http_request(ip);
+                std::string headers = get_headers("http://" + ip);
+                std::string redirect;
+                std::string default_result = "http://" + ip + ":" + std::to_string(port) + "/";
+
+                if (argp.no_get_path != true){
+
+                    // getting method 1 location
+                    // std::cout << "1 parse location\n";
+                    std::string path_location = parse_location(headers);
+                    if (path_location.length() > 1){
+                        status_path = true;
+                        std::string paste_;
+                        size_t finding0 = path_location.find("http://");
+                        size_t finding1 = path_location.find("https://");
+                        size_t finding2 = path_location.find(":" + std::to_string(port));
+    
+                        if (finding1 != std::string::npos || finding0 != std::string::npos){
+                            if (finding2 == std::string::npos){
+                                redirect = path_location;
+                            }
+                        }
+                        else {
+                            if (path_location[0] != '/'){
+                                paste_ = "http://" + ip + ":" + std::to_string(port) + "/" + path_location;
+                            }
+                            else {
+                                paste_ = "http://" + ip + ":" + std::to_string(port) + path_location;
+                            }
+                            redirect.insert(0, paste_);
+                            redirect = paste_;
+                        }
                     }
                     else {
+                        status_path = false;
+                    }
+
+                    if (status_path != true) {
                         // getting method 2 from http-equiv
-                        std::string code = send_http_request(ip);
-                        std::string path1 = parse_content_from_meta(code);
-                        std::string paste_;
+                        // std::cout << "2 parse http equiv\n";
+                        std::string path_http = parse_content_from_meta("http://" + code);
+                        if (path_http.length() > 1){
+                            status_path = true;
+                            std::string paste_;
 
-                        if (path1.length() > 1) {
-                            redirect = parse_content_from_meta("http://" + code);
+                            size_t finding0 = path_http.find("http://");
+                            size_t finding1 = path_http.find("https://");
+                            size_t finding2 = path_http.find(":" + std::to_string(port));
 
-                            // clean redirect    
-                            std::vector<std::string> pos_clean = {"http://", "https://", ip};
-                            size_t finding0 = redirect.find("http://");
-                            size_t finding1 = redirect.find("https://");
-                            size_t finding2 = redirect.find("ip");
-
-                            if (finding1 == std::string::npos && finding1 == std::string::npos && finding2 == std::string::npos){
-                                if (redirect[0] != '/'){
-                                    paste_ = "http://" + ip + ":" + std::to_string(port) + "/";
+                            if (finding1 != std::string::npos || finding0 != std::string::npos){
+                                if (finding2 == std::string::npos){
+                                    redirect = path_http;
+                                }
+                            }
+                            else {
+                                if (path_http[0] != '/'){
+                                    paste_ = "http://" + ip + ":" + std::to_string(port) + "/" + path_http;
                                 }
                                 else {
-                                    paste_ = "http://" + ip + ":" + std::to_string(port);
+                                    paste_ = "http://" + ip + ":" + std::to_string(port) + path_http;
                                 }
-
                                 redirect.insert(0, paste_);
+                                redirect = paste_;
                             }
+                        }
+                        else {
+                            status_path = false;
+                        }
+                    }
+                    if (status_path != true){
+                        // getting method 3 from js
+                        // std::cout << "3 parse js\n";
+                        std::string path_js = parse_url_from_js(code);
+                        if (path_js.length() > 3){
+                            status_path = true;
+
+                            std::string paste_;
+
+                            // clean redirect    
+                            size_t finding0 = path_js.find("http://");
+                            size_t finding1 = path_js.find("https://");
+                            size_t finding2 = path_js.find(":" + std::to_string(port));
+
+                            if (finding1 != std::string::npos || finding0 != std::string::npos){
+                                if (finding2 == std::string::npos){
+                                    redirect = path_js;
+                                }
+                            }
+                            else {
+                                if (path_js[0] != '/'){
+                                    paste_ = "http://" + ip + ":" + std::to_string(port) + "/" + path_js;
+                                }
+                                else {
+                                    paste_ = "http://" + ip + ":" + std::to_string(port) + path_js;
+                                }
+                                redirect.insert(0, paste_);
+                                redirect = paste_;
+                            }
+                        }
+                        else {
+                            status_path = false;
+                        }
+                    }
+                    if (status_path != true){
+                        // std::cout << "4 parse content location\n";
+                        // getting method 4 from content location
+                        std::string path_content_location = parse_content_location(headers);
+                        if (path_content_location.length() > 1){
+                            status_path = true;
+                            std::string paste_;
+                            size_t finding0 = path_content_location.find("http://");
+                            size_t finding1 = path_content_location.find("https://");
+                            size_t finding2 = path_content_location.find(":" + std::to_string(port));
+
+                            if (finding1 != std::string::npos || finding0 != std::string::npos){
+                                if (finding2 == std::string::npos){
+                                    redirect = path_content_location;
+                                }
+                            }
+                            else {
+                                if (path_content_location[0] != '/'){
+                                    paste_ = "http://" + ip + ":" + std::to_string(port) + "/" + path_content_location;
+                                }
+                                else {
+                                    paste_ = "http://" + ip + ":" + std::to_string(port) + path_content_location;
+                                }
+                                redirect.insert(0, paste_);
+                                redirect = paste_;
+                            }
+                        }
+                        else {
+                            status_path = false;
                         }
                     }
 
+                    /*
                     std::string axis_camera = cfs.check_axis_camera(path);
                     std::string basic_auth = cfs.check_basic_auth(path);
+                    */
 
-                    if (basic_auth.length() > 1 || axis_camera.length() > 1){
-                    }
                    // threads_brute_http(result, argp.http_logins, argp.http_passwords, argp.http_brute_log, argp.http_brute_verbose, argp.brute_timeout_ms);
                 }
               
                 std::string result_print;
+                std::string dns;
                 if (argp.no_get_dns){
-                    result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + result + reset_color + gray_nesca + " T: " + golder_rod + get_html_title(ip) + reset_color + gray_nesca + " D: " + sea_green + get_dns_ip(ip.c_str()) + reset_color;
+                    dns = get_dns_ip(ip.c_str());
+                    result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + result + reset_color + gray_nesca + " T: " + golder_rod + get_html_title(ip) + reset_color + gray_nesca + " D: " + sea_green + dns + reset_color;
                 }
                 else {
                     result_print = gray_nesca + "[" + std::string(get_time()) + "][BA]:" + sea_green + result + reset_color + gray_nesca + " T: " + golder_rod + get_html_title(ip) + reset_color;
+
                 }
+
                 std::string result_txt = "[" + std::string(get_time()) + "][BA]:" + result + " T: " + get_html_title(ip);
 
                 std::lock_guard<std::mutex> guard(mtx);
@@ -1003,12 +1114,17 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     int temp = write_line(argp.txt_save, result_txt);
                 }
                 std::cout << result_print << std::endl;
-                if (argp.no_get_path != true && redirect.length() != result.length()){
+                if (argp.no_get_path != true && redirect.length() != default_result.length()){
                     if (redirect.length() != 0){
                         std::cout << yellow_html;
                         std::cout << "[" << get_time() << "][^] Redirect to: " << redirect << std::endl;
                         std::cout << reset_color;
                     }
+                }
+                if (argp.get_response){
+                    std::cout << yellow_html;
+                    std::cout << code << std::endl;
+                    std::cout << reset_color;
                 }
             }
             else if (port == 20 || port == 21){
@@ -1239,6 +1355,7 @@ void help_menu(void){
     std::cout << "  -no-color              Disable colors.\n";
     std::cout << "  -no-get-path           Disable getting paths.\n";
     std::cout << "  -on-get-dns            On get dns for scanning ports.\n";
+    std::cout << "  -on-http-response      On print response from port 80.\n";
     std::cout << "  -log-set <count>       Change change the value of ips after which, will be displayed information about how much is left.\n";
     std::cout << "  -txt <path>            Save result to text document.\n";
 

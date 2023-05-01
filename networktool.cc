@@ -3,6 +3,10 @@
 #include "include/other.h"
 #include <curl/curl.h>
 #include <sstream>
+#include <regex>
+#include <cstring>
+#include <cstddef>
+#include <string>
 #include <algorithm>
 #include <cctype>
 #include <cstring>
@@ -193,40 +197,70 @@ std::string get_html_title(std::string node){
     return return_value;
 }
 
-
-std::string get_paths_from_ip_address(const std::string& ip){
-    CURL* curl = curl_easy_init();
-  std::string path;
-  if (curl) {
-    curl_easy_setopt(curl, CURLOPT_URL, ("http://" + ip).c_str());
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L); 
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-
-    CURLcode res = curl_easy_perform(curl);
-
-    if (res == CURLE_OK) {
-      char* redirect_url;
-      curl_easy_getinfo(curl, CURLINFO_REDIRECT_URL, &redirect_url);
-      if (redirect_url) {
-        std::cout << "Redirected to: " << redirect_url << std::endl;
-      }
-
-      char* effective_url;
-      curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &effective_url);
-      if (effective_url) {
-        std::string url(effective_url);
-        size_t pos = url.find_last_of("/");
-        if (pos != std::string::npos) {
-          path = "/" + url.substr(pos + 1);
+std::string parse_content_from_meta(const std::string& html) {
+    std::string htmll = html;
+    std::transform(htmll.begin(), htmll.end(), htmll.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+    std::regex meta_regex("<meta.*?http-equiv=\"refresh\".*?content=\"(.*?)\"", std::regex::icase);
+    std::smatch meta_match;
+    if (std::regex_search(htmll, meta_match, meta_regex)) {
+        std::string url = meta_match[1].str();
+        std::vector<std::string> url_prefixes = {"0; url=", "0;url=", "1; url=", "1;url=", "2; url", "2;url=", "0.0; url=", "0.0;url=", "12; url=", "12;url="};
+        for (auto& prefix : url_prefixes) {
+            if (url.compare(0, prefix.length(), prefix) == 0) {
+                url.erase(0, prefix.length());
+            }
         }
-      }
-    } 
-    curl_easy_cleanup(curl);
+        return url;
+    }
     return "";
+} 
 
-  }
-  curl_easy_cleanup(curl);
-  return path;
+std::string get_headers(const std::string node){
+    CURL* curl = curl_easy_init();
+    std::string header;
+
+    if (curl) {
+        curl_easy_setopt(curl, CURLOPT_URL, node.c_str());
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+        curl_easy_setopt(curl, CURLOPT_HEADER, 1L);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback_headers);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &header);
+
+        CURLcode res = curl_easy_perform(curl);
+
+        if (res != CURLE_OK) {
+            return "";
+        }
+
+        curl_easy_cleanup(curl);
+    }
+
+    return header;
+}
+
+std::string parse_content_location(const std::string& header)
+{
+    std::regex regex_content_location("Content-Location:\\s*(.+)\r\n");
+    std::smatch match;
+
+    if (std::regex_search(header, match, regex_content_location) && match.size() > 1) {
+        return match[1].str();
+    }
+
+    return "";
+}
+
+std::string parse_location(const std::string& header)
+{
+    std::regex regex_location("Location:\\s*(.+)\r\n");
+    std::smatch match;
+
+    if (std::regex_search(header, match, regex_location) && match.size() > 1) {
+        return match[1].str();
+    }
+
+    return "";
 }
 
 std::string send_http_request(std::string url){
@@ -249,41 +283,11 @@ std::string send_http_request(std::string url){
     return response_string;
 }
 
-std::string parse_content_from_meta(const std::string& html){
-    std::string htmll = html;
-    std::transform(htmll.begin(), htmll.end(), htmll.begin(),
-                   [](unsigned char c) { return std::tolower(c); });
-
-    std::string url = "";
-    std::string tagStart = "<meta";
-    std::string tagEnd = ">";
-    std::string httpEquiv = "http-equiv=\"refresh\"";
-    std::string content = "content=\"";
-    size_t metaPos = htmll.find(tagStart);
-
-    while (metaPos != std::string::npos) {
-        size_t tagEndPos = htmll.find(tagEnd, metaPos);
-        std::string metaTag = htmll.substr(metaPos, tagEndPos - metaPos + 1);
-        size_t httpEquivPos = metaTag.find(httpEquiv);
-        if (httpEquivPos != std::string::npos) {
-            size_t contentPos = metaTag.find(content);
-            if (contentPos != std::string::npos) {
-                size_t urlStartPos = contentPos + content.length();
-                size_t urlEndPos = metaTag.find("\"", urlStartPos);
-                url = metaTag.substr(urlStartPos, urlEndPos - urlStartPos);
-                std::vector<std::string> url_prefixes = {"0; url=", "0;url=", "1; url=",
-                                                        "1;url=", "2; url", "2;url=",
-                                                        "0.0; url=", "0.0;url=", "12; url=", "12;url="};
-                for (auto& prefix : url_prefixes){
-                    if (url.compare(0, prefix.length(), prefix) == 0) {
-                        url.erase(0, prefix.length());
-                    }
-                }
-                break;
-            }
-        }
-        metaPos = htmll.find(tagStart, tagEndPos);
+std::string parse_url_from_js(const std::string& html){
+    std::regex regex("window\\.location\\.href\\s*=\\s*\"(.*?)\"");
+    std::smatch match;
+    if (std::regex_search(html, match, regex)) {
+        return match[1];
     }
-    return url;
+    return "";
 }
-
