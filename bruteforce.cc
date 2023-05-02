@@ -1,11 +1,11 @@
 #include "include/bruteforce.h"
 #include "include/callbacks.h"
 #include "include/other.h"
+#include "include/prints.h"
 #include <thread>
 #include <curl/curl.h>
 
-std::string yellow_html1 = "\033[38;2;240;215;75m";
-std::string reset_color1 = "\033[0m";
+nesca_prints nsp;
 
 std::string brute_ftp(const std::string ip, const std::string login, const std::string pass, int brute_log, int verbose){
     std::string result;
@@ -34,10 +34,7 @@ std::string brute_ftp(const std::string ip, const std::string login, const std::
         std::string url = "ftp://" + ip;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         if (brute_log){
-            std::string result_print_brute = "[" + std::string(get_time()) + "][FTP]     try: " + login + "@" + pass + " [BRUTEFORCE]";
-            std::cout << yellow_html1;
-            std::cout << result_print_brute << std::endl;
-            std::cout << reset_color1;
+            std::cout << nsp.main_nesca_out("FTP", "      try: " + login + "@" + pass, 2, "[BRUTEFORCE]", "", "", "") << std::endl;
         }
         curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
         curl_easy_setopt(curl, CURLOPT_PASSWORD, pass.c_str());
@@ -123,10 +120,7 @@ std::string brute_ssh(const std::string& ip, const std::string login, const std:
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
         if (brute_log) {
-            std::cout << yellow_html1;
-            std::string result_print_brute = "[" + std::string(get_time()) + "][SSH]     try: " + login + "@" + pass + " [BRUTEFORCE]";
-            std::cout << result_print_brute << std::endl;
-            std::cout << reset_color1;
+            std::cout << nsp.main_nesca_out("SSH", "      try: " + login + "@" + pass, 2, "[BRUTEFORCE]", "", "", "") << std::endl;
         }
 
         curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
@@ -200,12 +194,8 @@ std::string brute_rtsp(const std::string ip, const std::string login, const std:
         std::string url = "rtsp://" + ip;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
-
         if (brute_log){
-            std::string result_print_brute = "[" + std::string(get_time()) + "][RTSP]    try: " + login + "@" + pass + " [BRUTEFORCE]";
-            std::cout << yellow_html1;
-            std::cout << result_print_brute << std::endl;
-            std::cout << reset_color1;
+            std::cout << nsp.main_nesca_out("RTSP", "      try: " + login + "@" + pass, 2, "[BRUTEFORCE]", "", "", "") << std::endl;
         }
         curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
         curl_easy_setopt(curl, CURLOPT_PASSWORD, pass.c_str());
@@ -275,10 +265,7 @@ std::string brute_http(const std::string ip, const std::string login, const std:
         curl_easy_setopt(curl, CURLOPT_URL, url_with_protocol.c_str());
 
         if (brute_log){
-            std::string result_print_brute = "[" + std::string(get_time()) + "][HTTP]    try: " + login + "@" + pass + " [BRUTEFORCE]";
-            std::cout << yellow_html1;
-            std::cout << result_print_brute << std::endl;
-            std::cout << reset_color1;
+            std::cout << nsp.main_nesca_out("HTTP", "      try: " + login + "@" + pass, 2, "[BRUTEFORCE]", "", "", "") << std::endl;
         }
 
         CURLcode res = curl_easy_perform(curl);

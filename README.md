@@ -70,14 +70,19 @@
 + Добавлен парсинг из content, content location, и window.location.href в js.
 + Добавлены 2 аргумента, -fix-get-path и -get-path-log
 + Добавлено сохранение redirect в txt и немного изменён дизайн вывода.
++ Весь вывод перенесён в отдельный класс.
++ Исправлены кривые цвета.
++ Добавлена возможность использывать кастомные цвета из конфига.
++ Добавлен аргумент -import-color для парсинга конфига.
++ Добавлена одна color scheme в стиле "retrowave".
 
 # BUGS
-пока нету
+- Задержка на порту во время сканирования может достигать 5 минут.
 
 # MINI-BUGS
-- Задержка на порту во время сканирования может достигать 5 минут.
 - Выводит путь (redirected) только пока в нем нету порта. А он там может быть.
     - Исправляеться влючением аргумента `-fix-get-path`.
+
 - Во время брутфорса может выдать ошибку `double free or corruption (out)`.
     - Исправляеться повышением таймаута для брутфорса или сканирования.
     
@@ -130,14 +135,17 @@ arguments dns-scan:
 arguments output:
   -db, -debug            On debug mode, save and display not even working hosts.
   -er, -error            On display errors.
-  -no-color              Disable colors.
   -no-get-path           Disable getting paths.
-  -get-path-log          Display paths method log.
+  -path-log              Display paths method log.
   -fix-get-path          Display paths no processing (original).
   -on-get-dns            On get dns for scanning ports.
   -on-http-response      On print response from port 80.
   -log-set <count>       Change change the value of ips after which, will be displayed information about how much is left.
   -txt <path>            Save result to text document.
+
+arguments colors:
+  -no-color              Disable colors.
+  -import-color <path>   Import color scheme from file.
 
 arguments testing:
   -host-test <1,2,3>     Set host for testing.
