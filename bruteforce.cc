@@ -1,7 +1,9 @@
 #include "include/bruteforce.h"
 #include "include/callbacks.h"
+#include "include/networktool.h"
 #include "include/other.h"
 #include "include/prints.h"
+#include <string>
 #include <thread>
 #include <curl/curl.h>
 
@@ -10,7 +12,6 @@ nesca_prints nsp;
 std::string brute_ftp(const std::string ip, const std::string login, const std::string pass, int brute_log, int verbose){
     std::string result;
     CURL* curl = curl_easy_init();
-    bool success = false;
 
     if (curl) {
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
@@ -84,7 +85,7 @@ std::string threads_brute_ftp(const std::string ip, const std::vector<std::strin
 std::string brute_ssh(const std::string& ip, const std::string login, const std::string pass, int brute_log, int verbose, int known_hosts){
     std::string result;
     CURL* curl = curl_easy_init();
-    bool success = false;
+
     if (curl) {
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
         curl_easy_setopt(curl, CURLOPT_USERNAME, "");
@@ -242,43 +243,52 @@ std::string threads_brute_rtsp(const std::string ip, const std::vector<std::stri
     }
 }
 
+std::string brute_http(const std::string ip, const std::string login, const std::string pass, int brute_log, int verbose) {
+    CURL *curl;
+    CURLcode res;
+    long http_code;
+    std::string content_type;
 
-std::string brute_http(const std::string ip, const std::string login, const std::string pass, int brute_log, int verbose){
-    std::string result;
-    CURL* curl = curl_easy_init();
-    bool success = false;
+    curl = curl_easy_init();
+
     if (curl) {
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
-        curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-        curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
-        curl_easy_setopt(curl, CURLOPT_PASSWORD, pass.c_str());
-        curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 1L);
-        curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1L);
-        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 15L);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-        curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
-        curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-        if (verbose){
+        curl_easy_setopt(curl, CURLOPT_URL, ip.c_str());
+
+        if (verbose) {
             curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
         }
-        std::string url_with_protocol = "http://" + ip;
-        curl_easy_setopt(curl, CURLOPT_URL, url_with_protocol.c_str());
 
-        if (brute_log){
+        curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
+        curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
+        curl_easy_setopt(curl, CURLOPT_PASSWORD, pass.c_str());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+
+        if (brute_log) {
             std::cout << nsp.main_nesca_out("HTTP", "      try: " + login + "@" + pass, 2, "[BRUTEFORCE]", "", "", "") << std::endl;
         }
 
-        CURLcode res = curl_easy_perform(curl);
-        if (res == CURLE_OK) {
-            result = login + ":" + pass + "@";
-            curl_easy_cleanup(curl);
-            return result;
-        }
-        else {
-            curl_easy_cleanup(curl);
+        curl_easy_setopt(curl, CURLOPT_FAILONERROR, true);
+        res = curl_easy_perform(curl);
+
+        if (res != CURLE_OK) {
             return "";
         }
+
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+        if (http_code < 200 || http_code >= 300) {
+            return "";
+        }
+
+        curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &content_type);
+        if (content_type.find("error") != std::string::npos) {
+            return "";
+        }
+
+        std::string result = login + ":" + pass + "@";
+        return result;
     }
+
     curl_easy_cleanup(curl);
     return "";
 }
@@ -308,4 +318,5 @@ std::string threads_brute_http(const std::string ip, const std::vector<std::stri
     } else {
         return "";
     }
+    return "";
 }

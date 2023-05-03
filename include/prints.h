@@ -1,7 +1,9 @@
 #ifndef PRINTS_H
 #define PRINTS_H
+
 #include <iostream>
 #include <map>
+#include <vector>
 class nesca_prints{
     private:
         std::string gray_nesca = "\033[38;2;112;112;112m";
@@ -23,5 +25,6 @@ class nesca_prints{
         std::string main_nesca_out(std::string opt, std::string result, int mode, std::string opt1, std::string opt2,
                                   std::string result1, std::string result2);
 };
+
 #endif
 

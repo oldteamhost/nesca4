@@ -1051,19 +1051,46 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                             status_path = false;
                         }
                     }
-
-                    /*
-                    std::string axis_camera = cfs.check_axis_camera(path);
-                    std::string basic_auth = cfs.check_basic_auth(path);
-                    */
-
-                   // threads_brute_http(result, argp.http_logins, argp.http_passwords, argp.http_brute_log, argp.http_brute_verbose, argp.brute_timeout_ms);
                 }
               
                 std::string result_print;
                 std::string result_txt;
                 std::string dns;
 
+                std::string result_print_brute;
+                std::string result_txt_brute;
+                std::string brute_temp;
+
+                // brute http axis
+                std::lock_guard<std::mutex> guard(mtx);
+                std::string temp_check_axis = cfs.check_axis_camera(redirect);
+                if (argp.off_http_brute != true && temp_check_axis != "no" && argp.no_get_path != true){
+                    std::cout <<  np.main_nesca_out("AXIS", ip + " [BRUTEFORCE]", 2, "", "", "", "") << std::endl;
+
+                    brute_temp = threads_brute_http(redirect, argp.http_logins, argp.http_passwords, argp.http_brute_log, argp.http_brute_verbose, argp.brute_timeout_ms);
+                    result_txt_brute = np.main_nesca_out("AXIS", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "", "", "", "");
+                }
+                else {
+                    result_txt_brute = np.main_nesca_out("AXIS", "http://" + ip + ":" + std::to_string(port), 3, "", "", "", "");
+                }
+                if (argp.off_http_brute != true){
+                    if (argp.http_only){
+                        if (brute_temp.length() > 1){
+                            result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "", "", "", "");
+                        }
+                    }
+                    else {
+                        result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "", "", "", "");
+                    }
+                }
+                else {
+                    result_print = np.main_nesca_out("HTTP", "http://" + ip + ":" + std::to_string(port), 3, "", "", "", "");
+                }
+                if (argp.txt){
+                    int temp = write_line(argp.txt_save, result_txt_brute);
+                }
+
+                /*
                 // print dns
                 if (argp.no_get_dns){
                     dns = get_dns_ip(ip.c_str());
@@ -1077,8 +1104,8 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 if (argp.txt){
                     write_line(argp.txt_save, result_txt);
                 }
+                */
 
-                std::lock_guard<std::mutex> guard(mtx);
                 if (argp.txt){
                     int temp = write_line(argp.txt_save, result_txt);
                 }
@@ -1127,7 +1154,6 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
 
                     brute_temp = threads_brute_ftp(ip, argp.ftp_logins, argp.ftp_passwords, argp.ftp_brute_log, argp.ftp_brute_verbose, argp.brute_timeout_ms);
                     result_txt_brute = np.main_nesca_out("FTP", "ftp://" + brute_temp + result, 3, "", "", "", "");
-                    brute_temp = threads_brute_ftp(ip, argp.ftp_logins, argp.ftp_passwords, argp.ftp_brute_log, argp.ftp_brute_verbose, argp.brute_timeout_ms);
                 }
                 else {
                     result_txt_brute = np.main_nesca_out("FTP", "ftp://" + result, 3, "", "", "", "");

@@ -7,13 +7,12 @@ size_t write_callback_headers(char *ptr, size_t size, size_t nmemb, void *userda
     return size * nmemb;
 }
 
-size_t write_callback_auth(char* buf, size_t size, size_t nmemb, void* userdata){
-    std::ostringstream* ss = reinterpret_cast<std::ostringstream*>(userdata);
-    size_t len = size * nmemb;
-    ss->write(buf, len);
-    return len;
+size_t write_callback_auth(char *ptr, size_t size, size_t nmemb, void *userdata){
+    std::string *response = reinterpret_cast<std::string *>(userdata);
+    size_t total_size = size * nmemb;
+    response->append(ptr, total_size);
+    return total_size;
 }
-
 size_t write_callback(char* ptr, size_t size, size_t nmemb, void* userdata) {
     return size * nmemb;
 }

@@ -197,7 +197,7 @@ std::string checking_finds::check_axis_camera(std::string ip){
             return path;
         }
     }
-    return "";
+    return "no";
 }
 
 std::string checking_finds::check_basic_auth(std::string ip){
@@ -210,5 +210,5 @@ std::string checking_finds::check_basic_auth(std::string ip){
             return path;
         }
     }
-    return "";
+    return "no";
 }
