@@ -3,23 +3,13 @@
 ![alt text](https://i.imgur.com/xoJQ2N5.png)
 
 # COMPILE
-#### Debian 11:
+#### Debian 11 || Arch linux:
 ```
-    sudo apt-get install libboost-all-dev
-    sudo apt-get install libcurl4-openssl-dev
-    sudo apt install g++ make git
     git clone https://github.com/oldteamhost/nesca4
     cd nesca4
-    make
+    python3 compile.py
 ```
-#### Arch linux:
-```
-    sudo pacman -S boost
-    sudo pacman -S curl git
-    git clone https://github.com/oldteamhost/nesca4
-    cd nesca4
-    make
-```
+
 #### Windows:
 ```
     Скачать MinGW
