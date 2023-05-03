@@ -1,6 +1,9 @@
 #include "include/networktool.h"
 #include "include/callbacks.h"
 #include "include/other.h"
+#include <boost/asio.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/algorithm/string.hpp>
 #include <curl/curl.h>
 #include <sstream>
 #include <regex>
@@ -304,3 +307,38 @@ std::string parse_url_from_js(const std::string& html){
 
     return future_result.get();
 }
+
+std::string get_ftp_response_code(std::string server, std::string port, std::string username, std::string password) {
+    boost::asio::io_context io_context;
+    boost::asio::ip::tcp::resolver resolver(io_context);
+    boost::asio::ip::tcp::socket socket(io_context);
+
+    try {
+        boost::asio::connect(socket, resolver.resolve(server, port));
+
+        boost::asio::streambuf request;
+        std::ostream request_stream(&request);
+        request_stream << "USER " << username << "\r\n";
+        request_stream << "PASS " << password << "\r\n";
+        request_stream << "QUIT\r\n";
+
+        boost::asio::write(socket, request);
+
+        boost::asio::streambuf response;
+        boost::asio::read_until(socket, response, "\r\n");
+
+        std::istream response_stream(&response);
+        std::string status_line;
+        std::getline(response_stream, status_line);
+
+        std::string response_description = status_line.substr(status_line.find(' ') + 1);
+        response_description.erase(std::remove(response_description.begin(), response_description.end(), '\r'), response_description.end());
+        response_description.erase(std::remove(response_description.begin(), response_description.end(), '\n'), response_description.end());
+
+        return response_description;
+    }
+    catch (const boost::wrapexcept<boost::system::system_error>& ex) {
+        return "Error: Connection refused";
+    }
+}
+

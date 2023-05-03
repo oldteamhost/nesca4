@@ -1,5 +1,6 @@
 #include "include/other.h"
 #include "include/target.h"
+#include <algorithm>
 #include <iostream>
 
 const char* get_time(){
@@ -59,17 +60,20 @@ void delay_ms(int milliseconds){
 
 std::vector<int> write_ports(std::string mode){
     std::vector<int> temp;
-    if (mode == "all" || mode == "ALL" || mode == "0"){
+    std::transform(mode.begin(), mode.end(), mode.begin(), [](unsigned char c) {
+        return std::tolower(c);
+    });
+    if (mode == "all" || mode == "0"){
         for (int i = 0; i < 65536; i++) {
             temp.push_back(i);
         }
         return temp;
     }
-    else if (mode == "nesca" || mode == "NESCA" || mode == "1" || mode == "nesca3"){
+    else if (mode == "nesca" || mode == "1" || mode == "nesca3"){
         temp = {80,81,88,8080,8081,60001,60002,8008,8888,554,9000,3536,21};
         return temp;
     }
-    else if (mode == "top100" || mode == "TOP100" || mode == "2"){
+    else if (mode == "top100" || mode == "2"){
         temp = {80, 443, 22, 21, 25, 3389, 110, 143, 53, 445, 139, 3306, 8080, 
                1723, 111, 995, 993, 5900, 1025, 587, 8888, 199, 1720, 465, 548, 113, 81,
                6001, 10000, 514, 5060, 179, 1026, 23, 8443, 8000, 444, 1433, 1900, 2001,
@@ -81,12 +85,26 @@ std::vector<int> write_ports(std::string mode){
                1066, 1067, 1068, 1069, 1070, 1071, 1072, 1073, 1074, 1075, 1076, 1077};
         return temp;
     }
-    else if (mode == "top50" || mode == "TOP50" || mode == "3"){
+    else if (mode == "top50" || mode == "3"){
         temp  = {80, 443, 22, 21, 25, 3389, 110, 143, 53, 445, 139, 3306, 8080, 1723,
                      111, 995, 993, 5900, 1025, 587, 8888, 199, 1720, 465, 548, 113, 81, 6001, 10000,
                      514, 5060, 179, 1026, 23, 8443, 8000, 444, 1433, 1900, 2001, 1027, 49152,
                      2049, 1028, 1029, 5901, 32768, 1434, 3283}; 
         return temp;
+    }
+    else if (mode == "http"){
+        temp = {80,81,8080,8081,8888};
+        return temp;
+    }
+    else if (mode == "https"){
+        temp = {443};
+        return temp;
+    }
+    else if (mode == "ftp"){
+        temp = {20,21};
+    }
+    else if (mode == "sftp" || mode == "ssh"){
+        temp = {22};
     }
     return {-1};
 }

@@ -28,11 +28,12 @@
 #include "include/target.h"
 #include "include/prints.h"
 
-#define VERSION "1974-build"
+#define VERSION "2022-05-03v"
 #define DELIMITER ','
 
 std::mutex mtx;
 checking_finds cfs;
+brute_ftp_data bfd_;
 
 // main
 void help_menu(void);
@@ -155,7 +156,6 @@ nesca_prints np;
 const char* run; // for help menu
 
 int main(int argc, char** argv){
-
     if (check_ansi_support() != true){
         std::cout << "You terminal don`t support ansi colors!\n";
         np.disable_colors();
@@ -273,6 +273,9 @@ int main(int argc, char** argv){
            case 12:
            {
                std::vector<std::string> what = split_string_string(optarg, DELIMITER);
+               std::transform(what[0].begin(), what[0].end(), what[0].begin(), [](unsigned char c) {
+                    return std::tolower(c);
+               });
                const char* what_convert = what[1].c_str();
                if (what[0] == "ftp"){
                     argp.path_ftp_login = what_convert;
@@ -295,6 +298,9 @@ int main(int argc, char** argv){
            case 11:
            {
                std::vector<std::string> what = split_string_string(optarg, DELIMITER);
+               std::transform(what[0].begin(), what[0].end(), what[0].begin(), [](unsigned char c) {
+                    return std::tolower(c);
+               });
                const char* what_convert = what[1].c_str();
                if (what[0] == "ftp"){
                     argp.path_ftp_pass = what_convert;
@@ -317,6 +323,9 @@ int main(int argc, char** argv){
            {
                std::vector<std::string> what = split_string_string(optarg, DELIMITER);
                 for (int i = 0; i < what.size(); i++){
+                    std::transform(what[i].begin(), what[i].end(), what[i].begin(), [](unsigned char c) {
+                        return std::tolower(c);
+                    });
                     if (what[i] == "ftp"){
                         argp.ftp_brute_log = true;
                     }
@@ -347,6 +356,9 @@ int main(int argc, char** argv){
                 std::vector<std::string> what = split_string_string(optarg, DELIMITER);
 
                 for (int i = 0; i < what.size(); i++){
+                    std::transform(what[i].begin(), what[i].end(), what[i].begin(), [](unsigned char c) {
+                        return std::tolower(c);
+                    });
                     if (what[i] == "ftp"){
                         argp.ftp_brute_verbose = true;
                     }
@@ -377,6 +389,9 @@ int main(int argc, char** argv){
                std::vector<std::string> what = split_string_string(optarg, DELIMITER);
 
                for (int i = 0; i < what.size(); i++){
+                    std::transform(what[i].begin(), what[i].end(), what[i].begin(), [](unsigned char c) {
+                        return std::tolower(c);
+                    });
                    if (what[i] == "ftp"){
                        argp.off_ftp_brute = true;
                    }
@@ -407,6 +422,9 @@ int main(int argc, char** argv){
                std::vector<std::string> what = split_string_string(optarg, DELIMITER);
 
                for (int i = 0; i < what.size(); i++){
+                    std::transform(what[i].begin(), what[i].end(), what[i].begin(), [](unsigned char c) {
+                        return std::tolower(c);
+                    });
                    if (what[i] == "ftp"){
                        argp.ftp_only = true;
                    }
@@ -671,7 +689,6 @@ int main(int argc, char** argv){
                     std::string random_ = generate_random_str(argp.dns_scan_domain_count, argp.dns_dictionary);
                     std::string result = "http://" + random_ + argp.domain_1level;
                     std::string result_print;
-
                     int test = dns_scan("http://" + random_, argp.domain_1level);
 
                     if (test == 0) {
@@ -679,17 +696,11 @@ int main(int argc, char** argv){
                             std::lock_guard<std::mutex> lock(mtx);
                             std::cout << np.main_nesca_out("BA", result + " FAILED", 3, "", "", "", "") << std::endl;
 
-                            if (argp.txt){
-                                int temp = write_line(argp.txt_save, np.main_nesca_out("BA", result + " FAILED", 31, "", "", "", ""));
-                            }
                         }
                     }
                     else {
                         std::lock_guard<std::mutex> lock(mtx);
                         std::cout << np.main_nesca_out("BA", result, 3, "T", "", get_html_title(result), "") << std::endl;
-                        if (argp.txt){
-                            int temp = write_line(argp.txt_save, np.main_nesca_out("BA", result, 31, "T", "", get_html_title(result), ""));
-                        }
                     }
                 }
             }).detach();
@@ -866,10 +877,16 @@ void checking_default_files(void){
     }
 }
 
+// Welcome to HELL :)
+// 
 void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, int timeout_ms){
     for (const auto& port : ports) {
         int result = tcp_scan_port(ip.c_str(), port, timeout_ms);
         if (result == 0) {
+            std::string result = ip + ":" + std::to_string(port);
+            std::string brute_temp;
+            std::string result_print;
+
             if (port == 80 || port == 81 || port == 8080 || port == 8081 || port == 8888 || port == 8008){
 
                 if (argp.ping_off != true){
@@ -882,7 +899,7 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
 
                 bool status_path = false;
 
-                std::string result = "http://" + ip + ":" + std::to_string(port);
+                result.insert(0, "http://");
                 std::string code = send_http_request(ip);
                 std::string headers = get_headers("http://" + ip);
                 std::string redirect;
@@ -900,7 +917,6 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                         if (argp.fix_get_path){
                             status_path = true;
                             redirect = path_location;
-
                         }
                         else {
                             std::string paste_;
@@ -970,7 +986,6 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     }
                     if (status_path != true){
                         // getting method 3 from js
-                        // std::cout << "3 parse js\n";
                         if (argp.get_path_log){
                             std::cout << np.main_nesca_out("LOG", "3 method: parse_window.location.href", 2, "", "", "", "") << std::endl;
                         }
@@ -1012,7 +1027,6 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                         }
                     }
                     if (status_path != true){
-                        // std::cout << "4 parse content location\n";
                         // getting method 4 from content location
                         if (argp.get_path_log){
                             std::cout << np.main_nesca_out("LOG", "3 method: parse_content_location", 2, "", "", "", "") << std::endl;
@@ -1053,13 +1067,7 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     }
                 }
               
-                std::string result_print;
-                std::string result_txt;
                 std::string dns;
-
-                std::string result_print_brute;
-                std::string result_txt_brute;
-                std::string brute_temp;
 
                 // brute http axis
                 std::lock_guard<std::mutex> guard(mtx);
@@ -1067,48 +1075,19 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 if (argp.off_http_brute != true && temp_check_axis != "no" && argp.no_get_path != true){
                     std::cout <<  np.main_nesca_out("AXIS", ip + " [BRUTEFORCE]", 2, "", "", "", "") << std::endl;
 
-                    brute_temp = threads_brute_http(redirect, argp.http_logins, argp.http_passwords, argp.http_brute_log, argp.http_brute_verbose, argp.brute_timeout_ms);
-                    result_txt_brute = np.main_nesca_out("AXIS", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", get_html_title(ip), "", "");
+                    brute_temp = threads_brute_http(redirect, argp.http_logins, argp.http_passwords,
+                             argp.http_brute_log, argp.http_brute_verbose, argp.brute_timeout_ms);
+
                 }
-                else {
-                    result_txt_brute = np.main_nesca_out("AXIS", "http://" + ip + ":" + std::to_string(port), 3, "T", "", "", "");
-                }
-                if (argp.off_http_brute != true){
-                    if (argp.http_only){
-                        if (brute_temp.length() > 1){
-                            result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "", get_html_title(ip), "");
-                        }
-                    }
-                    else {
+                if (argp.http_only){
+                    if (brute_temp.length() > 1){
                         result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "", get_html_title(ip), "");
                     }
                 }
                 else {
-                    result_print = np.main_nesca_out("HTTP", "http://" + ip + ":" + std::to_string(port), 3, "T", "", get_html_title(ip), "");
-                }
-                if (argp.txt){
-                    int temp = write_line(argp.txt_save, result_txt_brute);
+                   result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "", get_html_title(ip), "");
                 }
 
-                /*
-                // print dns
-                if (argp.no_get_dns){
-                    dns = get_dns_ip(ip.c_str());
-                    result_print =  np.main_nesca_out("BA", result, 3, "T", "D", get_html_title(ip), dns);
-                    result_txt =  np.main_nesca_out("BA", result, 31, "T", "D", get_html_title(ip), dns);
-                }
-                else {
-                    result_print =  np.main_nesca_out("BA", result, 3, "T", "", get_html_title(ip), "");
-                    result_txt =  np.main_nesca_out("BA", result, 31, "T", "", get_html_title(ip), "");
-                }
-                if (argp.txt){
-                    write_line(argp.txt_save, result_txt);
-                }
-                */
-
-                if (argp.txt){
-                    int temp = write_line(argp.txt_save, result_txt);
-                }
                 std::cout << result_print << std::endl;
 
                 // print paths
@@ -1118,14 +1097,12 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     if (argp.fix_get_path){
                             if (redirect.length() != 0){
                                 std::cout << redirect_result << std::endl;
-                                write_line(argp.txt_save, redirect_result_txt);
                             }
                     }
                     else {
                         if (redirect.length() != default_result.length()){
                             if (redirect.length() != 0){
                                 std::cout << redirect_result << std::endl;
-                                write_line(argp.txt_save, redirect_result_txt);
                             }
                         }
                     }
@@ -1134,72 +1111,43 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 // print response
                 if (argp.get_response){
                     std::string result_code =  np.main_nesca_out("TT", code, 2, "", "", "", "");
-                    if (argp.txt){
-                        write_line(argp.txt_save, result_code);
-                    }
                     std::cout << result_code << std::endl;
                 }
             }
             else if (port == 20 || port == 21){
                 std::lock_guard<std::mutex> guard(mtx);
 
-                std::string result = ip + ":" + std::to_string(port);
-                std::string result_print_brute;
-                std::string result_txt_brute;
-                std::string brute_temp;
-                std::string result_print;
-
                 if (argp.off_ftp_brute != true){
                     std::cout <<  np.main_nesca_out("FTP", ip + " [BRUTEFORCE]", 2, "", "", "", "") << std::endl;
 
                     brute_temp = threads_brute_ftp(ip, argp.ftp_logins, argp.ftp_passwords, argp.ftp_brute_log, argp.ftp_brute_verbose, argp.brute_timeout_ms);
-                    result_txt_brute = np.main_nesca_out("FTP", "ftp://" + brute_temp + result, 3, "", "", "", "");
-                }
-                else {
-                    result_txt_brute = np.main_nesca_out("FTP", "ftp://" + result, 3, "", "", "", "");
-                }
-                if (argp.off_ftp_brute != true){
+
                     if (argp.ftp_only){
                         if (brute_temp.length() > 1){
-                            result_print = np.main_nesca_out("FTP", "ftp://" + brute_temp + result, 3, "", "", "", "");
+                            result_print = np.main_nesca_out("FTP", "ftp://" + brute_temp + result, 3, "D", "", get_ftp_response_code(ip, std::to_string(port), bfd_.get_success_login(), bfd_.get_success_pass()), "");
                         }
                     }
                     else {
-                        result_print = np.main_nesca_out("FTP", "ftp://" + brute_temp + result, 3, "", "", "", "");
+                        result_print = np.main_nesca_out("FTP", "ftp://" + brute_temp + result, 3, "D", "", get_ftp_response_code(ip, std::to_string(port), bfd_.get_success_login(), bfd_.get_success_pass()), "");
                     }
                 }
                 else {
-                    result_print = np.main_nesca_out("FTP", "ftp://" + result, 3, "", "", "", "");
+                    result_print = np.main_nesca_out("FTP", "ftp://" + brute_temp + result, 3, "D", "", get_ftp_response_code(ip, std::to_string(port), bfd_.get_success_login(), bfd_.get_success_pass()), "");
                 }
-                if (argp.txt){
-                    int temp = write_line(argp.txt_save, result_txt_brute);
-                }
-
+                
                 std::cout << result_print << std::endl;
 
             }
             else if (port == 22){
                 std::lock_guard<std::mutex> guard(mtx);
 
-                std::string result = ip + ":" + std::to_string(port);
-                std::string result_print_brute;
-                std::string result_txt_brute;
-                std::string brute_temp;
-                std::string result_print;
-
-                if (argp.off_ftp_brute != true){
+                if (argp.off_sftp_brute != true){
                     std::cout <<  np.main_nesca_out("SFTP", ip + " [BRUTEFORCE]", 2, "", "", "", "") << std::endl;
 
-                    brute_temp = threads_brute_ftp(ip, argp.ftp_logins, argp.ftp_passwords, argp.ftp_brute_log, argp.ftp_brute_verbose, argp.brute_timeout_ms);
-                    result_txt_brute = np.main_nesca_out("SFTP", "sftp://" + brute_temp + result, 3, "", "", "", "");
                     brute_temp = threads_brute_ssh(ip, argp.sftp_logins, argp.sftp_passwords, argp.sftp_brute_log, argp.sftp_brute_verbose,
                                                   argp.sftp_using_know_hosts, argp.brute_timeout_ms);
-                }
-                else {
-                    result_txt_brute = np.main_nesca_out("SFTP", "sftp://" + result, 3, "", "", "", "");
-                }
-                if (argp.off_ftp_brute != true){
-                    if (argp.ftp_only){
+
+                    if (argp.sftp_only){
                         if (brute_temp.length() > 1){
                             result_print = np.main_nesca_out("SFTP", "sftp://" + brute_temp + result, 3, "", "", "", "");
                         }
@@ -1211,32 +1159,18 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 else {
                     result_print = np.main_nesca_out("SFTP", "sftp://" + result, 3, "", "", "", "");
                 }
-                if (argp.txt){
-                    int temp = write_line(argp.txt_save, result_txt_brute);
-                }
 
                 std::cout << result_print << std::endl;
             }
             else if (port == 554){
                 std::lock_guard<std::mutex> guard(mtx);
 
-                std::string result = ip + ":" + std::to_string(port);
-                std::string result_print_brute;
-                std::string result_txt_brute;
-                std::string brute_temp;
-                std::string result_print;
-
                 if (argp.off_rtsp_brute != true){
                     std::cout <<  np.main_nesca_out("RTSP", ip + " [BRUTEFORCE]", 2, "", "", "", "") << std::endl;
 
-                    result_txt_brute = np.main_nesca_out("RTSP", "rtsp://" + brute_temp + result, 3, "", "", "", "");
                     brute_temp = threads_brute_rtsp(ip, argp.rtsp_logins, argp.rtsp_passwords, argp.rtsp_brute_log, argp.rtsp_brute_verbose,
                                                    argp.brute_timeout_ms);
-                }
-                else {
-                    result_txt_brute = np.main_nesca_out("RTSP", "rtsp://" + result, 3, "", "", "", "");
-                }
-                if (argp.off_rtsp_brute != true){
+
                     if (argp.rtsp_only){
                         if (brute_temp.length() > 1){
                             result_print = np.main_nesca_out("RTSP", "rtsp://" + brute_temp + result, 3, "", "", "", "");
@@ -1249,9 +1183,6 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 else {
                     result_print = np.main_nesca_out("RTSP", "rtsp://" + result, 3, "", "", "", "");
                 }
-                if (argp.txt){
-                    int temp = write_line(argp.txt_save, result_txt_brute);
-                }
 
                 std::cout << result_print << std::endl;
             }
@@ -1260,10 +1191,6 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 std::string result_print = np.main_nesca_out("BA", result, 3, "", "", "", "");
                 
                 std::lock_guard<std::mutex> guard(mtx);
-                if (argp.txt){
-                    int temp = write_line(argp.txt_save, result_print);
-                }
-
                 std::cout << result_print << std::endl;
             }
         }
@@ -1279,9 +1206,6 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 std::string result_print = np.main_nesca_out("DB", ip, 3, "CLOSED", "", std::to_string(port), "");
                 std::string result_txt = np.main_nesca_out("DB", ip, 31, "CLOSED", "", std::to_string(port), "");
                 std::lock_guard<std::mutex> guard(mtx);
-                if (argp.txt){
-                    int temp = write_line(argp.txt_save, result_txt);
-                }
                 std::cout << result_print << std::endl;
             }
         }
@@ -1290,12 +1214,12 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 std::string result_print = np.main_nesca_out("DB", ip, 3, "FILTER", "", std::to_string(port), "");
                 std::string result_txt = np.main_nesca_out("DB", ip, 31, "FILTER", "", std::to_string(port), "");
                 std::lock_guard<std::mutex> guard(mtx);
-
                 std::cout << result_print << std::endl;
             }
         }
     }
 }
+// You live?
 
 void help_menu(void){
     np.golder_rod_on();

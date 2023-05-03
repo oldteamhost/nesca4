@@ -8,6 +8,7 @@
 #include <curl/curl.h>
 
 nesca_prints nsp;
+brute_ftp_data bfd;
 
 std::string brute_ftp(const std::string ip, const std::string login, const std::string pass, int brute_log, int verbose){
     std::string result;
@@ -44,6 +45,8 @@ std::string brute_ftp(const std::string ip, const std::string login, const std::
         if (res == CURLE_OK) {
             result = login + ":" + pass + "@";
             curl_easy_cleanup(curl);
+            bfd.set_success_pass(pass);
+            bfd.set_success_login(login);
             return result;
         }
         else {
@@ -319,4 +322,19 @@ std::string threads_brute_http(const std::string ip, const std::vector<std::stri
         return "";
     }
     return "";
+}
+        
+std::string brute_ftp_data::get_success_login(void){
+    return this->success_login;
+}
+
+std::string brute_ftp_data::get_success_pass(void){
+    return this->success_pass;
+}
+
+void brute_ftp_data::set_success_login(std::string success_login){
+    this->success_login = success_login;
+}
+void brute_ftp_data::set_success_pass(std::string success_pass){
+    this->success_pass = success_pass;
 }

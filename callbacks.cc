@@ -47,3 +47,11 @@ std::string* str = (std::string*) up;
 
     return size * nmemb;
 }
+
+size_t curl_write_callback_ftp_get(char* ptr, size_t size, size_t nmemb, void* userdata){
+    std::string* response = static_cast<std::string*>(userdata);
+    response->append(ptr, size * nmemb);
+    return size * nmemb;
+}
+
+

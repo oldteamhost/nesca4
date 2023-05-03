@@ -9,6 +9,7 @@ std::string get_dns_ip(const char* ip);
 long get_response_code(const char *node);
 std::string get_html_title(std::string node);
 std::string send_http_request(std::string url);
+std::string get_ftp_response_code(std::string server, std::string port, std::string username, std::string password);
 std::string get_headers(const std::string node);
 
 // get paths
