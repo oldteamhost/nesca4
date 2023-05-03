@@ -5,14 +5,16 @@
 # COMPILE
 #### Debian 11:
 ```
-    sudo apt install g++ make git
+    sudo apt-get install libboost-all-dev
     sudo apt-get install libcurl4-openssl-dev
+    sudo apt install g++ make git
     git clone https://github.com/oldteamhost/nesca4
     cd nesca4
     make
 ```
 #### Arch linux:
 ```
+    sudo pacman -S boost
     sudo pacman -S curl git
     git clone https://github.com/oldteamhost/nesca4
     cd nesca4
@@ -22,6 +24,7 @@
 ```
     Скачать MinGW
     Подлинковать libcurl - https://curl.se/windows/
+    Полинковать boost - https://www.boost.org/users/history/version_1_82_0.html
     Скачать архив с репозиторием - https://github.com/oldteamhost/nesca4/archive/refs/heads/main.zip
     Распокавать
     cd nesca4
