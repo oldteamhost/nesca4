@@ -1068,23 +1068,23 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     std::cout <<  np.main_nesca_out("AXIS", ip + " [BRUTEFORCE]", 2, "", "", "", "") << std::endl;
 
                     brute_temp = threads_brute_http(redirect, argp.http_logins, argp.http_passwords, argp.http_brute_log, argp.http_brute_verbose, argp.brute_timeout_ms);
-                    result_txt_brute = np.main_nesca_out("AXIS", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "", "", "", "");
+                    result_txt_brute = np.main_nesca_out("AXIS", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", get_html_title(ip), "", "");
                 }
                 else {
-                    result_txt_brute = np.main_nesca_out("AXIS", "http://" + ip + ":" + std::to_string(port), 3, "", "", "", "");
+                    result_txt_brute = np.main_nesca_out("AXIS", "http://" + ip + ":" + std::to_string(port), 3, "T", "", "", "");
                 }
                 if (argp.off_http_brute != true){
                     if (argp.http_only){
                         if (brute_temp.length() > 1){
-                            result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "", "", "", "");
+                            result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "", get_html_title(ip), "");
                         }
                     }
                     else {
-                        result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "", "", "", "");
+                        result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "", get_html_title(ip), "");
                     }
                 }
                 else {
-                    result_print = np.main_nesca_out("HTTP", "http://" + ip + ":" + std::to_string(port), 3, "", "", "", "");
+                    result_print = np.main_nesca_out("HTTP", "http://" + ip + ":" + std::to_string(port), 3, "T", "", get_html_title(ip), "");
                 }
                 if (argp.txt){
                     int temp = write_line(argp.txt_save, result_txt_brute);
