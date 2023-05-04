@@ -3,7 +3,7 @@ CFLAGS=-std=c++11
 LIB=-lcurl -pthread -lboost_system -lboost_thread -I hikvision -L hikvision/lib -lhcnetsdk
 SRCS=$(wildcard *.cc)
 OBJS=$(patsubst %.cc,%.o,$(SRCS))
-BIN=nesca
+BIN=nesca4
 
 .PHONY: all clean clean-bin
 
@@ -17,6 +17,3 @@ $(BIN): $(OBJS)
 
 clean:
 	rm -f $(OBJS) $(BIN)
-
-clean-bin:
-	rm -f $(OBJS)
