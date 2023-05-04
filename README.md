@@ -8,7 +8,7 @@
     git clone https://github.com/oldteamhost/nesca4
     cd nesca4
     python3 compile.py
-	export LD_LIBRARY_PATH=hikvision/lib
+    export LD_LIBRARY_PATH=hikvision/lib
 ```
 
 #### Windows:
