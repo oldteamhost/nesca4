@@ -334,9 +334,16 @@ void brute_ftp_data::set_success_login(std::string success_login){
 void brute_ftp_data::set_success_pass(std::string success_pass){
     this->success_pass = success_pass;
 }
-
 std::string brute_hikvision(const std::string ip, const std::string login, const std::string pass, int brute_log){
   std::string result;
+
+  // log redirection
+#ifdef _WIN32
+  freopen("NUL", "w", stderr);
+#else
+  freopen("/dev/null", "w", stderr);
+#endif
+  //
   NET_DVR_Init();
 
   NET_DVR_USER_LOGIN_INFO loginInfo = {0};

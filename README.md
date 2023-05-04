@@ -8,7 +8,7 @@
     git clone https://github.com/oldteamhost/nesca4
     cd nesca4
     python3 compile.py
-    export LD_LIBRARY_PATH=hikvision/lib
+    export LD_LIBRARY_PATH=hikvision/lib/linux
 ```
 
 #### Windows:
@@ -74,6 +74,7 @@
 + Кое как сделан брутфорс RTSP на сколько рабочий не знаю.
 + Добавлен брутфорс hikvision камер.
 + Сделан чёткий make файл.
++ Убрано ненужное сообщение при брутфорсе hikvision.
 
 # MINI-BUGS
 - Выводит путь (redirected) только пока в нем нету порта. А он там может быть.

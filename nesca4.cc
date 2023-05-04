@@ -197,7 +197,7 @@ int main(int argc, char** argv){
         {"brute-log", required_argument, 0, 30},
         {"brute-verbose", required_argument, 0, 31},
         {"thread-on-port", no_argument, 0, 48},
-        {"brute-off", required_argument, 0, 44},
+        {"no-brute", required_argument, 0, 44},
         {"brute-only", required_argument, 0, 46},
         {"brute-timeout", required_argument, 0, 47},
 
