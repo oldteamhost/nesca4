@@ -5,7 +5,7 @@ SRCS=$(wildcard *.cc)
 OBJS=$(patsubst %.cc,%.o,$(SRCS))
 BIN=nesca4
 
-.PHONY: all clean clean-bin
+.PHONY: all clean
 
 all: $(BIN)
 
