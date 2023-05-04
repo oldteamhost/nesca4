@@ -1197,10 +1197,10 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
             else if (port == 8000){
                 std::lock_guard<std::mutex> guard(mtx);
 
-                if (argp.off_sftp_brute != true){
+                if (argp.off_hikvision_brute != true){
                     std::cout <<  np.main_nesca_out("HIKVISION", ip + " [BRUTEFORCE]", 2, "", "", "", "") << std::endl;
 
-                    brute_temp = threads_brute_hikvision(ip, argp.sftp_logins, argp.sftp_passwords, argp.sftp_brute_log,
+                    brute_temp = threads_brute_hikvision(ip, argp.hikvision_logins, argp.hikvision_passwords, argp.hikvision_brute_log,
                                                   argp.brute_timeout_ms);
 
                     if (argp.hikvision_only){
