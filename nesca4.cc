@@ -30,7 +30,7 @@
 #include "include/target.h"
 #include "include/prints.h"
 
-#define VERSION "2022-05-03v"
+#define VERSION "2022-05-05v"
 #define DELIMITER ','
 
 std::mutex mtx;
