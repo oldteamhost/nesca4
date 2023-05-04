@@ -1,0 +1,8 @@
+admin
+ftp
+root
+user
+12345
+administrator
+1234
+123

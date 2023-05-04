@@ -38,10 +38,6 @@ std::string nesca_prints::main_nesca_out(std::string opt, std::string result, in
         golder_rod + result1 + reset_color + gray_nesca + " " + opt2 + ": " + reset_color +
         golder_rod + result2 + reset_color;
     }
-    else if (mode == 31){
-        temp = print_get_time(get_time()) + "[" + opt + "]:" +
-        result + " " + opt1 + ": " + result1 + " " + opt2 + ": " + result2;
-    }
     return temp;
 }
 

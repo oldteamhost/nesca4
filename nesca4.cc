@@ -17,6 +17,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <string.h>
 
 #include "include/bruteforce.h"
 #include "include/callbacks.h"
@@ -38,6 +39,7 @@ brute_ftp_data bfd_;
 // main
 void help_menu(void);
 void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, int timeout_ms);
+void check_files(const char* path, const char* path1);
 void checking_default_files(void);
 
 class arguments_program{
@@ -65,6 +67,9 @@ class arguments_program{
         std::vector<std::string> http_logins;
         std::vector<std::string> http_passwords;
 
+        std::vector<std::string> hikvision_logins;
+        std::vector<std::string> hikvision_passwords;
+
         const char* path_range;
         const char* path_cidr;
         const char* path_ips;
@@ -82,6 +87,9 @@ class arguments_program{
         std::string path_http_login = "passwd/http_logins.txt";
         std::string path_http_pass = "passwd/http_passwords.txt";
 
+        std::string path_hikvision_login = "passwd/hikvision_logins.txt";
+        std::string path_hikvision_pass = "passwd/hikvision_passwords.txt";
+
         int random_ip_count;
         int octets;
         int generate_count;
@@ -89,8 +97,8 @@ class arguments_program{
         int log_set = 1000;
         int threads_temp;
         int dns_scan_domain_count = 5;
-        int timeout_ms = 300;
-        int _threads = 20;
+        int timeout_ms = 165;
+        int _threads = 100;
 
         std::vector<int> ports;
 
@@ -118,6 +126,8 @@ class arguments_program{
         bool rtsp_brute_log;
         bool http_brute_log;
 
+        bool hikvision_brute_log;
+
         bool ftp_brute_verbose;
         bool sftp_brute_verbose;
         bool rtsp_brute_verbose;
@@ -130,12 +140,14 @@ class arguments_program{
         bool off_ftp_brute;
         bool off_sftp_brute;
         bool off_rtsp_brute;
+        bool off_hikvision_brute;
         bool off_http_brute;
 
         bool ftp_only;
         bool no_get_path;
         bool get_path_log;
         bool sftp_only;
+        bool hikvision_only;
         bool import_color_scheme;
         bool http_only;
         bool fix_get_path;
@@ -289,6 +301,9 @@ int main(int argc, char** argv){
                else if (what[0] == "http"){
                    argp.path_http_login = what_convert;
                }
+               else if (what[0] == "hikvision"){
+                   argp.path_hikvision_login = what_convert;
+               }
                else {
                    break;
               }
@@ -314,6 +329,9 @@ int main(int argc, char** argv){
                else if (what[0] == "http"){
                    argp.path_http_pass = what_convert;
                }
+               else if (what[0] == "hikvision"){
+                   argp.path_hikvision_pass = what_convert;
+               }
                else {
                    break;
               }
@@ -338,11 +356,15 @@ int main(int argc, char** argv){
                     else if (what[i] == "http"){
                         argp.http_brute_log = true;
                     }
+                    else if (what[i] == "hikvision"){
+                        argp.hikvision_brute_log = true;
+                    }
                     else if (what[i] == "all"){
                         argp.ftp_brute_log = true;
                         argp.sftp_brute_log = true;
                         argp.rtsp_brute_log = true;
                         argp.http_brute_log = true;
+                        argp.hikvision_brute_log = true;
                     }
                     else {
                         break;
@@ -404,11 +426,15 @@ int main(int argc, char** argv){
                    else if (what[i] == "http"){
                        argp.off_http_brute = true;
                    }
+                   else if (what[i] == "hikvision"){
+                       argp.off_hikvision_brute = true;
+                   }
                    else if (what[i] == "all"){
                        argp.off_ftp_brute = true;
                        argp.off_sftp_brute = true;
                        argp.off_rtsp_brute = true;
                        argp.off_http_brute = true;
+                       argp.off_hikvision_brute = true;
                    }
                    else {
                        break;
@@ -437,11 +463,15 @@ int main(int argc, char** argv){
                    else if (what[i] == "http"){
                        argp.http_only = true;
                    }
+                   else if (what[i] == "hikvision"){
+                       argp.hikvision_only = true;
+                   }
                    else if (what[i] == "all"){
                        argp.sftp_only = true;
                        argp.ftp_only = true;
                        argp.rtsp_only = true;
                        argp.http_only = true;
+                       argp.hikvision_only = true;
                    }
                    else {
                        break;
@@ -726,6 +756,9 @@ int main(int argc, char** argv){
     argp.http_logins = write_file(argp.path_http_login);
     argp.http_passwords = write_file(argp.path_http_pass);
 
+    argp.hikvision_logins = write_file(argp.path_hikvision_login);
+    argp.hikvision_passwords = write_file(argp.path_hikvision_pass);
+
     std::vector<std::string> result;
     
     if (argp.ip_scan_import || argp.ip_scan){
@@ -775,6 +808,22 @@ int main(int argc, char** argv){
     return 0;
 }
 
+void check_files(const char* path, const char* path1){
+       if (check_file(path)){
+            std::cout << np.main_nesca_out("OK", std::string(path) + " (" + std::to_string(get_count_lines(path)) +
+                                          ") entries ", 0, "", "", "", "") << std::endl;
+       }
+       else {
+            std::cout << np.main_nesca_out("FAILED", std::string(path) + " (" + std::to_string(get_count_lines(path)) + ") entries ", 2, "", "", "", "") << std::endl;
+       }
+       if (check_file(path1)){
+            std::cout << np.main_nesca_out("OK", std::string(path1) + " (" + std::to_string(get_count_lines(path1)) +
+                                          ") entries ", 0, "", "", "", "") << std::endl;
+       }
+       else {
+            std::cout << np.main_nesca_out("FAILED", std::string(path1) + " (" + std::to_string(get_count_lines(path1)) + ") entries ", 2, "", "", "", "") << std::endl;
+       }
+}
 void checking_default_files(void){
     const char* path0 = "ip.txt";
 
@@ -817,64 +866,11 @@ void checking_default_files(void){
        }
     }
 
-    if (check_file(argp.path_ftp_login.c_str())){
-        std::cout << np.main_nesca_out("OK", "FTP logins loaded (" + std::to_string(get_count_lines(argp.path_ftp_login.c_str())) +
-                                      ") entries ", 0, "", "", "", "") << std::endl;
-    }
-    else {
-        std::cout << np.main_nesca_out("FAILED", std::string(argp.path_ftp_login) + " (" + std::to_string(get_count_lines(argp.path_ftp_login.c_str())) + ") entries ", 2, "", "", "", "") << std::endl;
-    }
-    if (check_file(argp.path_ftp_pass.c_str())){
-        std::cout << np.main_nesca_out("OK", "FTP passwords loaded (" + std::to_string(get_count_lines(argp.path_ftp_pass.c_str())) +
-                                      ") entries ", 0, "", "", "", "") << std::endl;
-    }
-    else {
-        std::cout << np.main_nesca_out("FAILED", std::string(argp.path_ftp_pass) + " (" + std::to_string(get_count_lines(argp.path_ftp_pass.c_str())) + ") entries ", 2, "", "", "", "") << std::endl;
-    }
-    if (check_file(argp.path_http_login.c_str())){
-        std::cout << np.main_nesca_out("OK", "HTTP logins loaded (" + std::to_string(get_count_lines(argp.path_http_login.c_str())) +
-                                      ") entries ", 0, "", "", "", "") << std::endl;
-    }
-    else {
-        std::cout << np.main_nesca_out("FAILED", std::string(argp.path_http_login) + " (" + std::to_string(get_count_lines(argp.path_http_login.c_str())) + ") entries ", 2, "", "", "", "") << std::endl;
-    }
-    if (check_file(argp.path_http_pass.c_str())){
-        std::cout << np.main_nesca_out("OK", "HTTP passwords loaded (" + std::to_string(get_count_lines(argp.path_http_pass.c_str())) +
-                                       ") entries ", 0, "", "", "", "") << std::endl;
-    }
-    else {
-        std::cout << np.main_nesca_out("FAILED", std::string(argp.path_http_pass) + " (" + std::to_string(get_count_lines(argp.path_http_pass.c_str())) + ") entries ", 2, "", "", "", "") << std::endl;
-    }
-
-    if (check_file(argp.path_sftp_login.c_str())){
-        std::cout << np.main_nesca_out("OK", "SSH logins loaded (" + std::to_string(get_count_lines(argp.path_sftp_login.c_str())) +
-                                       ") entries ", 0, "", "", "", "") << std::endl;
-    }
-    else {
-        std::cout << np.main_nesca_out("FAILED", std::string(argp.path_rtsp_login) + " (" + std::to_string(get_count_lines(argp.path_rtsp_login.c_str())) + ") entries ", 2, "", "", "", "") << std::endl;
-    }
-    if (check_file(argp.path_sftp_pass.c_str())){
-        std::cout << np.main_nesca_out("OK", "SSH passwords loaded (" + std::to_string(get_count_lines(argp.path_sftp_pass.c_str())) +
-                                      ") entries ", 0, "", "", "", "") << std::endl;
-    }
-    else {
-        std::cout << np.main_nesca_out("FAILED", std::string(argp.path_rtsp_pass) + " (" + std::to_string(get_count_lines(argp.path_sftp_pass.c_str())) + ") entries ", 2, "", "", "", "") << std::endl;
-    }
-
-    if (check_file(argp.path_rtsp_login.c_str())){
-        std::cout << np.main_nesca_out("OK", "RTSP logins loaded (" + std::to_string(get_count_lines(argp.path_rtsp_login.c_str())) +
-                                      ") entries ", 0, "", "", "", "") << std::endl;
-    }
-    else {
-        std::cout << np.main_nesca_out("FAILED", std::string(argp.path_range) + " (" + std::to_string(get_count_lines(argp.path_rtsp_login.c_str())) + ") entries ", 2, "", "", "", "") << std::endl;
-    }
-    if (check_file(argp.path_rtsp_pass.c_str())){
-         std::cout << np.main_nesca_out("OK", "RTSP passwords loaded (" + std::to_string(get_count_lines(argp.path_rtsp_pass.c_str())) +
-                                       ") entries ", 0, "", "", "", "") << std::endl;
-    }
-    else {
-        std::cout << np.main_nesca_out("FAILED", std::string(argp.path_rtsp_pass) + " (" + std::to_string(get_count_lines(argp.path_rtsp_pass.c_str())) + ") entries ", 2, "", "", "", "") << std::endl;
-    }
+    check_files(argp.path_ftp_login.c_str(), argp.path_ftp_pass.c_str());
+    check_files(argp.path_sftp_login.c_str(), argp.path_sftp_pass.c_str());
+    check_files(argp.path_http_login.c_str(), argp.path_http_pass.c_str());
+    check_files(argp.path_rtsp_login.c_str(), argp.path_rtsp_pass.c_str());
+    check_files(argp.path_hikvision_login.c_str(), argp.path_hikvision_pass.c_str());
 }
 
 // Welcome to HELL :)
@@ -882,6 +878,7 @@ void checking_default_files(void){
 void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, int timeout_ms){
     for (const auto& port : ports) {
         int result = tcp_scan_port(ip.c_str(), port, timeout_ms);
+        
         if (result == 0) {
             std::string result = ip + ":" + std::to_string(port);
             std::string brute_temp;
@@ -1164,24 +1161,59 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
             }
             else if (port == 554){
                 std::lock_guard<std::mutex> guard(mtx);
+                std::string path_yes = "";
 
                 if (argp.off_rtsp_brute != true){
+
+                    std::vector<std::string> rtsp_paths = {"/Streaming/Channels/101", "/h264/ch01/main/av_stream", 
+                                                          "/cam/realmonitor?channel=1&subtype=0","/live/main",
+                                                           "/av0_0", "/mpeg4/ch01/main/av_stream"};
+
                     std::cout <<  np.main_nesca_out("RTSP", ip + " [BRUTEFORCE]", 2, "", "", "", "") << std::endl;
 
-                    brute_temp = threads_brute_rtsp(ip, argp.rtsp_logins, argp.rtsp_passwords, argp.rtsp_brute_log, argp.rtsp_brute_verbose,
+                    for (auto& path : rtsp_paths){
+                        brute_temp = threads_brute_rtsp(ip+path, argp.rtsp_logins, argp.rtsp_passwords, argp.rtsp_brute_log, argp.rtsp_brute_verbose,
                                                    argp.brute_timeout_ms);
+                        if (brute_temp.length() > 1){
+                            path_yes = path;
+                        }
+                    }
 
                     if (argp.rtsp_only){
                         if (brute_temp.length() > 1){
-                            result_print = np.main_nesca_out("RTSP", "rtsp://" + brute_temp + result, 3, "", "", "", "");
+                            result_print = np.main_nesca_out("RTSP", "rtsp://" + brute_temp + result + path_yes, 3, "", "", "", "");
                         }
                     }
                     else {
-                        result_print = np.main_nesca_out("RTSP", "rtsp://" + brute_temp + result, 3, "", "", "", "");
+                        result_print = np.main_nesca_out("RTSP", "rtsp://" + brute_temp + result + path_yes, 3, "", "", "", "");
                     }
                 }
                 else {
                     result_print = np.main_nesca_out("RTSP", "rtsp://" + result, 3, "", "", "", "");
+                }
+
+                std::cout << result_print << std::endl;
+            }
+            else if (port == 8000){
+                std::lock_guard<std::mutex> guard(mtx);
+
+                if (argp.off_sftp_brute != true){
+                    std::cout <<  np.main_nesca_out("HIKVISION", ip + " [BRUTEFORCE]", 2, "", "", "", "") << std::endl;
+
+                    brute_temp = threads_brute_hikvision(ip, argp.sftp_logins, argp.sftp_passwords, argp.sftp_brute_log,
+                                                  argp.brute_timeout_ms);
+
+                    if (argp.hikvision_only){
+                        if (brute_temp.length() > 1){
+                            result_print = np.main_nesca_out("HIKVISION", "" + brute_temp + result, 3, "", "", "", "");
+                        }
+                    }
+                    else {
+                        result_print = np.main_nesca_out("HIKVISION", "" + brute_temp + result, 3, "", "", "", "");
+                    }
+                }
+                else {
+                    result_print = np.main_nesca_out("HIKVISION", "" + result, 3, "", "", "", "");
                 }
 
                 std::cout << result_print << std::endl;

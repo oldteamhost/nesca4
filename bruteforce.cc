@@ -3,8 +3,10 @@
 #include "include/networktool.h"
 #include "include/other.h"
 #include "include/prints.h"
+#include "HCNetSDK.h"
 #include <string>
 #include <thread>
+#include <cstring>
 #include <curl/curl.h>
 
 nesca_prints nsp;
@@ -16,8 +18,6 @@ std::string brute_ftp(const std::string ip, const std::string login, const std::
 
     if (curl) {
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
-        curl_easy_setopt(curl, CURLOPT_USERNAME, "");
-        curl_easy_setopt(curl, CURLOPT_PASSWORD, "");
         if (verbose){
             curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
         }
@@ -91,13 +91,9 @@ std::string brute_ssh(const std::string& ip, const std::string login, const std:
 
     if (curl) {
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
-        curl_easy_setopt(curl, CURLOPT_USERNAME, "");
-        curl_easy_setopt(curl, CURLOPT_PASSWORD, "");
-
         if (verbose){
             curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
         }
-
         curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 1L);
         curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 1L);
         curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1L);
@@ -181,8 +177,6 @@ std::string brute_rtsp(const std::string ip, const std::string login, const std:
     if (curl)
     {
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
-        curl_easy_setopt(curl, CURLOPT_USERNAME, "");
-        curl_easy_setopt(curl, CURLOPT_PASSWORD, "");
         if (verbose)
         {
             curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
@@ -193,8 +187,10 @@ std::string brute_rtsp(const std::string ip, const std::string login, const std:
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
         curl_easy_setopt(curl, CURLOPT_USERAGENT, "LibVLC/2.1.5 (LIVE555 Streaming Media v2014.05.27"); 
         curl_easy_setopt(curl, CURLOPT_RTSP_TRANSPORT, "TCP");
-        curl_easy_setopt(curl, CURLOPT_RTSP_REQUEST, CURL_RTSPREQ_OPTIONS);
+        curl_easy_setopt(curl, CURLOPT_RTSP_REQUEST, CURL_RTSPREQ_DESCRIBE);
 
+        long http_code = 0;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
         std::string url = "rtsp://" + ip;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
@@ -206,7 +202,7 @@ std::string brute_rtsp(const std::string ip, const std::string login, const std:
 
         CURLcode res = curl_easy_perform(curl);
 
-        if (res == CURLE_OK){
+        if (res == CURLE_OK && http_code == 200){
             result = login + ":" + pass + "@";
             curl_easy_cleanup(curl);
             return result;
@@ -338,3 +334,65 @@ void brute_ftp_data::set_success_login(std::string success_login){
 void brute_ftp_data::set_success_pass(std::string success_pass){
     this->success_pass = success_pass;
 }
+
+std::string brute_hikvision(const std::string ip, const std::string login, const std::string pass, int brute_log){
+  std::string result;
+  NET_DVR_Init();
+
+  NET_DVR_USER_LOGIN_INFO loginInfo = {0};
+  loginInfo.bUseAsynLogin = false;
+  strcpy(loginInfo.sDeviceAddress, ip.c_str());
+  loginInfo.wPort = 8000;
+  strcpy(loginInfo.sUserName, login.c_str());
+  strcpy(loginInfo.sPassword, pass.c_str());
+
+  NET_DVR_DEVICEINFO_V40 deviceInfo = {0};
+
+  if (brute_log){
+      std::cout << nsp.main_nesca_out("HIKVISION", "      try: " + login + "@" + pass, 2, "[BRUTEFORCE]", "", "", "") << std::endl;
+  }
+
+  LONG userId = NET_DVR_Login_V40(&loginInfo, &deviceInfo);
+
+  if (userId < 0) {
+    NET_DVR_Cleanup();
+    return "";
+  }
+
+  result = login + ":" + pass + "@";
+
+  NET_DVR_Logout(userId);
+  NET_DVR_Cleanup();
+
+  return result;
+}
+
+std::string threads_brute_hikvision(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int brute_timeout_ms){
+    std::vector<std::thread> threads;
+    std::vector<std::string> results;
+
+    for (const auto& login : logins) {
+        for (const auto& password : passwords) {
+            delay_ms(brute_timeout_ms);
+            threads.emplace_back([ip, login, password, brute_log, &results]() {
+                std::string temp = brute_hikvision(ip, login, password, brute_log);
+                if (!temp.empty() && temp.length() > 3) {
+                    results.push_back(temp);
+                }
+            });
+        }
+    }
+
+    for (auto& thread : threads) {
+        thread.join();
+    }
+
+    if (!results.empty()) {
+        return results[0];
+    } else {
+        return "";
+    }
+    return "";
+}
+
+

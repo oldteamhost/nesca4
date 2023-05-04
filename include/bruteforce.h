@@ -35,4 +35,8 @@ std::string threads_brute_rtsp(const std::string ip, const std::vector<std::stri
 std::string brute_http(const std::string ip, const std::string login, const std::string pass, const int verbose);
 std::string threads_brute_http(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms);
 
+// bruteforce hikvision
+std::string brute_hikvision(const std::string ip, const std::string login, const std::string pass, int brute_log);
+std::string threads_brute_hikvision(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int brute_timeout_ms);
+
 #endif

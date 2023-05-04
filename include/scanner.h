@@ -5,8 +5,14 @@
 #include <string>
 #include <vector>
 
+#define PORT_OPEN 0
+#define PORT_ERROR -1
+#define PORT_CLOSED 1
+#define PORT_UNKNOWN 2
+
 // main scan
 int tcp_scan_port(const char *ip, int port, int timeout_ms);
+
 // dns scan
 int dns_scan(std::string domain, std::string domain_1level);
 
