@@ -1241,15 +1241,7 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 std::cout << result_print << std::endl;
             }
         }
-        else if (result == 2){
-            if (argp.debug){
-                std::string result_print = np.main_nesca_out("DB", ip, 3, "FILTER", "", std::to_string(port), "");
-                std::string result_txt = np.main_nesca_out("DB", ip, 31, "FILTER", "", std::to_string(port), "");
-                std::lock_guard<std::mutex> guard(mtx);
-                std::cout << result_print << std::endl;
-            }
-        }
-    }
+   }
 }
 // You live?
 

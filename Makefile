@@ -1,6 +1,6 @@
 CC=g++
 CFLAGS=-std=c++11
-LIB=-lcurl -pthread -lboost_system -lboost_thread -I hikvision -L hikvision/lib -lhcnetsdk
+LIB=-lcurl -pthread -lboost_system -lboost_thread -I hikvision -L hikvision/lib/linux -lhcnetsdk
 SRCS=$(wildcard *.cc)
 OBJS=$(patsubst %.cc,%.o,$(SRCS))
 BIN=nesca4
