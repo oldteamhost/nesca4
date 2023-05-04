@@ -3,11 +3,23 @@
 ![alt text](https://i.imgur.com/xoJQ2N5.png)
 
 # COMPILE
-#### Debian 11 || Arch linux:
+#### Debian 11:
 ```
+    sudo apt-get install libcurl4-openssl-dev
+    sudo apt-get install libboost-all-dev
+    sudo apt install g++ make git
     git clone https://github.com/oldteamhost/nesca4
     cd nesca4
-    python3 compile.py
+    make
+    export LD_LIBRARY_PATH=hikvision/lib/linux
+```
+#### Arch linux:
+```
+    sudo pacman -S boost
+    sudo pacman -S curl
+    git clone https://github.com/oldteamhost/nesca4
+    cd nesca4
+    make
     export LD_LIBRARY_PATH=hikvision/lib/linux
 ```
 
@@ -75,6 +87,7 @@
 + Добавлен брутфорс hikvision камер.
 + Сделан чёткий make файл.
 + Убрано ненужное сообщение при брутфорсе hikvision.
++ Исправлен вывод http title.
 
 # MINI-BUGS
 - Выводит путь (redirected) только пока в нем нету порта. А он там может быть.

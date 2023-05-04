@@ -8,6 +8,7 @@
 #include <chrono>
 #include <future>
 #include <netdb.h>
+#include <netinet/in.h>
 #include <sys/stat.h>
 #include <thread>
 #include <getopt.h>
@@ -693,7 +694,7 @@ int main(int argc, char** argv){
 
     if (argp.warning_threads){
         char what;
-        std::cout << np.main_nesca_out("WARING", "You set " + std::to_string(argp.threads_temp) +
+        std::cout << np.main_nesca_out("WARNING", "You set " + std::to_string(argp.threads_temp) +
                                       " threads this can severely overload a weak cpu, are you sure you want to continue? (y,n): ", 1, "", "", "", "");
         std::cin >> what;
 
@@ -1076,13 +1077,17 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                              argp.http_brute_log, argp.http_brute_verbose, argp.brute_timeout_ms);
 
                 }
+                std::string http_title_result = get_html_title(ip);
+                http_title_result.erase(std::remove(http_title_result.begin(), http_title_result.end(), '\r'), http_title_result.end());
+                http_title_result.erase(std::remove(http_title_result.begin(), http_title_result.end(), '\n'), http_title_result.end());
+
                 if (argp.http_only){
                     if (brute_temp.length() > 1){
-                        result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "", get_html_title(ip), "");
+                        result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "", http_title_result, "");
                     }
                 }
                 else {
-                   result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "", get_html_title(ip), "");
+                   result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "", http_title_result, "");
                 }
 
                 std::cout << result_print << std::endl;
