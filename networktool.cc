@@ -5,6 +5,7 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/algorithm/string.hpp>
 #include <curl/curl.h>
+#include <stdexcept>
 #include <sstream>
 #include <regex>
 #include <future>
@@ -222,23 +223,36 @@ std::string parse_content_from_meta(const std::string& html) {
         }
         return "";
     });
+    std::string result = future_result.get();
 
-    return future_result.get();
+    return result; 
 } 
 
 std::string get_headers(const std::string node){
     std::string header;
+
     CURL* curl = curl_easy_init();
-    if (curl) {
-        curl_easy_setopt(curl, CURLOPT_URL, node.c_str());
-        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-        curl_easy_setopt(curl, CURLOPT_HEADER, 1L);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback_headers);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &header);
-        auto res = std::async(std::launch::async, curl_easy_perform, curl);
-        res.wait();
-        curl_easy_cleanup(curl);
+    if (!curl) {
+        return "";
     }
+
+    CURLcode res;
+    curl_easy_setopt(curl, CURLOPT_URL, node.c_str());
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_HEADER, 1L);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback_headers);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &header);
+
+    auto handle = std::async(std::launch::async, curl_easy_perform, curl);
+    handle.wait();
+
+    if (handle.valid() && handle.get() != CURLE_OK) {
+        curl_easy_cleanup(curl);
+        return "";
+    }
+
+    curl_easy_cleanup(curl);
+
     return header;
 }
 
@@ -254,7 +268,9 @@ std::string parse_content_location(const std::string& header)
         return "";
     });
 
-    return future_result.get();
+    std::string result = future_result.get();
+
+    return result;
 }
 
 std::string parse_location(const std::string& header)

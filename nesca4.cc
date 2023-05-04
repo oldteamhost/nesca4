@@ -780,11 +780,10 @@ int main(int argc, char** argv){
             result.push_back(random_temp);
         }
     }
-
     std::vector<std::thread> threads;
 
-    long ip_count = 0;
-    int size = result.size();
+    long long ip_count = 0;
+    long long size = result.size();
     for (const auto& ip : result) {
         threads.emplace_back(processing_tcp_scan_ports, ip, argp.ports, argp.timeout_ms);
         ip_count++;
