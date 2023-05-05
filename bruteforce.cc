@@ -4,6 +4,7 @@
 #include "include/other.h"
 #include "include/prints.h"
 #include "HCNetSDK.h"
+#include <iostream>
 #include <string>
 #include <thread>
 #include <cstring>

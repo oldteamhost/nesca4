@@ -4,6 +4,10 @@
 #include <boost/asio.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/asio/deadline_timer.hpp>
+#define BOOST_BIND_GLOBAL_PLACEHOLDERS
+#include <boost/bind.hpp>
 #include <curl/curl.h>
 #include <stdexcept>
 #include <sstream>
@@ -32,9 +36,6 @@
 #include <unistd.h>
 #include <errno.h>
 #endif
-
-std::string reset_color2 = "\033[0m";
-std::string yellow_html2 = "\033[38;2;240;215;75m";
 
 std::string get_dns_ip(const char* ip){
     struct addrinfo hints, *result = nullptr;
@@ -202,7 +203,7 @@ std::string get_html_title(std::string node){
     return return_value;
 }
 
-std::string parse_content_from_meta(const std::string& html) {
+std::string parse_content_from_meta(std::string html) {
     std::string htmll = html;
     std::transform(htmll.begin(), htmll.end(), htmll.begin(), [](unsigned char c) { return std::tolower(c); });
 
@@ -256,7 +257,7 @@ std::string get_headers(const std::string node){
     return header;
 }
 
-std::string parse_content_location(const std::string& header)
+std::string parse_content_location(std::string header)
 {
     std::regex regex_content_location("Content-Location:\\s*(.+)\r\n");
     std::smatch match;
@@ -273,7 +274,7 @@ std::string parse_content_location(const std::string& header)
     return result;
 }
 
-std::string parse_location(const std::string& header)
+std::string parse_location(std::string header)
 {
     std::regex regex_location("Location:\\s*(.+)\r\n");
     std::smatch match;
@@ -292,7 +293,6 @@ std::string parse_location(const std::string& header)
 
 std::string send_http_request(std::string url){
     CURL* curl = curl_easy_init();
-
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
     std::string response_string;
@@ -302,15 +302,15 @@ std::string send_http_request(std::string url){
     CURLcode res = curl_easy_perform(curl);
 
     if (res != CURLE_OK) {
+        curl_easy_cleanup(curl);
         return "";
     }
 
     curl_easy_cleanup(curl);
-
     return response_string;
 }
 
-std::string parse_url_from_js(const std::string& html){
+std::string parse_url_from_js(std::string html){
     std::regex regex("window\\.location\\.href\\s*=\\s*\"(.*?)\"");
     std::smatch match;
 
@@ -341,7 +341,15 @@ std::string get_ftp_response_code(std::string server, std::string port, std::str
         boost::asio::write(socket, request);
 
         boost::asio::streambuf response;
-        boost::asio::read_until(socket, response, "\r\n");
+        boost::asio::deadline_timer timer(io_context, boost::posix_time::seconds(15));
+        boost::asio::async_read_until(socket, response, "\r\n", [&response](const boost::system::error_code& error, std::size_t bytes_transferred) {
+        });
+
+        io_context.run_one();
+        if (timer.expires_at() <= boost::asio::deadline_timer::traits_type::now()) {
+            socket.close();
+            return "";
+        }
 
         std::istream response_stream(&response);
         std::string status_line;
@@ -354,7 +362,6 @@ std::string get_ftp_response_code(std::string server, std::string port, std::str
         return response_description;
     }
     catch (const boost::wrapexcept<boost::system::system_error>& ex) {
-        return "Error: Connection refused";
+        return "";
     }
 }
-

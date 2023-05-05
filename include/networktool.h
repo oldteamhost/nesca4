@@ -13,10 +13,9 @@ std::string get_ftp_response_code(std::string server, std::string port, std::str
 std::string get_headers(const std::string node);
 
 // get paths
-std::string parse_content_from_meta(const std::string& html);
-std::string parse_content_location(const std::string& header);
-std::string parse_location(const std::string& header);
-std::string get_paths_from_ip_address(const std::string& ip);
-std::string parse_url_from_js(const std::string& html);
+std::string parse_content_from_meta(std::string html);
+std::string parse_content_location(std::string header);
+std::string parse_location(std::string header);
+std::string parse_url_from_js(std::string html);
 
 #endif
