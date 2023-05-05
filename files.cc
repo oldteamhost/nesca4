@@ -1,6 +1,10 @@
 #include "include/files.h"
 #include <fstream>
 
+#ifdef _WIN32
+#include <string>
+#endif
+
 int get_count_lines(const char* path){
     std::ifstream file(path);
     int count = 0;

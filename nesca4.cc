@@ -7,9 +7,6 @@
 #include <iostream>
 #include <chrono>
 #include <future>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <sys/stat.h>
 #include <thread>
 #include <getopt.h>
 #include <mutex>

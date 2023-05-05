@@ -2,7 +2,6 @@
 #include "include/networktool.h"
 #include "include/other.h"
 #include <cstddef>
-#include <sys/poll.h>
 #include <vector>
 #ifdef _WIN32
 #include <winsock2.h>
@@ -64,9 +63,13 @@ int tcp_scan_port(const char *ip, int port, int timeout_ms) {
 #endif
         return -2;
     }
-
+#ifdef _WIN32
+    u_long iMode = 1;
+    ioctlsocket(sock, FIONBIO, &iMode);
+#else
     int flags = fcntl(sock, F_GETFL, 0);
     fcntl(sock, F_SETFL, flags | O_NONBLOCK);
+#endif
 
     ret = connect(sock, (struct sockaddr *)&target, sizeof(target));
 

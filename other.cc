@@ -3,6 +3,11 @@
 #include <algorithm>
 #include <iostream>
 
+#ifdef _WIN32
+#include <WinBase.h>
+#include <consoleapi.h>
+#endif
+
 const char* get_time(){
     time_t rawtime;
     struct tm * timeinfo;
