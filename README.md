@@ -25,13 +25,7 @@
 
 #### Windows:
 ```
-    Скачать MinGW
-    Подлинковать libcurl - https://curl.se/windows/
-    Полинковать boost - https://www.boost.org/users/history/version_1_82_0.html
-    Скачать архив с репозиторием - https://github.com/oldteamhost/nesca4/archive/refs/heads/main.zip
-    Распокавать
-    cd nesca4
-    make
+    Я шатал как вы это сделаете, это возможно, я бы посоветовал вам использывать встроенный компилятор в visual studio, и подключить к нему библиотеку getopt.h. Установить boost и curl из vcpkg. И дай бог скомпилируеться.
 ```
 
 # UPDATE
