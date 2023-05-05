@@ -86,6 +86,8 @@
 + Теперь для главных потоков используеться future вместо threads.
 + Добавлено отключение получения описания ftp после 15 секунд неудачного подключения.
 + Наконец исправлена ошибка с segmentation error при получение путей.
++ Добавлен новый аргумент в тестрирование -redirect.
++ Добавлен новый аргумент в тестрирование -http-request.
 
 # Дополнительно
 - Выводит путь (redirected) только пока в нем нету порта. А он там может быть.
@@ -196,6 +198,8 @@ arguments colors:
 arguments testing:
   -host-test <1,2,3>     Set host for testing.
   -response-code         Get response code from host.
+  -redirect              Get redirect from host.
+  -http-request          Send http request from host.
   -tcp-ping <mode>       Get response time from host, modes (live) or (default).
 
 arguments generation:

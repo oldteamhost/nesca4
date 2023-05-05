@@ -156,9 +156,11 @@ class arguments_program{
         bool generation_test;
 
         bool host_testing;
+        bool get_redirect;
         bool thread_on_port;
         bool response_code_test;
         bool tcp_ping_test;
+        bool http_request;
         bool generate_ipv4_test;
         bool generate_ipv6_test;
 };
@@ -215,10 +217,12 @@ const struct option long_options[] = {
         {"error", no_argument, 0, 25},
 
         {"response-code", no_argument, 0, 35},
+        {"http-request", no_argument, 0, 56},
         {"gen-ipv4", no_argument, 0, 36},
         {"host-test", required_argument, 0, 34},
         {"tcp-ping", required_argument, 0, 37},
         {"gen-count", required_argument, 0, 38},
+        {"redirect", no_argument, 0, 55},
         {"gen-ipv6", required_argument, 0, 39},
         {0,0,0,0}
     };
@@ -599,6 +603,12 @@ int main(int argc, char** argv){
                argp.import_color_scheme = true;
                argp.path_color_scheme = optarg;
                break;
+           case 55:
+               argp.get_redirect = true;
+               break;
+           case 56:
+               argp.http_request = true;
+               break;
         }
     }
     if (argp.import_color_scheme){
@@ -618,6 +628,75 @@ int main(int argc, char** argv){
                 strs << get_response_code(argp.hosts_test[i].c_str());
                 std::string code = strs.str();
                 std::cout << np.main_nesca_out("TT", argp.hosts_test[i], 3, "C", "", code, "") << std::endl;
+            }
+        }
+        if (argp.http_request){
+            for (int i = 0; i < argp.hosts_test.size(); i++){
+                np.golder_rod_on();
+                std::cout << send_http_request(argp.hosts_test[i]);
+                np.reset_colors();
+                std::cout << np.main_nesca_out("TT", "[^]:HTTP REQUEST " + argp.hosts_test[i], 2, "", "", "", "") << std::endl;
+            }
+        }
+        if (argp.get_redirect){
+            for (int i = 0; i < argp.hosts_test.size(); i++){
+                    std::string headers = get_headers(argp.hosts_test[i]);
+                    std::string path_location = parse_location(headers);
+                    bool status_path;
+                    std::string redirect = "N/A";
+                    std::string code = send_http_request(argp.hosts_test[i]);
+
+                    if (path_location.length() > 1){
+                        status_path = true;
+                        redirect = path_location;
+                    }
+                    else {
+                        status_path = false;
+                    }
+
+                    if (status_path != true) {
+                        if (argp.get_path_log){
+                            std::cout << np.main_nesca_out("LOG", "2 method: parse_http_equiv", 2, "", "", "", "") << std::endl;
+                        }
+                        std::string path_http;
+                        path_http = parse_content_from_meta(code);
+                        if (path_http.length() > 1){
+                            status_path = true;
+                            redirect = path_http;
+                        }
+                        else {
+                            status_path = false;
+                        }
+                    }
+                    if (status_path != true){
+                        // getting method 3 from js
+                        if (argp.get_path_log){
+                            std::cout << np.main_nesca_out("LOG", "3 method: parse_window.location.href", 2, "", "", "", "") << std::endl;
+                        }
+                        std::string path_js = parse_url_from_js(code);
+                        if (path_js.length() > 3){
+                            status_path = true;
+                            redirect = path_js;
+                        }
+                        else {
+                            status_path = false;
+                        }
+                    }
+                    if (status_path != true){
+                        // getting method 4 from content location
+                        if (argp.get_path_log){
+                            std::cout << np.main_nesca_out("LOG", "4 method: parse_content_location", 2, "", "", "", "") << std::endl;
+                        }
+                        std::string path_content_location = parse_content_location(headers);
+                        if (path_content_location.length() > 1){
+                                status_path = true;
+                                redirect = path_content_location;
+                        }
+                        else {
+                            status_path = false;
+                        }
+                    }
+                    std::cout << np.main_nesca_out("TT", argp.hosts_test[i], 3, "R", "", redirect, "") << std::endl;
             }
         }
         if (argp.tcp_ping_test){
@@ -1086,9 +1165,6 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                         }
                     }
                 }
-             
-
-
                 // print paths
                 if (argp.no_get_path != true && redirect.length() != default_result.length()){
                     std::string redirect_result =  np.main_nesca_out("^", "Redirect to: " + redirect, 2, "", "", "", "");
@@ -1321,6 +1397,8 @@ void help_menu(void){
     np.reset_colors();
     std::cout << "  -host-test <1,2,3>     Set host for testing.\n";
     std::cout << "  -response-code         Get response code from host.\n";
+    std::cout << "  -redirect              Get redirect from host.\n";
+    std::cout << "  -http-request          Send http request from host.\n";
     std::cout << "  -tcp-ping <mode>       Get response time from host, modes (live) or (default).\n";
 
     np.sea_green_on();
