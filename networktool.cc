@@ -4,6 +4,7 @@
 #include <boost/asio.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/trim_all.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/deadline_timer.hpp>
 #define BOOST_BIND_GLOBAL_PLACEHOLDERS
@@ -203,31 +204,38 @@ std::string get_html_title(std::string node){
     return return_value;
 }
 
-std::string parse_content_from_meta(std::string html) {
+std::string parse_content_from_meta(std::string& html) {
     std::string htmll = html;
-    std::transform(htmll.begin(), htmll.end(), htmll.begin(), [](unsigned char c) { return std::tolower(c); });
+    boost::algorithm::to_lower(htmll);
+    std::string meta_str = "<meta";
+    std::string http_equiv_str = "http-equiv=\"refresh\"";
+    std::string content_str = "content=\"";
+    std::string end_str = "\"";
+    std::string url;
 
-    std::regex meta_regex("<meta.*?http-equiv=\"refresh\".*?content=\"(.*?)\"", std::regex::icase);
-    std::smatch meta_match;
-
-    std::future<std::string> future_result = std::async(std::launch::async, [&]() -> std::string {
-        if (std::regex_search(htmll, meta_match, meta_regex)) {
-            std::string url = meta_match[1].str();
-
-            std::vector<std::string> url_prefixes = {"0; url=", "0;url=", "1; url=", "1;url=", "2; url", "2;url=", "0.0; url=", "0.0;url=", "12; url=", "12;url="};
-            for (auto& prefix : url_prefixes) {
-                if (url.compare(0, prefix.length(), prefix) == 0) {
-                    url.erase(0, prefix.length());
+    auto meta_it = std::search(htmll.begin(), htmll.end(), meta_str.begin(), meta_str.end(), boost::is_iequal());
+    if (meta_it != htmll.end()) {
+        auto http_equiv_it = std::search(meta_it, htmll.end(), http_equiv_str.begin(), http_equiv_str.end(), boost::is_iequal());
+        if (http_equiv_it != htmll.end()) {
+            auto content_it = std::search(http_equiv_it, htmll.end(), content_str.begin(), content_str.end(), boost::is_iequal());
+            if (content_it != htmll.end()) {
+                auto end_it = std::search(content_it + content_str.size(), htmll.end(), end_str.begin(), end_str.end());
+                if (end_it != htmll.end()) {
+                    url = std::string(content_it + content_str.size(), end_it);
+                    boost::algorithm::trim_all(url);
+                    std::vector<std::string> url_prefixes = {"0; url=", "0;url=", "1; url=", "1;url=", "2; url", "2;url=", "0.0; url=", "0.0;url=", "12; url=", "12;url="};
+                    for (auto& prefix : url_prefixes) {
+                        if (url.compare(0, prefix.length(), prefix) == 0) {
+                            url.erase(0, prefix.length());
+                        }
+                    }
                 }
             }
-            return url;
         }
-        return "";
-    });
-    std::string result = future_result.get();
+    }
 
-    return result; 
-} 
+    return url;
+}
 
 std::string get_headers(const std::string node){
     std::string header;
@@ -257,36 +265,36 @@ std::string get_headers(const std::string node){
     return header;
 }
 
-std::string parse_content_location(std::string header)
-{
-    std::regex regex_content_location("Content-Location:\\s*(.+)\r\n");
-    std::smatch match;
+std::string parse_content_location(std::string header) {
+    std::string content_location_str = "Content-Location:";
+    std::string end_str = "\r\n";
+    std::string result;
 
-    std::future<std::string> future_result = std::async(std::launch::async, [&]() -> std::string {
-        if (std::regex_search(header, match, regex_content_location) && match.size() > 1) {
-            return match[1].str();
+    auto content_location_it = std::search(header.begin(), header.end(), content_location_str.begin(), content_location_str.end(), boost::is_iequal());
+    if (content_location_it != header.end()) {
+        auto end_it = std::search(content_location_it, header.end(), end_str.begin(), end_str.end());
+        if (end_it != header.end()) {
+            result = std::string(content_location_it + content_location_str.size(), end_it);
+            boost::algorithm::trim_all(result);
         }
-        return "";
-    });
-
-    std::string result = future_result.get();
+    }
 
     return result;
 }
 
-std::string parse_location(std::string header)
-{
-    std::regex regex_location("Location:\\s*(.+)\r\n");
-    std::smatch match;
+std::string parse_location(std::string header) {
+    std::string location_str = "Location:";
+    std::string end_str = "\r\n";
+    std::string result;
 
-    std::future<std::string> future_result = std::async(std::launch::async, [&]() -> std::string {
-    if (std::regex_search(header, match, regex_location) && match.size() > 1) {
-        return match[1].str();
+    auto location_it = std::search(header.begin(), header.end(), location_str.begin(), location_str.end(), boost::is_iequal());
+    if (location_it != header.end()) {
+        auto end_it = std::search(location_it, header.end(), end_str.begin(), end_str.end());
+        if (end_it != header.end()) {
+            result = std::string(location_it + location_str.size(), end_it);
+            boost::algorithm::trim_all(result);
+        }
     }
-    return "";
-    });
-
-    std::string result = future_result.get();
 
     return result;
 }
@@ -310,18 +318,21 @@ std::string send_http_request(std::string url){
     return response_string;
 }
 
-std::string parse_url_from_js(std::string html){
-    std::regex regex("window\\.location\\.href\\s*=\\s*\"(.*?)\"");
-    std::smatch match;
+std::string parse_url_from_js(std::string html) {
+    std::string search_str = "window.location.href";
+    std::string end_str = "\"";
+    std::string result;
 
-    std::future<std::string> future_result = std::async(std::launch::async, [&]() -> std::string {
-        if (std::regex_search(html, match, regex)) {
-            return match[1];
+    auto search_it = std::search(html.begin(), html.end(), search_str.begin(), search_str.end(), boost::is_iequal());
+    if (search_it != html.end()) {
+        auto end_it = std::search(search_it, html.end(), end_str.begin(), end_str.end());
+        if (end_it != html.end()) {
+            result = std::string(search_it + search_str.size(), end_it);
+            boost::algorithm::trim_all(result);
         }
-        return "";
-    });
+    }
 
-    return future_result.get();
+    return result;
 }
 
 std::string get_ftp_response_code(std::string server, std::string port, std::string username, std::string password) {

@@ -970,7 +970,8 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                         if (argp.get_path_log){
                             std::cout << np.main_nesca_out("LOG", "2 method: parse_http_equiv", 2, "", "", "", "") << std::endl;
                         }
-                        std::string path_http = parse_content_from_meta("http://" + code);
+                        std::string path_http;
+                        path_http = parse_content_from_meta(code);
                         if (path_http.length() > 1){
                             if (argp.fix_get_path){
                                 status_path = true;
@@ -1048,7 +1049,7 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                     if (status_path != true){
                         // getting method 4 from content location
                         if (argp.get_path_log){
-                            std::cout << np.main_nesca_out("LOG", "3 method: parse_content_location", 2, "", "", "", "") << std::endl;
+                            std::cout << np.main_nesca_out("LOG", "4 method: parse_content_location", 2, "", "", "", "") << std::endl;
                         }
                         std::string path_content_location = parse_content_location(headers);
                         if (path_content_location.length() > 1){
@@ -1085,7 +1086,8 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                         }
                     }
                 }
-              
+             
+
 
                 // print paths
                 if (argp.no_get_path != true && redirect.length() != default_result.length()){
