@@ -261,7 +261,16 @@ int main(int argc, char** argv){
                 argp.ports_temp = optarg;
                 argp.ports = write_ports(argp.ports_temp);
                 if (argp.ports[0] == -1){
-                    argp.ports = split_string_int(optarg, DELIMITER);
+                    size_t pos = argp.ports_temp.find(",");
+                    size_t pos1 = argp.ports_temp.find("-");
+
+                    if (pos1 != std::string::npos){
+                        argp.ports = parse_range(optarg);
+                    }
+                    else {
+                        argp.ports = split_string_int(optarg, DELIMITER);
+                    }
+
                 }
                 break;
             }

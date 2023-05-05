@@ -123,3 +123,24 @@ void logo(void){
     std::cout << "VP   V8P Y88888P `8888Y'  `Y88P' YP   YP          VP  \n";
     std::cout << std::endl;
 }
+
+std::vector<int> parse_range(const std::string& range_string){
+    std::vector<int> result;
+    int start = 0, end = 0;
+    bool found_dash = false;
+    for (char c : range_string) {
+        if (c == '-') {
+            found_dash = true;
+            start = std::stoi(range_string.substr(0, end));
+            end = std::stoi(range_string.substr(end + 1));
+        }
+        ++end;
+    }
+    if (!found_dash) {
+        return result;
+    }
+    for (int i = start; i <= end; ++i) {
+        result.push_back(i);
+    }
+    return result;
+}

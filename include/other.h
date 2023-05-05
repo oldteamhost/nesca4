@@ -14,5 +14,7 @@ bool check_ansi_support(void);
 std::vector<int> write_ports(std::string mode);
 // print help menu
 void logo(void);
+// range ports
+std::vector<int> parse_range(const std::string& range_string);
 
 #endif
