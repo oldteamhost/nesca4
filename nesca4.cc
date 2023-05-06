@@ -168,7 +168,6 @@ arguments_program argp;
 nesca_prints np;
 
 const struct option long_options[] = {
-
         {"threads", required_argument, 0, 'T'},
         {"timeout", required_argument, 0, 't'},
 
@@ -632,28 +631,28 @@ int main(int argc, char** argv){
 
     if (argp.host_testing){
         if (argp.response_code_test){
-            for (int i = 0; i < argp.hosts_test.size(); i++){
+            for (auto& host : argp.hosts_test){
                 std::ostringstream strs;
-                strs << get_response_code(argp.hosts_test[i].c_str());
+                strs << get_response_code(host.c_str());
                 std::string code = strs.str();
-                std::cout << np.main_nesca_out("TT", argp.hosts_test[i], 3, "C", "", code, "") << std::endl;
+                std::cout << np.main_nesca_out("TT", host, 3, "C", "", code, "") << std::endl;
             }
         }
         if (argp.http_request){
-            for (int i = 0; i < argp.hosts_test.size(); i++){
+            for (auto& host : argp.hosts_test){
                 np.golder_rod_on();
-                std::cout << send_http_request(argp.hosts_test[i]);
+                std::cout << send_http_request(host);
                 np.reset_colors();
-                std::cout << np.main_nesca_out("TT", "[^]:HTTP REQUEST " + argp.hosts_test[i], 2, "", "", "", "") << std::endl;
+                std::cout << np.main_nesca_out("TT", "[^]:HTTP REQUEST " + host, 2, "", "", "", "") << std::endl;
             }
         }
         if (argp.get_redirect){
-            for (int i = 0; i < argp.hosts_test.size(); i++){
-                    std::string headers = get_headers(argp.hosts_test[i]);
+            for (auto& host : argp.hosts_test){
+                    std::string headers = get_headers(host);
                     std::string path_location = parse_location(headers);
                     bool status_path;
                     std::string redirect = "N/A";
-                    std::string code = send_http_request(argp.hosts_test[i]);
+                    std::string code = send_http_request(host);
 
                     if (path_location.length() > 1){
                         status_path = true;
@@ -705,7 +704,7 @@ int main(int argc, char** argv){
                             status_path = false;
                         }
                     }
-                    std::cout << np.main_nesca_out("TT", argp.hosts_test[i], 3, "R", "", redirect, "") << std::endl;
+                    std::cout << np.main_nesca_out("TT", host, 3, "R", "", redirect, "") << std::endl;
             }
         }
         if (argp.tcp_ping_test){
@@ -734,9 +733,9 @@ int main(int argc, char** argv){
                 }
             }
             else if (argp.tcp_ping_mode == "default" || argp.tcp_ping_mode == "0") {
-                for (int i = 0; i < argp.hosts_test.size(); i++){
+                for (auto& host : argp.hosts_test){
                     std::ostringstream strs;
-                    double ping_temp = measure_ping_time(argp.hosts_test[i].c_str(), 80);
+                    double ping_temp = measure_ping_time(host.c_str(), 80);
                     strs << ping_temp;
                     std::string ping = strs.str();
 
@@ -867,6 +866,7 @@ int main(int argc, char** argv){
         }
     }
     std::vector<std::future<void>> futures;
+
     long long ip_count = 0;
     long long size = result.size();
 
@@ -1305,10 +1305,28 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
 
                 std::cout << result_print << std::endl;
             }
+            else if (port == 25){
+                std::string result_print = np.main_nesca_out("SMTP", result, 3, "", "", "", "");
+                std::lock_guard<std::mutex> guard(mtx);
+                std::cout << result_print << std::endl;
+            }
+            else if (port == 53){
+                std::string result_print = np.main_nesca_out("DNS", result, 3, "", "", "", "");
+                std::lock_guard<std::mutex> guard(mtx);
+                std::cout << result_print << std::endl;
+            }
+            else if (port == 143){
+                std::string result_print = np.main_nesca_out("IMAP", result, 3, "", "", "", "");
+                std::lock_guard<std::mutex> guard(mtx);
+                std::cout << result_print << std::endl;
+            }
+            else if (port == 443){
+                std::string result_print = np.main_nesca_out("HTTPS", result, 3, "", "", "", "");
+                std::lock_guard<std::mutex> guard(mtx);
+                std::cout << result_print << std::endl;
+            }
             else{
-                std::string result = ip + ":" + std::to_string(port);
                 std::string result_print = np.main_nesca_out("BA", result, 3, "", "", "", "");
-                
                 std::lock_guard<std::mutex> guard(mtx);
                 std::cout << result_print << std::endl;
             }
@@ -1320,10 +1338,16 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 std::cout << result_print << std::endl;
             }
         }
+        else if (result == 2){
+            if (argp.debug){
+                std::string result_print = np.main_nesca_out("DB", ip, 3, "FILTER", "", std::to_string(port), "");
+                std::lock_guard<std::mutex> guard(mtx);
+                std::cout << result_print << std::endl;
+            }
+        }
         else if (result == 1) {
             if (argp.debug){
                 std::string result_print = np.main_nesca_out("DB", ip, 3, "CLOSED", "", std::to_string(port), "");
-                std::string result_txt = np.main_nesca_out("DB", ip, 31, "CLOSED", "", std::to_string(port), "");
                 std::lock_guard<std::mutex> guard(mtx);
                 std::cout << result_print << std::endl;
             }

@@ -359,7 +359,7 @@ std::string get_ftp_response_code(std::string server, std::string port, std::str
         io_context.run_one();
         if (timer.expires_at() <= boost::asio::deadline_timer::traits_type::now()) {
             socket.close();
-            return "";
+            return "N/A";
         }
 
         std::istream response_stream(&response);
@@ -373,6 +373,6 @@ std::string get_ftp_response_code(std::string server, std::string port, std::str
         return response_description;
     }
     catch (const boost::wrapexcept<boost::system::system_error>& ex) {
-        return "";
+        return "N/A";
     }
 }

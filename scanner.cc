@@ -3,6 +3,8 @@
 #include "include/other.h"
 #include <cstddef>
 #include <vector>
+#include <boost/asio.hpp>
+
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -21,6 +23,8 @@
 
 checking_finds cf;
 
+
+// OLD SCAN
 int tcp_scan_port(const char *ip, int port, int timeout_ms) {
     int sock, ret;
     struct sockaddr_in target;
@@ -89,6 +93,15 @@ int tcp_scan_port(const char *ip, int port, int timeout_ms) {
     ret = select(sock + 1, NULL, &writefds, NULL, &timeout);
 
     if (ret < 0) {
+        if (errno == EAGAIN) {
+    #ifdef _WIN32
+            closesocket(sock);
+            WSACleanup();
+    #else
+            close(sock);
+    #endif
+            return 2;
+        }
 #ifdef _WIN32
         closesocket(sock);
         WSACleanup();
@@ -116,6 +129,15 @@ int tcp_scan_port(const char *ip, int port, int timeout_ms) {
         close(sock);
 #endif
         return PORT_OPEN;
+    }
+    else {
+    #ifdef _WIN32
+            closesocket(sock);
+            WSACleanup();
+    #else
+            close(sock);
+    #endif
+            return PORT_UNKNOWN;
     }
 
 #ifdef _WIN32
