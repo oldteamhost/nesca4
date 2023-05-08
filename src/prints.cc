@@ -1,5 +1,5 @@
-#include "include/prints.h"
-#include "include/other.h"
+#include "../include/prints.h"
+#include "../include/other.h"
 #include <string>
 #include <fstream>
 #include <map>

@@ -1,6 +1,6 @@
-#include "include/networktool.h"
-#include "include/callbacks.h"
-#include "include/other.h"
+#include "../include/networktool.h"
+#include "../include/callbacks.h"
+#include "../include/other.h"
 #include <boost/asio.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/algorithm/string.hpp>

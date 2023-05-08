@@ -18,15 +18,15 @@
 #include <vector>
 #include <string.h>
 
-#include "include/bruteforce.h"
-#include "include/callbacks.h"
-#include "include/files.h"
-#include "include/generation.h"
-#include "include/networktool.h"
-#include "include/other.h"
-#include "include/scanner.h"
-#include "include/target.h"
-#include "include/prints.h"
+#include "../include/bruteforce.h"
+#include "../include/callbacks.h"
+#include "../include/files.h"
+#include "../include/generation.h"
+#include "../include/networktool.h"
+#include "../include/other.h"
+#include "../include/scanner.h"
+#include "../include/target.h"
+#include "../include/prints.h"
 
 #define VERSION "2022-05-05v"
 #define DELIMITER ','

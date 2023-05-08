@@ -1,9 +1,9 @@
-#include "include/bruteforce.h"
-#include "include/callbacks.h"
-#include "include/networktool.h"
-#include "include/other.h"
-#include "include/prints.h"
-#include "HCNetSDK.h"
+#include "../include/bruteforce.h"
+#include "../include/callbacks.h"
+#include "../include/networktool.h"
+#include "../include/other.h"
+#include "../include/prints.h"
+#include "../lib/HCNetSDK.h"
 #include <iostream>
 #include <string>
 #include <thread>
@@ -14,6 +14,7 @@ nesca_prints nsp;
 brute_ftp_data bfd;
 
 std::string brute_ftp(const std::string ip, const std::string login, const std::string pass, int brute_log, int verbose){
+    
     std::string result;
     CURL* curl = curl_easy_init();
 

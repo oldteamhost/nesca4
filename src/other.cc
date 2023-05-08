@@ -1,5 +1,5 @@
-#include "include/other.h"
-#include "include/target.h"
+#include "../include/other.h"
+#include "../include/target.h"
 #include <algorithm>
 #include <iostream>
 

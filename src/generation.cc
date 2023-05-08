@@ -1,4 +1,4 @@
-#include "include/generation.h"
+#include "../include/generation.h"
 #include <random>
 #include <cstring>
 #include <sstream>
