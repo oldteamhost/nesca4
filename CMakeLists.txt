@@ -3,6 +3,9 @@ project(nesca4)
 
 set(CMAKE_CXX_STANDARD 20)
 
+set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
+    "CMakeCache.txt;CMakeFiles;Makefile;cmake_install.cmake")
+
 include_directories(lib)
 link_directories(lib/platform/linux)
 file(GLOB SRCS src/*.cc)

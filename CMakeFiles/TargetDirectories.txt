@@ -1,3 +1,0 @@
-/home/lomaster/nesca4/CMakeFiles/rebuild_cache.dir
-/home/lomaster/nesca4/CMakeFiles/edit_cache.dir
-/home/lomaster/nesca4/CMakeFiles/nesca4.dir
