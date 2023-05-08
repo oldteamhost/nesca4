@@ -1,8 +1,11 @@
 #include "include/scanner.h"
 #include "include/networktool.h"
 #include "include/other.h"
-#include <cstddef>
+#include <asm-generic/errno-base.h>
+#include <asm-generic/errno.h>
+#include <cerrno>
 #include <vector>
+
 #include <boost/asio.hpp>
 
 #ifdef _WIN32
@@ -14,139 +17,130 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <sys/types.h>
 #include <netdb.h>
-#include <netinet/in.h>
-#include <netinet/ip_icmp.h>
 #include <unistd.h>
-#include <errno.h>
 #endif
 
 checking_finds cf;
 
+void close_socket(int sock){
+    #ifdef _WIN32
+    closesocket(sock);
+    WSACleanup();
+    #else
+    close(sock);
+    #endif
+}
 
-// OLD SCAN
-int tcp_scan_port(const char *ip, int port, int timeout_ms) {
-    int sock, ret;
-    struct sockaddr_in target;
-    struct timeval timeout;
-    fd_set writefds;
-    timeout.tv_sec = timeout_ms / 1000;
-    timeout.tv_usec = (timeout_ms % 1000) * 1000;
+int create_socket() {
+    int sock;
 
 #ifdef _WIN32
     WSADATA wsaData;
-    int iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
-
-    if (iResult != 0) {
-        return PORT_ERROR;
+    int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (result != 0) {
+        printf("WSAStartup failed: %d\n", result);
+        return -1;
     }
-#endif
 
+    sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (sock == INVALID_SOCKET) {
+        printf("Failed to create socket: %d\n", WSAGetLastError());
+        close_socket(sock);
+        WSACleanup();
+        return -1;
+    }
+#else
     sock = socket(AF_INET, SOCK_STREAM, 0);
-
     if (sock < 0) {
-#ifdef _WIN32
-        closesocket(sock);
-        WSACleanup();
-#else
-        close(sock);
-#endif
-        return -3;
+        printf("Failed to create socket\n");
+        close_socket(sock);
+        return -1;
     }
-
-    target.sin_family = AF_INET;
-    target.sin_addr.s_addr = inet_addr(ip);
-    target.sin_port = htons(port);
-
-    if (target.sin_addr.s_addr == INADDR_NONE) {
-#ifdef _WIN32
-        closesocket(sock);
-        WSACleanup();
-#else
-        close(sock);
 #endif
-        return -2;
-    }
+
+    return sock;
+}
+
+void set_non_blocking(int sock) {
 #ifdef _WIN32
     u_long iMode = 1;
-    ioctlsocket(sock, FIONBIO, &iMode);
+    if (ioctlsocket(sock, FIONBIO, &iMode) != NO_ERROR) {
+        perror("ioctlsocket");
+        return;
+    }
 #else
     int flags = fcntl(sock, F_GETFL, 0);
-    fcntl(sock, F_SETFL, flags | O_NONBLOCK);
-#endif
-
-    ret = connect(sock, (struct sockaddr *)&target, sizeof(target));
-
-    if (ret < 0 && errno != EINPROGRESS) {
-#ifdef _WIN32
-        closesocket(sock);
-        WSACleanup();
-#else
-        close(sock);
-#endif
-        return errno == ECONNREFUSED ? PORT_CLOSED : -3;
+    if (flags == -1) {
+        perror("fcntl");
+        return;
     }
 
-    FD_ZERO(&writefds);
-    FD_SET(sock, &writefds);
-
-    ret = select(sock + 1, NULL, &writefds, NULL, &timeout);
-
-    if (ret < 0) {
-        if (errno == EAGAIN) {
-    #ifdef _WIN32
-            closesocket(sock);
-            WSACleanup();
-    #else
-            close(sock);
-    #endif
-            return 2;
-        }
-#ifdef _WIN32
-        closesocket(sock);
-        WSACleanup();
-#else
-        close(sock);
-#endif
-        return -5;
+    flags |= O_NONBLOCK;
+    if (fcntl(sock, F_SETFL, flags) == -1) {
+        perror("fcntl");
+        return;
     }
-
-    if (ret == 0) {
-#ifdef _WIN32
-        closesocket(sock);
-        WSACleanup();
-#else
-        close(sock);
 #endif
-        return PORT_CLOSED;
-    }
+}
 
-    if (FD_ISSET(sock, &writefds)) {
-#ifdef _WIN32
-        closesocket(sock);
-        WSACleanup();
-#else
-        close(sock);
-#endif
+int tcp_scan_port(const std::string& ip, int port, int timeout_ms) {
+    const char* addr = ip.c_str();
+    struct sockaddr_in addr_s;
+    struct timeval tv;
+
+    int so_error;
+    int fd=-1;
+
+    struct timespec tstart={0,0}, tend={0,0};
+    struct pollfd fds[1];
+
+    addr_s.sin_family = AF_INET;
+    addr_s.sin_addr.s_addr = inet_addr(addr);
+    addr_s.sin_port = htons(port);
+
+    clock_gettime(CLOCK_MONOTONIC, &tstart);
+
+    fd = create_socket();
+    set_non_blocking(fd);
+
+    int rc = connect(fd, (struct sockaddr *)&addr_s, sizeof(addr_s));
+
+    if (rc == 0) {
+        clock_gettime(CLOCK_MONOTONIC, &tend);
+        close_socket(fd);
         return PORT_OPEN;
     }
-    else {
-    #ifdef _WIN32
-            closesocket(sock);
-            WSACleanup();
-    #else
-            close(sock);
-    #endif
-            return PORT_UNKNOWN;
+    else if (rc == -1 && errno == EINPROGRESS) {
+        fds[0].fd = fd;
+        fds[0].events = POLLOUT;
+
+        tv.tv_sec = timeout_ms / 1000;
+        tv.tv_usec = (timeout_ms % 1000) * 1000;
+
+        rc = poll(fds, 1, timeout_ms);
+        if (rc > 0) {
+            socklen_t len = sizeof(so_error);
+            getsockopt(fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
+            if (so_error == 0) {
+                clock_gettime(CLOCK_MONOTONIC, &tend);
+                close_socket(fd);
+                return PORT_OPEN;
+            }
+            else {
+                close_socket(fd);
+                return PORT_FILTERED;
+            }
+        }
+        else if (rc == 0) {
+            close_socket(fd);
+            return PORT_CLOSED;
+        }
     }
 
-#ifdef _WIN32
-        closesocket(sock);
-        WSACleanup();
-#else
-        close(sock);
-#endif
-    return PORT_CLOSED;
+    close_socket(fd);
+    return PORT_ERROR;
 }
 
 int dns_scan(std::string domain, std::string domain_1level){

@@ -4,7 +4,6 @@
 // // // // // // // // // 
 
 #include <cstddef>
-#include <boost/program_options.hpp>
 #include <iostream>
 #include <chrono>
 #include <future>
@@ -962,7 +961,7 @@ void checking_default_files(void){
 // 
 void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, int timeout_ms){
     for (const auto& port : ports) {
-        int result = tcp_scan_port(ip.c_str(), port, timeout_ms);
+        int result = tcp_scan_port(ip, port, timeout_ms);
         
         if (result == 0) {
             std::string result = ip + ":" + std::to_string(port);

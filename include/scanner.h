@@ -8,13 +8,17 @@
 #define PORT_OPEN 0
 #define PORT_ERROR -1
 #define PORT_CLOSED 1
-#define PORT_UNKNOWN 2
-
-// main scan
-int tcp_scan_port(const char *ip, int port, int timeout_ms);
+#define PORT_FILTERED 2
 
 // dns scan
 int dns_scan(std::string domain, std::string domain_1level);
+
+// tcp scan
+int create_socket();
+void close_socket(int sock);
+void set_non_blocking(int sock);
+int send_tcp_packet(int sock, const struct sockaddr_in* target_address, int timeout_ms);
+int tcp_scan_port(const std::string& ip, int port, int timeout_ms);
 
 class checking_finds{
     public:

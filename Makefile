@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-g -std=c++11
+CFLAGS=-g 
 LIB=-lcurl -pthread -lboost_system -lboost_thread -I hikvision -L hikvision/lib/linux -lhcnetsdk
 SRCS=$(wildcard *.cc)
 OBJS=$(patsubst %.cc,%.o,$(SRCS))
