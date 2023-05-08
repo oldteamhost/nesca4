@@ -27,7 +27,7 @@
     Я шатал как вы это сделаете, это возможно, я бы посоветовал вам использывать встроенный компилятор в visual studio, и подключить к нему библиотеку getopt.h. Установить boost и curl из vcpkg. И дай бог скомпилируеться.
 ```
 
-## Error
+### Error
 ```
 On start using:
     export LD_LIBRARY_PATH=hikvision/lib/linux
