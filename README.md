@@ -30,7 +30,7 @@
 ### Error
 ```
 On start using:
-    export LD_LIBRARY_PATH=hikvision/lib/linux
+    export LD_LIBRARY_PATH=lib/platform/linux
 ```
 
 
