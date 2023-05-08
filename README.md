@@ -7,19 +7,24 @@
 ```
     sudo apt-get install libcurl4-openssl-dev
     sudo apt-get install libboost-all-dev
-    sudo apt install g++ make git
+    sudo apt install g++ make git cmake
     git clone https://github.com/oldteamhost/nesca4
     cd nesca4
+    cmake .
     make
-    export LD_LIBRARY_PATH=hikvision/lib/linux
 ```
 #### Arch linux:
 ```
-    sudo pacman -S boost
-    sudo pacman -S curl
+    sudo pacman -S boost curl cmake
     git clone https://github.com/oldteamhost/nesca4
     cd nesca4
+    cmake .
     make
+```
+
+#### Error
+```
+On start using:
     export LD_LIBRARY_PATH=hikvision/lib/linux
 ```
 
