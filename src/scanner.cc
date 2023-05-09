@@ -1,8 +1,6 @@
 #include "../include/scanner.h"
 #include "../include/networktool.h"
 #include "../include/other.h"
-#include <asm-generic/errno-base.h>
-#include <asm-generic/errno.h>
 #include <cerrno>
 #include <vector>
 

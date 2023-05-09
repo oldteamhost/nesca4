@@ -766,12 +766,12 @@ int main(int argc, char** argv){
     if (argp.generation_test){
         if (argp.generate_ipv4_test){
             for (int i = 1; i <= argp.generate_count; i++){
-                std::cout << np.main_nesca_out("TT", generate_ipv4(), 3, "", "", "", "");
+                std::cout << np.main_nesca_out("TT", generate_ipv4(), 3, "", "", "", "") << std::endl;
             }
         }
         if (argp.generate_ipv6_test){
             for (int i = 1; i <= argp.generate_count; i++){
-                std::cout << np.main_nesca_out("TT", generate_ipv6(argp.octets), 3, "", "", "", "");
+                std::cout << np.main_nesca_out("TT", generate_ipv6(argp.octets), 3, "", "", "", "") << std::endl;
             }
         }
         return 0;
