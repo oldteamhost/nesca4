@@ -2,7 +2,6 @@
 #include "../include/callbacks.h"
 #include "../include/other.h"
 #include <boost/asio.hpp>
-#include <boost/asio/ip/tcp.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim_all.hpp>
 #include <boost/asio/steady_timer.hpp>
