@@ -83,6 +83,7 @@ int syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
     iph->check = csum ((unsigned short *) datagram, iph->tot_len >> 1); // контрольная сумма пакета.
 
     /*Создание tcp заголовка для пакета.*/
+    tcph->dest = htons(80);
     create_tcp_header(tcph, port);
 
     /*Указания ядру ос, то что будет отправлен
@@ -103,10 +104,11 @@ int syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
     /*Подготовка к заполнению фекового tcp заголовка.*/
     dest.sin_family = AF_INET;
     dest.sin_addr.s_addr = dest_ip.s_addr;
+    tcph->check = 0;
 
     /*Заполнение псевдо tcp заголовка, для обмана
     хоста, и установки псевдо подключения.*/
-    psh.source_address = inet_addr( ip );
+    psh.source_address = inet_addr( source_ip );
     psh.dest_address = dest.sin_addr.s_addr;
     psh.placeholder = 0;
     psh.protocol = IPPROTO_TCP;
@@ -191,14 +193,14 @@ int syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
 
         /*Обработка пакета, писалась используя
         эту статью: https://nmap.org/book/synscan.html*/
-        if (tcph->syn == 1 && tcph->ack == 1){
+        if (tcph->th_flags == 0x12){ // syn + ack
             main_utils::close_socket(sock);
             main_utils::close_socket(sock1);
             /*Если хост ответил флагом ack и послал syn
             значит порт считаеться открытым.*/
             return PORT_OPEN;
         }
-        else if (tcph->syn == 1 && tcph->ack == 1 && tcph->psh == 1){
+        else if (tcph->th_flags == 0x12 && tcph->th_flags == 0x08){ // syn + ack + psh
             main_utils::close_socket(sock);
             main_utils::close_socket(sock1);
             /*Если хост ответил флагом ack и psh затем  послал syn
@@ -206,7 +208,7 @@ int syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
             передачи данных*/
             return PORT_OPEN;
         }
-        else if (tcph->rst == 1){
+        else if (tcph->th_flags == 0x04){ // rst
             main_utils::close_socket(sock);
             main_utils::close_socket(sock1);
             /*Если хост послал только флаг rst
@@ -237,7 +239,7 @@ void syn_scan::create_tcp_header(struct tcphdr* tcph, int port){
     uint32_t seq = dist(rd);
 
     tcph->seq = htonl(seq);
-    tcph->source = htons(12345);
+    tcph->source = htons(15845);
     tcph->seq = htonl(1105024978);
     tcph->dest = htons (port);
     tcph->ack_seq = 0;
@@ -247,14 +249,13 @@ void syn_scan::create_tcp_header(struct tcphdr* tcph, int port){
     tcph->rst=0;
     tcph->psh=0;
     tcph->ack=0;
-    tcph->check = 0;
     tcph->urg=0;
+    tcph->check = 0;
 
     int window_size_bytes = 14600;
     uint16_t window_size_words = window_size_bytes / 2;
     tcph->window = htons(window_size_words);
 
-    tcph->check = 0;
     tcph->urg_ptr = 0;
 }
 
