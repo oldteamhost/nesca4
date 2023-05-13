@@ -16,5 +16,7 @@ std::vector<int> write_ports(std::string mode);
 void logo(void);
 // range ports
 std::vector<int> parse_range(const std::string& range_string);
+// check root
+bool check_root_perms();
 
 #endif

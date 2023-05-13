@@ -20,6 +20,9 @@ void set_non_blocking(int sock);
 int send_tcp_packet(int sock, const struct sockaddr_in* target_address, int timeout_ms);
 int tcp_scan_port(const std::string& ip, int port, int timeout_ms);
 
+// syn scan
+int syn_scan_port(const std::string& ip, int port, int timeout_ms);
+
 class checking_finds{
     public:
 

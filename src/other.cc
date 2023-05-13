@@ -5,7 +5,10 @@
 
 #ifdef _WIN32
 #include <WinBase.h>
+#include <windows.h>
 #include <consoleapi.h>
+#else
+#include <unistd.h>
 #endif
 
 const char* get_time(){
@@ -143,4 +146,27 @@ std::vector<int> parse_range(const std::string& range_string){
         result.push_back(i);
     }
     return result;
+}
+
+bool check_root_perms(){
+#ifdef _WIN32
+
+    BOOL isAdmin = FALSE;
+    SID_IDENTIFIER_AUTHORITY ntAuthority = SECURITY_NT_AUTHORITY;
+    PSID adminGroup;
+
+    if (AllocateAndInitializeSid(&ntAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID,
+        DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &adminGroup)){
+        if (!CheckTokenMembership(NULL, adminGroup, &isAdmin))
+        {
+            isAdmin = FALSE;
+        }
+        FreeSid(adminGroup);
+    }
+
+    return isAdmin != FALSE;
+#else
+    return geteuid() == 0;
+#endif
+    return false;
 }

@@ -4,6 +4,7 @@
 // // // // // // // // // 
 
 #include <cstddef>
+#include <cstdlib>
 #include <iostream>
 #include <chrono>
 #include <future>
@@ -27,6 +28,8 @@
 #include "../include/scanner.h"
 #include "../include/target.h"
 #include "../include/prints.h"
+#include "../include/syn_scan.h"
+#include "../include/net_utils.h"
 
 #define VERSION "2022-05-05v"
 #define DELIMITER ','
@@ -34,6 +37,8 @@
 std::mutex mtx;
 checking_finds cfs;
 brute_ftp_data bfd_;
+syn_scan ss;
+ip_utils _iu;
 
 // main
 void help_menu(void);
@@ -240,6 +245,10 @@ int main(int argc, char** argv){
     if (argc <= 1){
         help_menu();
         return 1;
+    }
+    if (!check_root_perms()){
+        std::cout << np.main_nesca_out("ERROR", "SYN scan only sudo run!", 1, "", "", "", "") << std::endl;
+        exit(1);
     }
 
     int rez;
@@ -844,6 +853,8 @@ int main(int argc, char** argv){
     argp.hikvision_passwords = write_file(argp.path_hikvision_pass);
 
     ///////////////////////////////// start tcp_scan_port
+    ss.source_ip = _iu.get_local_ip();
+    argp.timeout_ms = 6;
     std::vector<std::string> result;
     
     if (argp.ip_scan_import || argp.ip_scan){
@@ -961,7 +972,7 @@ void checking_default_files(void){
 // 
 void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, int timeout_ms){
     for (const auto& port : ports) {
-        int result = tcp_scan_port(ip, port, timeout_ms);
+        int result = ss.syn_scan_port(ip.c_str(), port, timeout_ms);
         
         if (result == 0) {
             std::string result = ip + ":" + std::to_string(port);
