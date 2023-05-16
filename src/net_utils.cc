@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstring>
 #include <algorithm>
+#include <netinet/in.h>
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -18,7 +19,8 @@
 #include <unistd.h>
 #endif
 
-void main_utils::close_socket(int sock){
+void 
+main_utils::close_socket(int sock){
 #ifdef _WIN32
         closesocket(sock);
         WSACleanup();
@@ -27,7 +29,8 @@ void main_utils::close_socket(int sock){
 #endif
 }
 
-int main_utils::create_socket(){
+int 
+main_utils::create_socket(){
     int sock;
 #ifdef _WIN32
     init_winsock();
@@ -51,7 +54,8 @@ int main_utils::create_socket(){
     return sock;
 }
 
-void main_utils::init_winsock(){
+void 
+main_utils::init_winsock(){
 #ifdef _WIN32
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
@@ -61,7 +65,8 @@ void main_utils::init_winsock(){
 #endif
 }
 
-const char* dns_utils::get_dns_by_ip(const char* ip, int port){
+const char*
+dns_utils::get_dns_by_ip(const char* ip, int port){
     struct in_addr addr;
     if (inet_pton(AF_INET, ip, &addr) != 1) {
         return "get_dns_by_ip: Invalid IP address";
@@ -91,7 +96,8 @@ const char* dns_utils::get_dns_by_ip(const char* ip, int port){
     return dns_name;
 }
 
-const char* dns_utils::get_ip_by_dns(const char* dns){
+const char* 
+dns_utils::get_ip_by_dns(const char* dns){
     int sock = main_utils::create_socket();
 
     if (sock == -1){
@@ -170,12 +176,18 @@ std::vector<std::string> dns_utils::get_all_ips_by_dns(const char* dns){
 
     return ip_addresses;
 }
-int main_utils::create_raw_socket(){
+int
+main_utils::create_raw_socket(std::string protocol){
     int sock;
 #ifdef _WIN32
     init_winsock();
 #endif
-    sock = socket (AF_INET, SOCK_RAW , IPPROTO_TCP);
+    if (protocol == "tcp"){
+        sock = socket (AF_INET, SOCK_RAW, IPPROTO_TCP);
+    }
+    else if (protocol == "icmp"){
+        sock = socket (AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    }
 
     if (sock < 0){
         return -1;
@@ -184,10 +196,12 @@ int main_utils::create_raw_socket(){
     return sock;
 }
 
-const char* ip_utils::get_local_ip(){
+const char*
+ip_utils::get_local_ip(){
     struct sockaddr_in serv;
     static char buffer[100];
     socklen_t namelen;
+
     int sock = main_utils::create_socket();
     if (sock < 0){
         return "-1";

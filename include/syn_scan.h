@@ -25,9 +25,14 @@ unsigned short csum(unsigned short *ptr,int nbytes);
 
 class syn_scan{
 public:
+      bool debug = false;
+      int s_timeout = 6;
+      int r_timeout = 6;
       const char* source_ip;
-      void create_tcp_header(struct tcphdr* tcph, int port);
-      int syn_scan_port(const char* ip, int port, int timeout_ms);
+      void 
+      create_tcp_header(struct tcphdr* tcph, int port);
+      int 
+      syn_scan_port(const char* ip, int port, int timeout_ms);
 
 };
 

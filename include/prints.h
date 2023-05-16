@@ -15,15 +15,24 @@ class nesca_prints{
         std::string reset_color = "\033[0m";
     public:
         std::map<std::string, std::string> config_values;
-        int no_color_txt;
-        void disable_colors(void);
-        void golder_rod_on(void);
-        void sea_green_on(void);
-        void reset_colors(void);
-        int import_color_scheme(const std::string file_name, std::map<std::string, std::string>& config_values);
-        int processing_color_scheme(const std::map<std::string, std::string> config_values);
-        std::string print_get_time(const char* time);
-        std::string main_nesca_out(std::string opt, std::string result, int mode, std::string opt1, std::string opt2,
+        int 
+        no_color_txt;
+        void 
+        disable_colors(void);
+        void
+        golder_rod_on(void);
+        void 
+        sea_green_on(void);
+        void 
+        reset_colors(void);
+        int 
+        import_color_scheme(const std::string file_name, std::map<std::string, std::string>& config_values);
+        int 
+        processing_color_scheme(const std::map<std::string, std::string> config_values);
+        std::string 
+        print_get_time(const char* time);
+        std::string 
+        main_nesca_out(std::string opt, std::string result, int mode, std::string opt1, std::string opt2,
                                         std::string result1, std::string result2);
 };
 

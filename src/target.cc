@@ -2,7 +2,8 @@
 #include <sstream>
 #include <bitset>
 
-std::vector<std::string> range_to_ips(const std::vector<std::string>& ip_ranges){
+std::vector<std::string>
+range_to_ips(const std::vector<std::string>& ip_ranges){
     std::vector<std::string> result;
     for (const auto& range : ip_ranges) {
         std::istringstream iss(range);
@@ -30,7 +31,8 @@ std::vector<std::string> range_to_ips(const std::vector<std::string>& ip_ranges)
     return result;
 }
 
-std::vector<std::string> cidr_to_ips(const std::vector<std::string>& cidr_list) {
+std::vector<std::string>
+cidr_to_ips(const std::vector<std::string>& cidr_list) {
   std::vector<std::string> ipAddresses;
 
   for (const std::string& cidr : cidr_list) {
@@ -65,7 +67,8 @@ std::vector<std::string> cidr_to_ips(const std::vector<std::string>& cidr_list) 
   return ipAddresses;
 }
 
-std::vector<int> split_string_int(const std::string& str, char delimiter){
+std::vector<int>
+split_string_int(const std::string& str, char delimiter){
     std::vector<int> result;
     std::stringstream ss(str);
     std::string token;
@@ -76,7 +79,8 @@ std::vector<int> split_string_int(const std::string& str, char delimiter){
     return result;
 }
 
-std::vector<std::string> split_string_string(const std::string& str, char delimiter){
+std::vector<std::string>
+split_string_string(const std::string& str, char delimiter){
     std::vector<std::string> result;
     size_t pos = 0, found;
     std::string token;

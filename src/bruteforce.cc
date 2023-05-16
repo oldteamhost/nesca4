@@ -13,7 +13,8 @@
 nesca_prints nsp;
 brute_ftp_data bfd;
 
-std::string brute_ftp(const std::string ip, const std::string login, const std::string pass, int brute_log, int verbose){
+std::string 
+brute_ftp(const std::string ip, const std::string login, const std::string pass, int brute_log, int verbose){
     
     std::string result;
     CURL* curl = curl_easy_init();
@@ -60,7 +61,8 @@ std::string brute_ftp(const std::string ip, const std::string login, const std::
     return "";
 }
 
-std::string threads_brute_ftp(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms) {
+std::string 
+threads_brute_ftp(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms) {
     std::vector<std::thread> threads;
     std::vector<std::string> results;
 
@@ -87,7 +89,8 @@ std::string threads_brute_ftp(const std::string ip, const std::vector<std::strin
     }
 }
 
-std::string brute_ssh(const std::string& ip, const std::string login, const std::string pass, int brute_log, int verbose, int known_hosts){
+std::string 
+brute_ssh(const std::string& ip, const std::string login, const std::string pass, int brute_log, int verbose, int known_hosts){
     std::string result;
     CURL* curl = curl_easy_init();
 
@@ -144,7 +147,8 @@ std::string brute_ssh(const std::string& ip, const std::string login, const std:
     return "";
 }
 
-std::string threads_brute_ssh(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int known_hosts, int brute_timeout_ms) {
+std::string 
+threads_brute_ssh(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int known_hosts, int brute_timeout_ms) {
     std::vector<std::thread> threads;
     std::vector<std::string> results;
 
@@ -171,7 +175,8 @@ std::string threads_brute_ssh(const std::string ip, const std::vector<std::strin
     }
 }
 
-std::string brute_rtsp(const std::string ip, const std::string login, const std::string pass, int brute_log, int verbose){
+std::string 
+brute_rtsp(const std::string ip, const std::string login, const std::string pass, int brute_log, int verbose){
     std::string result;
     curl_global_init(CURL_GLOBAL_ALL);
     CURL* curl = curl_easy_init();
@@ -217,7 +222,8 @@ std::string brute_rtsp(const std::string ip, const std::string login, const std:
     curl_global_cleanup();
     return "";
 }
-std::string threads_brute_rtsp(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms) {
+std::string 
+threads_brute_rtsp(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms) {
     std::vector<std::thread> threads;
     std::vector<std::string> results;
 
@@ -244,7 +250,8 @@ std::string threads_brute_rtsp(const std::string ip, const std::vector<std::stri
     }
 }
 
-std::string brute_http(const std::string ip, const std::string login, const std::string pass, int brute_log, int verbose) {
+std::string 
+brute_http(const std::string ip, const std::string login, const std::string pass, int brute_log, int verbose) {
     CURL *curl;
     CURLcode res;
     long http_code;
@@ -294,7 +301,8 @@ std::string brute_http(const std::string ip, const std::string login, const std:
     return "";
 }
 
-std::string threads_brute_http(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms) {
+std::string 
+threads_brute_http(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms) {
     std::vector<std::thread> threads;
     std::vector<std::string> results;
 
@@ -322,21 +330,26 @@ std::string threads_brute_http(const std::string ip, const std::vector<std::stri
     return "";
 }
         
-std::string brute_ftp_data::get_success_login(void){
+std::string 
+brute_ftp_data::get_success_login(void){
     return this->success_login;
 }
 
-std::string brute_ftp_data::get_success_pass(void){
+std::string 
+brute_ftp_data::get_success_pass(void){
     return this->success_pass;
 }
 
-void brute_ftp_data::set_success_login(std::string success_login){
+void 
+brute_ftp_data::set_success_login(std::string success_login){
     this->success_login = success_login;
 }
-void brute_ftp_data::set_success_pass(std::string success_pass){
+void 
+brute_ftp_data::set_success_pass(std::string success_pass){
     this->success_pass = success_pass;
 }
-std::string brute_hikvision(const std::string ip, const std::string login, const std::string pass, int brute_log){
+std::string 
+brute_hikvision(const std::string ip, const std::string login, const std::string pass, int brute_log){
   std::string result;
 
   // log redirection
@@ -376,7 +389,8 @@ std::string brute_hikvision(const std::string ip, const std::string login, const
   return result;
 }
 
-std::string threads_brute_hikvision(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int brute_timeout_ms){
+std::string 
+threads_brute_hikvision(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int brute_timeout_ms){
     std::vector<std::thread> threads;
     std::vector<std::string> results;
 

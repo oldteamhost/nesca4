@@ -5,6 +5,7 @@
 
 #include <cstddef>
 #include <cstdlib>
+#include <ctime>
 #include <iostream>
 #include <chrono>
 #include <future>
@@ -29,6 +30,7 @@
 #include "../include/target.h"
 #include "../include/prints.h"
 #include "../include/syn_scan.h"
+#include "../include/nescaping.h"
 #include "../include/net_utils.h"
 
 #define VERSION "2022-05-05v"
@@ -37,6 +39,7 @@
 std::mutex mtx;
 checking_finds cfs;
 brute_ftp_data bfd_;
+icmp_ping ipn;
 syn_scan ss;
 ip_utils _iu;
 
@@ -101,8 +104,10 @@ class arguments_program{
         int log_set = 1000;
         int threads_temp;
         int dns_scan_domain_count = 5;
-        int timeout_ms = 165;
+        int timeout_ms = 180;
         int _threads = 100;
+        int connection_timeout_sec;
+        int recv_timeout_sec;
 
         std::vector<int> ports;
 
@@ -115,6 +120,7 @@ class arguments_program{
         bool ip_cidr_scan_import;
         bool ip_range_scan;
         bool ip_range_scan_import;
+        bool syn_debug;
 
         bool debug;
         bool warning_threads;
@@ -129,6 +135,7 @@ class arguments_program{
         bool sftp_brute_log;
         bool rtsp_brute_log;
         bool http_brute_log;
+        bool display_response_time;
 
         bool hikvision_brute_log;
 
@@ -211,6 +218,11 @@ const struct option long_options[] = {
         {"no-ping", no_argument, 0, 29},
         {"no-color", no_argument, 0, 26},
         {"log-set", required_argument, 0, 24},
+        {"syn-db", no_argument, 0, 59},
+        {"syn-debug", no_argument, 0, 60},
+        {"sss-timeout", required_argument, 0, 57},
+        {"ssc-timeout", required_argument, 0, 58},
+        {"res-time", no_argument, 0, 61},
 
         {"help", no_argument, 0, 'h'},
         {"version", no_argument, 0, 'v'},
@@ -625,6 +637,21 @@ int main(int argc, char** argv){
            case 56:
                argp.http_request = true;
                break;
+           case 57:
+               argp.recv_timeout_sec = atoi(optarg);
+               break;
+           case 58:
+               argp.connection_timeout_sec = atoi(optarg);
+               break;
+           case 59:
+               argp.syn_debug = true;
+               break;
+           case 60:
+               argp.syn_debug = true;
+               break;
+           case 61:
+               argp.display_response_time = true;
+               break;
         }
     }
     if (argp.import_color_scheme){
@@ -635,6 +662,9 @@ int main(int argc, char** argv){
     if (argp.print_help_menu){
         help_menu();
         return 0;
+    }
+    if (argp.syn_debug){
+        ss.debug = true;
     }
 
     if (argp.host_testing){
@@ -854,7 +884,6 @@ int main(int argc, char** argv){
 
     ///////////////////////////////// start tcp_scan_port
     ss.source_ip = _iu.get_local_ip();
-    argp.timeout_ms = 6;
     std::vector<std::string> result;
     
     if (argp.ip_scan_import || argp.ip_scan){
@@ -971,24 +1000,30 @@ void checking_default_files(void){
 // Welcome to HELL :)
 // 
 void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, int timeout_ms){
+    int flag = 0;
     for (const auto& port : ports) {
         int result = ss.syn_scan_port(ip.c_str(), port, timeout_ms);
+        long double time_ms;
+
+        int temp_ping = ipn.ping(ip.c_str(), &time_ms);
+        if (argp.ping_off != true && flag < 1){
+            if (argp.display_response_time && time_ms > 0){
+                std::lock_guard<std::mutex> guard(mtx);
+                std:: cout << np.main_nesca_out("PING", ip , 3,
+                "rtt", "", std::to_string(time_ms)+"ms", "") << std::endl;
+            }
+            if (temp_ping != 0){
+                return;
+            }
+            flag++;
+        }
         
         if (result == 0) {
             std::string result = ip + ":" + std::to_string(port);
             std::string brute_temp;
             std::string result_print;
-
+     
             if (port == 80 || port == 81 || port == 8080 || port == 8081 || port == 8888 || port == 8008){
-
-                double temp_ping;
-                if (argp.ping_off != true){
-                    temp_ping = measure_ping_time(ip.c_str(), port);
-
-                    if (temp_ping == -1 || temp_ping == -2){
-                        return;
-                    }
-                }
 
                 bool status_path = false;
 
@@ -1022,6 +1057,7 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 else {
                    result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "", http_title_result, "");
                 }
+
 
                 std::cout << result_print << std::endl;
                 if (argp.no_get_path != true){
@@ -1331,7 +1367,7 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
                 std::cout << result_print << std::endl;
             }
             else if (port == 443){
-                std::string result_print = np.main_nesca_out("HTTPS", result, 3, "", "", "", "");
+                std::string result_print = np.main_nesca_out("HTTPS", "https://" + result, 3, "", "", "", "");
                 std::lock_guard<std::mutex> guard(mtx);
                 std::cout << result_print << std::endl;
             }
@@ -1395,6 +1431,13 @@ void help_menu(void){
     std::cout << "  -timeout, -t <ms>      Set timeout for scan.\n";
 
     np.sea_green_on();
+    std::cout << "\narguments syn_scan:" << std::endl;
+    np.reset_colors();
+    std::cout << "  -sss-timeout           Set timeout for send packet on port.\n";
+    std::cout << "  -ssr-timeout           Set timeout for getting packet on port.\n";
+    std::cout << "  -syn-db, syn-debug     Display verbose info for syn port scan.\n";
+
+    np.sea_green_on();
     std::cout << "\narguments bruteforce:" << std::endl;
     np.reset_colors();
     std::cout << "  -brute-login <ss,path> Set path for <ss> logins.\n";
@@ -1449,5 +1492,4 @@ void help_menu(void){
     np.reset_colors();
     std::cout << "  -gen-count <count>     Set count for generation.\n";
     std::cout << "  -gen-ipv6 <octets>     Generate ip version 6.\n";
-    std::cout << "  -gen-ipv4              Generate ip version 4.\n";
 }

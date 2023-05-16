@@ -11,7 +11,8 @@
 #include <unistd.h>
 #endif
 
-const char* get_time(){
+const char*
+get_time(){
     time_t rawtime;
     struct tm * timeinfo;
     static char time_str[9];
@@ -24,7 +25,8 @@ const char* get_time(){
 }
 
 
-bool check_ansi_support(void){
+bool
+check_ansi_support(void){
     #ifdef _WIN32
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     if (hOut == INVALID_HANDLE_VALUE)
@@ -55,7 +57,8 @@ bool check_ansi_support(void){
     #endif
 }
 
-void delay_ms(int milliseconds){
+void
+delay_ms(int milliseconds){
 #ifdef _WIN32
     Sleep(milliseconds);
 #else
@@ -66,7 +69,8 @@ void delay_ms(int milliseconds){
 #endif
 }
 
-std::vector<int> write_ports(std::string mode){
+std::vector<int>
+write_ports(std::string mode){
     std::vector<int> temp;
     std::transform(mode.begin(), mode.end(), mode.begin(), [](unsigned char c) {
         return std::tolower(c);
@@ -117,7 +121,8 @@ std::vector<int> write_ports(std::string mode){
     return {-1};
 }
 
-void logo(void){
+void
+logo(void){
     std::cout << "d8b   db d88888b .d8888.  .o88b.  .d8b.         j88D  \n";
     std::cout << "888o  88 88'     88'  YP d8P  Y8 d8' `8b       j8~88  \n"; 
     std::cout << "88V8o 88 88ooooo `8bo.   8P      88ooo88      j8' 88  \n";
@@ -127,7 +132,8 @@ void logo(void){
     std::cout << std::endl;
 }
 
-std::vector<int> parse_range(const std::string& range_string){
+std::vector<int>
+parse_range(const std::string& range_string){
     std::vector<int> result;
     int start = 0, end = 0;
     bool found_dash = false;
@@ -148,7 +154,8 @@ std::vector<int> parse_range(const std::string& range_string){
     return result;
 }
 
-bool check_root_perms(){
+bool 
+check_root_perms(){
 #ifdef _WIN32
 
     BOOL isAdmin = FALSE;

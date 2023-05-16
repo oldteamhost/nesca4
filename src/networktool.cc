@@ -37,7 +37,8 @@
 #include <errno.h>
 #endif
 
-std::string get_dns_ip(const char* ip){
+std::string
+get_dns_ip(const char* ip){
     struct addrinfo hints, *result = nullptr;
     std::memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
@@ -77,7 +78,8 @@ std::string get_dns_ip(const char* ip){
 }
 
 
-long get_response_code(const char *node){
+long 
+get_response_code(const char *node){
     CURL *curl = curl_easy_init();
     if (!curl) {
         return -1;
@@ -101,7 +103,8 @@ long get_response_code(const char *node){
     return response_code;
 }
 
-double measure_ping_time(const char* node, int port){
+double 
+measure_ping_time(const char* node, int port){
     double total_time = 0.0;
     CURL *curl = curl_easy_init();
     if(curl) {
@@ -148,7 +151,8 @@ double measure_ping_time(const char* node, int port){
     return total_time;
 }
 
-std::string get_html_title(std::string node){
+std::string
+get_html_title(std::string node){
     CURL* curl = curl_easy_init();
 
     if (curl == nullptr) {
@@ -203,7 +207,8 @@ std::string get_html_title(std::string node){
     return return_value;
 }
 
-std::string parse_content_from_meta(std::string& html) {
+std::string 
+parse_content_from_meta(std::string& html) {
     std::string htmll = html;
     boost::algorithm::to_lower(htmll);
     std::string meta_str = "<meta";
@@ -236,7 +241,8 @@ std::string parse_content_from_meta(std::string& html) {
     return url;
 }
 
-std::string get_headers(const std::string node){
+std::string 
+get_headers(const std::string node){
     std::string header;
 
     CURL* curl = curl_easy_init();
@@ -264,7 +270,8 @@ std::string get_headers(const std::string node){
     return header;
 }
 
-std::string parse_content_location(std::string header) {
+std::string 
+parse_content_location(std::string header) {
     std::string content_location_str = "Content-Location:";
     std::string end_str = "\r\n";
     std::string result;
@@ -281,7 +288,8 @@ std::string parse_content_location(std::string header) {
     return result;
 }
 
-std::string parse_location(std::string header) {
+std::string 
+parse_location(std::string header) {
     std::string location_str = "Location:";
     std::string end_str = "\r\n";
     std::string result;
@@ -298,7 +306,8 @@ std::string parse_location(std::string header) {
     return result;
 }
 
-std::string send_http_request(std::string url){
+std::string 
+send_http_request(std::string url){
     CURL* curl = curl_easy_init();
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
@@ -317,7 +326,8 @@ std::string send_http_request(std::string url){
     return response_string;
 }
 
-std::string parse_url_from_js(std::string html) {
+std::string 
+parse_url_from_js(std::string html) {
     std::string search_str = "window.location.href";
     std::string end_str = "\"";
     std::string result;
@@ -334,7 +344,8 @@ std::string parse_url_from_js(std::string html) {
     return result;
 }
 
-std::string get_ftp_response_code(std::string server, std::string port, std::string username, std::string password) {
+std::string 
+get_ftp_response_code(std::string server, std::string port, std::string username, std::string password) {
     boost::asio::io_context io_context;
     boost::asio::ip::tcp::resolver resolver(io_context);
     boost::asio::ip::tcp::socket socket(io_context);

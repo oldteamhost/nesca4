@@ -4,7 +4,8 @@
 #include <fstream>
 #include <map>
 
-void nesca_prints::disable_colors(void){
+void 
+nesca_prints::disable_colors(void){
     gray_nesca = "";
     golder_rod = "";
     sea_green = "";
@@ -14,12 +15,14 @@ void nesca_prints::disable_colors(void){
     reset_color = "";
 }
 
-std::string nesca_prints::print_get_time(const char* time){
+std::string 
+nesca_prints::print_get_time(const char* time){
     std::string temp = "[" + std::string(time) + "]";
     return temp;
 }
 
-std::string nesca_prints::main_nesca_out(std::string opt, std::string result, int mode, std::string opt1, std::string opt2,
+std::string 
+nesca_prints::main_nesca_out(std::string opt, std::string result, int mode, std::string opt1, std::string opt2,
                                         std::string result1, std::string result2){
     std::string temp;
     if (mode == 0){
@@ -41,19 +44,23 @@ std::string nesca_prints::main_nesca_out(std::string opt, std::string result, in
     return temp;
 }
 
-void nesca_prints::golder_rod_on(void){
+void
+nesca_prints::golder_rod_on(void){
     std::cout << golder_rod;
 }
 
-void nesca_prints::sea_green_on(void){
+void 
+nesca_prints::sea_green_on(void){
     std::cout << sea_green;
 }
 
-void nesca_prints::reset_colors(void){
+void 
+nesca_prints::reset_colors(void){
     std::cout << reset_color;
 }
 
-int nesca_prints::import_color_scheme(const std::string file_name, std::map<std::string, std::string>& config_values){
+int 
+nesca_prints::import_color_scheme(const std::string file_name, std::map<std::string, std::string>& config_values){
     std::ifstream configFile(file_name);
     if (configFile.is_open())
     {
@@ -73,7 +80,8 @@ int nesca_prints::import_color_scheme(const std::string file_name, std::map<std:
     return -1;
 }
 
-int nesca_prints::processing_color_scheme(const std::map<std::string, std::string> config_values){
+int 
+nesca_prints::processing_color_scheme(const std::map<std::string, std::string> config_values){
     for (const auto& kvp : config_values)
     {
         if (kvp.first == "color1"){

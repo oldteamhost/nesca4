@@ -5,7 +5,8 @@
 #include <string>
 #endif
 
-int get_count_lines(const char* path){
+int 
+get_count_lines(const char* path){
     std::ifstream file(path);
     int count = 0;
     std::string line;
@@ -17,12 +18,14 @@ int get_count_lines(const char* path){
     return count;
 }
 
-bool check_file(const char* path){
+bool 
+check_file(const char* path){
     std::ifstream file(path);
     return file.good();
 }
 
-std::vector<std::string>write_file(const std::string& filename){
+std::vector<std::string>
+write_file(const std::string& filename){
     std::ifstream file(filename);
     std::vector<std::string> lines;
     std::string line;
@@ -34,7 +37,8 @@ std::vector<std::string>write_file(const std::string& filename){
     return lines;
 }
 
-int write_line(std::string path, std::string line){
+int 
+write_line(std::string path, std::string line){
     std::ofstream outfile;
     outfile.open(path, std::ios_base::app);
     if (!outfile.is_open()){

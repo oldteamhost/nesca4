@@ -5,7 +5,8 @@
 
 checking_finds cf;
 
-int dns_scan(std::string domain, std::string domain_1level){
+int 
+dns_scan(std::string domain, std::string domain_1level){
     std::string result = domain + domain_1level;
 
      double response_time = measure_ping_time(result.c_str(), 80);
@@ -23,7 +24,8 @@ int dns_scan(std::string domain, std::string domain_1level){
     return -1; // error
 }
 
-std::string checking_finds::check_axis_camera(std::string ip){
+std::string 
+checking_finds::check_axis_camera(std::string ip){
     bool status = false;
 
     for (auto& path : cf.axis_path){
@@ -36,7 +38,8 @@ std::string checking_finds::check_axis_camera(std::string ip){
     return "no";
 }
 
-std::string checking_finds::check_basic_auth(std::string ip){
+std::string 
+checking_finds::check_basic_auth(std::string ip){
     bool status = false;
 
     for (auto& path : cf.basic_auth_paths){

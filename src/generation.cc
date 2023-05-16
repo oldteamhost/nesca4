@@ -3,7 +3,8 @@
 #include <cstring>
 #include <sstream>
 
-const char* generate_ipv6(int num_octets){
+const char*
+generate_ipv6(int num_octets){
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> distrib(0, 65535);
@@ -19,7 +20,8 @@ const char* generate_ipv6(int num_octets){
     return ip;
 }
 
-const char* generate_ipv4(void){
+const char*
+generate_ipv4(void){
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> distrib(0, 255);
@@ -35,7 +37,8 @@ const char* generate_ipv4(void){
     return ip;
 }
 
-std::string generate_random_str(int len, std::string dictionary){
+std::string
+generate_random_str(int len, std::string dictionary){
     std::string result;
 
     std::random_device rd;
