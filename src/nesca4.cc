@@ -42,6 +42,7 @@ brute_ftp_data bfd_;
 icmp_ping ipn;
 syn_scan ss;
 ip_utils _iu;
+dns_utils dus;
 
 // main
 void help_menu(void);
@@ -181,28 +182,22 @@ nesca_prints np;
 const struct option long_options[] = {
         {"threads", required_argument, 0, 'T'},
         {"timeout", required_argument, 0, 't'},
-
         {"ip", required_argument, 0, 1},
         {"cidr", required_argument, 0, 2},
         {"range", required_argument, 0, 33},
         {"import-ip", required_argument, 0, 23},
         {"import-cidr", required_argument, 0, 3},
         {"import-range", required_argument, 0, 32},
-
         {"random-ip", required_argument, 0, 5},
-
         {"brute-login", required_argument, 0, 12},
         {"brute-pass", required_argument, 0, 11},
-
         {"brute-log", required_argument, 0, 30},
         {"brute-verbose", required_argument, 0, 31},
         {"thread-on-port", no_argument, 0, 48},
         {"no-brute", required_argument, 0, 44},
         {"brute-only", required_argument, 0, 46},
         {"brute-timeout", required_argument, 0, 47},
-
         {"sftp-brute-known-hosts", no_argument, 0, 45},
-
         {"dns-scan", required_argument, 0, 19},
         {"dns-length", required_argument, 0, 20},
         {"dns-dict", required_argument, 0, 21},
@@ -223,22 +218,22 @@ const struct option long_options[] = {
         {"sss-timeout", required_argument, 0, 57},
         {"ssc-timeout", required_argument, 0, 58},
         {"res-time", no_argument, 0, 61},
-
         {"help", no_argument, 0, 'h'},
         {"version", no_argument, 0, 'v'},
         {"ports", no_argument, 0, 'p'},
-
         {"db", no_argument, 0, 7},
         {"error", no_argument, 0, 25},
-
         {"response-code", no_argument, 0, 35},
         {"http-request", no_argument, 0, 56},
         {"gen-ipv4", no_argument, 0, 36},
         {"host-test", required_argument, 0, 34},
-        {"tcp-ping", required_argument, 0, 37},
+        {"icmp-ping", required_argument, 0, 37},
         {"gen-count", required_argument, 0, 38},
         {"redirect", no_argument, 0, 55},
         {"gen-ipv6", required_argument, 0, 39},
+        {"ipn-timeout", required_argument, 0, 49},
+        {"ipn-rtimeout", required_argument, 0, 43},
+        {"ipn-packs", required_argument, 0, 41},
         {0,0,0,0}
     };
 const char* short_options = "hvt:T:p:";
@@ -615,6 +610,15 @@ int main(int argc, char** argv){
                argp.octets = atoi(optarg);
                break;
            }
+           case 41:
+               ipn.packets = atoi(optarg);
+               break;
+           case 43:
+               ipn.recv_timeout = atoi(optarg);
+               break;
+           case 49:
+               ipn.ping_timeout = atoi(optarg);
+               break;
            case 50:
                argp.no_get_path = true;
                break;
@@ -746,52 +750,30 @@ int main(int argc, char** argv){
             }
         }
         if (argp.tcp_ping_test){
+            long double ping_time_temp;
+            double ping_temp;
             if (argp.tcp_ping_mode == "live" || argp.tcp_ping_mode == "1"){
                 for (;;){
-                    std::ostringstream strs;
-                    double ping_temp = measure_ping_time(argp.hosts_test[0].c_str(), 80);
-                    strs << ping_temp;
-                    std::string ping = strs.str();
+                    ping_temp = ipn.ping(argp.hosts_test[0].c_str(), &ping_time_temp);
+                    
                     if (ping_temp != -1){
-                        if (ping_temp != -2){
-                            std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 3, "P", "", ping+"ms", "") << std::endl;
-                        }
+                        std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 3, "rtt", "", std::to_string(ping_time_temp)+"ms", "") << std::endl;
                     }
                     else {
-                        if (ping_temp == -2){
-                            std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 1, "", "", "info check failed!", "") << std::endl;
-                        }
-                        else if (ping_temp == -3){
-                            std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 1, "", "", "connection failed!", "") << std::endl;
-                        }
-
-                        std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 1, "P", "", "down", "") << std::endl;
+                        std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 3, "rtt", "", "down", "") << std::endl;
                     }
                     delay_ms(argp.timeout_ms);
                 }
             }
             else if (argp.tcp_ping_mode == "default" || argp.tcp_ping_mode == "0") {
                 for (auto& host : argp.hosts_test){
-                    std::ostringstream strs;
-                    double ping_temp = measure_ping_time(host.c_str(), 80);
-                    strs << ping_temp;
-                    std::string ping = strs.str();
+                    ping_temp = ipn.ping(host.c_str(), &ping_time_temp);
 
                     if (ping_temp != -1){
-                        if (ping_temp != -2){
-                            std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 3, "P", "", ping+"ms", "") << std::endl;
-                        }
+                        std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 3, "rtt", "", std::to_string(ping_time_temp)+"ms", "") << std::endl;
                     }
-
                     else {
-                        std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 3, "P", "", "down", "") << std::endl;
-
-                        if (ping_temp == -2){
-                            std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 1, "", "", "info check failed!", "") << std::endl;
-                        }
-                        else if (ping_temp == -3){
-                            std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 1, "", "", "connection failed!", "") << std::endl;
-                        }
+                        std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 3, "rtt", "", "down", "") << std::endl;
                         delay_ms(argp.timeout_ms);
                     }
                 }
@@ -1008,7 +990,6 @@ void processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& po
         int temp_ping = ipn.ping(ip.c_str(), &time_ms);
         if (argp.ping_off != true && flag < 1){
             if (argp.display_response_time && time_ms > 0){
-                std::lock_guard<std::mutex> guard(mtx);
                 std:: cout << np.main_nesca_out("PING", ip , 3,
                 "rtt", "", std::to_string(time_ms)+"ms", "") << std::endl;
             }
@@ -1419,12 +1400,6 @@ void help_menu(void){
     std::cout << "  -random-ip <count>     Set random ips target.\n";
 
     np.sea_green_on();
-    std::cout << "\narguments ports:" << std::endl;
-    np.reset_colors();
-    std::cout << "  -ports, -p <1,2,3>     Set ports on scan.\n";
-    std::cout << "     - example ports:    all, nesca, top100, top50\n";
-
-    np.sea_green_on();
     std::cout << "\narguments speed:" << std::endl;
     np.reset_colors();
     std::cout << "  -threads, -T <count>   Set threads for scan.\n";
@@ -1433,9 +1408,19 @@ void help_menu(void){
     np.sea_green_on();
     std::cout << "\narguments syn_scan:" << std::endl;
     np.reset_colors();
+    std::cout << "  -ports, -p <1,2,3>     Set ports on scan.\n";
+    std::cout << "     - example ports:    all, nesca, top100, top50\n";
     std::cout << "  -sss-timeout           Set timeout for send packet on port.\n";
     std::cout << "  -ssr-timeout           Set timeout for getting packet on port.\n";
     std::cout << "  -syn-db, syn-debug     Display verbose info for syn port scan.\n";
+
+    np.sea_green_on();
+    std::cout << "\narguments ping:" << std::endl;
+    np.reset_colors();
+    std::cout << "  -ipn-timeout <ms>      Set timeout for icmp ping.\n";
+    std::cout << "  -ipn-rtimeout <ms>     Set timeout for send icmp packet.\n";
+    std::cout << "  -ipn-packs <count>     Set count icmp packets for send.\n";
+    std::cout << "  -no-ping               Off ping.\n";
 
     np.sea_green_on();
     std::cout << "\narguments bruteforce:" << std::endl;
@@ -1485,7 +1470,7 @@ void help_menu(void){
     std::cout << "  -response-code         Get response code from host.\n";
     std::cout << "  -redirect              Get redirect from host.\n";
     std::cout << "  -http-request          Send http request from host.\n";
-    std::cout << "  -tcp-ping <mode>       Get response time from host, modes (live) or (default).\n";
+    std::cout << "  -icmp-ping <mode>       Get response time from host, modes (live) or (default).\n";
 
     np.sea_green_on();
     std::cout << "\narguments generation:" << std::endl;
