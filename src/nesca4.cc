@@ -21,7 +21,6 @@
 #include <vector>
 #include <string.h>
 
-
 #include "../include/bruteforce.h"
 #include "../include/callbacks.h"
 #include "../include/files.h"
@@ -31,9 +30,9 @@
 #include "../include/scanner.h"
 #include "../include/target.h"
 #include "../include/prints.h"
-#include "../include/syn_scan.h"
+#include "../include/synscan.h"
 #include "../include/nescaping.h"
-#include "../include/net_utils.h"
+#include "../include/netutils.h"
 
 #define VERSION "2023-05-20v"
 #define DELIMITER ','

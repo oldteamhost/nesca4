@@ -94,8 +94,8 @@ get_response_code(const char *node){
     if (res == CURLE_OK) {
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
     }
-
     else {
+        curl_easy_cleanup(curl);
         return -1;
     }
 

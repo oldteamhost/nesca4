@@ -15,8 +15,8 @@
 #include <cstdint>
 #include <cstring>
 
-#include "../include/syn_scan.h"
-#include "../include/net_utils.h"
+#include "../include/synscan.h"
+#include "../include/netutils.h"
 #include "../include/prints.h"
 #include "../include/other.h"
 

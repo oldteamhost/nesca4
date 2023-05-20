@@ -1,6 +1,6 @@
 #ifndef NESCAPING_H
 #define NESCAPING_H
-#include "../include/net_utils.h"
+#include "../include/netutils.h"
 #include "../include/other.h"
 #include <stdint.h>
 #include <signal.h>
