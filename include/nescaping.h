@@ -9,6 +9,10 @@
 #include <cstring>
 #include <cstdio>
 #ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <Windows.h>
+#pragma comment(lib, "ws2_32.lib")
 #else
 #include <netinet/ip_icmp.h>
 #include <netdb.h>

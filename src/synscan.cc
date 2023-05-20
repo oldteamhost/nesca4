@@ -1,19 +1,27 @@
 #include <iostream>
 #include <string>
-#include <sys/socket.h>
-#include <sys/types.h>
 #include <random>
-#include <netinet/in.h>
-#include <netinet/ip.h>
 #include <netdb.h>
 #include <cerrno>
-#include <arpa/inet.h>
-#include <netinet/tcp.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/time.h>
 #include <cstdint>
 #include <cstring>
+
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <Windows.h>
+#pragma comment(lib, "ws2_32.lib")
+#else
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/socket.h>
+#include <netinet/tcp.h>
+#include <netinet/ip.h>
+#include <netinet/in.h>
+#endif
 
 #include "../include/synscan.h"
 #include "../include/netutils.h"
