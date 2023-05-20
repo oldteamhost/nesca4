@@ -41,10 +41,12 @@ int
 write_line(std::string path, std::string line){
     std::ofstream outfile;
     outfile.open(path, std::ios_base::app);
+
     if (!outfile.is_open()){
         return -1;
     }
-    outfile << line << std::endl;
+
+    outfile << line;
 
     if (outfile.fail()){
          return -2;

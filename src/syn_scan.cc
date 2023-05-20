@@ -57,11 +57,11 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
     с сокетом.*/
     int sock = main_utils::create_raw_socket("tcp");
     if (debug){
-        std::cout << nspr.main_nesca_out("SYN", "Creation RAW sock.", 2, "", "", "", "") << std::endl;
+        nspr.nlog_custom("SYN", "Creation RAW sock on send.\n", 1);
     }
     if (sock == -1){
         if (debug){
-            std::cout << nspr.main_nesca_out("^", "FAILED Creation RAW sock.", 1, "", "", "", "") << std::endl;
+            nspr.nlog_custom("^", "FAILED creation RAW sock on SEND.\n", 2);
         }
         return PORT_ERROR;
     }
@@ -78,7 +78,7 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
     memset (datagram, 0, 4096);
 
     if (debug){
-        std::cout << nspr.main_nesca_out("SYN", "Creation IP header.", 2, "", "", "", "") << std::endl;
+        nspr.nlog_custom("SYN", "Creation IP header.\n", 1);
     }
     /*Создание ip заголовка, для пакета.*/
     int ip_header_length = sizeof(struct iphdr);
@@ -96,13 +96,13 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
     iph->daddr = dest_ip.s_addr; // ip получателя.
 
     if (debug){
-        std::cout << nspr.main_nesca_out("SYN", "Calculate sum for IP header.", 2, "", "", "", "") << std::endl;
+        nspr.nlog_custom("SYN", "Calculate sum for IP header.\n", 1);
     }
     iph->check = csum ((unsigned short *) datagram, iph->tot_len >> 1); // контрольная сумма пакета.
 
     /*Создание tcp заголовка для пакета.*/
     if (debug){
-        std::cout << nspr.main_nesca_out("SYN", "Creation TCP header.", 2, "", "", "", "") << std::endl;
+        nspr.nlog_custom("SYN", "Creation TCP header.\n", 1);
     }
     tcph->dest = htons(80);
     create_tcp_header(tcph, port);
@@ -127,7 +127,7 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
     dest.sin_addr.s_addr = dest_ip.s_addr;
 
     if (debug){
-    std::cout << nspr.main_nesca_out("SYN", "Creation TCP fake header.", 2, "", "", "", "") << std::endl;
+        nspr.nlog_custom("SYN", "Creation fake TCP header.\n", 1);
     }
     /*Заполнение псевдо tcp заголовка, для обмана
     хоста, и установки псевдо подключения.*/
@@ -141,7 +141,7 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
     /*Заполнение контрольной суммы пакета для
     tcp заголовка*/
     if (debug){
-        std::cout << nspr.main_nesca_out("SYN", "Calculate sum for TCP header.", 2, "", "", "", "") << std::endl;
+        nspr.nlog_custom("SYN", "Calculate sum for TCP header.\n", 1);
     }
 
     tcph->check = csum( (unsigned short*) &psh , sizeof (struct pseudo_header));
@@ -159,12 +159,12 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
 
     /*Отправка syn пакета.*/
     if (debug){
-        std::cout << nspr.main_nesca_out("SYN", "Send SYN packet.", 2, "", "", "", "") << std::endl;
+        nspr.nlog_custom("SYN", "Send SYN packet.\n", 1);
     }
     if (sendto (sock, datagram , sizeof(struct iphdr) + sizeof(struct tcphdr) ,
                 0 , (struct sockaddr *) &dest, sizeof (dest)) < 0){
         if (debug){
-            std::cout << nspr.main_nesca_out("^", "FAILED Send SYN packet.", 1, "", "", "", "") << std::endl;
+            nspr.nlog_custom("^", "FAILED send SYN packet.\n", 2);
         }
         return PORT_ERROR;
     }
@@ -178,11 +178,14 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
     
     /*Создания нового сокета для обработки ответа.*/
     if (debug){
-        std::cout << nspr.main_nesca_out("SYN", "Create RAW sock for processing answer.", 2, "", "", "", "") << std::endl;
+        nspr.nlog_custom("SYN", "Creation RAW sock on RECV.\n", 1);
     }
 
     int sock1 = main_utils::create_raw_socket("tcp");
     if (sock1 == -1){
+        if (debug){
+            nspr.nlog_custom("^", "FAILED creation RAW sock on RECV.\n", 2);
+        }
         return PORT_ERROR;
     }
 
@@ -202,7 +205,7 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
 
     /*Получение пакета в буфер.*/
     if (debug){
-        std::cout << nspr.main_nesca_out("SYN", "Getting packet on buffer.", 2, "", "", "", "") << std::endl;
+        nspr.nlog_custom("SYN", "Getting packet on buffer.\n", 1);
     }
 #ifdef _WIN32
     data_size = recvfrom(sock1, buffer, 65536, 0, (struct sockaddr*)&saddr, &saddr_size);
@@ -211,7 +214,7 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
 #endif
     if (data_size < 0){
         if (debug){
-            std::cout << nspr.main_nesca_out("^", "FAILED Getting packet on buffer.", 1, "", "", "", "") << std::endl;
+            nspr.nlog_custom("^", "Getting packet on buffer.\n", 2);
         }
         return PORT_ERROR;
     }
@@ -221,7 +224,7 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
 
         /*Извлечение ответа*/
         if (debug){
-            std::cout << nspr.main_nesca_out("SYN", "Getting answer.", 2, "", "", "", "") << std::endl;
+            nspr.nlog_custom("SYN", "Getting answer.\n", 1);
         }
         struct iphdr *iph = (struct iphdr *)buffer;
         iphdrlen = iph->ihl*4;
@@ -235,23 +238,22 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
 
         if (debug){
             if (tcph->syn != 0){
-                std::cout << nspr.main_nesca_out("SYN", "Flag SYN is: "+std::to_string(tcph->syn), 0, "", "", "", "") << std::endl;
+                nspr.nlog_custom("SYN", "Flag SYN is: " + std::to_string(tcph->syn) + "\n", 0);
             }
             else {
-                std::cout << nspr.main_nesca_out("SYN", "Flag SYN is: "+std::to_string(tcph->syn), 1, "", "", "", "") << std::endl;
+                nspr.nlog_custom("SYN", "Flag SYN is: " + std::to_string(tcph->syn) + "\n", 2);
             }
             if (tcph->ack != 0){
-                std::cout << nspr.main_nesca_out("SYN", "Flag ACK is: "+std::to_string(tcph->ack), 0, "", "", "", "") << std::endl;
+                nspr.nlog_custom("SYN", "Flag ACK is: " + std::to_string(tcph->ack) + "\n", 0);
             }
             else {
-                std::cout << nspr.main_nesca_out("SYN", "Flag ACK is: "+std::to_string(tcph->ack), 1, "", "", "", "") << std::endl;
-
+                nspr.nlog_custom("SYN", "Flag ACK is: " + std::to_string(tcph->ack) + "\n", 2);
             }
             if (tcph->rst != 0){
-                std::cout << nspr.main_nesca_out("SYN", "Flag RST is: "+std::to_string(tcph->rst), 0, "", "", "", "") << std::endl;
+                nspr.nlog_custom("SYN", "Flag RST is: " + std::to_string(tcph->rst) + "\n", 0);
             }
             else {
-                std::cout << nspr.main_nesca_out("SYN", "Flag RST is: "+std::to_string(tcph->rst), 1, "", "", "", "") << std::endl;
+                nspr.nlog_custom("SYN", "Flag RST is: " + std::to_string(tcph->rst) + "\n", 2);
             }
         }
 

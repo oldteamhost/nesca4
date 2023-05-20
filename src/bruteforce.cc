@@ -4,6 +4,7 @@
 #include "../include/other.h"
 #include "../include/prints.h"
 #include "../lib/HCNetSDK.h"
+#include <cmath>
 #include <iostream>
 #include <string>
 #include <thread>
@@ -39,7 +40,7 @@ brute_ftp(const std::string ip, const std::string login, const std::string pass,
         std::string url = "ftp://" + ip;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         if (brute_log){
-            std::cout << nsp.main_nesca_out("FTP", "      try: " + login + "@" + pass, 2, "[BRUTEFORCE]", "", "", "") << std::endl;
+            nsp.nlog_custom("FTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
         }
         curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
         curl_easy_setopt(curl, CURLOPT_PASSWORD, pass.c_str());
@@ -125,7 +126,7 @@ brute_ssh(const std::string& ip, const std::string login, const std::string pass
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
         if (brute_log) {
-            std::cout << nsp.main_nesca_out("SSH", "      try: " + login + "@" + pass, 2, "[BRUTEFORCE]", "", "", "") << std::endl;
+            nsp.nlog_custom("SSH", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
         }
 
         curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
@@ -202,7 +203,7 @@ brute_rtsp(const std::string ip, const std::string login, const std::string pass
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
         if (brute_log){
-            std::cout << nsp.main_nesca_out("RTSP", "      try: " + login + "@" + pass, 2, "[BRUTEFORCE]", "", "", "") << std::endl;
+            nsp.nlog_custom("RTSP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
         }
         curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
         curl_easy_setopt(curl, CURLOPT_PASSWORD, pass.c_str());
@@ -273,7 +274,7 @@ brute_http(const std::string ip, const std::string login, const std::string pass
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
 
         if (brute_log) {
-            std::cout << nsp.main_nesca_out("HTTP", "      try: " + login + "@" + pass, 2, "[BRUTEFORCE]", "", "", "") << std::endl;
+            nsp.nlog_custom("HTTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
         }
 
         curl_easy_setopt(curl, CURLOPT_FAILONERROR, true);
@@ -371,7 +372,7 @@ brute_hikvision(const std::string ip, const std::string login, const std::string
   NET_DVR_DEVICEINFO_V40 deviceInfo = {0};
 
   if (brute_log){
-      std::cout << nsp.main_nesca_out("HIKVISION", "      try: " + login + "@" + pass, 2, "[BRUTEFORCE]", "", "", "") << std::endl;
+      nsp.nlog_custom("HIKVISION", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
   }
 
   LONG userId = NET_DVR_Login_V40(&loginInfo, &deviceInfo);

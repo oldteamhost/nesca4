@@ -31,7 +31,7 @@
 class icmp_ping{
 private:
     static constexpr int packet_size = 64;
-    int ttl_val = 255;
+    int ttl_val = 57;
     long double rtt_msec = 0;
     int addr_len;
 
@@ -52,10 +52,6 @@ public:
                 const char *rev_host, long double* rtt_msec_buffer);
     int
     ping(const char* ip, long double* buffer);
-    
-
 };
-
-
 
 #endif

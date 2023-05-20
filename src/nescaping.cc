@@ -22,7 +22,6 @@ bool
 icmp_ping::send_ping(int ping_sockfd, struct sockaddr_in *ping_addr,
             const char *ping_ip, long double* rtt_msec_buffer){
 
-      delay_ms(ping_timeout);
       struct icmp_packet pckt;
       struct sockaddr_in r_addr;
       struct timespec time_start, time_end, tfs;
@@ -43,16 +42,21 @@ icmp_ping::send_ping(int ping_sockfd, struct sockaddr_in *ping_addr,
 
       for (int i = 0; i < packets; i++){
           memset(&pckt, 0, sizeof(pckt));
-          pckt.hdr.type = ICMP_ECHO;
+
+          pckt.hdr.type = 8;
           pckt.hdr.un.echo.id = getpid();
 
           memset(pckt.msg, '0', sizeof(pckt.msg)-1);
 
           pckt.msg[0] = 0;
           pckt.hdr.un.echo.sequence = 0;
+
+          pckt.hdr.checksum = 0;
           pckt.hdr.checksum = RFC792_csum(reinterpret_cast<unsigned char*>(&pckt), sizeof(pckt));
 
           clock_gettime(CLOCK_MONOTONIC, &time_start);
+
+          delay_ms(ping_timeout);
           if ( sendto(ping_sockfd, &pckt, sizeof(pckt), 0,
                           (struct sockaddr*) ping_addr,
                           sizeof(*ping_addr)) <= 0){
@@ -90,7 +94,7 @@ icmp_ping::ping(const char* ip, long double* buffer_time){
     struct sockaddr_in addr_con;
     addr_con.sin_family = AF_INET;
     if(inet_pton(AF_INET, ip, &(addr_con.sin_addr)) <= 0){
-        return -1;
+       return -1;
     }
     addr_con.sin_port = 0;
 

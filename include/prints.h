@@ -4,6 +4,7 @@
 #include <iostream>
 #include <map>
 #include <vector>
+
 class nesca_prints{
     private:
         std::string gray_nesca = "\033[38;2;112;112;112m";
@@ -33,7 +34,19 @@ class nesca_prints{
         print_get_time(const char* time);
         std::string 
         main_nesca_out(std::string opt, std::string result, int mode, std::string opt1, std::string opt2,
-                                        std::string result1, std::string result2);
+                std::string result1, std::string result2);
+
+        bool save_file;
+        const char* file_path_save;
+
+        void 
+        nlog_trivial(std::string message);
+        void 
+        nlog_error(std::string message);
+        void 
+        nlog_result(std::string message);
+        void
+        nlog_custom(std::string auth, std::string message, int color);
 };
 
 #endif
