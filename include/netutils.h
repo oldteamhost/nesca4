@@ -4,18 +4,6 @@
 #include <iostream>
 #include <vector>
 
-class main_utils{
-public:
-    static int 
-    create_socket();
-    static int 
-    create_raw_socket(std::string protocol);
-    static void 
-    close_socket(int sock); 
-    static void 
-    init_winsock();
-};
-
 class dns_utils{
 public:
     const char* 
@@ -24,7 +12,6 @@ public:
     get_ip_by_dns(const char* dns);
     std::vector<std::string>
     get_all_ips_by_dns(const char* dns);
-
 };
 
 class ip_utils{

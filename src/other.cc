@@ -1,5 +1,7 @@
 #include "../include/other.h"
 #include "../include/target.h"
+#include <regex>
+#include <sstream>
 #include <algorithm>
 #include <iostream>
 
@@ -177,3 +179,11 @@ check_root_perms(){
 #endif
     return false;
 }
+
+bool 
+dns_or_ip(std::string &node){
+    std::regex dnsRegex("^[a-zA-Z0-9]+([-.][a-zA-Z0-9]+)*\\.[a-zA-Z]{2,}(\\.[a-zA-Z]{2,})?$");
+    return std::regex_match(node, dnsRegex);
+}
+
+

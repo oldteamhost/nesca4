@@ -25,5 +25,8 @@ parse_range(const std::string& range_string);
 // check root
 bool 
 check_root_perms();
+// check dns or ip
+bool 
+dns_or_ip(std::string &node);
 
 #endif

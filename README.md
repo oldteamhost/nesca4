@@ -1,12 +1,11 @@
 ![alt text](https://i.imgur.com/fb5pG53.png)
 
-![alt text](https://i.imgur.com/xoJQ2N5.png)
+![alt text](https://i.imgur.com/iiwGfJq.png)
 
 # COMPILE
 #### Debian 11:
 ```
     sudo apt-get install libcurl4-openssl-dev
-    sudo apt-get install libboost-all-dev
     sudo apt install g++ make git cmake
     git clone https://github.com/oldteamhost/nesca4
     cd nesca4
@@ -15,17 +14,16 @@
 ```
 #### Arch linux:
 ```
-    sudo pacman -S boost curl cmake
+    sudo pacman -S curl cmake
     git clone https://github.com/oldteamhost/nesca4
     cd nesca4
     cmake .
     make
 ```
 
-#### Windows:
-```
-    Я шатал как вы это сделаете, это возможно, я бы посоветовал вам использывать встроенный компилятор в visual studio, и подключить к нему библиотеку getopt.h. Установить boost и curl из vcpkg. И дай бог скомпилируеться.
-```
+# Крос?
+К сожалению с недавнего обновления уже нет, компиляция возможна только на linux.
+Если кто-то сможет расставить предпроцессор для сокетов, то сюда ![telegram](https://t.me/Lomasterrr).
 
 # Error
 ```
@@ -112,6 +110,8 @@ On start using:
 + Переписан вывод.
 + Сохранение в txt вновь рабочее.
 + Улучшем код в main файле, и его читабельность.
+
++ Добавлено куча всего, слишком много измененей.
 
 # Документация
 Читайте do_not_read.txt

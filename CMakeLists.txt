@@ -8,10 +8,13 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
 
 include_directories(lib)
 link_directories(lib/platform/linux)
-file(GLOB SRCS src/*.cc)
-add_executable(nesca4 ${SRCS})
-target_link_libraries(nesca4 curl pthread boost_system boost_thread hcnetsdk)
 
-# set(CMAKE_CXX_FLAGS "-g")
+file(GLOB SRCS src/*.cc)
+file(GLOB MODULE_SRCS modules/*.cc)
+
+add_executable(nesca4 ${SRCS} ${MODULE_SRCS})
+target_link_libraries(nesca4 curl pthread hcnetsdk)
+
+set(CMAKE_CXX_FLAGS "-g")
 
 

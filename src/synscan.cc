@@ -7,30 +7,26 @@
 #include <fcntl.h>
 #include <cstdint>
 #include <cstring>
-
-#ifdef _WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <Windows.h>
-#pragma comment(lib, "ws2_32.lib")
-#else
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
 #include <netinet/ip.h>
+#include <mutex>
 #include <netinet/in.h>
-#endif
+#include <vector>
 
 #include "../include/synscan.h"
-#include "../include/netutils.h"
+#include "../modules/include/easysock.h"
 #include "../include/prints.h"
 #include "../include/other.h"
 
 struct in_addr dest_ip;
-ip_utils iu;
 nesca_prints nspr;
+
+std::mutex fuck_sock;
+std::mutex fuck_sock1;
 
 unsigned short 
 csum(unsigned short *ptr,int nbytes){
@@ -63,7 +59,7 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
 
     /*Создание raw сокета, для более глубокой работы
     с сокетом.*/
-    int sock = main_utils::create_raw_socket("tcp");
+    int sock = create_raw_sock("tcp");
     if (debug){
         nspr.nlog_custom("SYN", "Creation RAW sock on send.\n", 1);
     }
@@ -120,15 +116,9 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
     int one = 1;
     const int *val = &one;
 
-#ifdef _WIN32
-    if (setsockopt(sock, IPPROTO_IP, IP_HDRINCL, (const char*)val, sizeof(one)) < 0){
-        return PORT_ERROR;
-    }
-#else
     if (setsockopt (sock, IPPROTO_IP, IP_HDRINCL, val, sizeof (one)) < 0){
         return PORT_ERROR;
     }
-#endif
 
     /*Подготовка к заполнению фекового tcp заголовка.*/
     dest.sin_family = AF_INET;
@@ -156,11 +146,9 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
     struct timeval timeout;
     timeout.tv_sec = s_timeout;
     timeout.tv_usec = 0;
-#ifdef _WIN32
-    int _result = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
-#else
+
     int _result = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-#endif
+
     if (_result < 0){
         return PORT_ERROR;
     }
@@ -189,7 +177,8 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
         nspr.nlog_custom("SYN", "Creation RAW sock on RECV.\n", 1);
     }
 
-    int sock1 = main_utils::create_raw_socket("tcp");
+    std::lock_guard<std::mutex> lock_sock(fuck_sock);
+    int sock1 = create_raw_sock("tcp");
     if (sock1 == -1){
         if (debug){
             nspr.nlog_custom("^", "FAILED creation RAW sock on RECV.\n", 2);
@@ -202,11 +191,9 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
     struct timeval timeout2;
     timeout2.tv_sec = r_timeout;
     timeout2.tv_usec = 0;
-#ifdef _WIN32
-    result = setsockopt(sock1, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
-#else
+
     result = setsockopt(sock1, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-#endif
+
     if (result < 0){
         return PORT_ERROR;
     }
@@ -215,11 +202,8 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
     if (debug){
         nspr.nlog_custom("SYN", "Getting packet on buffer.\n", 1);
     }
-#ifdef _WIN32
-    data_size = recvfrom(sock1, buffer, 65536, 0, (struct sockaddr*)&saddr, &saddr_size);
-#else
+
     data_size = recvfrom(sock1, buffer, 65536, 0, (struct sockaddr*)&saddr, (socklen_t*)&saddr_size);
-#endif
     if (data_size < 0){
         if (debug){
             nspr.nlog_custom("^", "Getting packet on buffer.\n", 2);
@@ -267,46 +251,51 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
 
         /*Обработка пакета, писалась используя
         эту статью: https://nmap.org/book/synscan.html*/
-        if (tcph->th_flags == 0x12){ // syn + ack
-            main_utils::close_socket(sock);
-            main_utils::close_socket(sock1);
-            /*Если хост ответил флагом ack и послал syn
-            значит порт считаеться открытым.*/
-            return PORT_OPEN;
+        switch (tcph->th_flags) {
+            case 0x12:{
+                /*SYN + ACK
+                 * Если хост ответил флагом ack и послал syn
+                значит порт считаеться открытым.*/
+                close(sock);
+                close(sock1);
+                return PORT_OPEN;
+            }
+            case 0x1A:{
+                /*SYN + ACK + PSH
+                 * Если хост ответил флагом ack и psh затем  послал syn
+                значит порт считаеться открытым, и готовым для
+                передачи данных*/
+                close(sock);
+                close(sock1);
+                return PORT_OPEN;
+            }
+            case 0x04:{
+                /*RST
+                 * Если хост послал только флаг rst
+                aka сброс соеденения, то считаеться что порт
+                закрыт.*/
+                close(sock);
+                close(sock1);
+                return PORT_CLOSED;
+            }
+            default:{
+                /*Если ответа от хоста вообще не было то считаеться
+                что подлкючение не удалось, порт фильтруеться.*/
+                close(sock);
+                close(sock1);
+                return PORT_FILTER;
+            }
         }
-        else if (tcph->th_flags == 0x12 && tcph->th_flags == 0x08){ // syn + ack + psh
-            main_utils::close_socket(sock);
-            main_utils::close_socket(sock1);
-            /*Если хост ответил флагом ack и psh затем  послал syn
-            значит порт считаеться открытым, и готовым для
-            передачи данных*/
-            return PORT_OPEN;
-        }
-        else if (tcph->th_flags == 0x04){ // rst
-            main_utils::close_socket(sock);
-            main_utils::close_socket(sock1);
-            /*Если хост послал только флаг rst
-            aka сброс соеденения, то считаеться что порт
-            закрыт.*/
-            return PORT_CLOSED;
-        }
-        else{
-            main_utils::close_socket(sock);
-            main_utils::close_socket(sock1);
-            /*Если ответа от хоста вообще не было то считаеться
-            что подлкючение не удалось, порт фильтруеться.*/
-            return PORT_FILTER;
-       }
-       //
     }
 
-    main_utils::close_socket(sock);
-    main_utils::close_socket(sock1);
+    close(sock);
+    close(sock1);
     /*В любом другом случае считаеться что выполнение
     функции кончилось ошибкой.*/
     return PORT_ERROR;
 }
 
+/*Убран в другую для более короткой основной*/
 void 
 syn_scan::create_tcp_header(struct tcphdr* tcph, int port){
     std::random_device rd;
@@ -331,5 +320,3 @@ syn_scan::create_tcp_header(struct tcphdr* tcph, int port){
 
     tcph->urg_ptr = 0;
 }
-
-

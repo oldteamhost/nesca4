@@ -2,10 +2,6 @@
 // by oldteam & lomaster
 // license GPL-3.0
 // // // // // // // // // 
-
-#include <cstddef>
-#include <cstdlib>
-#include <ctime>
 #include <iostream>
 #include <chrono>
 #include <future>
@@ -34,13 +30,20 @@
 #include "../include/nescaping.h"
 #include "../include/netutils.h"
 
-#define VERSION "2023-05-20v"
+#include "../modules/include/requests.h"
+#include "../modules/include/title.h"
+#include "../modules/include/redirect.h"
+#include "../modules/include/ftpinfo.h"
+
+#define VERSION "2023-05-25v"
 #define DELIMITER ','
 
 std::mutex mtx;
 checking_finds cfs;
 brute_ftp_data bfd_;
 icmp_ping ipn;
+udp_ping up;
+udp_ping udpp;
 syn_scan ss;
 ip_utils _iu;
 dns_utils dus;
@@ -61,6 +64,8 @@ pre_check();
 
 class arguments_program{
     public:
+        int fuck_yeah = 0;
+        int scanning_count = 3;
         std::string ports_temp;
         std::string domain_1level;
         std::vector<std::string> hosts_test;
@@ -71,6 +76,7 @@ class arguments_program{
         std::vector<std::string> _ip;
         std::vector<std::string> ip_cidr;
         std::vector<std::string> ip_range;
+        std::vector<std::string> dns;
 
         std::vector<std::string> ftp_logins;
         std::vector<std::string> ftp_passwords;
@@ -114,7 +120,7 @@ class arguments_program{
         int log_set = 1000;
         int threads_temp;
         int dns_scan_domain_count = 5;
-        int timeout_ms = 180;
+        int timeout_ms = 100;
         int _threads = 100;
         int connection_timeout_sec;
         int recv_timeout_sec;
@@ -191,9 +197,6 @@ nesca_prints np;
 const struct option long_options[] = {
         {"threads", required_argument, 0, 'T'},
         {"timeout", required_argument, 0, 't'},
-        {"ip", required_argument, 0, 1},
-        {"cidr", required_argument, 0, 2},
-        {"range", required_argument, 0, 33},
         {"import-ip", required_argument, 0, 23},
         {"import-cidr", required_argument, 0, 3},
         {"import-range", required_argument, 0, 32},
@@ -217,6 +220,7 @@ const struct option long_options[] = {
         {"no-get-path", no_argument, 0, 50},
         {"path-log", no_argument, 0, 53},
         {"import-color", required_argument, 0, 54},
+        {"scan-count", required_argument, 0, 1},
         {"fix-get-path", no_argument, 0, 52},
         {"on-http-response", no_argument, 0, 51},
         {"no-ping", no_argument, 0, 29},
@@ -225,7 +229,7 @@ const struct option long_options[] = {
         {"syn-db", no_argument, 0, 59},
         {"syn-debug", no_argument, 0, 60},
         {"sss-timeout", required_argument, 0, 57},
-        {"ssc-timeout", required_argument, 0, 58},
+        {"ssr-timeout", required_argument, 0, 58},
         {"res-time", no_argument, 0, 61},
         {"help", no_argument, 0, 'h'},
         {"version", no_argument, 0, 'v'},
@@ -240,9 +244,9 @@ const struct option long_options[] = {
         {"gen-count", required_argument, 0, 38},
         {"redirect", no_argument, 0, 55},
         {"gen-ipv6", required_argument, 0, 39},
-        {"ipn-timeout", required_argument, 0, 49},
-        {"ipn-rtimeout", required_argument, 0, 43},
-        {"ipn-packs", required_argument, 0, 41},
+        {"icmp-timeout", required_argument, 0, 49},
+        {"icmp-rtimeout", required_argument, 0, 43},
+        {"icmp-packs", required_argument, 0, 41},
         {0,0,0,0}
     };
 const char* short_options = "hvt:T:p:";
@@ -285,6 +289,7 @@ pre_check(){
         std::string date_str = oss.str();
         write_line(np.file_path_save, "\n\nNESCA4:[" + date_str + "]:[" + get_time() + "]-------------------------------\n");    
     }
+    ipn.source_ip = _iu.get_local_ip();
 
 }
 
@@ -300,6 +305,31 @@ int main(int argc, char** argv){
     parse_args(argc, argv);
     pre_check();
 
+    if (optind < argc){
+        size_t cidr = std::string(argv[optind]).find("/");
+        size_t range = std::string(argv[optind]).find("-");
+
+        if (cidr != std::string::npos){
+            argp.ip_cidr_scan = true;
+            argp.ip_cidr = split_string_string(argv[optind], DELIMITER);
+        }
+        else if (range != std::string::npos){
+            argp.ip_range_scan = true;
+            argp.ip_range = split_string_string(argv[optind], DELIMITER);
+        }
+        else {
+            argp.dns = split_string_string(argv[optind], DELIMITER);        
+            if (dns_or_ip(argp.dns[0])){
+                argp.ip_scan = true;
+                argp._ip = convert_dns_to_ip(argp.dns);
+            }
+            else {
+                argp.ip_scan = true;
+                argp._ip = split_string_string(argv[optind], DELIMITER);
+            }
+        }
+    }
+
     /*Режим тестирования кое как работает.*/
     if (argp.host_testing){
         // Код ответа
@@ -307,7 +337,7 @@ int main(int argc, char** argv){
 
             for (auto& host : argp.hosts_test){
                 std::ostringstream strs;
-                strs << get_response_code(host.c_str());
+                strs << get_response_code(host, 80);
                 std::string code = strs.str();
                 std::cout << np.main_nesca_out("TT", host, 3, "C", "", code, "") << std::endl;
             }
@@ -317,7 +347,7 @@ int main(int argc, char** argv){
         if (argp.http_request){
 
             for (auto& host : argp.hosts_test){
-                np.golder_rod_on(); /**/ std::cout << send_http_request(host); /**/ np.reset_colors(); 
+                np.golder_rod_on(); /**/ std::cout << send_http_request(host, 80); /**/ np.reset_colors(); 
                 std::cout << np.main_nesca_out("TT", "[^]:HTTP REQUEST " + host, 2,
                         "", "", "", "") << std::endl;
             }
@@ -328,53 +358,12 @@ int main(int argc, char** argv){
             for (auto& host : argp.hosts_test){
                     bool status_path;
                     // get headers
-                    std::string headers = get_headers(host), code = send_http_request(host), redirect = "N/A";
-
+                    std::string headers = (host), code = send_http_request(host, 80), redirect = "N/A";
                     np.nlog_custom("LOG", "1 method: parse_location\n", 2);
-                    std::string path_location = parse_location(headers);
-                 
-                    if (path_location.length() > 1){
-                        status_path = true;
-                        redirect = path_location;
-                    }
-                    status_path = false;
+                    std::string html = send_http_request(host, 80);
 
-                    if (status_path != true) {
-                        if (argp.get_path_log){
-                            np.nlog_custom("LOG", "2 method: parse_http_equiv\n", 2);
-                        }
-                        std::string path_http;
-                        path_http = parse_content_from_meta(code);
-                        if (path_http.length() > 1){
-                            status_path = true;
-                            redirect = path_http;
-                        }
-                        status_path = false;
-                    }
-                    if (status_path != true){
-                        // getting method 3 from js
-                        if (argp.get_path_log){
-                            np.nlog_custom("LOG", "3 method: parse_window.location.href\n", 2);
-                        }
-                        std::string path_js = parse_url_from_js(code);
-                        if (path_js.length() > 3){
-                            status_path = true;
-                            redirect = path_js;
-                        }
-                        status_path = false;
-                    }
-                    if (status_path != true){
-                        // getting method 4 from content location
-                        if (argp.get_path_log){
-                            np.nlog_custom("LOG", "4 method: parse_content_location\n", 2);
-                        }
-                        std::string path_content_location = parse_content_location(headers);
-                        if (path_content_location.length() > 1){
-                                status_path = true;
-                                redirect = path_content_location;
-                        }
-                        status_path = false;
-                    }
+                    redirect = parse_redirect(html, headers, host, true, 80);
+
                     std::cout << np.main_nesca_out("TT", host, 3, "R", "", redirect, "") << std::endl;
             }
         }
@@ -468,6 +457,9 @@ int main(int argc, char** argv){
                 for (;;) {
                     std::string random_ = generate_random_str(argp.dns_scan_domain_count, argp.dns_dictionary);
                     std::string result = "http://" + random_ + argp.domain_1level;
+                    std::string ip = dus.get_ip_by_dns(result.c_str());
+                    std::string html = send_http_request(ip, 80);
+
                     std::string result_print;
                     int test = dns_scan("http://" + random_, argp.domain_1level);
                     if (test == 0) {
@@ -478,7 +470,7 @@ int main(int argc, char** argv){
                     }
                     else {
                         std::lock_guard<std::mutex> lock(mtx);
-                        std::cout << np.main_nesca_out("BA", result, 3, "T", "", get_html_title(result), "") << std::endl;
+                        std::cout << np.main_nesca_out("BA", result, 3, "T", "", get_http_title(html), "") << std::endl;
                     }
                 }
             }).detach();
@@ -552,6 +544,9 @@ int main(int argc, char** argv){
     for (auto& f : futures) {
         f.get();
     }
+    if (argp.fuck_yeah < 1){
+        np.nlog_custom("NB", "If you are sure that at least something there is open, then try increasing the timeout, or reduce the number of threads.\n", 1);
+    }
     /*Конец*/
 
     return 0;
@@ -559,16 +554,16 @@ int main(int argc, char** argv){
 
 void check_files(const char* path, const char* path1){
        if (check_file(path)){
-            np.nlog_trivial(std::string(path) + "(" + std::to_string(get_count_lines(path)) + ") entries\n");
+            np.nlog_trivial(std::string(path) + " (" + std::to_string(get_count_lines(path)) + ") entries\n");
        }
        else {
-            np.nlog_error(std::string(path) + "(" + std::to_string(get_count_lines(path)) + ") entries\n");
+            np.nlog_error(std::string(path) + " (" + std::to_string(get_count_lines(path)) + ") entries\n");
        }
        if (check_file(path1)){
-            np.nlog_trivial(std::string(path1) + "(" + std::to_string(get_count_lines(path1)) + ") entries\n");
+            np.nlog_trivial(std::string(path1) + " (" + std::to_string(get_count_lines(path1)) + ") entries\n");
        }
        else {
-            np.nlog_error(std::string(path1) + "(" + std::to_string(get_count_lines(path1)) + ") entries\n");
+            np.nlog_error(std::string(path1) + " (" + std::to_string(get_count_lines(path1)) + ") entries\n");
        }
 }
 
@@ -579,37 +574,37 @@ checking_default_files(void){
     if (argp.ip_cidr_scan_import){
        if (check_file(argp.path_cidr)){
             if (argp.ip_cidr_scan){
-                np.nlog_trivial(std::string(argp.path_cidr) + "(" + std::to_string(get_count_lines(argp.path_cidr)) + ") entries\n");
+                np.nlog_trivial(std::string(argp.path_cidr) + " (" + std::to_string(get_count_lines(argp.path_cidr)) + ") entries\n");
             }
             argp.ip_cidr = write_file(argp.path_cidr);  
        }
        else {
-            np.nlog_error(std::string(argp.path_cidr) + "(" + std::to_string(get_count_lines(argp.path_cidr)) + ") entries\n");
+            np.nlog_error(std::string(argp.path_cidr) + " (" + std::to_string(get_count_lines(argp.path_cidr)) + ") entries\n");
        }
     }
 
     if (argp.ip_range_scan_import){
         if (check_file(argp.path_range)){
             if (argp.ip_range_scan){
-                np.nlog_trivial(std::string(argp.path_range) + "(" + std::to_string(get_count_lines(argp.path_range)) 
+                np.nlog_trivial(std::string(argp.path_range) + " (" + std::to_string(get_count_lines(argp.path_range)) 
                                 + ") entries\n");
             }
             argp.ip_range = write_file(argp.path_range);
         }
         else {
-            np.nlog_error(std::string(argp.path_range) + "(" + std::to_string(get_count_lines(argp.path_range)) 
+            np.nlog_error(std::string(argp.path_range) + " (" + std::to_string(get_count_lines(argp.path_range)) 
                             + ") entries\n");
         }
     }
 
     if (argp.ip_scan_import){
        if (check_file(argp.path_ips)){
-            np.nlog_trivial(std::string(argp.path_ips) + "(" + std::to_string(get_count_lines(argp.path_ips)) 
+            np.nlog_trivial(std::string(argp.path_ips) + " (" + std::to_string(get_count_lines(argp.path_ips)) 
                             + ") entries\n");
             argp._ip = write_file(argp.path_ips);  
        }
        else {
-            np.nlog_error(std::string(argp.path_ips) + "(" + std::to_string(get_count_lines(argp.path_ips)) 
+            np.nlog_error(std::string(argp.path_ips) + " (" + std::to_string(get_count_lines(argp.path_ips)) 
                             + ") entries\n");
        }
     }
@@ -626,11 +621,16 @@ checking_default_files(void){
 void 
 processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, int timeout_ms){
     int flag = 0;
+    int yeah_flag = 0;
+    for (int i = 0; i < argp.scanning_count; i++){
+        if (yeah_flag == 1){
+            break;
+        }
 
-    for (const auto& port : ports) {
+        for (const auto& port : ports) {
         int result = ss.syn_scan_port(ip.c_str(), port, timeout_ms);
-        long double time_ms;
 
+        long double time_ms;
         int temp_ping = ipn.ping(ip.c_str(), &time_ms);
         if (argp.ping_off != true && flag < 1){
             if (argp.display_response_time && time_ms > 0){
@@ -642,212 +642,73 @@ processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, 
             }
             flag++;
         }
-        
+
         if (result == 0) {
+            yeah_flag = 1;
+            argp.fuck_yeah++;
             std::string result = ip + ":" + std::to_string(port);
             std::string brute_temp;
             std::string result_print;
      
             if (port == 80 || port == 81 || port == 8080 || port == 8081 || port == 8888 || port == 8008){
-
+                std::lock_guard<std::mutex> guard(mtx);
                 bool status_path = false;
 
+                // Add protocol
                 result.insert(0, "http://");
+
                 std::string redirect;
-                std::string code = send_http_request(ip);
-                std::string headers = get_headers("http://" + ip);
+
+                // for check length
                 std::string default_result = "http://" + ip + ":" + std::to_string(port) + "/";
 
-                std::string dns;
+                // get page code
+                std::string html = send_http_request(ip, port);
+
+                // get redirect
+                if (argp.no_get_path != true){
+                    if (argp.fix_get_path){
+                        redirect = parse_redirect(html, html, ip,false, port);
+                    }
+                    else {
+                        redirect = parse_redirect(html, html, ip,true, port);
+                    }
+                }
 
                 // brute http axis
-                std::lock_guard<std::mutex> guard(mtx);
-                std::string temp_check_axis = cfs.check_axis_camera(redirect);
+                std::string temp_check_axis = cfs.check_axis_camera(redirect); // check axis redirect
                 if (argp.off_http_brute != true && temp_check_axis != "no" && argp.no_get_path != true){
                     np.nlog_custom("AXIS", ip + " [BRUTEFORCE]\n",1);
-
                     brute_temp = threads_brute_http(redirect, argp.http_logins, argp.http_passwords,
                              argp.http_brute_log, argp.http_brute_verbose, argp.brute_timeout_ms);
-
                 }
-                std::string http_title_result = get_html_title(ip);
+
+                // get redirect
+                std::string http_title_result = get_http_title(html);
+
+                // clear answer
                 http_title_result.erase(std::remove(http_title_result.begin(), http_title_result.end(), '\r'), http_title_result.end());
                 http_title_result.erase(std::remove(http_title_result.begin(), http_title_result.end(), '\n'), http_title_result.end());
-
+                
+                // print only success brute result
                 if (argp.http_only){
                     if (brute_temp.length() > 1){
                         result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "", http_title_result, "");
                     }
                 }
                 else {
-                   result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "", http_title_result, "");
-                }
-
-
-                std::cout << result_print << std::endl;
-                if (argp.no_get_path != true){
-
-                    if (argp.get_path_log){
-                        np.nlog_custom("LOG", "1 method: parse_location\n",1);
-                    }
-                    // getting method 1 location
-                    std::string path_location = parse_location(headers);
-                    if (path_location.length() > 1){
-                        if (argp.fix_get_path){
-                            status_path = true;
-                            redirect = path_location;
-                        }
-                        else {
-                            status_path = true;
-                            std::string paste_;
-                            size_t finding0 = path_location.find("http://");
-                            size_t finding1 = path_location.find("https://");
-                            size_t finding2 = path_location.find(":" + std::to_string(port));
-    
-                            if (finding1 != std::string::npos || finding0 != std::string::npos){
-                                if (finding2 == std::string::npos){
-                                    redirect = path_location;
-                                }
-                            }
-                            else {
-                                if (path_location[0] != '/'){
-                                    paste_ = "http://" + ip + ":" + std::to_string(port) + "/" + path_location;
-                                }
-                                else {
-                                    paste_ = "http://" + ip + ":" + std::to_string(port) + path_location;
-                                }
-                                redirect.insert(0, paste_);
-                                redirect = paste_;
-                            }
-                        }
+                    if (argp.no_get_dns != true){
+                        result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "", http_title_result, "");
                     }
                     else {
-                        status_path = false;
-                    }
-
-                    if (status_path != true) {
-                        if (argp.get_path_log){
-                            np.nlog_custom("LOG", "2 method: parse_http_equiv\n",1);
-                        }
-                        std::string path_http;
-                        path_http = parse_content_from_meta(code);
-                        if (path_http.length() > 1){
-                            if (argp.fix_get_path){
-                                status_path = true;
-                                redirect = path_http;
-                            }
-                            else {
-                                status_path = true;
-                                std::string paste_;
-                                size_t finding0 = path_http.find("http://");
-                                size_t finding1 = path_http.find("https://");
-                                size_t finding2 = path_http.find(":" + std::to_string(port));
-
-                                if (finding1 != std::string::npos || finding0 != std::string::npos){
-                                    if (finding2 == std::string::npos){
-                                        redirect = path_http;
-                                    }
-                                }
-                                else {
-                                    if (path_http[0] != '/'){
-                                        paste_ = "http://" + ip + ":" + std::to_string(port) + "/" + path_http;
-                                    }
-                                    else {
-                                        paste_ = "http://" + ip + ":" + std::to_string(port) + path_http;
-                                    }
-                                    redirect.insert(0, paste_);
-                                    redirect = paste_;
-                                }
-                            }
-                        }
-                        else {
-                            status_path = false;
-                        }
-                    }
-                    if (status_path != true){
-                        // getting method 3 from js
-                        if (argp.get_path_log){
-                            np.nlog_custom("LOG", "3 method: parse_window.location.href\n",1);
-                        }
-                        std::string path_js = parse_url_from_js(code);
-                        if (path_js.length() > 3){
-                            if (argp.fix_get_path){
-                                status_path = true;
-                                redirect = path_js;
-                            }
-                            else {
-                                status_path = true;
-                                std::string paste_;
-
-                                // clean redirect    
-                                size_t finding0 = path_js.find("http://");
-                                size_t finding1 = path_js.find("https://");
-                                size_t finding2 = path_js.find(":" + std::to_string(port));
-
-                                if (finding1 != std::string::npos || finding0 != std::string::npos){
-                                    if (finding2 == std::string::npos){
-                                        redirect = path_js;
-                                    }
-                                }
-                                else {
-                                    if (path_js[0] != '/'){
-                                        paste_ = "http://" + ip + ":" + std::to_string(port) + "/" + path_js;
-                                    }
-                                    else {
-                                        paste_ = "http://" + ip + ":" + std::to_string(port) + path_js;
-                                    }
-                                    redirect.insert(0, paste_);
-                                    redirect = paste_;
-                                }
-                            }
-                        }
-                        else {
-                            status_path = false;
-                        }
-                    }
-                    if (status_path != true){
-                        // getting method 4 from content location
-                        if (argp.get_path_log){
-                            np.nlog_custom("LOG", "4 method: parse_content_location\n",1);
-                        }
-                        std::string path_content_location = parse_content_location(headers);
-                        if (path_content_location.length() > 1){
-                                if (argp.fix_get_path){
-                                    status_path = true;
-                                    redirect = path_content_location;
-                                }
-                                else {
-                                    status_path = true;
-                                    std::string paste_;
-                                    size_t finding0 = path_content_location.find("http://");
-                                    size_t finding1 = path_content_location.find("https://");
-                                    size_t finding2 = path_content_location.find(":" + std::to_string(port));
-
-                                    if (finding1 != std::string::npos || finding0 != std::string::npos){
-                                        if (finding2 == std::string::npos){
-                                            redirect = path_content_location;
-                                        }
-                                    }
-                                    else {
-                                        if (path_content_location[0] != '/'){
-                                            paste_ = "http://" + ip + ":" + std::to_string(port) + "/" + path_content_location;
-                                        }
-                                        else {
-                                            paste_ = "http://" + ip + ":" + std::to_string(port) + path_content_location;
-                                        }
-                                        redirect.insert(0, paste_);
-                                        redirect = paste_;
-                                    }
-                                }
-                        }
-                        else {
-                            status_path = false;
-                        }
+                        result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "DNS", http_title_result, get_dns_ip(ip.c_str()));
                     }
                 }
-                // print paths
 
-                // GOTO
+                // print
+                std::cout << result_print << std::endl;
+
+                // GOTO print redirect
                 if (argp.no_get_path != true && redirect.length() != default_result.length()){
                     if (argp.fix_get_path){
                             if (redirect.length() != 0){
@@ -865,7 +726,7 @@ processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, 
 
                 // print response
                 if (argp.get_response){
-                    std::string result_code =  np.main_nesca_out("TT", code, 2, "", "", "", "");
+                    std::string result_code =  np.main_nesca_out("TT", html, 2, "", "", "", "");
                     std::cout << result_code << std::endl;
                 }
             }
@@ -875,19 +736,26 @@ processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, 
                 if (argp.off_ftp_brute != true){
                     np.nlog_custom("FTP", ip + " [BRUTEFORCE]\n",1);
 
-                    brute_temp = threads_brute_ftp(ip, argp.ftp_logins, argp.ftp_passwords, argp.ftp_brute_log, argp.ftp_brute_verbose, argp.brute_timeout_ms);
+                    brute_temp = threads_brute_ftp(ip, argp.ftp_logins, argp.ftp_passwords, argp.ftp_brute_log,
+                            argp.ftp_brute_verbose, argp.brute_timeout_ms);
 
                     if (argp.ftp_only){
                         if (brute_temp.length() > 1){
-                            result_print = np.main_nesca_out("FTP", "ftp://" + brute_temp + result, 3, "D", "", get_ftp_response_code(ip, std::to_string(port), bfd_.get_success_login(), bfd_.get_success_pass()), "");
+                            result_print = np.main_nesca_out("FTP", "ftp://" + brute_temp + result, 3, "D", "",
+                                    get_ftp_description(ip, std::to_string(port),
+                                    bfd_.get_success_login(), bfd_.get_success_pass()), "");
                         }
                     }
                     else {
-                        result_print = np.main_nesca_out("FTP", "ftp://" + brute_temp + result, 3, "D", "", get_ftp_response_code(ip, std::to_string(port), bfd_.get_success_login(), bfd_.get_success_pass()), "");
+                        result_print = np.main_nesca_out("FTP", "ftp://" + brute_temp + result, 3, "D", "",
+                                get_ftp_description(ip, std::to_string(port),
+                                bfd_.get_success_login(), bfd_.get_success_pass()), "");
                     }
                 }
                 else {
-                    result_print = np.main_nesca_out("FTP", "ftp://" + brute_temp + result, 3, "D", "", get_ftp_response_code(ip, std::to_string(port), bfd_.get_success_login(), bfd_.get_success_pass()), "");
+                    result_print = np.main_nesca_out("FTP", "ftp://" + brute_temp + result, 3, "D", "",
+                            get_ftp_description(ip, std::to_string(port),
+                            bfd_.get_success_login(), bfd_.get_success_pass()), "");
                 }
                 
                 std::cout << result_print << std::endl;
@@ -899,8 +767,8 @@ processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, 
                 if (argp.off_sftp_brute != true){
                     np.nlog_custom("SFTP", ip + " [BRUTEFORCE]\n",1);
 
-                    brute_temp = threads_brute_ssh(ip, argp.sftp_logins, argp.sftp_passwords, argp.sftp_brute_log, argp.sftp_brute_verbose,
-                                                  argp.sftp_using_know_hosts, argp.brute_timeout_ms);
+                    brute_temp = threads_brute_ssh(ip, argp.sftp_logins, argp.sftp_passwords, argp.sftp_brute_log,
+                        argp.sftp_brute_verbose, argp.sftp_using_know_hosts, argp.brute_timeout_ms);
 
                     if (argp.sftp_only){
                         if (brute_temp.length() > 1){
@@ -1024,29 +892,28 @@ processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, 
             }
         }
    }
+    }
 }
 // You live?
 
 void 
 help_menu(void){
     np.golder_rod_on();
-    std::cout << "usage: " << run << " [flags]\n";
+    std::cout << "usage: " << run << " [target 1,2,3] [flags]\n";
     np.reset_colors();
 
     np.sea_green_on();
     std::cout << "\narguments target:" << std::endl;
     np.reset_colors();
-    std::cout << "  -ip <1,2,3>            Set ip target.\n";
-    std::cout << "  -cidr <1,2,3>          Set cidr target.\n";
-    std::cout << "  -range <1,2,3>         Set range target.\n";
-    std::cout << "  -import-ip <path>      Set ips on target from file.\n";
+    std::cout << "  -import-ip <path>      Set ip on target from file.\n";
     std::cout << "  -import-cidr <path>    Set cidr on target from file.\n";
     std::cout << "  -import-range <path>   Set range on target from file.\n";
-    std::cout << "  -random-ip <count>     Set random ips target.\n";
+    std::cout << "  -random-ip <count>     Set random ip target.\n";
 
     np.sea_green_on();
     std::cout << "\narguments speed:" << std::endl;
     np.reset_colors();
+    std::cout << "  -scan-count <count>    Set the number of repeat scans.\n";
     std::cout << "  -threads, -T <count>   Set threads for scan.\n";
     std::cout << "  -timeout, -t <ms>      Set timeout for scan.\n";
 
@@ -1062,9 +929,9 @@ help_menu(void){
     np.sea_green_on();
     std::cout << "\narguments ping:" << std::endl;
     np.reset_colors();
-    std::cout << "  -ipn-timeout <ms>      Set timeout for icmp ping.\n";
-    std::cout << "  -ipn-rtimeout <ms>     Set timeout for send icmp packet.\n";
-    std::cout << "  -ipn-packs <count>     Set count icmp packets for send.\n";
+    std::cout << "  -icmp-timeout <ms>     Set timeout for icmp ping.\n";
+    std::cout << "  -icmp-rtimeout <ms>    Set timeout for send icmp packet.\n";
+    std::cout << "  -icmp-packs <count>    Set count icmp packets for send.\n";
     std::cout << "  -no-ping               Off ping.\n";
 
     np.sea_green_on();
@@ -1115,13 +982,14 @@ help_menu(void){
     std::cout << "  -response-code         Get response code from host.\n";
     std::cout << "  -redirect              Get redirect from host.\n";
     std::cout << "  -http-request          Send http request from host.\n";
-    std::cout << "  -icmp-ping <mode>       Get response time from host, modes (live) or (default).\n";
+    std::cout << "  -icmp-ping <mode>      Get response time from host, modes (live) or (default).\n";
 
     np.sea_green_on();
     std::cout << "\narguments generation:" << std::endl;
     np.reset_colors();
     std::cout << "  -gen-count <count>     Set count for generation.\n";
     std::cout << "  -gen-ipv6 <octets>     Generate ip version 6.\n";
+    std::cout << "  -gen-ipv4              Generate ip version 6.\n";
 }
 void 
 parse_args(int argc, char** argv){
@@ -1156,17 +1024,8 @@ parse_args(int argc, char** argv){
                 break;
             }
             case 1:
-            {
-                argp.ip_scan = true;
-                argp._ip = split_string_string(optarg, DELIMITER);
+                argp.scanning_count = atoi(optarg);
                 break;
-            }
-            case 2:
-            {
-                argp.ip_cidr_scan = true;
-                argp.ip_cidr = split_string_string(optarg, DELIMITER);
-                break;
-            }
             case 3:
             {
                argp.ip_cidr_scan_import = true;
@@ -1378,10 +1237,6 @@ parse_args(int argc, char** argv){
                break;
            case 48:
                argp.thread_on_port = true;
-               break;
-           case 33:
-               argp.ip_range_scan = true;
-               argp.ip_range = split_string_string(optarg, DELIMITER);
                break;
            case 32:
                argp.ip_range_scan_import = true;

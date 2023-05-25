@@ -16,7 +16,7 @@ generate_ipv6(int num_octets){
         if (i < num_octets - 1) ss << ":";
     }
     std::string ip_str = ss.str();
-    strcpy(ip, ip_str.c_str());
+    std::strcpy(ip, ip_str.c_str());
     return ip;
 }
 
@@ -33,7 +33,7 @@ generate_ipv4(void){
         if (i < 3) ss << ".";
     }
     std::string ip_str = ss.str();
-    strcpy(ip, ip_str.c_str());
+    std::strcpy(ip, ip_str.c_str());
     return ip;
 }
 

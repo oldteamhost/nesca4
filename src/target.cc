@@ -1,6 +1,10 @@
 #include "../include/target.h"
 #include <sstream>
+#include <cstring>
+#include <netdb.h>
+#include <arpa/inet.h>
 #include <bitset>
+#include <vector>
 
 std::vector<std::string>
 range_to_ips(const std::vector<std::string>& ip_ranges){
@@ -92,4 +96,27 @@ split_string_string(const std::string& str, char delimiter){
     }
     result.push_back(str.substr(pos));
     return result;
+}
+std::vector<std::string>
+convert_dns_to_ip(const std::vector<std::string>& dns_vector){
+    std::vector<std::string> ip_vector;
+
+    for (const auto& dns : dns_vector) {
+        struct addrinfo hints, *res;
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = AF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+
+        int status = getaddrinfo(dns.c_str(), NULL, &hints, &res);
+        if (status != 0) {
+            continue;
+        }
+
+        struct sockaddr_in* addr = (struct sockaddr_in*) res->ai_addr;
+        char ip_str[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &(addr->sin_addr), ip_str, INET_ADDRSTRLEN);
+        ip_vector.push_back(ip_str);
+        freeaddrinfo(res);
+    }
+    return ip_vector;
 }

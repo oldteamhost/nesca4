@@ -1,69 +1,11 @@
 #include "../include/netutils.h"
-#include <cerrno>
-#include <cstdio>
+#include "../modules/include/easysock.h"
 #include <cstring>
 #include <algorithm>
-#include <netinet/in.h>
-
-#ifdef _WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <Windows.h>
-#pragma comment(lib, "ws2_32.lib")
-#else
-#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
-#include <sys/types.h>
 #include <netdb.h>
 #include <unistd.h>
-#endif
-
-void 
-main_utils::close_socket(int sock){
-#ifdef _WIN32
-        closesocket(sock);
-        WSACleanup();
-#else
-        close(sock);
-#endif
-}
-
-int 
-main_utils::create_socket(){
-    int sock;
-#ifdef _WIN32
-    init_winsock();
-
-    sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (sock == INVALID_SOCKET) {
-        printf("Failed to create socket: %d\n", WSAGetLastError());
-        close_socket(sock);
-        WSACleanup();
-        return -1;
-    }
-#else
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0) {
-        printf("Failed to create socket\n");
-        close_socket(sock);
-        return -1;
-    }
-#endif
-
-    return sock;
-}
-
-void 
-main_utils::init_winsock(){
-#ifdef _WIN32
-    WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        std::cerr << "Failed to initialize winsock" << std::endl;
-        return 1;
-    }
-#endif
-}
 
 const char*
 dns_utils::get_dns_by_ip(const char* ip, int port){
@@ -72,7 +14,7 @@ dns_utils::get_dns_by_ip(const char* ip, int port){
         return "get_dns_by_ip: Invalid IP address";
     }
 
-    int sock = main_utils::create_socket();
+    int sock = create_sock("tcp"); 
     if (sock == -1) {
         return "get_dns_by_ip: Could not create socket";
     }
@@ -86,19 +28,19 @@ dns_utils::get_dns_by_ip(const char* ip, int port){
     char host[NI_MAXHOST];
     int res = getnameinfo((struct sockaddr*)&sa, sizeof(sa), host, sizeof(host), NULL, 0, NI_NAMEREQD);
     if (res != 0) {
-        main_utils::close_socket(sock);
+        close(sock);
         return "get_dns_by_ip: Could not resolve DNS";
     }
 
     char* dns_name = new char[strlen(host) + 1];
     strcpy(dns_name, host);
-    main_utils::close_socket(sock);
+    close(sock);
     return dns_name;
 }
 
 const char* 
 dns_utils::get_ip_by_dns(const char* dns){
-    int sock = main_utils::create_socket();
+    int sock = create_sock("tcp"); 
 
     if (sock == -1){
         return "get_ip_by_dns: Could not create socket";
@@ -112,7 +54,7 @@ dns_utils::get_ip_by_dns(const char* dns){
     int status = getaddrinfo(dns, NULL, &hints, &res);
 
     if (status != 0){
-        main_utils::close_socket(sock);
+        close(sock);
         return "get_dns_by_ip: Could failed getting ip";
     }
 
@@ -121,16 +63,11 @@ dns_utils::get_ip_by_dns(const char* dns){
 
     freeaddrinfo(res);
 
-    main_utils::close_socket(sock);
+    close(sock);
     return ip;
 }
 
 std::vector<std::string> dns_utils::get_all_ips_by_dns(const char* dns){
-
-#ifdef _WIN32
-    main_utils::init_winsock();
-#endif
-
     std::vector<std::string> ip_addresses;
     struct addrinfo* result;
 
@@ -155,11 +92,7 @@ std::vector<std::string> dns_utils::get_all_ips_by_dns(const char* dns){
             addr = &(addr_in6->sin6_addr);
         }
 
-        #ifdef _WIN32
-            inet_ntop(current->ai_family, addr, ip_address, INET6_ADDRSTRLEN);
-        #else
-            inet_ntop(current->ai_family, addr, ip_address, sizeof(ip_address));
-        #endif
+        inet_ntop(current->ai_family, addr, ip_address, sizeof(ip_address));
         std::string ip_str(ip_address);
         if (std::find(ip_addresses.begin(), ip_addresses.end(), ip_str) == ip_addresses.end()) {
             ip_addresses.push_back(ip_str);
@@ -170,30 +103,7 @@ std::vector<std::string> dns_utils::get_all_ips_by_dns(const char* dns){
 
     freeaddrinfo(result);
 
-#ifdef _WIN32
-    WSACleanup();
-#endif
-
     return ip_addresses;
-}
-int
-main_utils::create_raw_socket(std::string protocol){
-    int sock;
-#ifdef _WIN32
-    init_winsock();
-#endif
-    if (protocol == "tcp"){
-        sock = socket (AF_INET, SOCK_RAW, IPPROTO_TCP);
-    }
-    else if (protocol == "icmp"){
-        sock = socket (AF_INET, SOCK_RAW, IPPROTO_ICMP);
-    }
-
-    if (sock < 0){
-        return -1;
-    }
-
-    return sock;
 }
 
 const char*
@@ -202,7 +112,7 @@ ip_utils::get_local_ip(){
     static char buffer[100];
     socklen_t namelen;
 
-    int sock = main_utils::create_socket();
+    int sock = create_sock("tcp");
     if (sock < 0){
         return "-1";
     }
@@ -217,7 +127,7 @@ ip_utils::get_local_ip(){
 
     int err = connect(sock, (const struct sockaddr*)&serv, sizeof(serv));
     if (err < 0){
-        main_utils::close_socket(sock);
+        close_sock(sock);
         return "-1";
     }
 
@@ -225,23 +135,11 @@ ip_utils::get_local_ip(){
     namelen = sizeof(name);
     memset(&name, 0, sizeof(name));
     if (getsockname(sock, (struct sockaddr*)&name, &namelen)){
-        main_utils::close_socket(sock);
+        close(sock);
         return "-1";
     }
 
     const char *p = inet_ntop(AF_INET, &name.sin_addr, buffer, sizeof(buffer));
-    main_utils::close_socket(sock);
+    close(sock);
     return p;
 }
-
-
-
-
-
-
-
-
-
-
-
-
