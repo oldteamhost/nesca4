@@ -1,0 +1,17 @@
+$SERVICE        $PORT/tcp
+
+TCPMUX          1
+COMPRESSNET cn  2
+COMPRESSNET     3
+RJE             5
+ECHO            7
+DISCARD         9
+SYSSTAT         11
+DAYTIME         13
+TELNET          23
+SMTP            25
+RSFTP           26
+WHOIS           43
+POP3S           995
+
+

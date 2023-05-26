@@ -29,6 +29,7 @@
 #include "../include/synscan.h"
 #include "../include/nescaping.h"
 #include "../include/netutils.h"
+#include "../include/services.h"
 
 #include "../modules/include/requests.h"
 #include "../modules/include/title.h"
@@ -47,6 +48,7 @@ udp_ping udpp;
 syn_scan ss;
 ip_utils _iu;
 dns_utils dus;
+services_nesca sn;
 
 // main
 void 
@@ -294,6 +296,7 @@ pre_check(){
 }
 
 int main(int argc, char** argv){
+    sn.init_services();
     logo();
     run = argv[0];
 
@@ -865,7 +868,7 @@ processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, 
                 std::cout << result_print << std::endl;
             }
             else{
-                std::string result_print = np.main_nesca_out("BA", result, 3, "", "", "", "");
+                std::string result_print = np.main_nesca_out(sn.probe_service(port), result, 3, "", "", "", "");
                 std::lock_guard<std::mutex> guard(mtx);
                 std::cout << result_print << std::endl;
             }

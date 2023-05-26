@@ -13,7 +13,7 @@ file(GLOB SRCS src/*.cc)
 file(GLOB MODULE_SRCS modules/*.cc)
 
 add_executable(nesca4 ${SRCS} ${MODULE_SRCS})
-target_link_libraries(nesca4 curl pthread hcnetsdk)
+target_link_libraries(nesca4 curl pthread hcnetsdk )
 
 set(CMAKE_CXX_FLAGS "-g")
 
