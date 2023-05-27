@@ -4,7 +4,11 @@
 #include "../include/other.h"
 #include "../include/prints.h"
 #include "../lib/HCNetSDK.h"
-#include <cmath>
+#include "../modules/include/easysock.h"
+#include <libssh/libssh.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 #include <iostream>
 #include <string>
 #include <thread>
@@ -15,63 +19,93 @@ nesca_prints nsp;
 brute_ftp_data bfd;
 
 std::string 
-brute_ftp(const std::string ip, const std::string login, const std::string pass, int brute_log, int verbose){
-    
-    std::string result;
-    CURL* curl = curl_easy_init();
-
-    if (curl) {
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
-        if (verbose){
-            curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-        }
-        curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 1L);
-        curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1L);
-        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 15L);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-        curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
-        curl_easy_setopt(curl, CURLOPT_FTPPORT, "-");
-        curl_easy_setopt(curl, CURLOPT_FTP_RESPONSE_TIMEOUT, 15L);
-        curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
-        curl_easy_setopt(curl, CURLOPT_FTP_USE_EPSV, 1L);
-        curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 1L);
-        curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 15L);
-
-        std::string url = "ftp://" + ip;
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        if (brute_log){
+brute_ftp(const std::string ip, int port, const std::string login, const std::string pass, int brute_log, int verbose){
+    if (brute_log){
             nsp.nlog_custom("FTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
-        }
-        curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
-        curl_easy_setopt(curl, CURLOPT_PASSWORD, pass.c_str());
-
-        CURLcode res = curl_easy_perform(curl);
-        if (res == CURLE_OK) {
-            result = login + ":" + pass + "@";
-            curl_easy_cleanup(curl);
-            bfd.set_success_pass(pass);
-            bfd.set_success_login(login);
-            return result;
-        }
-        else {
-            curl_easy_cleanup(curl);
-            return "";
-        }
     }
-    curl_easy_cleanup(curl);
+
+    int sock = create_sock("tcp");
+    if (sock == -1){
+	   return "";
+    }
+
+    sockaddr_in server_address{};
+    server_address.sin_family = AF_INET;
+    server_address.sin_port = htons(port);
+
+    if (inet_pton(AF_INET, ip.c_str(), &(server_address.sin_addr)) <= 0) {
+        return "";
+    }
+
+    if (connect(sock, reinterpret_cast<sockaddr*>(&server_address), sizeof(server_address)) < 0) {
+        return "";
+    }
+
+    char buffer[1024];
+    memset(buffer, 0, 1024);
+    if (recv(sock, buffer, 1024 - 1, 0) < 0) {
+        close(sock);
+        return "";
+    }
+    if (verbose){
+	   std::cout << buffer;
+    }
+
+    std::string user_command = "USER " + login + "\r\n";
+    if (send(sock, user_command.c_str(), user_command.length(), 0) < 0) {
+        close(sock);
+        return "";
+    }
+
+    memset(buffer, 0, 1024);
+    if (recv(sock, buffer, 1024 - 1, 0) < 0) {
+        close(sock);
+        return "";
+    }
+    if (verbose){
+	   std::cout << buffer;
+    }
+
+    std::string password_command = "PASS " + pass + "\r\n";
+    if (send(sock, password_command.c_str(), password_command.length(), 0) < 0) {
+        close(sock);
+        return "";
+    }
+
+    memset(buffer, 0, 1024);
+    if (recv(sock, buffer, 1024- 1, 0) < 0) {
+        close(sock);
+        return "";
+    }
+
+    if (verbose){
+	   std::cout << buffer;
+    }
+
+    if (std::string(buffer).find("230") != std::string::npos) {
+        close(sock);
+	   std::string result = login + ":" + pass + "@";
+	   bfd.set_success_pass(pass);
+	   bfd.set_success_login(login);
+        return result;
+    } 
+    else {
+        close(sock);
+        return "";
+    }
     return "";
 }
 
 std::string 
-threads_brute_ftp(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms) {
+threads_brute_ftp(const std::string ip, int port, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms) {
     std::vector<std::thread> threads;
     std::vector<std::string> results;
 
     for (const auto& login : logins) {
         for (const auto& password : passwords) {
             delay_ms(brute_timeout_ms);
-            threads.emplace_back([ip, login, password, brute_log, verbose, &results]() {
-                std::string temp = brute_ftp(ip, login, password, brute_log, verbose);
+            threads.emplace_back([ip, port, login, password, brute_log, verbose, &results]() {
+                std::string temp = brute_ftp(ip, port, login, password, brute_log, verbose);
                 if (!temp.empty() && temp.length() > 3) {
                     results.push_back(temp);
                 }
@@ -91,73 +125,60 @@ threads_brute_ftp(const std::string ip, const std::vector<std::string> logins, c
 }
 
 std::string 
-brute_ssh(const std::string& ip, const std::string login, const std::string pass, int brute_log, int verbose, int known_hosts){
-    std::string result;
-    CURL* curl = curl_easy_init();
-
-    if (curl) {
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
-        if (verbose){
-            curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-        }
-        curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 1L);
-        curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 1L);
-        curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1L);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 15L);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-        curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
-        curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 1L);
-        curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 15L);
-        curl_easy_setopt(curl, CURLOPT_SSH_AUTH_TYPES, CURLSSH_AUTH_PASSWORD);
-
-        if (known_hosts){
-            curl_easy_setopt(curl, CURLOPT_SSH_HOST_PUBLIC_KEY_MD5, "serverkeymd5");
-            curl_easy_setopt(curl, CURLOPT_SSH_KNOWNHOSTS, "/path/to/known_hosts");
-        }
-        else {
-            curl_easy_setopt(curl, CURLOPT_SSH_HOST_PUBLIC_KEY_MD5, "");
-        }
-
-        curl_easy_setopt(curl, CURLOPT_DNS_CACHE_TIMEOUT, 15L);
-        curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
-        std::string url = "sftp://" + ip;
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-
-        if (brute_log) {
-            nsp.nlog_custom("SSH", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
-        }
-
-        curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
-        curl_easy_setopt(curl, CURLOPT_PASSWORD, pass.c_str());
-
-        CURLcode res = curl_easy_perform(curl);
-
-        if (res == CURLE_OK) {
-            result = (login + ":" + pass + "@");
-            curl_easy_cleanup(curl);
-            return result;
-        }
-        else {
-            curl_easy_cleanup(curl);
-            return "";
-        }
+brute_ssh(const std::string& ip, int port, const std::string login, const std::string pass, int brute_log, int verbose, int known_hosts){
+    if (brute_log) {
+        nsp.nlog_custom("SSH", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
     }
-    curl_easy_cleanup(curl);
-    return "";
+
+    ssh_session sshSession = ssh_new();
+    if (sshSession == nullptr) {
+        return "";
+    }
+
+    ssh_options_set(sshSession, SSH_OPTIONS_HOST, ip.c_str());
+    ssh_options_set(sshSession, SSH_OPTIONS_PORT, &port);
+    ssh_options_set(sshSession, SSH_OPTIONS_USER, login.c_str());
+
+    int connectionStatus = ssh_connect(sshSession);
+    if (connectionStatus != SSH_OK) {
+	   if (verbose){
+		  std::cerr << "Не удалось установить соединение SSH: " << ssh_get_error(sshSession) << std::endl;
+	   }
+        ssh_free(sshSession);
+        return "";
+    }
+
+    int authenticationStatus = ssh_userauth_password(sshSession, nullptr, pass.c_str());
+    if (authenticationStatus != SSH_AUTH_SUCCESS) {
+	   if (verbose){
+		  std::cerr << "Не удалось авторизоваться: " << ssh_get_error(sshSession) << std::endl;
+	   }
+        ssh_disconnect(sshSession);
+        ssh_free(sshSession);
+        return "";
+    }
+
+    if (verbose){
+	   std::cout << "Авторизация прошла успешно!" << std::endl;
+    }
+
+    ssh_disconnect(sshSession);
+    ssh_free(sshSession);
+
+    std::string result = login + ":" + pass + "@";
+    return result;
 }
 
 std::string 
-threads_brute_ssh(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int known_hosts, int brute_timeout_ms) {
+threads_brute_ssh(const std::string ip, int port, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int known_hosts, int brute_timeout_ms) {
     std::vector<std::thread> threads;
     std::vector<std::string> results;
 
     for (const auto& login : logins) {
         for (const auto& password : passwords) {
             delay_ms(brute_timeout_ms);
-            threads.emplace_back([ip, login, password, brute_log, verbose, known_hosts, &results]() {
-                std::string temp = brute_ssh(ip, login, password, brute_log, verbose, known_hosts);
+            threads.emplace_back([ip, port, login, password, brute_log, verbose, known_hosts, &results]() {
+                std::string temp = brute_ssh(ip, port, login, password, brute_log, verbose, known_hosts);
                 if (!temp.empty() && temp.length() > 3) {
                     results.push_back(temp);
                 }

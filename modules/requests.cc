@@ -3,6 +3,7 @@
 std::string 
 send_http_request(const std::string& node, int port) {
     int sockfd = create_sock("tcp"); 
+
     if (sockfd < 0) {
         throw std::runtime_error("Failed to create socket.");
     }

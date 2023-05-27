@@ -7,6 +7,7 @@
 
 #define REDIRECT_VERSION 0.1
 #define REDIRECT_ERROR -1
+
 std::string
 parse_http_equiv(std::string& html);
 

@@ -36,7 +36,7 @@
 #include "../modules/include/redirect.h"
 #include "../modules/include/ftpinfo.h"
 
-#define VERSION "2023-05-25v"
+#define VERSION "20230528"
 #define DELIMITER ','
 
 std::mutex mtx;
@@ -682,7 +682,7 @@ processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, 
                 std::string temp_check_axis = cfs.check_axis_camera(redirect); // check axis redirect
                 if (argp.off_http_brute != true && temp_check_axis != "no" && argp.no_get_path != true){
                     np.nlog_custom("AXIS", ip + " [BRUTEFORCE]\n",1);
-                    brute_temp = threads_brute_http(redirect, argp.http_logins, argp.http_passwords,
+                    brute_temp = threads_brute_http("http://" + ip + redirect, argp.http_logins, argp.http_passwords,
                              argp.http_brute_log, argp.http_brute_verbose, argp.brute_timeout_ms);
                 }
 
@@ -739,7 +739,7 @@ processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, 
                 if (argp.off_ftp_brute != true){
                     np.nlog_custom("FTP", ip + " [BRUTEFORCE]\n",1);
 
-                    brute_temp = threads_brute_ftp(ip, argp.ftp_logins, argp.ftp_passwords, argp.ftp_brute_log,
+                    brute_temp = threads_brute_ftp(ip, port, argp.ftp_logins, argp.ftp_passwords, argp.ftp_brute_log,
                             argp.ftp_brute_verbose, argp.brute_timeout_ms);
 
                     if (argp.ftp_only){
@@ -770,7 +770,7 @@ processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, 
                 if (argp.off_sftp_brute != true){
                     np.nlog_custom("SFTP", ip + " [BRUTEFORCE]\n",1);
 
-                    brute_temp = threads_brute_ssh(ip, argp.sftp_logins, argp.sftp_passwords, argp.sftp_brute_log,
+                    brute_temp = threads_brute_ssh(ip, port, argp.sftp_logins, argp.sftp_passwords, argp.sftp_brute_log,
                         argp.sftp_brute_verbose, argp.sftp_using_know_hosts, argp.brute_timeout_ms);
 
                     if (argp.sftp_only){
@@ -847,28 +847,13 @@ processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, 
 
                 std::cout << result_print << std::endl;
             }
-            else if (port == 25){
-                std::string result_print = np.main_nesca_out("SMTP", result, 3, "", "", "", "");
-                std::lock_guard<std::mutex> guard(mtx);
-                std::cout << result_print << std::endl;
-            }
-            else if (port == 53){
-                std::string result_print = np.main_nesca_out("DNS", result, 3, "", "", "", "");
-                std::lock_guard<std::mutex> guard(mtx);
-                std::cout << result_print << std::endl;
-            }
-            else if (port == 143){
-                std::string result_print = np.main_nesca_out("IMAP", result, 3, "", "", "", "");
-                std::lock_guard<std::mutex> guard(mtx);
-                std::cout << result_print << std::endl;
-            }
             else if (port == 443){
                 std::string result_print = np.main_nesca_out("HTTPS", "https://" + result, 3, "", "", "", "");
                 std::lock_guard<std::mutex> guard(mtx);
                 std::cout << result_print << std::endl;
             }
             else{
-                std::string result_print = np.main_nesca_out(sn.probe_service(port), result, 3, "", "", "", "");
+                std::string result_print = np.main_nesca_out(sn.probe_service(port), result, 3, "O", "", "No module on port: "+std::to_string(port), "");
                 std::lock_guard<std::mutex> guard(mtx);
                 std::cout << result_print << std::endl;
             }

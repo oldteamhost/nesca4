@@ -12,6 +12,7 @@ TELNET          23
 SMTP            25
 RSFTP           26
 WHOIS           43
+DNS			 53
 POP3S           995
 
 
