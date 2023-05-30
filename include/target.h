@@ -3,6 +3,12 @@
 
 #include <iostream>
 #include <vector>
+#include <sstream>
+#include <cstring>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <bitset>
+#include <vector>
 
 // cidr to ips
 std::vector<std::string> 

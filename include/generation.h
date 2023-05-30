@@ -2,6 +2,9 @@
 #define GENERATION_H
 
 #include <iostream>
+#include <random>
+#include <cstring>
+#include <sstream>
 
 // random str
 std::string 

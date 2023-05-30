@@ -16,5 +16,3 @@ add_executable(nesca4 ${SRCS} ${MODULE_SRCS})
 target_link_libraries(nesca4 curl pthread hcnetsdk ssh)
 
 set(CMAKE_CXX_FLAGS "-g")
-
-

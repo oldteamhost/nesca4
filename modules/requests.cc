@@ -5,7 +5,7 @@ send_http_request(const std::string& node, int port) {
     int sockfd = create_sock("tcp"); 
 
     if (sockfd < 0) {
-        throw std::runtime_error("Failed to create socket.");
+        return HTTPREQUEST_ERROR;
     }
 
     // Получение информации о хосте
@@ -19,7 +19,7 @@ send_http_request(const std::string& node, int port) {
 
     if (getaddrinfo(node.c_str(), port_str.str().c_str(), &hints, &res) != 0) {
         close(sockfd);
-        throw std::runtime_error("Failed to get address info.");
+	   return HTTPREQUEST_ERROR;
     }
 
     // Установка соединения
@@ -40,7 +40,7 @@ send_http_request(const std::string& node, int port) {
     ssize_t bytesSent = send(sockfd, request.c_str(), request.length(), 0);
     if (bytesSent < 0) {
         close(sockfd);
-        throw std::runtime_error("Failed to send data.");
+	   return HTTPREQUEST_ERROR;
     }
 
     // Получение и обработка HTTP-ответа

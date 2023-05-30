@@ -6,6 +6,23 @@
 #include <cstring>
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
+#include <string>
+#include <random>
+#include <netdb.h>
+#include <cerrno>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/socket.h>
+#include <netinet/ip.h>
+#include <mutex>
+#include <netinet/in.h>
+#include <vector>
+
+#include "../modules/include/easysock.h"
+#include "../include/prints.h"
+#include "../include/other.h"
 
 #define PORT_OPEN 0
 #define PORT_CLOSED 1
@@ -27,8 +44,8 @@ class syn_scan{
 public:
       bool debug = false;
       // GOTO
-      int s_timeout = 10;
-      int r_timeout = 10;
+      int s_timeout;
+      int r_timeout;
       //
       const char* source_ip;
       void 

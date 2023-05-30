@@ -1,22 +1,188 @@
 #include "../include/bruteforce.h"
-#include "../include/callbacks.h"
-#include "../include/networktool.h"
-#include "../include/other.h"
-#include "../include/prints.h"
-#include "../lib/HCNetSDK.h"
-#include "../modules/include/easysock.h"
-#include <libssh/libssh.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <iostream>
-#include <string>
-#include <thread>
-#include <cstring>
-#include <curl/curl.h>
 
 nesca_prints nsp;
 brute_ftp_data bfd;
+
+std::string 
+base64_encode(const std::string& input){
+    constexpr char base64_chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+    std::string encoded_string;
+    size_t input_length = input.length();
+    size_t i = 0;
+
+    while (i < input_length) {
+        unsigned char char_array_3[3] = {0};
+        unsigned char char_array_4[4] = {0};
+
+        for (size_t j = 0; j < 3; j++) {
+            if (i < input_length) {
+                char_array_3[j] = input[i++];
+            }
+        }
+
+        char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+        char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+        char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+        char_array_4[3] = char_array_3[2] & 0x3f;
+
+        for (size_t j = 0; j < 4; j++) {
+            encoded_string += base64_chars[char_array_4[j]];
+        }
+    }
+
+    size_t padding = 3 - (input_length % 3);
+    for (size_t j = 0; j < padding; j++) {
+        encoded_string += '=';
+    }
+
+    return encoded_string;
+}
+
+std::string 
+brute_smtp(const std::string& ip, int port, const std::string& login, const std::string& pass, int brute_log, int verbose){
+    if (brute_log) {
+        nsp.nlog_custom("SMTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
+    }
+
+    int sock = create_sock("tcp");
+    if (sock == -1) {
+        return "";
+    }
+
+    sockaddr_in server_address{};
+    server_address.sin_family = AF_INET;
+    server_address.sin_port = htons(port);
+
+    if (inet_pton(AF_INET, ip.c_str(), &(server_address.sin_addr)) <= 0) {
+        return "";
+    }
+
+    if (connect(sock, reinterpret_cast<sockaddr*>(&server_address), sizeof(server_address)) < 0) {
+        return "";
+    }
+
+    char buffer[1024];
+    memset(buffer, 0, 1024);
+    if (recv(sock, buffer, 1024 - 1, 0) < 0) {
+        close(sock);
+        return "";
+    }
+    if (verbose) {
+        std::cout << buffer;
+    }
+
+    std::string helo_command = "HELO localhost\r\n";
+    if (send(sock, helo_command.c_str(), helo_command.length(), 0) < 0) {
+        close(sock);
+        return "";
+    }
+
+    memset(buffer, 0, 1024);
+    if (recv(sock, buffer, 1024 - 1, 0) < 0) {
+        close(sock);
+        return "";
+    }
+    if (verbose) {
+        std::cout << buffer;
+    }
+
+    std::string auth_command = "AUTH LOGIN\r\n";
+    if (send(sock, auth_command.c_str(), auth_command.length(), 0) < 0) {
+        close(sock);
+        return "";
+    }
+
+    memset(buffer, 0, 1024);
+    if (recv(sock, buffer, 1024 - 1, 0) < 0) {
+        close(sock);
+        return "";
+    }
+    if (verbose) {
+        std::cout << buffer;
+    }
+
+    std::string encoded_login = base64_encode(login);
+    if (send(sock, encoded_login.c_str(), encoded_login.length(), 0) < 0) {
+        close(sock);
+        return "";
+    }
+
+    if (send(sock, "\r\n", 2, 0) < 0) {
+        close(sock);
+        return "";
+    }
+
+    memset(buffer, 0, 1024);
+    if (recv(sock, buffer, 1024 - 1, 0) < 0) {
+        close(sock);
+        return "";
+    }
+    if (verbose) {
+        std::cout << buffer;
+    }
+
+    std::string encoded_password = base64_encode(pass);
+    if (send(sock, encoded_password.c_str(), encoded_password.length(), 0) < 0) {
+        close(sock);
+        return "";
+    }
+
+    if (send(sock, "\r\n", 2, 0) < 0) {
+        close(sock);
+        return "";
+    }
+
+    memset(buffer, 0, 1024);
+    if (recv(sock, buffer, 1024 - 1, 0) < 0) {
+        close(sock);
+        return "";
+    }
+    if (verbose) {
+        std::cout << buffer;
+    }
+
+    if (std::string(buffer).find("235") != std::string::npos) {
+        close(sock);
+        std::string result = login + ":" + pass + "@";
+        bfd.set_success_pass(pass);
+        bfd.set_success_login(login);
+        return result;
+    } 
+    else {
+        close(sock);
+        return "";
+    }
+    return "";
+}
+
+std::string 
+threads_brute_smtp(const std::string ip, int port, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms){
+    std::vector<std::thread> threads;
+    std::vector<std::string> results;
+
+    for (const auto& login : logins) {
+        for (const auto& password : passwords) {
+            delay_ms(brute_timeout_ms);
+            threads.emplace_back([ip, port, login, password, brute_log, verbose, &results]() {
+                std::string temp = brute_smtp(ip, port, login, password, brute_log, verbose);
+                if (!temp.empty() && temp.length() > 3) {
+                    results.push_back(temp);
+                }
+            });
+        }
+    }
+
+    for (auto& thread : threads) {
+        thread.join();
+    }
+
+    if (!results.empty()) {
+        return results[0];
+    } else {
+        return "";
+    }
+}
 
 std::string 
 brute_ftp(const std::string ip, int port, const std::string login, const std::string pass, int brute_log, int verbose){
@@ -375,11 +541,7 @@ brute_hikvision(const std::string ip, const std::string login, const std::string
   std::string result;
 
   // log redirection
-#ifdef _WIN32
-  freopen("NUL", "w", stderr);
-#else
   freopen("/dev/null", "w", stderr);
-#endif
   //
   NET_DVR_Init();
 
@@ -439,5 +601,3 @@ threads_brute_hikvision(const std::string ip, const std::vector<std::string> log
     }
     return "";
 }
-
-

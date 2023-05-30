@@ -1,9 +1,4 @@
 #include "../include/files.h"
-#include <fstream>
-
-#ifdef _WIN32
-#include <string>
-#endif
 
 int 
 get_count_lines(const char* path){
@@ -58,4 +53,3 @@ write_line(std::string path, std::string line){
     }
     return 0;
 }
-

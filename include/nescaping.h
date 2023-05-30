@@ -1,28 +1,24 @@
 #ifndef NESCAPING_H
 #define NESCAPING_H
-#include "../include/netutils.h"
-#include "../include/other.h"
-#include <stdint.h>
-#include <thread>
-#include <iomanip>
-#include <cstdlib>
-#include <chrono>
-#include <ctime>
-#include <cstring>
-#include <signal.h>
-#include <time.h>
+
 #include <iostream>
+#include <string>
+#include <chrono>
+#include <vector>
+#include <stdexcept>
+#include <cstdlib>
 #include <cstring>
-#include <cstdio>
+#include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
-#include <netdb.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
+#include <unistd.h>
+#include <poll.h>
+#include <mutex>
+
+#include "../include/other.h"
+#include "../modules/include/easysock.h"
 
 /*Классический пинг, но сейчас много 
 сайтов начинают уже блокировать его запросы.
@@ -30,38 +26,27 @@
  * https://datatracker.ietf.org/doc/html/rfc792
  * https://gist.github.com/bugparty/ccba5744ba8f1cece5e0
 */
-
 class icmp_ping{
-private:
-    int ttl_val = 54;
-    long double rtt_msec = 0;
-    int addr_len;
-    static constexpr int packet_size = 64;
-
-    struct icmp_packet{
-        struct iphdr ip;
-        struct icmphdr hdr;
-        char msg[packet_size-sizeof(struct icmphdr)];
-    };
-
-    uint16_t 
-    RFC792_csum(unsigned char* buffer, unsigned int length);
-    bool 
-    send_ping(int ping_sockfd, struct sockaddr_in *ping_addr,
-                const char *rev_host, long double* rtt_msec_buffer);
 public:
-    int ping_timeout = 100;
-    const char* source_ip;
-    int recv_timeout = 340;
-    int packets = 4;
+    bool ping(const char* address, int count = 1, int timeout = 1000);
+    double get_last_time();
 
-    int
-    ping(const char* ip, long double* buffer);
+private:
+    bool send_packet(int sockfd, struct sockaddr_in addr, int seq);
+    bool receive_packet(int sockfd, struct sockaddr_in addr, int seq, int timeout);
+    unsigned short checksum(unsigned short* buf, int len);
+    double get_time();
+
+    std::chrono::high_resolution_clock::time_point start_time, end_time;
+    double last_time;
 };
 
 class udp_ping{
+private:
+    
 public:
-    int ping_udp(const std::string & ip, int timeout, double& buffer);
+    bool
+    ping(std::string host, double* response_buf, int timeout_ms);
 };
 
 #endif

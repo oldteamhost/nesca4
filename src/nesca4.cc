@@ -2,7 +2,9 @@
 // by oldteam & lomaster
 // license GPL-3.0
 // // // // // // // // // 
+
 #include <iostream>
+#include <cstdlib>
 #include <chrono>
 #include <future>
 #include <thread>
@@ -21,7 +23,6 @@
 #include "../include/callbacks.h"
 #include "../include/files.h"
 #include "../include/generation.h"
-#include "../include/networktool.h"
 #include "../include/other.h"
 #include "../include/scanner.h"
 #include "../include/target.h"
@@ -35,26 +36,27 @@
 #include "../modules/include/title.h"
 #include "../modules/include/redirect.h"
 #include "../modules/include/ftpinfo.h"
+#include "../modules/include/smtpinfo.h"
 
-#define VERSION "20230528"
+#include "../config/nescaopts.h"
+
+#define VERSION "20230530"
 #define DELIMITER ','
 
 std::mutex mtx;
 checking_finds cfs;
 brute_ftp_data bfd_;
-icmp_ping ipn;
-udp_ping up;
-udp_ping udpp;
+icmp_ping icp;
+udp_ping udpi;
 syn_scan ss;
 ip_utils _iu;
 dns_utils dus;
 services_nesca sn;
 
-// main
 void 
 help_menu(void);
 void 
-processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, int timeout_ms);
+processing_tcp_scan_ports(std::string ip, std::vector<int> ports, int timeout_ms);
 void 
 check_files(const char* path, const char* path1);
 void 
@@ -64,136 +66,7 @@ parse_args(int argc, char** argv);
 void
 pre_check();
 
-class arguments_program{
-    public:
-        int fuck_yeah = 0;
-        int scanning_count = 3;
-        std::string ports_temp;
-        std::string domain_1level;
-        std::vector<std::string> hosts_test;
-        std::string txt_save;
-        std::string tcp_ping_mode;
-        std::string dns_dictionary = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-        std::vector<std::string> _ip;
-        std::vector<std::string> ip_cidr;
-        std::vector<std::string> ip_range;
-        std::vector<std::string> dns;
-
-        std::vector<std::string> ftp_logins;
-        std::vector<std::string> ftp_passwords;
-
-        std::vector<std::string> rtsp_logins;
-        std::vector<std::string> rtsp_passwords;
-
-        std::vector<std::string> sftp_logins;
-        std::vector<std::string> sftp_passwords;
-
-        std::vector<std::string> http_logins;
-        std::vector<std::string> http_passwords;
-
-        std::vector<std::string> hikvision_logins;
-        std::vector<std::string> hikvision_passwords;
-
-        const char* path_range;
-        const char* path_cidr;
-        const char* path_ips;
-        const char* path_color_scheme;
-
-        std::string path_ftp_login = "passwd/ftp_logins.txt";
-        std::string path_ftp_pass = "passwd/ftp_passwords.txt";
-
-        std::string path_sftp_login = "passwd/sftp_logins.txt";
-        std::string path_sftp_pass = "passwd/sftp_passwords.txt";
-
-        std::string path_rtsp_login = "passwd/rtsp_logins.txt";
-        std::string path_rtsp_pass = "passwd/rtsp_passwords.txt";
-
-        std::string path_http_login = "passwd/http_logins.txt";
-        std::string path_http_pass = "passwd/http_passwords.txt";
-
-        std::string path_hikvision_login = "passwd/hikvision_logins.txt";
-        std::string path_hikvision_pass = "passwd/hikvision_passwords.txt";
-
-        int random_ip_count;
-        int octets;
-        int generate_count;
-        int brute_timeout_ms = 10;
-        int log_set = 1000;
-        int threads_temp;
-        int dns_scan_domain_count = 5;
-        int timeout_ms = 100;
-        int _threads = 100;
-        int connection_timeout_sec;
-        int recv_timeout_sec;
-
-        std::vector<int> ports;
-
-        bool random_ip;
-        bool dns_scan;
-        bool print_help_menu;
-        bool ip_scan_import;
-        bool ip_scan;
-        bool ip_cidr_scan;
-        bool ip_cidr_scan_import;
-        bool ip_range_scan;
-        bool ip_range_scan_import;
-        bool syn_debug;
-
-        bool debug;
-        bool warning_threads;
-        bool ping_off;
-        bool no_get_dns;
-        bool txt;
-        bool get_response;
-        bool html;
-        bool color_off;
-
-        bool ftp_brute_log;
-        bool sftp_brute_log;
-        bool rtsp_brute_log;
-        bool http_brute_log;
-        bool display_response_time;
-
-        bool hikvision_brute_log;
-
-        bool ftp_brute_verbose;
-        bool sftp_brute_verbose;
-        bool rtsp_brute_verbose;
-        bool http_brute_verbose;
-
-        bool sftp_using_know_hosts;
-
-        bool timeout;
-        bool print_errors;
-        bool off_ftp_brute;
-        bool off_sftp_brute;
-        bool off_rtsp_brute;
-        bool off_hikvision_brute;
-        bool off_http_brute;
-
-        bool ftp_only;
-        bool no_get_path;
-        bool get_path_log;
-        bool sftp_only;
-        bool hikvision_only;
-        bool import_color_scheme;
-        bool http_only;
-        bool fix_get_path;
-        bool rtsp_only;
-
-        bool generation_test;
-
-        bool host_testing;
-        bool get_redirect;
-        bool thread_on_port;
-        bool response_code_test;
-        bool tcp_ping_test;
-        bool http_request;
-        bool generate_ipv4_test;
-        bool generate_ipv6_test;
-};
-arguments_program argp;
+arguments_program argp; // config
 nesca_prints np;
 
 const struct option long_options[] = {
@@ -247,8 +120,6 @@ const struct option long_options[] = {
         {"redirect", no_argument, 0, 55},
         {"gen-ipv6", required_argument, 0, 39},
         {"icmp-timeout", required_argument, 0, 49},
-        {"icmp-rtimeout", required_argument, 0, 43},
-        {"icmp-packs", required_argument, 0, 41},
         {0,0,0,0}
     };
 const char* short_options = "hvt:T:p:";
@@ -257,6 +128,9 @@ const char* run; // for help menu
 
 void
 pre_check(){
+    sn.init_services();
+    logo();
+
     if (check_ansi_support() != true){
         std::cout << "You terminal don`t support ansi colors!\n";
         std::cout << "Colors disable!\n";
@@ -267,6 +141,25 @@ pre_check(){
         help_menu();
         exit(0);
     }
+
+    /*Начальный экран*/
+    np.gray_nesca_on();
+    std::cout << np.print_get_time(get_time());
+    std::cout << "[VERSION]:";
+    np.golder_rod_on();
+    std::cout << VERSION << std::endl;
+    np.gray_nesca_on();
+    std::cout << np.print_get_time(get_time());
+    std::cout << "[INFO]:";
+    np.sea_green_on();
+    std::cout << "https://github.com/oldteamhost/nesca4" << std::endl;
+    np.reset_colors();
+    np.gray_nesca_on();
+    std::cout << np.print_get_time(get_time());
+    std::cout << "[NB]:";
+    np.golder_rod_on();
+    std::cout << "Don`t read \"do_not_read.txt\"\n" << std::endl;
+    np.reset_colors();
 
     if (argp.syn_debug){
         ss.debug = true;
@@ -291,13 +184,9 @@ pre_check(){
         std::string date_str = oss.str();
         write_line(np.file_path_save, "\n\nNESCA4:[" + date_str + "]:[" + get_time() + "]-------------------------------\n");    
     }
-    ipn.source_ip = _iu.get_local_ip();
-
 }
 
 int main(int argc, char** argv){
-    sn.init_services();
-    logo();
     run = argv[0];
 
     if (argc <= 1){
@@ -333,7 +222,6 @@ int main(int argc, char** argv){
         }
     }
 
-    /*Режим тестирования кое как работает.*/
     if (argp.host_testing){
         // Код ответа
         if (argp.response_code_test){
@@ -352,58 +240,55 @@ int main(int argc, char** argv){
             for (auto& host : argp.hosts_test){
                 np.golder_rod_on(); /**/ std::cout << send_http_request(host, 80); /**/ np.reset_colors(); 
                 std::cout << np.main_nesca_out("TT", "[^]:HTTP REQUEST " + host, 2,
-                        "", "", "", "") << std::endl;
+                "", "", "", "") << std::endl;
             }
 
         }
         // Получение путей
         if (argp.get_redirect){
             for (auto& host : argp.hosts_test){
-                    bool status_path;
-                    // get headers
-                    std::string headers = (host), code = send_http_request(host, 80), redirect = "N/A";
-                    np.nlog_custom("LOG", "1 method: parse_location\n", 2);
-                    std::string html = send_http_request(host, 80);
-
-                    redirect = parse_redirect(html, headers, host, true, 80);
-
-                    std::cout << np.main_nesca_out("TT", host, 3, "R", "", redirect, "") << std::endl;
+                bool status_path;
+			 std::string redirect = "N/A";
+                std::string html = send_http_request(host, 80);
+                redirect = parse_redirect(html, html, host, true, 80);
+                std::cout << np.main_nesca_out("TT", host, 3, "R", "", redirect, "") << std::endl;
             }
         }
 
         // Пинг
         if (argp.tcp_ping_test){
-            long double ping_time_temp;
+            double ping_time_temp;
             double ping_temp;
             if (argp.tcp_ping_mode == "live" || argp.tcp_ping_mode == "1"){
                 for (;;){
-                    ping_temp = ipn.ping(argp.hosts_test[0].c_str(), &ping_time_temp);
-                    
-                    if (ping_temp != -1){
+				bool icmp_ping = icp.ping(argp.hosts_test[0].c_str(), 1, argp.icmp_ping_timeout);
+				ping_time_temp = icp.get_last_time();
+                    if (icmp_ping){
                         std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 3,
-                                "rtt", "", std::to_string(ping_time_temp)+"ms", "") << std::endl;
+                        "rtt", "", std::to_string(ping_time_temp)+"ms", "") << std::endl;
                     }
                     else {
                         std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 3,
-                                "rtt", "", "down", "") << std::endl;
+                        "rtt", "", "down", "") << std::endl;
                     }
                     delay_ms(argp.timeout_ms);
                 }
             }
             else if (argp.tcp_ping_mode == "default" || argp.tcp_ping_mode == "0") {
                 for (auto& host : argp.hosts_test){
-                    ping_temp = ipn.ping(host.c_str(), &ping_time_temp);
+				bool icmp_ping = icp.ping(argp.hosts_test[0].c_str(), 1, argp.icmp_ping_timeout);
+				ping_time_temp = icp.get_last_time();
 
-                    if (ping_temp != -1){
+                    if (icmp_ping){
                         std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 3,
-                                "rtt", "", std::to_string(ping_time_temp)+"ms", "") << std::endl;
+                        "rtt", "", std::to_string(ping_time_temp)+"ms", "") << std::endl;
                     }
                     else {
                         std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 3,
-                                "rtt", "", "down", "") << std::endl;
+                        "rtt", "", "down", "") << std::endl;
 
                         // Delay
-                        delay_ms(argp.timeout_ms);
+                        delay_ms(argp.icmp_ping_timeout);
                     }
                 }
             }
@@ -459,13 +344,19 @@ int main(int argc, char** argv){
             std::thread([&](){
                 for (;;) {
                     std::string random_ = generate_random_str(argp.dns_scan_domain_count, argp.dns_dictionary);
-                    std::string result = "http://" + random_ + argp.domain_1level;
+                    std::string result = random_ + argp.domain_1level;
                     std::string ip = dus.get_ip_by_dns(result.c_str());
-                    std::string html = send_http_request(ip, 80);
-
+				if (ip == "-1"){
+				    if (argp.debug){
+					   np.nlog_custom("BA", result + " [FaILEd]\n",2);
+				    }
+				    continue;
+				}
                     std::string result_print;
-                    int test = dns_scan("http://" + random_, argp.domain_1level);
-                    if (test == 0) {
+				bool icmp_ping = icp.ping(ip.c_str(), 1, argp.icmp_ping_timeout);
+				double time = icp.get_last_time();
+                    std::string html = send_http_request(ip, 80);
+                    if (!icmp_ping) {
                         if (argp.debug) {
                             std::lock_guard<std::mutex> lock(mtx);
                             np.nlog_custom("BA", result + " [FaILEd]\n",2);
@@ -473,7 +364,7 @@ int main(int argc, char** argv){
                     }
                     else {
                         std::lock_guard<std::mutex> lock(mtx);
-                        std::cout << np.main_nesca_out("BA", result, 3, "T", "", get_http_title(html), "") << std::endl;
+                        std::cout << np.main_nesca_out("BA", "http://" + result, 3, "T", "", get_http_title(html), "") << std::endl;
                     }
                 }
             }).detach();
@@ -502,9 +393,12 @@ int main(int argc, char** argv){
     argp.hikvision_logins = write_file(argp.path_hikvision_login);
     argp.hikvision_passwords = write_file(argp.path_hikvision_pass);
 
+    argp.smtp_logins = write_file(argp.path_smtp_login);
+    argp.smtp_passwords = write_file(argp.path_smtp_pass);
+
     /*Начало сканирования*/
-    ss.source_ip = _iu.get_local_ip();
-    std::vector<std::string> result;
+    ss.source_ip = _iu.get_local_ip(); // получение ip компютера
+    std::vector<std::string> result; // ip для сканирования
     
     if (argp.ip_scan_import || argp.ip_scan){
         result = argp._ip;
@@ -524,32 +418,31 @@ int main(int argc, char** argv){
             result.push_back(random_temp);
         }
     }
-    std::vector<std::future<void>> futures;
 
-    long long ip_count = 0;
+    int ip_count = 0;
     long long size = result.size();
 
+    std::vector<std::thread> threads;
     for (const auto& ip : result) {
-        futures.emplace_back(std::async(std::launch::async, processing_tcp_scan_ports, ip, argp.ports, argp.timeout_ms));
-        ip_count++;
+        threads.emplace_back(processing_tcp_scan_ports, ip, argp.ports, argp.timeout_ms);
+	   ip_count++;
 
-        if (ip_count % argp.log_set == 0){
+        if (ip_count % argp.log_set == 0) {
             np.nlog_custom("LOG", std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs scanned\n", 1);
         }
 
-        if (ip_count % argp._threads == 0) {
-            for (auto& f : futures) {
-                f.get();
+        if (threads.size() >= argp._threads) {
+            for (auto& thread : threads) {
+                thread.join();
             }
-            futures.clear();
+            threads.clear();
         }
     }
-    for (auto& f : futures) {
-        f.get();
+
+    for (auto& thread : threads) {
+        thread.join();
     }
-    if (argp.fuck_yeah < 1){
-        np.nlog_custom("NB", "If you are sure that at least something there is open, then try increasing the timeout, or reduce the number of threads.\n", 1);
-    }
+
     /*Конец*/
 
     return 0;
@@ -612,39 +505,49 @@ checking_default_files(void){
        }
     }
 
+    // Чек паролей и логинов
     check_files(argp.path_ftp_login.c_str(), argp.path_ftp_pass.c_str());
     check_files(argp.path_sftp_login.c_str(), argp.path_sftp_pass.c_str());
     check_files(argp.path_http_login.c_str(), argp.path_http_pass.c_str());
     check_files(argp.path_rtsp_login.c_str(), argp.path_rtsp_pass.c_str());
+    check_files(argp.path_smtp_login.c_str(), argp.path_smtp_pass.c_str());
     check_files(argp.path_hikvision_login.c_str(), argp.path_hikvision_pass.c_str());
 }
 
 // Welcome to HELL :)
 // > Я сам не понимаю что тут написано, но работает правильно.
 void 
-processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, int timeout_ms){
-    int flag = 0;
+processing_tcp_scan_ports(std::string ip, std::vector<int> ports, int timeout_ms){
     int yeah_flag = 0;
-    for (int i = 0; i < argp.scanning_count; i++){
-        if (yeah_flag == 1){
-            break;
-        }
 
-        for (const auto& port : ports) {
-        int result = ss.syn_scan_port(ip.c_str(), port, timeout_ms);
+	   for (int i = 0; i < argp.scanning_count; i++){
+		  if (yeah_flag == 1){
+			 break;
+		  }
 
-        long double time_ms;
-        int temp_ping = ipn.ping(ip.c_str(), &time_ms);
-        if (argp.ping_off != true && flag < 1){
-            if (argp.display_response_time && time_ms > 0){
-                std:: cout << np.main_nesca_out("PING", ip , 3,
-                "rtt", "", std::to_string(time_ms)+"ms", "") << std::endl;
-            }
-            if (temp_ping != 0){
-                return;
-            }
-            flag++;
-        }
+		  double time_ms ;
+
+		  if (argp.ping_off != true){
+			 bool ping_icmp = icp.ping(ip.c_str(), 1, argp.icmp_ping_timeout);
+			 double time_ms = icp.get_last_time();
+
+			 if (ping_icmp){
+				if (argp.display_response_time){
+				    std:: cout << np.main_nesca_out("PING", ip , 3,
+				    "rtt", "", std::to_string(time_ms)+"ms", "") << std::endl;
+				}
+			 }
+			 else {
+				if (argp.debug){
+				    std:: cout << np.main_nesca_out("PING", ip , 3,
+				    "ST", "", "FAILED", "") << std::endl;
+				}
+				return;
+			 }
+		  }
+
+		  for (auto& port : ports){
+			 int result = ss.syn_scan_port(ip.c_str(), port, timeout_ms);
 
         if (result == 0) {
             yeah_flag = 1;
@@ -671,10 +574,10 @@ processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, 
                 // get redirect
                 if (argp.no_get_path != true){
                     if (argp.fix_get_path){
-                        redirect = parse_redirect(html, html, ip,false, port);
+                        redirect = parse_redirect(html, html, ip, false, port);
                     }
                     else {
-                        redirect = parse_redirect(html, html, ip,true, port);
+                        redirect = parse_redirect(html, html, ip, true, port);
                     }
                 }
 
@@ -686,10 +589,13 @@ processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, 
                              argp.http_brute_log, argp.http_brute_verbose, argp.brute_timeout_ms);
                 }
 
-                // get redirect
+                // get title
                 std::string http_title_result = get_http_title(html);
+			 if (http_title_result == HTTPTITLE_ERROR){
+				http_title_result = get_http_title_pro(ip);
+			 }
 
-                // clear answer
+                // clear title
                 http_title_result.erase(std::remove(http_title_result.begin(), http_title_result.end(), '\r'), http_title_result.end());
                 http_title_result.erase(std::remove(http_title_result.begin(), http_title_result.end(), '\n'), http_title_result.end());
                 
@@ -700,11 +606,11 @@ processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, 
                     }
                 }
                 else {
-                    if (argp.no_get_dns != true){
+                    if (argp.get_dns != true){
                         result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "", http_title_result, "");
                     }
                     else {
-                        result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "DNS", http_title_result, get_dns_ip(ip.c_str()));
+                        result_print = np.main_nesca_out("HTTP", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "DNS", http_title_result, dus.get_dns_by_ip(ip.c_str(), port));
                     }
                 }
 
@@ -736,6 +642,8 @@ processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, 
             else if (port == 20 || port == 21){
                 std::lock_guard<std::mutex> guard(mtx);
 
+			 std::string ftp_version = get_ftp_description(ip, std::to_string(port), bfd_.get_success_login(), bfd_.get_success_pass());
+
                 if (argp.off_ftp_brute != true){
                     np.nlog_custom("FTP", ip + " [BRUTEFORCE]\n",1);
 
@@ -745,20 +653,17 @@ processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, 
                     if (argp.ftp_only){
                         if (brute_temp.length() > 1){
                             result_print = np.main_nesca_out("FTP", "ftp://" + brute_temp + result, 3, "D", "",
-                                    get_ftp_description(ip, std::to_string(port),
-                                    bfd_.get_success_login(), bfd_.get_success_pass()), "");
+                                    ftp_version ,"");
                         }
                     }
                     else {
                         result_print = np.main_nesca_out("FTP", "ftp://" + brute_temp + result, 3, "D", "",
-                                get_ftp_description(ip, std::to_string(port),
-                                bfd_.get_success_login(), bfd_.get_success_pass()), "");
+                                ftp_version, "");
                     }
                 }
                 else {
                     result_print = np.main_nesca_out("FTP", "ftp://" + brute_temp + result, 3, "D", "",
-                            get_ftp_description(ip, std::to_string(port),
-                            bfd_.get_success_login(), bfd_.get_success_pass()), "");
+                            ftp_version, "");
                 }
                 
                 std::cout << result_print << std::endl;
@@ -768,7 +673,7 @@ processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, 
                 std::lock_guard<std::mutex> guard(mtx);
 
                 if (argp.off_sftp_brute != true){
-                    np.nlog_custom("SFTP", ip + " [BRUTEFORCE]\n",1);
+                    np.nlog_custom("SSH", ip + " [BRUTEFORCE]\n",1);
 
                     brute_temp = threads_brute_ssh(ip, port, argp.sftp_logins, argp.sftp_passwords, argp.sftp_brute_log,
                         argp.sftp_brute_verbose, argp.sftp_using_know_hosts, argp.brute_timeout_ms);
@@ -851,7 +756,32 @@ processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, 
                 std::string result_print = np.main_nesca_out("HTTPS", "https://" + result, 3, "", "", "", "");
                 std::lock_guard<std::mutex> guard(mtx);
                 std::cout << result_print << std::endl;
-            }
+            } else if (port == 25){
+                std::lock_guard<std::mutex> guard(mtx);
+			 std::string responce_220 = smtp_get_220_response(ip, port, 0);
+
+                if (argp.off_sftp_brute != true){
+                    np.nlog_custom("SMTP", ip + " [BRUTEFORCE]\n",1);
+
+                    brute_temp = threads_brute_smtp(ip, port, argp.smtp_logins, argp.smtp_passwords, argp.smtp_brute_log,
+                        argp.smtp_brute_verbose, argp.brute_timeout_ms);
+
+
+                    if (argp.sftp_only){
+                        if (brute_temp.length() > 1){
+                            result_print = np.main_nesca_out("SMTP", "smtp://" + brute_temp + result, 3, "D", "", responce_220, "");
+                        }
+                    }
+                    else {
+                        result_print = np.main_nesca_out("SMTP", "smtp://" + brute_temp + result, 3, "D", "", responce_220, "");
+                    }
+                }
+                else {
+                    result_print = np.main_nesca_out("SMTP", "smtp://" + result, 3, "", "", responce_220, "");
+                }
+
+                std::cout << result_print << std::endl;
+		  }
             else{
                 std::string result_print = np.main_nesca_out(sn.probe_service(port), result, 3, "O", "", "No module on port: "+std::to_string(port), "");
                 std::lock_guard<std::mutex> guard(mtx);
@@ -879,13 +809,14 @@ processing_tcp_scan_ports(const std::string& ip, const std::vector<int>& ports, 
                 std::cout << result_print << std::endl;
             }
         }
+		  }
    }
-    }
 }
 // You live?
 
 void 
 help_menu(void){
+    logo();
     np.golder_rod_on();
     std::cout << "usage: " << run << " [target 1,2,3] [flags]\n";
     np.reset_colors();
@@ -918,8 +849,6 @@ help_menu(void){
     std::cout << "\narguments ping:" << std::endl;
     np.reset_colors();
     std::cout << "  -icmp-timeout <ms>     Set timeout for icmp ping.\n";
-    std::cout << "  -icmp-rtimeout <ms>    Set timeout for send icmp packet.\n";
-    std::cout << "  -icmp-packs <count>    Set count icmp packets for send.\n";
     std::cout << "  -no-ping               Off ping.\n";
 
     np.sea_green_on();
@@ -1021,7 +950,7 @@ parse_args(int argc, char** argv){
                break;
             }
            case 8:
-               argp.no_get_dns = true;
+               argp.get_dns = true;
                break;
            case 12:
            {
@@ -1041,6 +970,9 @@ parse_args(int argc, char** argv){
                }
                else if (what[0] == "http"){
                    argp.path_http_login = what_convert;
+               }
+               else if (what[0] == "smtp"){
+			    argp.path_smtp_login = what_convert;
                }
                else if (what[0] == "hikvision"){
                    argp.path_hikvision_login = what_convert;
@@ -1069,6 +1001,9 @@ parse_args(int argc, char** argv){
                }
                else if (what[0] == "http"){
                    argp.path_http_pass = what_convert;
+               }
+               else if (what[0] == "smtp"){
+			    argp.path_smtp_pass = what_convert;
                }
                else if (what[0] == "hikvision"){
                    argp.path_hikvision_pass = what_convert;
@@ -1100,8 +1035,12 @@ parse_args(int argc, char** argv){
                     else if (what[i] == "hikvision"){
                         argp.hikvision_brute_log = true;
                     }
+                    else if (what[i] == "smtp"){
+				    argp.smtp_brute_log = true;
+                    }
                     else if (what[i] == "all"){
                         argp.ftp_brute_log = true;
+				    argp.smtp_brute_log = true;
                         argp.sftp_brute_log = true;
                         argp.rtsp_brute_log = true;
                         argp.http_brute_log = true;
@@ -1134,9 +1073,13 @@ parse_args(int argc, char** argv){
                     else if (what[i] == "http"){
                         argp.http_brute_verbose = true;
                     }
+                    else if (what[i] == "smtp"){
+				    argp.smtp_brute_verbose = true;
+                    }
                     else if (what[i] == "all"){
                         argp.ftp_brute_verbose = true;
                         argp.sftp_brute_verbose = true;
+				    argp.smtp_brute_verbose = true;
                         argp.rtsp_brute_verbose = true;
                         argp.http_brute_verbose = true;
                     }
@@ -1170,9 +1113,13 @@ parse_args(int argc, char** argv){
                    else if (what[i] == "hikvision"){
                        argp.off_hikvision_brute = true;
                    }
+                   else if (what[i] == "smtp"){
+				   argp.off_smtp_brute = true;
+                   }
                    else if (what[i] == "all"){
                        argp.off_ftp_brute = true;
                        argp.off_sftp_brute = true;
+				   argp.off_smtp_brute = true;
                        argp.off_rtsp_brute = true;
                        argp.off_http_brute = true;
                        argp.off_hikvision_brute = true;
@@ -1207,9 +1154,13 @@ parse_args(int argc, char** argv){
                    else if (what[i] == "hikvision"){
                        argp.hikvision_only = true;
                    }
+                   else if (what[i] == "smtp"){
+				   argp.smtp_only = true;
+                   }
                    else if (what[i] == "all"){
                        argp.sftp_only = true;
                        argp.ftp_only = true;
+				   argp.smtp_only = true;
                        argp.rtsp_only = true;
                        argp.http_only = true;
                        argp.hikvision_only = true;
@@ -1320,14 +1271,8 @@ parse_args(int argc, char** argv){
                argp.octets = atoi(optarg);
                break;
            }
-           case 41:
-               ipn.packets = atoi(optarg);
-               break;
-           case 43:
-               ipn.recv_timeout = atoi(optarg);
-               break;
            case 49:
-               ipn.ping_timeout = atoi(optarg);
+		     argp.icmp_ping_timeout = atoi(optarg);
                break;
            case 50:
                argp.no_get_path = true;
@@ -1353,9 +1298,11 @@ parse_args(int argc, char** argv){
                break;
            case 57:
                argp.recv_timeout_sec = atoi(optarg);
+			ss.r_timeout = argp.recv_timeout_sec;
                break;
            case 58:
-               argp.connection_timeout_sec = atoi(optarg);
+               argp.send_timeout_sec = atoi(optarg);
+			ss.s_timeout = argp.send_timeout_sec;
                break;
            case 59:
                argp.syn_debug = true;

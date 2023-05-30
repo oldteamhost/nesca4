@@ -1,6 +1,6 @@
 // Баг иногда выводиться то что не должно.
-#ifndef GETFTPVERSION_H
-#define GETFTPVERSION_H
+#ifndef FTPINFO_H 
+#define FTPINFO_H 
 #include <iostream>
 #include <algorithm>
 #include <regex>

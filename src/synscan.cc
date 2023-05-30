@@ -1,26 +1,4 @@
-#include <iostream>
-#include <string>
-#include <random>
-#include <netdb.h>
-#include <cerrno>
-#include <unistd.h>
-#include <fcntl.h>
-#include <cstdint>
-#include <cstring>
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-#include <netinet/tcp.h>
-#include <netinet/ip.h>
-#include <mutex>
-#include <netinet/in.h>
-#include <vector>
-
 #include "../include/synscan.h"
-#include "../modules/include/easysock.h"
-#include "../include/prints.h"
-#include "../include/other.h"
 
 struct in_addr dest_ip;
 nesca_prints nspr;
@@ -177,7 +155,7 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
         nspr.nlog_custom("SYN", "Creation RAW sock on RECV.\n", 1);
     }
 
-    std::lock_guard<std::mutex> lock_sock(fuck_sock);
+    //std::lock_guard<std::mutex> lock_sock(fuck_sock);
     int sock1 = create_raw_sock("tcp");
     if (sock1 == -1){
         if (debug){

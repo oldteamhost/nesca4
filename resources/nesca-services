@@ -13,6 +13,25 @@ SMTP            25
 RSFTP           26
 WHOIS           43
 DNS			 53
+DHCP			 67
+TFTP			 69
+KERBEROS		 88
+POP3			 110
+SNMP			 161
+IMAP			 143
+NNTP			 119
+NTP			 123
+IRC			 194
+LDAP			 389
+SMB			 445
+SMTPS		 465
+IPSEC		 500
+AFP			 548
+LDAPS		 636
+RSYNC		 873
+IMAPS		 993
 POP3S           995
-
-
+MySQL		 3306
+RDP			 3389
+VNC			 5900
+PostgreSQL	 5432

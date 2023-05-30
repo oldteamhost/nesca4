@@ -1,22 +1,15 @@
 #include "../include/netutils.h"
-#include "../modules/include/easysock.h"
-#include <cstring>
-#include <algorithm>
-#include <arpa/inet.h>
-#include <fcntl.h>
-#include <netdb.h>
-#include <unistd.h>
 
 const char*
 dns_utils::get_dns_by_ip(const char* ip, int port){
     struct in_addr addr;
     if (inet_pton(AF_INET, ip, &addr) != 1) {
-        return "get_dns_by_ip: Invalid IP address";
+        return "-1";
     }
 
     int sock = create_sock("tcp"); 
     if (sock == -1) {
-        return "get_dns_by_ip: Could not create socket";
+        return "-1";
     }
 
     struct sockaddr_in sa;
@@ -29,7 +22,7 @@ dns_utils::get_dns_by_ip(const char* ip, int port){
     int res = getnameinfo((struct sockaddr*)&sa, sizeof(sa), host, sizeof(host), NULL, 0, NI_NAMEREQD);
     if (res != 0) {
         close(sock);
-        return "get_dns_by_ip: Could not resolve DNS";
+        return "-1";
     }
 
     char* dns_name = new char[strlen(host) + 1];
@@ -43,7 +36,7 @@ dns_utils::get_ip_by_dns(const char* dns){
     int sock = create_sock("tcp"); 
 
     if (sock == -1){
-        return "get_ip_by_dns: Could not create socket";
+        return "-1";
     }
 
     struct addrinfo hints, *res;
@@ -55,7 +48,7 @@ dns_utils::get_ip_by_dns(const char* dns){
 
     if (status != 0){
         close(sock);
-        return "get_dns_by_ip: Could failed getting ip";
+        return "-1";
     }
 
     struct sockaddr_in *addr = (struct sockaddr_in *)res->ai_addr;

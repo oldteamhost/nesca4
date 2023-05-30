@@ -4,6 +4,23 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <libssh/libssh.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <iostream>
+#include <string>
+#include <thread>
+#include <cstring>
+#include <curl/curl.h>
+
+#include "../include/callbacks.h"
+#include "../include/other.h"
+#include "../include/prints.h"
+
+#include "../modules/include/easysock.h"
+
+#include "../lib/HCNetSDK.h"
 
 class brute_ftp_data{
     private:
@@ -19,6 +36,14 @@ class brute_ftp_data{
         void
 	   set_success_pass(std::string success_pass);
 };
+
+// brutforce smtp
+std::string 
+base64_encode(const std::string& input);
+std::string 
+brute_smtp(const std::string& ip, int port, const std::string& login, const std::string& pass, int brute_log, int verbose);
+std::string 
+threads_brute_smtp(const std::string ip, int port, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms);
 
 // brutforce ftp
 std::string 

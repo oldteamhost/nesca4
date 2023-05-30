@@ -1,10 +1,4 @@
 #include "../include/target.h"
-#include <sstream>
-#include <cstring>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <bitset>
-#include <vector>
 
 std::vector<std::string>
 range_to_ips(const std::vector<std::string>& ip_ranges){
@@ -97,6 +91,7 @@ split_string_string(const std::string& str, char delimiter){
     result.push_back(str.substr(pos));
     return result;
 }
+
 std::vector<std::string>
 convert_dns_to_ip(const std::vector<std::string>& dns_vector){
     std::vector<std::string> ip_vector;

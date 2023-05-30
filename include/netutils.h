@@ -3,6 +3,14 @@
 
 #include <iostream>
 #include <vector>
+#include <cstring>
+#include <algorithm>
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <unistd.h>
+
+#include "../modules/include/easysock.h"
 
 class dns_utils{
 public:

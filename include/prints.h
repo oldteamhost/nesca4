@@ -4,6 +4,12 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <string>
+#include <fstream>
+#include <map>
+
+#include "../include/other.h"
+#include "../include/files.h"
 
 class nesca_prints{
     private:
@@ -26,6 +32,8 @@ class nesca_prints{
         sea_green_on(void);
         void 
         reset_colors(void);
+	   void
+	   gray_nesca_on(void);
         int 
         import_color_scheme(const std::string file_name, std::map<std::string, std::string>& config_values);
         int 

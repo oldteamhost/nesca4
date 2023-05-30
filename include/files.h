@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <vector>
+#include <fstream>
+#include <string>
 
 // read and write all file
 std::vector<std::string>

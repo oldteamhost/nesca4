@@ -1,17 +1,4 @@
 #include "../include/other.h"
-#include "../include/target.h"
-#include <regex>
-#include <sstream>
-#include <algorithm>
-#include <iostream>
-
-#ifdef _WIN32
-#include <WinBase.h>
-#include <windows.h>
-#include <consoleapi.h>
-#else
-#include <unistd.h>
-#endif
 
 const char*
 get_time(){
@@ -26,49 +13,22 @@ get_time(){
     return time_str;
 }
 
-
 bool
 check_ansi_support(void){
-    #ifdef _WIN32
-    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (hOut == INVALID_HANDLE_VALUE)
-    {
-        return false;
-    }
-
-    DWORD dwMode = 0;
-    if (!GetConsoleMode(hOut, &dwMode))
-    {
-        return false;
-    }
-
-    if (dwMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING)
-    {
-        return true;
-    }
-
-    return false;
-    #else
     const char* envValue = std::getenv("TERM");
-    if (envValue == nullptr)
-    {
+    if (envValue == nullptr){
         return false;
     }
 
     return std::string(envValue).find("xterm") != std::string::npos;
-    #endif
 }
 
 void
 delay_ms(int milliseconds){
-#ifdef _WIN32
-    Sleep(milliseconds);
-#else
     struct timespec ts;
     ts.tv_sec = milliseconds / 1000;
     ts.tv_nsec = (milliseconds % 1000) * 1000000;
     nanosleep(&ts, NULL);
-#endif
 }
 
 std::vector<int>
@@ -158,25 +118,7 @@ parse_range(const std::string& range_string){
 
 bool 
 check_root_perms(){
-#ifdef _WIN32
-
-    BOOL isAdmin = FALSE;
-    SID_IDENTIFIER_AUTHORITY ntAuthority = SECURITY_NT_AUTHORITY;
-    PSID adminGroup;
-
-    if (AllocateAndInitializeSid(&ntAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID,
-        DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &adminGroup)){
-        if (!CheckTokenMembership(NULL, adminGroup, &isAdmin))
-        {
-            isAdmin = FALSE;
-        }
-        FreeSid(adminGroup);
-    }
-
-    return isAdmin != FALSE;
-#else
     return geteuid() == 0;
-#endif
     return false;
 }
 

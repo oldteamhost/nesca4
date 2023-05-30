@@ -1,7 +1,4 @@
 #include "../include/generation.h"
-#include <random>
-#include <cstring>
-#include <sstream>
 
 const char*
 generate_ipv6(int num_octets){
@@ -52,4 +49,3 @@ generate_random_str(int len, std::string dictionary){
 
     return result;
 }
-

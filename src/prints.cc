@@ -1,9 +1,4 @@
 #include "../include/prints.h"
-#include "../include/other.h"
-#include "../include/files.h"
-#include <string>
-#include <fstream>
-#include <map>
 
 void 
 nesca_prints::disable_colors(void){
@@ -91,6 +86,10 @@ void
 nesca_prints::reset_colors(void){
     std::cout << reset_color;
 }
+void
+nesca_prints::gray_nesca_on(void){
+    std::cout << gray_nesca;
+}
 
 int 
 nesca_prints::processing_color_scheme(const std::map<std::string, std::string> config_values){
@@ -157,9 +156,3 @@ nesca_prints::nlog_custom(std::string auth, std::string message, int color){
         write_line(file_path_save, log);
     }
 }
-/*
-void 
-nesca_prints::nlog_result(std::string message){
-
-}
-*/
