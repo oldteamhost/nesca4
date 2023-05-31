@@ -29,6 +29,8 @@
 #define PORT_FILTER 2
 #define PORT_ERROR -1
 
+#define SOURCE_PORT 49151
+
 struct pseudo_header{
    unsigned int source_address;
    unsigned int dest_address;
@@ -48,8 +50,8 @@ public:
 	 bool xmas = false;
 
       // GOTO
-      int s_timeout;
-      int r_timeout;
+      int s_timeout = 4;
+      int r_timeout = 4;
       //
       const char* source_ip;
       void

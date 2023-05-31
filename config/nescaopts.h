@@ -14,8 +14,8 @@ public:
 
         bool timeout;
         int timeout_ms = 500;
-        int recv_timeout_sec = 6;
-        int send_timeout_sec = 6;
+        int recv_timeout_sec = 3;
+        int send_timeout_sec = 3;
         int scanning_count = 2;
         int log_set = 20;
         int _threads = 100;

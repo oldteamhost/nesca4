@@ -647,21 +647,16 @@ checking_default_files(void){
 // > Я сам не понимаю что тут написано, но работает правильно.
 void 
 processing_tcp_scan_ports(std::string ip, std::vector<int> ports, int timeout_ms){
-	   int yeah_flag = 0;
-		  if (yeah_flag == 1){
-		  }
-
 	   for (auto& port : ports){
 		  int result;
 		  for (int i = 0; i < argp.scanning_count; i++){
 			 result = ss.syn_scan_port(ip.c_str(), port, timeout_ms);
 			 if (result == 0){
-				yeah_flag = 1;
+				break;
 			 }
 		  }
 
         if (result == 0) {
-            yeah_flag = 1;
             argp.fuck_yeah++;
             std::string result = ip + ":" + std::to_string(port);
             std::string brute_temp;
