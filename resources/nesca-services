@@ -15,6 +15,7 @@ WHOIS           43
 DNS			 53
 DHCP			 67
 TFTP			 69
+GOPHER		 70
 KERBEROS		 88
 POP3			 110
 SNMP			 161

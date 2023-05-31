@@ -31,7 +31,7 @@ int create_raw_sock(std::string protocol){
     int sock_temp;
 
     if (protocol == "default"){
-        sock_temp = socket(AF_INET, SOCK_RAW, 0);
+        sock_temp = socket(AF_INET, SOCK_RAW, IPPROTO_IP);
     }
     else if (protocol == "tcp"){
         sock_temp = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);

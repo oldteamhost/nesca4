@@ -43,6 +43,25 @@ nesca_prints::main_nesca_out(std::string opt, std::string result, int mode, std:
         temp_file = print_get_time(get_time()) + "[" + opt + "]:" + 
         result + " " + opt1 + ": " + result1 + " " + opt2 + ": " + result2;
     }
+    else if (mode == 4){
+        temp = gray_nesca + print_get_time(get_time()) + "[" + opt + "]:" + reset_color + 
+        golder_rod + result + reset_color + gray_nesca + " " + opt1 + ": " + reset_color +
+        golder_rod + result1 + reset_color + gray_nesca + " " + opt2 + ": " + reset_color +
+        golder_rod + result2 + reset_color;
+
+        temp_file = print_get_time(get_time()) + "[" + opt + "]:" + 
+        result + " " + opt1 + ": " + result1 + " " + opt2 + ": " + result2;
+
+    }
+    else if (mode == 5){
+        temp = gray_nesca + print_get_time(get_time()) + "[" + opt + "]:" + reset_color + 
+        green_html + result + reset_color + gray_nesca + " " + opt1 + ": " + reset_color +
+        green_html + result1 + reset_color + gray_nesca + " " + opt2 + ": " + reset_color +
+        green_html + result2 + reset_color;
+
+        temp_file = print_get_time(get_time()) + "[" + opt + "]:" + 
+        result + " " + opt1 + ": " + result1 + " " + opt2 + ": " + result2;
+    }
 
     if (save_file){
         write_line(file_path_save, temp_file+"\n");

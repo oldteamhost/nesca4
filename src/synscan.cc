@@ -1,4 +1,5 @@
 #include "../include/synscan.h"
+#include <arpa/inet.h>
 
 struct in_addr dest_ip;
 nesca_prints nspr;
@@ -30,8 +31,40 @@ csum(unsigned short *ptr,int nbytes){
     return(answer);
 }
 
+void
+syn_scan::create_ip_header(struct iphdr *iph, const char *source_ip, struct in_addr dest_ip){
+    if (debug){
+        nspr.nlog_custom("SYN", "Creation IP header.\n", 1);
+    }
+
+    /*Создание ip заголовка, для пакета.*/
+    int ip_header_length = sizeof(struct iphdr);
+    uint8_t iph_ihl = ip_header_length / 4;
+    iph->ihl = iph_ihl;
+    iph->version = 4;
+    iph->tot_len = sizeof(struct ip) + sizeof(struct tcphdr);
+    iph->tos = 0;
+    iph->frag_off = htons(16384);
+    iph->id = htons(54321);
+    iph->ttl = 255;
+    iph->protocol = IPPROTO_TCP;
+    iph->check = 0;
+    iph->saddr = inet_addr(source_ip);
+    iph->daddr = dest_ip.s_addr; 
+}
+
 int 
 syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
+    struct sockaddr_in dest;
+    struct pseudo_header psh;
+    char datagram[2048];
+    struct iphdr *iph = (struct iphdr*) datagram;
+    struct tcphdr *tcph = (struct tcphdr*) (datagram + sizeof (struct iphdr));
+    memset (datagram, 0, 2048);
+
+    if (debug){
+        nspr.nlog_custom("SYN", "IP is: "+std::string(ip)+"\n", 1);
+    }
     /*Таймаут, он реально помогает и очень сильно влияет.*/
     delay_ms(timeout_ms);
 
@@ -48,34 +81,8 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
         return PORT_ERROR;
     }
 
-    char datagram[4096];
-
-    struct iphdr *iph = (struct iphdr *) datagram;
-    struct tcphdr *tcph = (struct tcphdr *) (datagram + sizeof (struct ip));
-
-    struct sockaddr_in dest;
-    struct pseudo_header psh;
-
     dest_ip.s_addr = inet_addr(ip);    
-    memset (datagram, 0, 4096);
-
-    if (debug){
-        nspr.nlog_custom("SYN", "Creation IP header.\n", 1);
-    }
-    /*Создание ip заголовка, для пакета.*/
-    int ip_header_length = sizeof(struct iphdr);
-    uint8_t iph_ihl = ip_header_length / 4;
-    iph->ihl = iph_ihl;
-    iph->version = 4;
-    iph->tot_len = sizeof (struct ip) + sizeof (struct tcphdr);
-    iph->tos = 0;
-    iph->frag_off = htons(16384);
-    iph->id = htons (54321);
-    iph->ttl = 255;
-    iph->protocol = IPPROTO_TCP;
-    iph->check = 0; // На всякий
-    iph->saddr = inet_addr(source_ip); // ip отправителя.
-    iph->daddr = dest_ip.s_addr; // ip получателя.
+    create_ip_header(iph, source_ip, dest_ip);
 
     if (debug){
         nspr.nlog_custom("SYN", "Calculate sum for IP header.\n", 1);
@@ -120,7 +127,9 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
         nspr.nlog_custom("SYN", "Calculate sum for TCP header.\n", 1);
     }
 
-    tcph->check = csum( (unsigned short*) &psh , sizeof (struct pseudo_header));
+    tcph->check = csum((unsigned short*)&psh, 
+		  sizeof(struct pseudo_header));
+
     struct timeval timeout;
     timeout.tv_sec = s_timeout;
     timeout.tv_usec = 0;
@@ -135,7 +144,7 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
     if (debug){
         nspr.nlog_custom("SYN", "Send SYN packet.\n", 1);
     }
-    if (sendto (sock, datagram , sizeof(struct iphdr) + sizeof(struct tcphdr) ,
+    if (sendto(sock, datagram, sizeof(struct iphdr) + sizeof(struct tcphdr) ,
                 0 , (struct sockaddr *) &dest, sizeof (dest)) < 0){
         if (debug){
             nspr.nlog_custom("^", "FAILED send SYN packet.\n", 2);
@@ -147,7 +156,7 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
 
     struct sockaddr saddr;
     struct sockaddr_in source, _dest;
-    unsigned char *buffer = (unsigned char *)malloc(65536);
+    unsigned char *buffer = (unsigned char *)malloc(1024);
     unsigned short iphdrlen;
     
     /*Создания нового сокета для обработки ответа.*/
@@ -155,7 +164,9 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
         nspr.nlog_custom("SYN", "Creation RAW sock on RECV.\n", 1);
     }
 
-    //std::lock_guard<std::mutex> lock_sock(fuck_sock);
+    close(sock);
+
+    std::lock_guard<std::mutex> lock_sock(fuck_sock);
     int sock1 = create_raw_sock("tcp");
     if (sock1 == -1){
         if (debug){
@@ -170,7 +181,7 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
     timeout2.tv_sec = r_timeout;
     timeout2.tv_usec = 0;
 
-    result = setsockopt(sock1, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+    result = setsockopt(sock1, SOL_SOCKET, SO_RCVTIMEO, &timeout2, sizeof(timeout2));
 
     if (result < 0){
         return PORT_ERROR;
@@ -181,7 +192,7 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
         nspr.nlog_custom("SYN", "Getting packet on buffer.\n", 1);
     }
 
-    data_size = recvfrom(sock1, buffer, 65536, 0, (struct sockaddr*)&saddr, (socklen_t*)&saddr_size);
+    data_size = recvfrom(sock1, buffer, 1024, 0, (struct sockaddr*)&saddr, (socklen_t*)&saddr_size);
     if (data_size < 0){
         if (debug){
             nspr.nlog_custom("^", "Getting packet on buffer.\n", 2);
@@ -203,8 +214,8 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
         memset(&source, 0, sizeof(source));
         source.sin_addr.s_addr = iph->saddr;
 
-        memset(&dest, 0, sizeof(dest));
-        dest.sin_addr.s_addr = iph->daddr;
+        memset(&_dest, 0, sizeof(_dest));
+        _dest.sin_addr.s_addr = iph->daddr;
 
         if (debug){
             if (tcph->syn != 0){
@@ -226,51 +237,72 @@ syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
                 nspr.nlog_custom("SYN", "Flag RST is: " + std::to_string(tcph->rst) + "\n", 2);
             }
         }
-
-        /*Обработка пакета, писалась используя
-        эту статью: https://nmap.org/book/synscan.html*/
-        switch (tcph->th_flags) {
-            case 0x12:{
-                /*SYN + ACK
-                 * Если хост ответил флагом ack и послал syn
-                значит порт считаеться открытым.*/
-                close(sock);
-                close(sock1);
-                return PORT_OPEN;
-            }
-            case 0x1A:{
-                /*SYN + ACK + PSH
-                 * Если хост ответил флагом ack и psh затем  послал syn
-                значит порт считаеться открытым, и готовым для
-                передачи данных*/
-                close(sock);
-                close(sock1);
-                return PORT_OPEN;
-            }
-            case 0x04:{
-                /*RST
-                 * Если хост послал только флаг rst
-                aka сброс соеденения, то считаеться что порт
-                закрыт.*/
-                close(sock);
-                close(sock1);
-                return PORT_CLOSED;
-            }
-            default:{
-                /*Если ответа от хоста вообще не было то считаеться
-                что подлкючение не удалось, порт фильтруеться.*/
-                close(sock);
-                close(sock1);
-                return PORT_FILTER;
-            }
-        }
+	   int status = get_port_status(tcph->th_flags);
+	   if (status != PORT_ERROR){
+		  close(sock1);
+		  return status;
+	   }
     }
 
-    close(sock);
-    close(sock1);
     /*В любом другом случае считаеться что выполнение
     функции кончилось ошибкой.*/
+    close(sock1);
     return PORT_ERROR;
+}
+
+int
+syn_scan::get_port_status(uint8_t flags){
+    /*Обработка пакета, писалась используя
+    эту статью: https://nmap.org/book/synscan.html*/
+    if (fin || null | xmas){
+	   switch (flags) {
+		  case 0x04:{
+			 return PORT_CLOSED;
+		  }
+		  default:{
+			 return PORT_OPEN;
+		  }
+	   }
+    } 
+    else {
+	   switch (flags) {
+		  case 0x12:{
+			 /*SYN + ACK
+			 * Если хост ответил флагом ack и послал syn
+			 значит порт считаеться открытым.*/
+			 return PORT_OPEN;
+		  }
+		  case 0x1A:{
+			 /*SYN + ACK + PSH
+			 * Если хост ответил флагом ack и psh затем  послал syn
+			 значит порт считаеться открытым, и готовым для
+			 передачи данных*/
+			 return PORT_OPEN;
+		  }
+		  case 0x04:{
+			 /*RST
+			 * Если хост послал только флаг rst
+			 aka сброс соеденения, то считаеться что порт
+			 закрыт.*/
+			 return PORT_CLOSED;
+		  }
+		  default:{
+			 /*Если ответа от хоста вообще не было то считаеться
+			 что подлкючение не удалось, порт фильтруеться.*/
+			 return PORT_FILTER;
+		  }
+	   }
+    }
+}
+
+void
+syn_scan::set_tcp_flags(struct tcphdr* tcph, int syn, int ack, int fin, int rst, int urg, int phs){
+    tcph->fin=fin;
+    tcph->syn=syn;
+    tcph->rst=rst;
+    tcph->psh=phs;
+    tcph->ack=ack;
+    tcph->urg=urg;
 }
 
 /*Убран в другую для более короткой основной*/
@@ -281,15 +313,21 @@ syn_scan::create_tcp_header(struct tcphdr* tcph, int port){
     uint32_t seq = dist(rd);
     tcph->seq = htonl(seq);
     tcph->source = htons(15845);
-    tcph->dest = htons (port);
+    tcph->dest = htons(port);
     tcph->ack_seq = 0;
     tcph->doff = sizeof(struct tcphdr) / 4;
-    tcph->fin=0;
-    tcph->syn=1;
-    tcph->rst=0;
-    tcph->psh=0;
-    tcph->ack=0;
-    tcph->urg=0;
+    if (fin){
+	   set_tcp_flags(tcph, 0, 0, 1, 0, 0, 0);
+    }
+    else if (null){
+	   set_tcp_flags(tcph, 0, 0, 0, 0, 0, 0);
+    }
+    else if (xmas){
+	   set_tcp_flags(tcph, 0, 0, 1, 0, 1, 1);
+    }
+    else {
+	   set_tcp_flags(tcph, 1, 0, 0, 0, 0, 0);
+    }
     tcph->check = 0;
 
     int window_size_bytes = 14600;

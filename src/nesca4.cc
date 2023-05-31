@@ -18,6 +18,8 @@
 #include <sstream>
 #include <vector>
 #include <string.h>
+#include <unistd.h>
+#include <termios.h>
 
 #include "../include/bruteforce.h"
 #include "../include/callbacks.h"
@@ -40,7 +42,7 @@
 
 #include "../config/nescaopts.h"
 
-#define VERSION "20230530"
+#define VERSION "20230531"
 #define DELIMITER ','
 
 std::mutex mtx;
@@ -48,6 +50,7 @@ checking_finds cfs;
 brute_ftp_data bfd_;
 icmp_ping icp;
 udp_ping udpi;
+tcp_ping tcpp;
 syn_scan ss;
 ip_utils _iu;
 dns_utils dus;
@@ -61,6 +64,8 @@ void
 check_files(const char* path, const char* path1);
 void 
 checking_default_files(void);
+bool
+process_ping(std::string ip);
 void 
 parse_args(int argc, char** argv);
 void
@@ -78,6 +83,7 @@ const struct option long_options[] = {
         {"random-ip", required_argument, 0, 5},
         {"brute-login", required_argument, 0, 12},
         {"brute-pass", required_argument, 0, 11},
+        {"ping-log", required_argument, 0, 90},
         {"brute-log", required_argument, 0, 30},
         {"brute-verbose", required_argument, 0, 31},
         {"thread-on-port", no_argument, 0, 48},
@@ -96,15 +102,18 @@ const struct option long_options[] = {
         {"path-log", no_argument, 0, 53},
         {"import-color", required_argument, 0, 54},
         {"scan-count", required_argument, 0, 1},
+        {"null", no_argument, 0, 91},
+        {"fin", no_argument, 0, 92},
+        {"xmas", no_argument, 0, 93},
         {"fix-get-path", no_argument, 0, 52},
         {"on-http-response", no_argument, 0, 51},
         {"no-ping", no_argument, 0, 29},
         {"no-color", no_argument, 0, 26},
         {"log-set", required_argument, 0, 24},
-        {"syn-db", no_argument, 0, 59},
-        {"syn-debug", no_argument, 0, 60},
-        {"sss-timeout", required_argument, 0, 57},
-        {"ssr-timeout", required_argument, 0, 58},
+        {"scan-db", no_argument, 0, 59},
+        {"scan-debug", no_argument, 0, 60},
+        {"scan-s-timeout", required_argument, 0, 57},
+        {"scan-r-timeout", required_argument, 0, 58},
         {"res-time", no_argument, 0, 61},
         {"help", no_argument, 0, 'h'},
         {"version", no_argument, 0, 'v'},
@@ -333,12 +342,13 @@ int main(int argc, char** argv){
     }
 
     checking_default_files();
-    np.nlog_trivial("Starting " + std::to_string(argp._threads) + " threads...\n\n");
+    std::cout << std::endl;
 
     /*Начало DNS сканирования.*/
     if (argp.dns_scan){
         argp.timeout_ms = 100;
         std::mutex mtx;
+	   std::cout << np.main_nesca_out("NESCA4", "Starting "+std::to_string(argp._threads)+" threads...", 5, "on", "", "DNS","") << std::endl;
         for (int i = 0; i < argp._threads; i++) {
 
             std::thread([&](){
@@ -398,6 +408,7 @@ int main(int argc, char** argv){
 
     /*Начало сканирования*/
     ss.source_ip = _iu.get_local_ip(); // получение ip компютера
+    tcpp.source_ip = ss.source_ip; 
     std::vector<std::string> result; // ip для сканирования
     
     if (argp.ip_scan_import || argp.ip_scan){
@@ -420,32 +431,150 @@ int main(int argc, char** argv){
     }
 
     int ip_count = 0;
-    long long size = result.size();
+    int flag_desing = 0;
 
-    std::vector<std::thread> threads;
-    for (const auto& ip : result) {
-        threads.emplace_back(processing_tcp_scan_ports, ip, argp.ports, argp.timeout_ms);
-	   ip_count++;
+    /*Пинг сканирования*/
+    std::cout << np.main_nesca_out("NESCA4", "PING scan", 5, "timeout", "ttl", std::to_string(argp.icmp_ping_timeout), "64") << std::endl;
+
+    std::vector<std::string> result_main; // ip для сканирования
+    int ips_per_thread = result.size() / argp._threads;
+    int ip_count_ping = 0;
+    
+    for (auto& ip : result){
+	   bool ping = process_ping(ip);
+	   if (ping){
+		  result_main.push_back(ip);
+
+		  double time_ms = icp.get_last_time();
+		  if (argp.display_response_time){
+			 std:: cout << np.main_nesca_out("PING", ip , 1,
+			 "rtt", "", std::to_string(time_ms)+"ms", "") << std::endl;
+		  }
+	   }
+	   ip_count_ping++;
+
+	   if (ip_count_ping % argp.ping_log == 0){
+
+		  double procents = (static_cast<double>(ip_count_ping) / result.size()) * 100;
+		  std::ostringstream oss;
+		  oss << std::fixed << std::setprecision(1) << procents << "%";
+		  std::string _result = oss.str();
+
+		  std::cout << np.main_nesca_out("^NESCAPINGLOG", std::to_string(ip_count_ping) + " out of " + std::to_string(result.size()) + "IPs",
+		  4, "P", "", _result + "%", "") << std::endl;
+	   }
+    }
+    int error_count = result.size() - result_main.size();
+    std::cout << np.main_nesca_out("NESCA4", "END PING", 5, "success", "errors", std::to_string(result_main.size()), std::to_string(error_count)) << std::endl;
+
+    int result_threads = result_main.size() * 2;
+    if (result_threads <= argp._threads){
+	   argp._threads = result_threads; 
+    }
+
+    std::cout << std::endl;
+    if (argp.fin_scan || argp.xmas_scan || argp.null_scan){
+	   np.nlog_custom("WARNING", "XMAS | FIN | NULL scan, results may be inaccurate!\n", 2);
+    }
+    if (argp.fin_scan){
+	   ss.fin = true;
+    }
+    else if (argp.null_scan){
+	   ss.null = true;
+    }
+    else if (argp.xmas_scan){
+	   ss.xmas = true;
+    }
+
+    if (ss.fin){
+	   std::cout << np.main_nesca_out("NESCA4", "Starting "+std::to_string(argp._threads)+" threads...", 5, "on", "", "FIN","") << std::endl;
+	   std::cout << np.main_nesca_out("NESCA4", "FIN scan", 5, "targets", "", std::to_string(result_main.size()), "") << std::endl;
+    }
+    else if (ss.null){
+	   std::cout << np.main_nesca_out("NESCA4", "Starting "+std::to_string(argp._threads)+" threads...", 5, "on", "", "NULL","") << std::endl;
+	   std::cout << np.main_nesca_out("NESCA4", "NULL scan", 5, "targets", "", std::to_string(result_main.size()), "") << std::endl;
+    }
+    else if (ss.xmas){
+	   std::cout << np.main_nesca_out("NESCA4", "Starting "+std::to_string(argp._threads)+" threads...", 5, "on", "", "XMAS","") << std::endl;
+	   std::cout << np.main_nesca_out("NESCA4", "XMAS scan", 5, "targets", "", std::to_string(result_main.size()), "") << std::endl;
+    }
+    else {
+	   std::cout << np.main_nesca_out("NESCA4", "Starting "+std::to_string(argp._threads)+" threads...", 5, "on", "", "SYN","") << std::endl;
+	   std::cout << np.main_nesca_out("NESCA4", "SYN scan", 5, "targets", "", std::to_string(result_main.size()), "") << std::endl;
+    }
+    std::vector<std::future<void>> futures;
+
+    long long size = result_main.size();
+
+    for (const auto& ip : result_main) {
+        futures.emplace_back(std::async(std::launch::async, processing_tcp_scan_ports, ip, argp.ports, argp.timeout_ms));
+        ip_count++;
 
         if (ip_count % argp.log_set == 0) {
-            np.nlog_custom("LOG", std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs scanned\n", 1);
+
+            double procents = (static_cast<double>(ip_count) / size) * 100;
+		  std::ostringstream oss;
+		  oss << std::fixed << std::setprecision(1) << procents << "%";
+		  std::string result = oss.str();
+
+            std::cout << np.main_nesca_out("^NESCASYNLOG", std::to_string(ip_count) + " out of " + std::to_string(size) + "IPs", 
+            4, "P", "", result + "%", "") << std::endl;
+            // mode: opt1: opt2: result1: val: result2:
         }
 
-        if (threads.size() >= argp._threads) {
-            for (auto& thread : threads) {
-                thread.join();
+        if (futures.size() >= argp._threads) {
+            for (auto& future : futures) {
+                future.wait();
             }
-            threads.clear();
+            futures.clear();
         }
     }
 
-    for (auto& thread : threads) {
-        thread.join();
+    for (auto& future : futures) {
+        future.wait();
     }
 
     /*Конец*/
 
     return 0;
+}
+
+bool
+process_ping(std::string ip){
+    int yeah_flag = 0;
+
+    // Обычный через connect 
+    bool tcp_ping = tcpp.ping(ip.c_str(), 80, argp.icmp_ping_timeout);
+    if (tcp_ping){
+	   return true;
+    }
+
+    // 3 Метода ICMP пинга
+    for (int i = 1; i <= 3; i++){
+	   if (yeah_flag == 1){
+		  break;
+	   }
+	   icp.type = i;
+	   bool icmp_ping = icp.ping(ip.c_str(), 1, argp.icmp_ping_timeout);
+	   if (icmp_ping){
+		  yeah_flag = 1;
+		  return true;
+	   }
+	   if (argp.debug){
+		  np.nlog_custom("PING", ip + " [FaILEd]\n",2);
+	   }
+    }
+
+    // TCP ACK пинг, есть но не настроен.
+    /*
+    ss.ping_mode = true;
+    bool tcp_ack_ping = ss.syn_scan_port(ip.c_str(), 80, argp.tcp_ping_timeout);
+    ss.ping_mode = false;
+    if (tcp_ack_ping){
+	   return true;
+    }
+    */
+    return false;
 }
 
 void check_files(const char* path, const char* path1){
@@ -518,36 +647,18 @@ checking_default_files(void){
 // > Я сам не понимаю что тут написано, но работает правильно.
 void 
 processing_tcp_scan_ports(std::string ip, std::vector<int> ports, int timeout_ms){
-    int yeah_flag = 0;
-
-	   for (int i = 0; i < argp.scanning_count; i++){
+	   int yeah_flag = 0;
 		  if (yeah_flag == 1){
-			 break;
 		  }
 
-		  double time_ms ;
-
-		  if (argp.ping_off != true){
-			 bool ping_icmp = icp.ping(ip.c_str(), 1, argp.icmp_ping_timeout);
-			 double time_ms = icp.get_last_time();
-
-			 if (ping_icmp){
-				if (argp.display_response_time){
-				    std:: cout << np.main_nesca_out("PING", ip , 3,
-				    "rtt", "", std::to_string(time_ms)+"ms", "") << std::endl;
-				}
-			 }
-			 else {
-				if (argp.debug){
-				    std:: cout << np.main_nesca_out("PING", ip , 3,
-				    "ST", "", "FAILED", "") << std::endl;
-				}
-				return;
+	   for (auto& port : ports){
+		  int result;
+		  for (int i = 0; i < argp.scanning_count; i++){
+			 result = ss.syn_scan_port(ip.c_str(), port, timeout_ms);
+			 if (result == 0){
+				yeah_flag = 1;
 			 }
 		  }
-
-		  for (auto& port : ports){
-			 int result = ss.syn_scan_port(ip.c_str(), port, timeout_ms);
 
         if (result == 0) {
             yeah_flag = 1;
@@ -809,7 +920,6 @@ processing_tcp_scan_ports(std::string ip, std::vector<int> ports, int timeout_ms
                 std::cout << result_print << std::endl;
             }
         }
-		  }
    }
 }
 // You live?
@@ -837,13 +947,16 @@ help_menu(void){
     std::cout << "  -timeout, -t <ms>      Set timeout for scan.\n";
 
     np.sea_green_on();
-    std::cout << "\narguments syn_scan:" << std::endl;
+    std::cout << "\narguments port_scan:" << std::endl;
     np.reset_colors();
+    std::cout << "  -fin                   Using FIN scan.\n";
+    std::cout << "  -xmas                Using XMAS scan.\n";
+    std::cout << "  -null			 Using TCP NULL scan.\n\n";
     std::cout << "  -ports, -p <1,2,3>     Set ports on scan.\n";
     std::cout << "     - example ports:    all, nesca, top100, top50\n";
-    std::cout << "  -sss-timeout           Set timeout for send packet on port.\n";
-    std::cout << "  -ssr-timeout           Set timeout for getting packet on port.\n";
-    std::cout << "  -syn-db, syn-debug     Display verbose info for syn port scan.\n";
+    std::cout << "  -scan-s-timeout <ms>   Set timeout for send packet on port.\n";
+    std::cout << "  -scan-r-timeout <ms>   Set timeout for getting packet on port.\n";
+    std::cout << "  -scan-db, scan-debug   Display verbose info for syn port scan.\n";
 
     np.sea_green_on();
     std::cout << "\narguments ping:" << std::endl;
@@ -1313,6 +1426,18 @@ parse_args(int argc, char** argv){
            case 61:
                argp.display_response_time = true;
                break;
+	      case 90:
+			argp.ping_log = atoi(optarg);
+		     break;
+	      case 91:
+			argp.null_scan = true;
+			break;
+	      case 92:
+			argp.fin_scan = true;
+			break;
+	      case 93:
+			argp.xmas_scan = true;
+			break;
         }
     }
 }

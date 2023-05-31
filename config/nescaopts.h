@@ -8,12 +8,16 @@ public:
         std::string txt_save;
 
 	   /*Scan options*/
+	   bool fin_scan;
+	   bool null_scan;
+	   bool xmas_scan;
+
         bool timeout;
-        int timeout_ms = 400;
-        int recv_timeout_sec = 5;
-        int send_timeout_sec = 5;
-        int scanning_count = 3;
-        int log_set = 100;
+        int timeout_ms = 500;
+        int recv_timeout_sec = 6;
+        int send_timeout_sec = 6;
+        int scanning_count = 2;
+        int log_set = 20;
         int _threads = 100;
 
         std::vector<int> ports = {80};
@@ -58,7 +62,9 @@ public:
         const char* path_ips;
 
 	   /*Ping options*/
-	   int icmp_ping_timeout = 400;
+	   int icmp_ping_timeout = 500;
+	   int tcp_ping_timeout = 300;
+	   int ping_log = 20;
         bool display_response_time;
 
 	   /*Don`t touch*/
