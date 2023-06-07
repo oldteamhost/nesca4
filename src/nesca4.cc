@@ -47,7 +47,7 @@
 #include "../ncping/include/icmpping.h"
 #include "../ncping/include/tcpping.h"
 
-#define VERSION "20230607"
+#define VERSION "20230608"
 #define DELIMITER ','
 
 std::mutex mtx;
