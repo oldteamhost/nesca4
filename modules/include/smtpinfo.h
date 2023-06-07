@@ -5,9 +5,12 @@
 #include <regex>
 #include <cstring>
 #include <string>
-#include "easysock.h"
+#include <sys/socket.h>
+#include <netdb.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <arpa/inet.h>
 
-#define SMTP_VERSION 0.1
 #define SMTP_ERROR "N/A"
 
 std::string 

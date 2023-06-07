@@ -1,260 +1,324 @@
-#include "../include/synscan.h"
+/*
+ * NESCA4
+ * by oldteam & lomaster
+ * license GPL-3.0
+ * - Сделано от души 2023.
+*/
+
 #include <arpa/inet.h>
+#include <cstdio>
+#include <ctime>
+#include <libssh/libssh.h>
 #include <netinet/ip.h>
+#include <netinet/tcp.h>
 #include <string>
+#include <sys/types.h>
+#include <thread>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <poll.h>
 
-struct in_addr dest_ip;
+#include "../include/synscan.h"
+#include "../ncsock/include/headers.h"
+#include "../ncsock/include/socket.h"
+#include "../ncsock/include/other.h"
+
 nesca_prints nspr;
+bool no_syn_scan;
+struct in_addr dest_ip;
 
-std::mutex fuck_sock;
-std::mutex fuck_sock1;
-
-unsigned short 
-csum(unsigned short *ptr,int nbytes){
-    long sum;
-    unsigned short oddbyte;
-    short answer;
-
-    sum=0;
-    while(nbytes>1) {
-        sum+=*ptr++;
-        nbytes-=2;
-    }
-
-    if(nbytes==1) {
-        oddbyte=0;
-        *((u_char*)&oddbyte)=*(u_char*)ptr;
-        sum+=oddbyte;
-    }
-    sum = (sum>>16)+(sum & 0xffff);
-    sum += (sum>>16);
-    answer=(short)~sum;
-
-    return(answer);
+unsigned int
+generate_seq(){
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned int> dis(0, 4294967295);
+    unsigned int seq_res = dis(gen);
+    return seq_res;
 }
 
 void
-syn_scan::create_ip_header(struct iphdr *iph, const char *source_ip, struct in_addr dest_ip){
+scan_debug_log(std::string mes, bool debug){
     if (debug){
-        nspr.nlog_custom("SYN", "Creation IP header.\n", 1);
+	   nspr.nlog_custom("SCAN", mes, 1);
+	   fflush(stdout);
     }
-    /*Создание ip заголовка, для пакета.*/
-    iph->ihl = 5;
-    iph->version = 4;
-    iph->tot_len = sizeof(struct iphdr) + sizeof(struct tcphdr);
-    iph->tos = 0;
-    iph->id = htons(54321);
-    iph->frag_off = htons(16384);
-    iph->ttl = 255;
-    iph->protocol = IPPROTO_TCP;
-    iph->check = 0;
-    iph->saddr = inet_addr(source_ip);
-    iph->daddr = dest_ip.s_addr; 
 }
 
 int 
-syn_scan::syn_scan_port(const char* ip, int port, int timeout_ms){
+nesca_scan(struct nesca_scan_opts *ncot ,const char* ip, int port, int timeout_ms){
+    unsigned int seq_res = generate_seq(); 
+
+    char datagram[SEND_BUFFER_SIZE];
+    memset(datagram, 0, SEND_BUFFER_SIZE);
+
     struct sockaddr_in dest;
     struct pseudo_header psh;
-    char datagram[2048];
-    struct iphdr *iph1 = (struct iphdr*) datagram;
-    struct tcphdr *tcph1 = (struct tcphdr*) (datagram + sizeof (struct iphdr));
-    memset (datagram, 0, 2048);
-    int result1, result;
-    struct timeval timeout, timeout2;
-    timeout2.tv_sec = r_timeout;
-    timeout2.tv_usec = 0;
-    timeout.tv_sec = s_timeout;
-    timeout.tv_usec = 0;
-    dest_ip.s_addr = inet_addr(ip);    
 
-    if (debug){
-        nspr.nlog_custom("SYN", "IP is: "+std::string(ip)+"\n", 1);
-        nspr.nlog_custom("SYN", "Source IP is: "+std::string(source_ip)+"\n", 1);
-        nspr.nlog_custom("SYN", "Port is: "+std::to_string(port)+"\n", 1);
-    }
+    struct iphdr *iph_send = (struct iphdr*)datagram;
+    struct tcphdr *tcph_send = (struct tcphdr*)(datagram + sizeof (struct iphdr));
+
+    bool debug = ncot->debug;
+
+    scan_debug_log("IP is: "+std::string(ip)+"\n", debug);
+    scan_debug_log("Source IP is: "+std::string(ncot->source_ip)+"\n", debug);
+    scan_debug_log("Port is: "+std::to_string(port)+"\n", debug);
+    scan_debug_log("Source Port is: "+std::to_string(ncot->source_port)+"\n", debug);
+    scan_debug_log("Seq is: "+std::to_string(seq_res)+"\n", debug);
 
     /*Таймаут, он реально помогает и очень сильно влияет.*/
-    delay_ms(timeout_ms);
+    std::this_thread::sleep_for(std::chrono::milliseconds(timeout_ms));
 
+    if (debug){
+	   nspr.nlog_custom("", "===============================SEND===============================\n", 0);
+    }
     /*Создание raw сокета, для более глубокой работы
     с сокетом.*/
-    int sock = create_raw_sock("tcp");
-    if (debug){
-        nspr.nlog_custom("SYN", "Creation RAW sock on send.\n", 1);
-    }
+    scan_debug_log("Creation RAW sock on SEND.\n", debug);
+    int sock = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
     if (sock == -1){
-        if (debug){
-            nspr.nlog_custom("^", "FAILED creation RAW sock on SEND.\n", 2);
-        }
+	   scan_debug_log("FAILED creation RAW sock on SEND.\n", debug);
         return PORT_ERROR;
     }
 
-    create_ip_header(iph1, source_ip, dest_ip);
+    /*Для обработки пакета.*/
+    dest_ip.s_addr = inet_addr(ip);
 
-    if (debug){
-        nspr.nlog_custom("SYN", "Calculate sum for IP header.\n", 1);
+    /*Сообщаем ядру, что не нужно генерировать IP заголовок
+	* потому что мы сами его сделали.*/
+    int set_hdrincl = set_socket_hdrincl(sock);
+    if (set_hdrincl == -1){
+	   close(sock);
+	   return PORT_ERROR;
     }
-    int check_sum_ip = csum ((unsigned short *) datagram, iph1->tot_len >> 1); // контрольная сумма пакета.
-    if (debug){
-        nspr.nlog_custom("SYN", "IP cheksum is: "+ std::to_string(check_sum_ip)+ "\n", 1);
-    } 
-    iph1->check = check_sum_ip;
 
-    create_tcp_header(tcph1, port);
+    tcp_flags tpf;
+    tpf.rst = 0;
+    tpf.ack = 0;
+    
+    if (ncot->scan_type == SYN_SCAN){
+	   tpf.syn = 1;
+	   tpf.fin = 0;
+	   tpf.psh = 0;
+	   tpf.urg = 0;
+	   no_syn_scan = false;
+    }
+    else if (ncot->scan_type == XMAS_SCAN){
+	   tpf.syn = 0;
+	   tpf.fin = 1;
+	   tpf.psh = 1;
+	   tpf.urg = 1;
+    }
+    else if (ncot->scan_type == FIN_SCAN){
+	   tpf.syn = 0;
+	   tpf.fin = 1;
+	   tpf.psh = 0;
+	   tpf.urg = 0;
+    }
+    else if (ncot->scan_type == NULL_SCAN){
+	   tpf.syn = 0;
+	   tpf.fin = 0;
+	   tpf.psh = 0;
+	   tpf.urg = 0;
+    }
 
-    /*Подготовка к заполнению фекового tcp заголовка.*/
+    /*Заполнение TCP заголовка.*/
+    scan_debug_log("Fill TCP header.\n", debug);
+
+    fill_tcp_header(tcph_send, ncot->source_port, port, seq_res, 0, WINDOWS_SIZE, 0,
+		  5, 0, tpf);
+
+    /*Заполнение IP заголовка.*/
+    scan_debug_log("Fill IP header.\n", debug);
+
+    fill_ip_header(iph_send, ncot->source_ip, ip, sizeof(struct iphdr) + sizeof(struct tcphdr),
+		        IPPROTO_TCP, seq_res+2, IP_DF, IP_HEADER_TTL, 5, 4, 0);
+
+    scan_debug_log("Calculate sum for IP header.\n", debug);
+
+    int check_sum_ip = checksum_16bit((unsigned short *)datagram, iph_send->tot_len >> 1); 
+    iph_send->check = check_sum_ip;
+
+    scan_debug_log("IP cheksum is: "+std::to_string(check_sum_ip)+"\n", debug);
+    scan_debug_log("IP length is: "+std::to_string(sizeof(struct iphdr)+ sizeof(struct tcphdr))+"\n", debug);
+
     dest.sin_family = AF_INET;
-    dest.sin_addr.s_addr = dest_ip.s_addr;
+    dest.sin_addr.s_addr = inet_addr(ip);
 
-    if (debug){
-        nspr.nlog_custom("SYN", "Creation fake TCP header.\n", 1);
-    }
-    /*Заполнение псевдо tcp заголовка, для обмана
-    хоста, и установки псевдо подключения.*/
-    char *pseudogram;
-    size_t pseudogram_length;
-
-    psh.source_address = iph1->saddr; 
-    psh.dest_address = iph1->daddr; 
+    /*Заполнение фейкового TCP заголовка, для расчёта
+	* контрольной суммы, тем самым обманывая хост.*/
+    scan_debug_log("Fill fake TCP header.\n", debug);
+    psh.source_address = iph_send->saddr;
+    psh.dest_address = dest.sin_addr.s_addr; 
     psh.placeholder = 0;
-    psh.protocol = iph1->protocol;
-    psh.tcp_length = htons(sizeof(struct tcphdr) );
+    psh.protocol = iph_send->protocol;
+    psh.tcp_length = htons(sizeof(struct tcphdr));
+    memcpy(&psh.tcp, tcph_send, sizeof(struct tcphdr));
+
+    scan_debug_log("Calculate sum for TCP header.\n", debug);
 
     /*Заполнение контрольной суммы пакета для
     tcp заголовка*/
-    if (debug){
-        nspr.nlog_custom("SYN", "Calculate sum for TCP header.\n", 1);
+    int check_sum_tcp = checksum_16bit((unsigned short*)&psh, sizeof(struct pseudo_header));
+    tcph_send->check = check_sum_tcp;
+    scan_debug_log("TCP cheksum is: "+std::to_string(tcph_send->check)+"\n", debug);
+
+    /*Отправка TCP пакета.*/
+    scan_debug_log("Send TCP packet.\n", debug);
+    int send_size = sizeof(struct iphdr)+sizeof(struct tcphdr);
+    ssize_t send = sendto(sock, datagram, send_size, 0,
+		  (struct sockaddr*)&dest, sizeof(dest));
+    if (send == -1){
+	   scan_debug_log("FAILED Send TCP packet.\n", debug);
+	   close(sock);
+	   return PORT_ERROR;
     }
-
-    memcpy(&psh.tcp, tcph1 , sizeof (struct tcphdr));
-    int check_sum_tcp = csum((unsigned short*)&psh,sizeof(struct pseudo_header));
-    tcph1->check = check_sum_tcp;
-
-    /*Указания ядру ос, то что будет отправлен
-    кастомный ip заголовок.*/
-    int one = 1;
-    const int *val = &one;
-    if (setsockopt (sock, IPPROTO_IP, IP_HDRINCL, val, sizeof (one)) < 0){
-        return PORT_ERROR;
-    }
-
-    /*Заполнение контрольной суммы пакета для
-    tcp заголовка*/
-    if (debug){
-        nspr.nlog_custom("SYN", "TCP cheksum is: "+ std::to_string(check_sum_tcp)+ "\n", 1);
-    } 
-
-    result = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-    if (result < 0){
-        return PORT_ERROR;
-    }
-
-    /*Отправка syn пакета.*/
-    if (debug){
-        nspr.nlog_custom("SYN", "Send SYN packet.\n", 1);
-    }
-    if (sendto(sock, datagram, sizeof(struct iphdr) + sizeof(struct tcphdr) ,
-                0 , (struct sockaddr*) &dest, sizeof (dest)) == -1){
-        if (debug){
-            nspr.nlog_custom("^", "FAILED send SYN packet.\n", 2);
-        }
-        return PORT_ERROR;
-    }
-
     close(sock);
+    // int result = recv_packet(ncot->recv_timeout_ms, debug, no_syn_scan);
 
-    struct sockaddr saddr;
-    struct sockaddr_in source, _dest;
-    unsigned char *buffer = (unsigned char *)malloc(65536);
-    unsigned short iphdrlen;
+    return PORT_OPEN;
+}
 
+int
+recv_packet(int recv_timeout_ms, bool debug){
     /*Создания нового сокета для обработки ответа.*/
     if (debug){
-        nspr.nlog_custom("SYN", "Creation RAW sock on RECV.\n", 1);
+	   nspr.nlog_custom("", "===============================RECV===============================\n", 0);
     }
-    int sock1 = create_raw_sock("tcp");
-    if (sock1 == -1){
-        if (debug){
-            nspr.nlog_custom("^", "FAILED creation RAW sock on RECV.\n", 2);
-        }
+    scan_debug_log("Creation RAW sock for recv.\n", debug);
+    int sock_recv = socket(AF_INET, SOCK_RAW, IPPROTO_TCP); 
+    if (sock_recv == -1){
+	   scan_debug_log("FAILED Creation RAW sock for recv.\n", debug);
         return PORT_ERROR;
     }
 
-    /*Установка таймаута для сокета.*/
-    result1 = setsockopt(sock1, SOL_SOCKET, SO_RCVTIMEO, &timeout2, sizeof(timeout2));
-    if (result1 < 0){
-        return PORT_ERROR;
+    /*Буфер с ответом.*/
+    unsigned char *buffer = (unsigned char *)calloc(RECV_BUFFER_SIZE, sizeof(unsigned char));
+    if (buffer == NULL){
+	   scan_debug_log("FAILED Memory allocation.\n", debug);
+	   close(sock_recv);
+	   return PORT_ERROR;
     }
+
+
+
+
+    struct pollfd poll_fds[1];
+    poll_fds[0].fd = sock_recv;
+    poll_fds[0].events = POLLIN;
+
+    int poll_result = poll(poll_fds, 1, recv_timeout_ms);
+    if (poll_result == -1) {
+	   free(buffer);
+	   return PORT_ERROR;
+    } 
+    else if (poll_result == 0) {
+	   free(buffer);
+	   // Баг что выдаёт наогда это.
+	   return PORT_FILTER;
+    }
+
+
+
+
 
     /*Получение пакета в буфер.*/
-    if (debug){
-        nspr.nlog_custom("SYN", "Getting packet on buffer.\n", 1);
-    }
+    scan_debug_log("Getting packet in buffer.\n", debug);
 
-    int saddr_size = sizeof(saddr);
+    struct sockaddr saddr;
+    int saddr_size = sizeof saddr;
 
-    int data_size = recvfrom(sock1, buffer, 65536, 0, (struct sockaddr*)&saddr, (socklen_t*)&saddr_size);
-    if (data_size == -1){
-        if (debug){
-            nspr.nlog_custom("^", "Getting packet on buffer.\n", 2);
-        }
-        return PORT_ERROR;
-    }
+    auto start_time = std::chrono::steady_clock::now();
+    for (; ;){
+	   ssize_t data_size = recvfrom(sock_recv, buffer, RECV_BUFFER_SIZE, 0, &saddr, (socklen_t *)&saddr_size);
+	   if (data_size == -1){
+		  scan_debug_log("FAILED Getting packet in buffer.\n", debug);
+		  free(buffer);
+		  close(sock_recv);
+		  return PORT_ERROR;
+	   }
 
-    if (iph1->protocol == 6){ // Если протокол равен tcp
-        /*Извлечение ответа*/
-        if (debug){
-            nspr.nlog_custom("SYN", "Getting answer.\n", 1);
-        }
-        struct iphdr *iph1 = (struct iphdr*)buffer;
-        iphdrlen = iph1->ihl*4;
+	   struct iphdr *iph = (struct iphdr*)buffer;
+	   unsigned short iphdrlen = (iph->ihl) * 4;
+	   if (iphdrlen < 20){
+		  free(buffer);
+		  close(sock_recv);
+		  return PORT_ERROR;
+	   }
 
-        struct tcphdr *tcph1 =(struct tcphdr*)(buffer + iphdrlen);
-        memset(&source, 0, sizeof(source));
-        source.sin_addr.s_addr = iph1->saddr;
+	   /*Если протокол полученного пакета равен TCP.*/
+	   if (iph->protocol == 6){ 
+		  /*Извлечение ответа*/
+		  scan_debug_log("Getting answer.\n", debug);
 
-        memset(&_dest, 0, sizeof(_dest));
-        _dest.sin_addr.s_addr = iph1->daddr;
+		  /*Получение самого пакета в структуру.*/
+		  struct tcphdr *tcph = (struct tcphdr*)(buffer + iphdrlen);
+		  struct sockaddr_in source;
 
-        if (debug){
-            if (tcph1->syn != 0){
-                nspr.nlog_custom("SYN", "Flag SYN is: " + std::to_string(tcph1->syn) + "\n", 0);
-            }
-            else {
-                nspr.nlog_custom("SYN", "Flag SYN is: " + std::to_string(tcph1->syn) + "\n", 2);
-            }
-            if (tcph1->ack != 0){
-                nspr.nlog_custom("SYN", "Flag ACK is: " + std::to_string(tcph1->ack) + "\n", 0);
-            }
-            else {
-                nspr.nlog_custom("SYN", "Flag ACK is: " + std::to_string(tcph1->ack) + "\n", 2);
-            }
-            if (tcph1->rst != 0){
-                nspr.nlog_custom("SYN", "Flag RST is: " + std::to_string(tcph1->rst) + "\n", 0);
-            }
-            else {
-                nspr.nlog_custom("SYN", "Flag RST is: " + std::to_string(tcph1->rst) + "\n", 2);
-            }
-        }
-	   int status = get_port_status(tcph1->th_flags);
-	   if (status != PORT_ERROR){
-		  close(sock1);
-		  return status;
+		  /*Получение, IP отправителя.*/
+		  memset(&source, 0, sizeof(source));
+		  source.sin_addr.s_addr = iph->saddr;
+
+		  /*IP получателя несходиться с IP отправителя.
+		   * Один из главных процессов.*/
+		  if (source.sin_addr.s_addr != dest_ip.s_addr){
+			 auto current_time = std::chrono::steady_clock::now();
+			 auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
+
+			 if (elapsed_time >= recv_timeout_ms) {
+				free(buffer);
+				close(sock_recv);
+				return PORT_FILTER;
+			 }
+			 if (debug){
+				nspr.nlog_error(">> A packet was received from the wrong host.\n");
+			 }
+			 continue;
+		  }
+
+		  if (debug){
+			 if (tcph->syn != 0){
+				nspr.nlog_custom("SCAN", "Flag SYN is: " + std::to_string(tcph->syn) + "\n", 0);
+			 }
+			 else {
+				nspr.nlog_custom("SCAN", "Flag SYN is: " + std::to_string(tcph->syn) + "\n", 2);
+			 }
+			 if (tcph->ack != 0){
+				nspr.nlog_custom("SCAN", "Flag ACK is: " + std::to_string(tcph->ack) + "\n", 0);
+			 }
+			 else {
+				nspr.nlog_custom("SCAN", "Flag ACK is: " + std::to_string(tcph->ack) + "\n", 2);
+			 }
+			 if (tcph->rst != 0){
+				nspr.nlog_custom("SCAN", "Flag RST is: " + std::to_string(tcph->rst) + "\n", 0);
+			 }
+			 else {
+				nspr.nlog_custom("SCAN", "Flag RST is: " + std::to_string(tcph->rst) + "\n", 2);
+			 }
+		  }
+
+		  int status = get_port_status(tcph->th_flags, no_syn_scan);
+		  if (status != PORT_ERROR){
+			 free(buffer);
+			 close(sock_recv);
+			 return status;
+		  }else {
+			 return PORT_ERROR;
+		  }
 	   }
     }
 
     /*В любом другом случае считаеться что выполнение
     функции кончилось ошибкой.*/
-    close(sock1);
+    free(buffer);
+    close(sock_recv);
     return PORT_ERROR;
 }
 
 int
-syn_scan::get_port_status(uint8_t flags){
+get_port_status(uint8_t flags, bool no_syn){
     /*Обработка пакета, писалась используя
     эту статью: https://nmap.org/book/synscan.html*/
-    if (fin || null | xmas){
+    if (no_syn){
 	   switch (flags) {
 		  case 0x04:{
 			 return PORT_CLOSED;
@@ -293,43 +357,4 @@ syn_scan::get_port_status(uint8_t flags){
 		  }
 	   }
     }
-}
-
-void
-syn_scan::set_tcp_flags(struct tcphdr* tcph, int syn, int ack, int fin, int rst, int urg, int phs){
-    tcph->fin=fin;
-    tcph->syn=syn;
-    tcph->rst=rst;
-    tcph->psh=phs;
-    tcph->ack=ack;
-    tcph->urg=urg;
-}
-
-/*Убран в другую для более короткой основной*/
-void 
-syn_scan::create_tcp_header(struct tcphdr* tcph, int port){
-    /*Создание tcp заголовка для пакета.*/
-    if (debug){
-        nspr.nlog_custom("SYN", "Creation TCP header.\n", 1);
-    }
-    tcph->source = htons(SOURCE_PORT);
-    tcph->seq = htonl(1105024978);
-    tcph->dest = htons(port);
-    tcph->ack_seq = 0;
-    tcph->doff = sizeof(struct tcphdr) / 4;
-    if (fin){
-	   set_tcp_flags(tcph, 0, 0, 1, 0, 0, 0);
-    }
-    else if (null){
-	   set_tcp_flags(tcph, 0, 0, 0, 0, 0, 0);
-    }
-    else if (xmas){
-	   set_tcp_flags(tcph, 0, 0, 1, 0, 1, 1);
-    }
-    else {
-	   set_tcp_flags(tcph, 1, 0, 0, 0, 0, 0);
-    }
-    tcph->check = 0;
-    tcph->window = htons(14600);
-    tcph->urg_ptr = 0;
 }

@@ -1,3 +1,10 @@
+/*
+ * NESCA4
+ * by oldteam & lomaster
+ * license GPL-3.0
+ * - Сделано от души 2023.
+*/
+
 #ifndef NET_UTILS_H
 #define NET_UTILS_H
 
@@ -9,8 +16,6 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <unistd.h>
-
-#include "../modules/include/easysock.h"
 
 class dns_utils{
 public:

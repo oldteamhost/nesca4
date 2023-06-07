@@ -1,4 +1,12 @@
+/*
+ * NESCA4
+ * by oldteam & lomaster
+ * license GPL-3.0
+ * - Сделано от души 2023.
+*/
+
 #include "../include/bruteforce.h"
+#include <sys/socket.h>
 
 nesca_prints nsp;
 brute_ftp_data bfd;
@@ -45,7 +53,7 @@ brute_smtp(const std::string& ip, int port, const std::string& login, const std:
         nsp.nlog_custom("SMTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
     }
 
-    int sock = create_sock("tcp");
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1) {
         return "";
     }
@@ -190,7 +198,7 @@ brute_ftp(const std::string ip, int port, const std::string login, const std::st
             nsp.nlog_custom("FTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
     }
 
-    int sock = create_sock("tcp");
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1){
 	   return "";
     }

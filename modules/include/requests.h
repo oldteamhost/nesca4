@@ -7,9 +7,12 @@
 #include <vector>
 #include <algorithm>
 #include <cstring>
-#include "easysock.h"
+#include <sys/socket.h>
+#include <netdb.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <arpa/inet.h>
 
-#define HTTPREQUEST_VERSION 0.1
 #define HTTPREQUEST_ERROR "HTTPREQUEST: error"
 
 std::string 

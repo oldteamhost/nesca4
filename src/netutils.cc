@@ -1,15 +1,24 @@
+/*
+ * NESCA4
+ * by oldteam & lomaster
+ * license GPL-3.0
+ * - Сделано от души 2023.
+*/
+
 #include "../include/netutils.h"
+#include <sys/socket.h>
+#include <unistd.h>
 
 const char*
 dns_utils::get_dns_by_ip(const char* ip, int port){
     struct in_addr addr;
     if (inet_pton(AF_INET, ip, &addr) != 1) {
-        return "-1";
+        return "N/A";
     }
 
-    int sock = create_sock("tcp"); 
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1) {
-        return "-1";
+        return "N/A";
     }
 
     struct sockaddr_in sa;
@@ -22,7 +31,7 @@ dns_utils::get_dns_by_ip(const char* ip, int port){
     int res = getnameinfo((struct sockaddr*)&sa, sizeof(sa), host, sizeof(host), NULL, 0, NI_NAMEREQD);
     if (res != 0) {
         close(sock);
-        return "-1";
+        return "N/A";
     }
 
     char* dns_name = new char[strlen(host) + 1];
@@ -33,10 +42,10 @@ dns_utils::get_dns_by_ip(const char* ip, int port){
 
 const char* 
 dns_utils::get_ip_by_dns(const char* dns){
-    int sock = create_sock("tcp"); 
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
 
     if (sock == -1){
-        return "-1";
+        return "N/A";
     }
 
     struct addrinfo hints, *res;
@@ -48,7 +57,7 @@ dns_utils::get_ip_by_dns(const char* dns){
 
     if (status != 0){
         close(sock);
-        return "-1";
+        return "N/A";
     }
 
     struct sockaddr_in *addr = (struct sockaddr_in *)res->ai_addr;
@@ -105,7 +114,7 @@ ip_utils::get_local_ip(){
     static char buffer[100];
     socklen_t namelen;
 
-    int sock = create_sock("tcp");
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0){
         return "-1";
     }
@@ -120,7 +129,7 @@ ip_utils::get_local_ip(){
 
     int err = connect(sock, (const struct sockaddr*)&serv, sizeof(serv));
     if (err < 0){
-        close_sock(sock);
+	   close(sock);
         return "-1";
     }
 

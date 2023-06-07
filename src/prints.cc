@@ -1,3 +1,10 @@
+/*
+ * NESCA4
+ * by oldteam & lomaster
+ * license GPL-3.0
+ * - Сделано от души 2023.
+*/
+
 #include "../include/prints.h"
 
 void 
@@ -35,7 +42,7 @@ nesca_prints::main_nesca_out(std::string opt, std::string result, int mode, std:
         temp_file = print_get_time(get_time()) + "[" + opt + "]:" + result;
     }
     else if (mode == 3){
-        temp = gray_nesca + print_get_time(get_time()) + "[" + opt + "]:" + reset_color + 
+        temp = gray_nesca + "[>]"  + "[" + opt + "]:" + reset_color + 
         sea_green + result + reset_color + gray_nesca + " " + opt1 + ": " + reset_color +
         golder_rod + result1 + reset_color + gray_nesca + " " + opt2 + ": " + reset_color +
         golder_rod + result2 + reset_color;
@@ -174,4 +181,18 @@ nesca_prints::nlog_custom(std::string auth, std::string message, int color){
     if (save_file){
         write_line(file_path_save, log);
     }
+}
+void
+nesca_prints::yellow_html_on(void){
+    std::cout << yellow_html;
+}
+
+void 
+nesca_prints::green_html_on(void){
+    std::cout << green_html;
+}
+
+void 
+nesca_prints::red_html_on(void){
+    std::cout << red_html;
 }

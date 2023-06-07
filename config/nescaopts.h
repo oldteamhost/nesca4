@@ -8,19 +8,24 @@ public:
         std::string txt_save;
 
 	   /*Scan options*/
+	   const char* source_ip;
+	   int type = 1;
+	   bool nmap_mode;
 	   bool fin_scan;
 	   bool null_scan;
 	   bool xmas_scan;
 
         bool timeout;
-        int timeout_ms = 500;
-        int recv_timeout_sec = 3;
+        int timeout_ms = 150;
+        int recv_timeout_ms = 2000;
         int send_timeout_sec = 3;
         int scanning_count = 2;
         int log_set = 20;
-        int _threads = 100;
+        int _threads = 15;
 
         std::vector<int> ports = {80};
+	   std::vector<int> source_ports = {46566, 42849, 38872, 58098,
+								 34343, 54075, 54176, 54784};
 
         bool debug;
         bool print_errors;
@@ -64,6 +69,7 @@ public:
 	   /*Ping options*/
 	   int icmp_ping_timeout = 500;
 	   int tcp_ping_timeout = 300;
+	   int threads_ping = 10;
 	   int ping_log = 20;
         bool display_response_time;
 
@@ -74,6 +80,7 @@ public:
         int threads_temp;
         std::string ports_temp;
         bool thread_on_port;
+	   bool info_version;
         bool html;
 
 	   /*Bruteforce auth data*/

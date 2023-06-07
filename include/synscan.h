@@ -1,3 +1,10 @@
+/*
+ * NESCA4
+ * by oldteam & lomaster
+ * license GPL-3.0
+ * - Сделано от души 2023.
+*/
+
 #ifndef SYN_SCAN_H
 #define SYN_SCAN_H
 
@@ -20,52 +27,63 @@
 #include <netinet/in.h>
 #include <vector>
 
-#include "../modules/include/easysock.h"
 #include "../include/prints.h"
 #include "../include/other.h"
+
+#define SEND_BUFFER_SIZE 4096
+#define RECV_BUFFER_SIZE 4096
+
+#define IP_HEADER_TTL 122
+#define WINDOWS_SIZE 32768
 
 #define PORT_OPEN 0
 #define PORT_CLOSED 1
 #define PORT_FILTER 2
 #define PORT_ERROR -1
 
-#define SOURCE_PORT 49151
+#define SYN_SCAN 1
+#define XMAS_SCAN 2
+#define FIN_SCAN 3
+#define NULL_SCAN 4
 
+/*Опции для nesca_scan.*/
+struct nesca_scan_opts{
+    int scan_type;
+    int recv_timeout_ms;
+    int source_port;
+    bool debug;
+    const char* source_ip;
+};
+
+/*Для расчёта фейковой контрольной суммы
+ * CAPEC-287: TCP SYN Scan*/
 struct pseudo_header{
-   unsigned int source_address;
-   unsigned int dest_address;
-   unsigned char placeholder;
-   unsigned char protocol;
-   unsigned short tcp_length;
+   uint32_t source_address;
+   uint32_t dest_address;
+   uint8_t placeholder;
+   uint8_t protocol;
+   uint16_t tcp_length;
    struct tcphdr tcp;
 };
 
-static unsigned short csum(unsigned short *ptr,int nbytes);
+/*Главная функция по сканированию.*/
+int 
+nesca_scan(struct nesca_scan_opts *ncot ,const char* ip, int port, int timeout_ms);
 
-class syn_scan{
-public:
-      bool debug = false;
-	 bool fin = false;
-	 bool null = false;
-	 bool xmas = false;
+/*Принятие пакета, отправка находиться в nesca_scan.*/
+int
+recv_packet(int recv_timeout_ms, bool debug);
 
-      // GOTO
-      int s_timeout = 4;
-      int r_timeout = 4;
-      //
-      const char* source_ip;
-      void
-      create_ip_header(struct iphdr *iph, const char *source_ip, struct in_addr dest_ip);
-	 static void
-      set_tcp_flags(struct tcphdr* tcph, int syn, int ack, int fin, int rst, int urg, int phs);
-      void 
-      create_tcp_header(struct tcphdr* tcph, int port);
-	 int
-      get_port_status(uint8_t flags);
-      int 
-      syn_scan_port(const char* ip, int port, int timeout_ms);
+/*Для генерации рандомного seq.*/
+unsigned int
+generate_seq();
 
+/*Более простой вывод лога.*/
+void
+scan_debug_log(std::string mes, bool debug);
 
-};
+/*Определение статуса порта.*/
+int
+get_port_status(uint8_t flags, bool no_syn);
 
 #endif

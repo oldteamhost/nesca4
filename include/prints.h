@@ -1,3 +1,10 @@
+/*
+ * NESCA4
+ * by oldteam & lomaster
+ * license GPL-3.0
+ * - Сделано от души 2023.
+*/
+
 #ifndef PRINTS_H
 #define PRINTS_H
 
@@ -32,8 +39,14 @@ class nesca_prints{
         sea_green_on(void);
         void 
         reset_colors(void);
+        void 
+        green_html_on(void);
 	   void
 	   gray_nesca_on(void);
+	   void
+	   yellow_html_on(void);
+        void 
+        red_html_on(void);
         int 
         import_color_scheme(const std::string file_name, std::map<std::string, std::string>& config_values);
         int 

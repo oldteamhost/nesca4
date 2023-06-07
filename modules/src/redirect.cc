@@ -1,4 +1,4 @@
-#include "include/redirect.h"
+#include "../include/redirect.h"
 
 std::string 
 parse_http_equiv(std::string& html) {

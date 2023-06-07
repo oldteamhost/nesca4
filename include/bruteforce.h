@@ -1,3 +1,10 @@
+/*
+ * NESCA4
+ * by oldteam & lomaster
+ * license GPL-3.0
+ * - Сделано от души 2023.
+*/
+
 #ifndef BRUTEFORCE_H
 #define BRUTEFORCE_H
 
@@ -17,8 +24,6 @@
 #include "../include/callbacks.h"
 #include "../include/other.h"
 #include "../include/prints.h"
-
-#include "../modules/include/easysock.h"
 
 #include "../lib/HCNetSDK.h"
 

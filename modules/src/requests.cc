@@ -1,8 +1,9 @@
-#include "include/requests.h"
+#include "../include/requests.h"
+#include <sys/socket.h>
 
 std::string 
 send_http_request(const std::string& node, int port) {
-    int sockfd = create_sock("tcp"); 
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
     if (sockfd < 0) {
         return HTTPREQUEST_ERROR;
@@ -61,7 +62,7 @@ send_http_request(const std::string& node, int port) {
 
 int
 get_response_code(const std::string& node, int port){
-    int sockfd = create_sock("tcp"); 
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1) {
         std::cerr << "Failed to create socket" << std::endl;
         return -1;
