@@ -199,9 +199,6 @@ recv_packet(int recv_timeout_ms, bool debug){
 	   return PORT_ERROR;
     }
 
-
-
-
     struct pollfd poll_fds[1];
     poll_fds[0].fd = sock_recv;
     poll_fds[0].events = POLLIN;
@@ -213,19 +210,14 @@ recv_packet(int recv_timeout_ms, bool debug){
     } 
     else if (poll_result == 0) {
 	   free(buffer);
-	   // Баг что выдаёт наогда это.
 	   return PORT_FILTER;
     }
-
-
-
-
 
     /*Получение пакета в буфер.*/
     scan_debug_log("Getting packet in buffer.\n", debug);
 
     struct sockaddr saddr;
-    int saddr_size = sizeof saddr;
+    int saddr_size = sizeof(saddr);
 
     auto start_time = std::chrono::steady_clock::now();
     for (; ;){
@@ -297,13 +289,9 @@ recv_packet(int recv_timeout_ms, bool debug){
 		  }
 
 		  int status = get_port_status(tcph->th_flags, no_syn_scan);
-		  if (status != PORT_ERROR){
-			 free(buffer);
-			 close(sock_recv);
-			 return status;
-		  }else {
-			 return PORT_ERROR;
-		  }
+		  free(buffer);
+		  close(sock_recv);
+		  return status;
 	   }
     }
 
@@ -311,7 +299,7 @@ recv_packet(int recv_timeout_ms, bool debug){
     функции кончилось ошибкой.*/
     free(buffer);
     close(sock_recv);
-    return PORT_ERROR;
+    return PORT_FILTER;
 }
 
 int

@@ -1086,7 +1086,7 @@ parse_args(int argc, char** argv){
             {
                 argp.ports_temp = optarg;
                 argp.ports = write_ports(argp.ports_temp);
-                if (argp.ports[0] == -1){
+                if (argp.ports[0] == EOF){
                     size_t pos = argp.ports_temp.find(",");
                     size_t pos1 = argp.ports_temp.find("-");
 
@@ -1096,7 +1096,6 @@ parse_args(int argc, char** argv){
                     else {
                         argp.ports = split_string_int(optarg, DELIMITER);
                     }
-
                 }
                 break;
             }
@@ -1524,9 +1523,7 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms, const int
     ncopts.debug = argp.syn_debug;
     ncopts.scan_type = argp.type;
     ncopts.recv_timeout_ms = argp.recv_timeout_ms;
-
-    int recv_value = -1;
-
+    int recv_value;
 
     for (const auto& port : ports){
 	   int result = nesca_scan(&ncopts, ip, port, timeout_ms);
@@ -1537,14 +1534,13 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms, const int
 	   /*Сам таймаут.*/
 	   if (status == std::future_status::ready){
 		  recv_value = recv_result.get();
+		  processing_tcp_scan_ports(ip, port, recv_value);
 	   }
 	   else if (status == std::future_status::timeout){
-		  processing_tcp_scan_ports(ip, port, recv_value);
-		  return -1;
+		  /*Ответ не был получен значит filtered.*/
+		  processing_tcp_scan_ports(ip, port, 2);
 	   }
-	   processing_tcp_scan_ports(ip, port, recv_value);
     }
-
 
     return recv_value;
 }
