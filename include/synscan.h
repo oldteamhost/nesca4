@@ -70,10 +70,6 @@ struct pseudo_header{
 int 
 nesca_scan(struct nesca_scan_opts *ncot ,const char* ip, int port, int timeout_ms);
 
-/*Принятие пакета, отправка находиться в nesca_scan.*/
-int
-recv_packet(int recv_timeout_ms, bool debug);
-
 /*Для генерации рандомного seq.*/
 unsigned int
 generate_seq();
@@ -84,6 +80,6 @@ scan_debug_log(std::string mes, bool debug);
 
 /*Определение статуса порта.*/
 int
-get_port_status(uint8_t flags, bool no_syn);
+get_port_status(unsigned char* buffer, bool no_syn);
 
 #endif

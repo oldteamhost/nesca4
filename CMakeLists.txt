@@ -11,10 +11,12 @@ include_directories(lib)
 link_directories(lib/platform/linux)
 
 file(GLOB SRCS src/*.cc)
-file(GLOB C_SRCS ncsock/src/*.c)
-file(GLOB C_PING ncping/src/*.c)
 file(GLOB MODULE_SRCS modules/src/*.cc)
+file(GLOB PLUS_NCSOCK_SRCS ncsock/src/*.cc)
 
-add_executable(nesca4 ${SRCS} ${MODULE_SRCS} ${C_SRCS} ${C_PING})
+file(GLOB C_NCSOCK_SRCS ncsock/src/*.c)
+file(GLOB C_NCPING_SRCS ncping/src/*.c)
+
+add_executable(nesca4 ${SRCS} ${C_NCPING_SRCS} ${C_NCSOCK_SRCS} ${PLUS_NCSOCK_SRCS} ${MODULE_SRCS})
 target_link_libraries(nesca4 curl pthread hcnetsdk ssh)
 

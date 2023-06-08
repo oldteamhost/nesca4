@@ -15,7 +15,8 @@ extern "C" {
  * ICMP_ECHO,
  * ICMP_TIMESTAMP,
  * ICMP_INFO_REQUEST.*/
-int
+
+double
 icmp_ping(const char* dest_ip, int count, int timeout_ms,
 	   u_int8_t type, u_int8_t code, u_int8_t ttl);
 

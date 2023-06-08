@@ -6,6 +6,7 @@
 */
 
 /*GOTO*/
+#include <cstdio>
 #include <iostream>
 #include <cstdlib>
 #include <chrono>
@@ -46,8 +47,9 @@
 #include "../config/nescaopts.h"
 #include "../ncping/include/icmpping.h"
 #include "../ncping/include/tcpping.h"
+#include "../ncsock/include/ncread.h"
 
-#define VERSION "20230608"
+#define VERSION "20230609"
 #define DELIMITER ','
 
 std::mutex mtx;
@@ -532,7 +534,12 @@ int main(int argc, char** argv){
 
 	   std::cout << std::endl;
 	   std::string dns = dus.get_dns_by_ip(ip.c_str(), source_port);
-	   std::cout << np.main_nesca_out("READY", ip, 5, "DNS", "", dns, "") << std::endl;
+	   double time_ms;
+
+	   if (argp.rtts.count(ip) > 0){time_ms = argp.rtts.at(ip);} 
+	   else {time_ms = -1.0;}
+
+	   std::cout << np.main_nesca_out("READY", ip, 5, "DNS", "RTT", dns, std::to_string(time_ms)) << std::endl;
 
 	   ip_count++;
 
@@ -560,27 +567,30 @@ int main(int argc, char** argv){
 bool
 process_ping(std::string ip){
     // Обычный через connect 
+    /*
     bool tcp_ping = connect_tcp_ping(ip.c_str(), 80, argp.icmp_ping_timeout);
     if (tcp_ping){
 	   return true;
     }
+    */
 
     // 3 Метода ICMP пинга
     delay_ms(argp.icmp_ping_timeout);
-    int icmp_casual = icmp_ping(ip.c_str(), 1, 1000, 8, 0, 64);
-    if (icmp_casual == 0){
+    double icmp_casual = icmp_ping(ip.c_str(), 1, 1000, 8, 0, 64);
+    if (icmp_casual != PING_ERROR){
+	   argp.rtts[ip] = icmp_casual;
 	   return true;
     }
     else {
-	   delay_ms(argp.icmp_ping_timeout);
-	   int icmp_rev = icmp_ping(ip.c_str(), 1, 1000, 13, 0, 64);
-	   if (icmp_rev == 0){
+	   double icmp_rev = icmp_ping(ip.c_str(), 1, 1000, 13, 0, 64);
+	   if (icmp_rev != PING_ERROR){
+		  argp.rtts[ip] = icmp_rev;
 		  return true;
 	   }
 	   else {
-		  delay_ms(argp.icmp_ping_timeout);
 		  int icmp_rev1 = icmp_ping(ip.c_str(), 1, 1000, 15, 0, 64);
-		  if (icmp_rev1 == 0){
+		  if (icmp_rev1 != PING_ERROR){
+		      argp.rtts[ip] = icmp_rev1;
 			 return true;
 		  }
 	   }
@@ -1524,15 +1534,49 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms, const int
     ncopts.source_ip = argp.source_ip;
     ncopts.debug = argp.syn_debug;
     ncopts.scan_type = argp.type;
-    ncopts.recv_timeout_ms = argp.recv_timeout_ms;
-    int recv_value;
 
-    for (const auto& port : ports){
-	   int result = nesca_scan(&ncopts, ip, port, timeout_ms);
-	   recv_value = recv_packet(argp.recv_timeout_ms, argp.syn_debug);
-	   processing_tcp_scan_ports(ip, port, recv_value);
+    /*Расчёт таймаута для приёма данных
+	* самая простая формула, время ответа
+	* умножить на 4.*/
+    int recv_timeout_result;
+    auto it = argp.rtts.find(ip);
+    if (it != argp.rtts.end()) {
+	   double rtt_ping = argp.rtts.at(ip);
+	   recv_timeout_result = rtt_ping * 4;
+	   ncopts.recv_timeout_ms = recv_timeout_result;
+    } 
+    else {
+	   recv_timeout_result = 600;
+	   ncopts.recv_timeout_ms = recv_timeout_result;
     }
 
-    return recv_value;
+    for (const auto& port : ports){
+	   /*Буфер для ответа.*/
+	   unsigned char *buffer = (unsigned char *)calloc(READ_BUFFER_SIZE, sizeof(unsigned char));
+
+	   /*Отправка пакета.*/
+	   int result = nesca_scan(&ncopts, ip, port, timeout_ms);
+	   if (result != PORT_OPEN){
+		  free(buffer);
+		  processing_tcp_scan_ports(ip, port, PORT_ERROR);
+		  continue;
+	   }
+
+	   /*Принятие пакета.*/
+	   int read = ncread(ip, recv_timeout_result, &buffer, argp.syn_debug);
+	   if (read != SUCCESS_READ){
+		  free(buffer);
+		  processing_tcp_scan_ports(ip, port, PORT_FILTER);
+		  continue;
+	   }
+
+	   /*Обработка пакета.*/
+	   int port_status = get_port_status(buffer, false);
+	   processing_tcp_scan_ports(ip, port, port_status);
+
+	   /*Очистка буфера.*/
+	   free(buffer);
+    }
+    return 0;
 }
 

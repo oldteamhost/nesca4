@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <map>
 
 class arguments_program{
 public:
@@ -15,9 +16,9 @@ public:
 	   bool null_scan;
 	   bool xmas_scan;
 
-        bool timeout;
-        int timeout_ms = 140;
-        int recv_timeout_ms = 2000;
+        bool timeout = 0;
+        int timeout_ms = 0;
+        int recv_timeout_ms = 1000;
         int scanning_count = 2;
         int log_set = 20;
         int _threads = 15;
@@ -71,6 +72,8 @@ public:
 	   int threads_ping = 10;
 	   int ping_log = 20;
         bool display_response_time;
+
+	   std::map<std::string,double> rtts;
 
 	   /*Don`t touch*/
         int fuck_yeah = 0;

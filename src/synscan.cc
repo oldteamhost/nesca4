@@ -19,6 +19,7 @@
 #include <poll.h>
 
 #include "../include/synscan.h"
+#include "../ncsock/include/ncread.h"
 #include "../ncsock/include/headers.h"
 #include "../ncsock/include/socket.h"
 #include "../ncsock/include/other.h"
@@ -179,135 +180,18 @@ nesca_scan(struct nesca_scan_opts *ncot ,const char* ip, int port, int timeout_m
 }
 
 int
-recv_packet(int recv_timeout_ms, bool debug){
-    /*Создания нового сокета для обработки ответа.*/
-    if (debug){
-	   nspr.nlog_custom("", "===============================RECV===============================\n", 0);
-    }
-    scan_debug_log("Creation RAW sock for recv.\n", debug);
-    int sock_recv = socket(AF_INET, SOCK_RAW, IPPROTO_TCP); 
-    if (sock_recv == -1){
-	   scan_debug_log("FAILED Creation RAW sock for recv.\n", debug);
-        return PORT_ERROR;
-    }
+get_port_status(unsigned char* buffer, bool no_syn){
+    struct iphdr *iph = (struct iphdr*)buffer;
+    unsigned short iphdrlen = (iph->ihl) * 4;
 
-    /*Буфер с ответом.*/
-    unsigned char *buffer = (unsigned char *)calloc(RECV_BUFFER_SIZE, sizeof(unsigned char));
-    if (buffer == NULL){
-	   scan_debug_log("FAILED Memory allocation.\n", debug);
-	   close(sock_recv);
-	   return PORT_ERROR;
-    }
+    /*Если пакет именно TCP.*/
+    if (iph->protocol != 6){return PORT_ERROR;}
+    struct tcphdr *tcph = (struct tcphdr*)((char*)buffer + iphdrlen);
 
-    struct pollfd poll_fds[1];
-    poll_fds[0].fd = sock_recv;
-    poll_fds[0].events = POLLIN;
-
-    int poll_result = poll(poll_fds, 1, recv_timeout_ms);
-    if (poll_result == -1) {
-	   free(buffer);
-	   return PORT_ERROR;
-    } 
-    else if (poll_result == 0) {
-	   free(buffer);
-	   return PORT_FILTER;
-    }
-
-    /*Получение пакета в буфер.*/
-    scan_debug_log("Getting packet in buffer.\n", debug);
-
-    struct sockaddr saddr;
-    int saddr_size = sizeof(saddr);
-
-    auto start_time = std::chrono::steady_clock::now();
-    for (; ;){
-	   ssize_t data_size = recvfrom(sock_recv, buffer, RECV_BUFFER_SIZE, 0, &saddr, (socklen_t *)&saddr_size);
-	   if (data_size == -1){
-		  scan_debug_log("FAILED Getting packet in buffer.\n", debug);
-		  free(buffer);
-		  close(sock_recv);
-		  return PORT_ERROR;
-	   }
-
-	   struct iphdr *iph = (struct iphdr*)buffer;
-	   unsigned short iphdrlen = (iph->ihl) * 4;
-	   if (iphdrlen < 20){
-		  free(buffer);
-		  close(sock_recv);
-		  return PORT_ERROR;
-	   }
-
-	   /*Если протокол полученного пакета равен TCP.*/
-	   if (iph->protocol == 6){ 
-		  /*Извлечение ответа*/
-		  scan_debug_log("Getting answer.\n", debug);
-
-		  /*Получение самого пакета в структуру.*/
-		  struct tcphdr *tcph = (struct tcphdr*)(buffer + iphdrlen);
-		  struct sockaddr_in source;
-
-		  /*Получение, IP отправителя.*/
-		  memset(&source, 0, sizeof(source));
-		  source.sin_addr.s_addr = iph->saddr;
-
-		  /*IP получателя несходиться с IP отправителя.
-		   * Один из главных процессов.*/
-		  if (source.sin_addr.s_addr != dest_ip.s_addr){
-			 auto current_time = std::chrono::steady_clock::now();
-			 auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
-
-			 if (elapsed_time >= recv_timeout_ms) {
-				free(buffer);
-				close(sock_recv);
-				return PORT_FILTER;
-			 }
-			 if (debug){
-				nspr.nlog_error(">> A packet was received from the wrong host.\n");
-			 }
-			 continue;
-		  }
-
-		  if (debug){
-			 if (tcph->syn != 0){
-				nspr.nlog_custom("SCAN", "Flag SYN is: " + std::to_string(tcph->syn) + "\n", 0);
-			 }
-			 else {
-				nspr.nlog_custom("SCAN", "Flag SYN is: " + std::to_string(tcph->syn) + "\n", 2);
-			 }
-			 if (tcph->ack != 0){
-				nspr.nlog_custom("SCAN", "Flag ACK is: " + std::to_string(tcph->ack) + "\n", 0);
-			 }
-			 else {
-				nspr.nlog_custom("SCAN", "Flag ACK is: " + std::to_string(tcph->ack) + "\n", 2);
-			 }
-			 if (tcph->rst != 0){
-				nspr.nlog_custom("SCAN", "Flag RST is: " + std::to_string(tcph->rst) + "\n", 0);
-			 }
-			 else {
-				nspr.nlog_custom("SCAN", "Flag RST is: " + std::to_string(tcph->rst) + "\n", 2);
-			 }
-		  }
-
-		  int status = get_port_status(tcph->th_flags, no_syn_scan);
-		  free(buffer);
-		  close(sock_recv);
-		  return status;
-	   }
-    }
-
-    /*В любом другом случае считаеться что выполнение
-    функции кончилось ошибкой.*/
-    free(buffer);
-    close(sock_recv);
-    return PORT_FILTER;
-}
-
-int
-get_port_status(uint8_t flags, bool no_syn){
     /*Обработка пакета, писалась используя
     эту статью: https://nmap.org/book/synscan.html*/
     if (no_syn){
-	   switch (flags) {
+	   switch (tcph->th_flags) {
 		  case 0x04:{
 			 return PORT_CLOSED;
 		  }
@@ -317,7 +201,7 @@ get_port_status(uint8_t flags, bool no_syn){
 	   }
     } 
     else {
-	   switch (flags) {
+	   switch (tcph->th_flags) {
 		  case 0x12:{
 			 /*SYN + ACK
 			 * Если хост ответил флагом ack и послал syn

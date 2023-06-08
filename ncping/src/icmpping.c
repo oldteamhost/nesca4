@@ -11,6 +11,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <sys/time.h>
 #include <netinet/ip_icmp.h>
 #include <netdb.h>
 #include <unistd.h>
@@ -19,13 +20,15 @@
 #include "../../ncsock/include/headers.h"
 #include "../../ncsock/include/other.h"
 
-int
+double
 icmp_ping(const char* dest_ip, int count, int timeout_ms,
 	   u_int8_t type, u_int8_t code, u_int8_t ttl){
     int count_packets = 0;
     int ident = getpid() & 0xFFFF;
     static u_char outpack[4096];
     memset(outpack, 0, sizeof(outpack));
+
+    struct timeval send_time, recv_time;
 
     /*Создание сокета.*/
     int sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
@@ -56,6 +59,7 @@ icmp_ping(const char* dest_ip, int count, int timeout_ms,
     icp->icmp_cksum = checksum_16bit(icmp_buffer, sizeof(struct icmp));
 
     /*Отправка пакетов.*/
+    gettimeofday(&send_time, NULL);
     for (; count_packets < count; count_packets++) {
         int send = sendto(sock, outpack, sizeof(struct icmp), 0, (struct sockaddr*)&whereto, sizeof(struct sockaddr));
         if (send < 0) {
@@ -96,8 +100,12 @@ icmp_ping(const char* dest_ip, int count, int timeout_ms,
 			 close(sock);
 			 return PING_ERROR;
 		  }
+		  gettimeofday(&recv_time, NULL);
 	   }
     }
+    /*Расчёт веремени ответа.*/
+    double elapsed_time = (recv_time.tv_sec - send_time.tv_sec) * 1000.0;
+    elapsed_time += (recv_time.tv_usec - send_time.tv_usec) / 1000.0;
 
     /*Структуры куда передаёться буфер ответа,
 	* для дальнейшей обработки, ответа.*/
@@ -109,7 +117,7 @@ icmp_ping(const char* dest_ip, int count, int timeout_ms,
     if (icp->icmp_type == ICMP_ECHO){
 	   if (icmp_hdr->icmp_type == ICMP_ECHOREPLY) {
 		  close(sock);
-		  return PING_SUCCESS;
+		  return elapsed_time;
 	   }
     }
     /*Резервная обработка, шлём пакет типа ICMP_TIMESTAMP,
@@ -117,7 +125,7 @@ icmp_ping(const char* dest_ip, int count, int timeout_ms,
     else if (icp->icmp_type == ICMP_TIMESTAMP){
 	   if (icmp_hdr->icmp_type == ICMP_TIMESTAMPREPLY) {
 		  close(sock);
-		  return PING_SUCCESS;
+		  return elapsed_time;
 	   }
     }
     /*Ещё одна, шлём пакет типа ICMP_INFO_REQUEST,
@@ -125,7 +133,7 @@ icmp_ping(const char* dest_ip, int count, int timeout_ms,
     else if (icp->icmp_type == ICMP_INFO_REQUEST){
 	   if (icmp_hdr->icmp_type == ICMP_INFO_REPLY) {
 		  close(sock);
-		  return PING_SUCCESS;
+		  return elapsed_time;
 	   }
     }
 
