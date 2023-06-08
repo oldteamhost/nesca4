@@ -23,9 +23,9 @@
 #include "../ncsock/include/socket.h"
 #include "../ncsock/include/other.h"
 
+struct in_addr dest_ip;
 nesca_prints nspr;
 bool no_syn_scan;
-struct in_addr dest_ip;
 
 unsigned int
 generate_seq(){

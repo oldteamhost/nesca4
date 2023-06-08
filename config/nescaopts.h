@@ -16,9 +16,8 @@ public:
 	   bool xmas_scan;
 
         bool timeout;
-        int timeout_ms = 150;
+        int timeout_ms = 140;
         int recv_timeout_ms = 2000;
-        int send_timeout_sec = 3;
         int scanning_count = 2;
         int log_set = 20;
         int _threads = 15;

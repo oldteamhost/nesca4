@@ -116,6 +116,7 @@ const struct option long_options[] = {
         {"xmas", no_argument, 0, 93},
         {"fix-get-path", no_argument, 0, 52},
         {"on-http-response", no_argument, 0, 51},
+        {"recv-timeout", required_argument, 0, 101},
         {"no-ping", no_argument, 0, 29},
         {"no-color", no_argument, 0, 26},
         {"log-set", required_argument, 0, 24},
@@ -520,35 +521,35 @@ int main(int argc, char** argv){
     /*Само сканирование.*/
     long long size = result_main.size();
 
-
     int fuck_yeah = 0;
     int error = 0;
-for (const auto& ip : result_main) {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dist(49151, 65535);
-    int source_port = dist(gen);
 
-    std::cout << std::endl;
-    std::string dns = dus.get_dns_by_ip(ip.c_str(), source_port);
-    std::cout << np.main_nesca_out("READY", ip, 5, "DNS", "", dns, "") << std::endl;
+    for (const auto& ip : result_main) {
+	   std::random_device rd;
+	   std::mt19937 gen(rd());
+	   std::uniform_int_distribution<> dist(49151, 65535);
+	   int source_port = dist(gen);
 
-    ip_count++;
+	   std::cout << std::endl;
+	   std::string dns = dus.get_dns_by_ip(ip.c_str(), source_port);
+	   std::cout << np.main_nesca_out("READY", ip, 5, "DNS", "", dns, "") << std::endl;
 
-    if (ip_count % argp.log_set == 0) {
-        double procents = (static_cast<double>(ip_count) / size) * 100;
-        std::string result = format_percentage(procents);
-        std::cout << np.main_nesca_out("^NESCASYNLOG", std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs", 4, "P", "", result + "%", "") << std::endl;
+	   ip_count++;
+
+	   if (ip_count % argp.log_set == 0) {
+		  double procents = (static_cast<double>(ip_count) / size) * 100;
+		  std::string result = format_percentage(procents);
+		  std::cout << np.main_nesca_out("^NESCASYNLOG", std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs", 4, "P", "", result + "%", "") << std::endl;
+	   }
+
+	   int main_scan = scan_port(ip.c_str(), argp.ports, argp.timeout_ms, source_port);
+	   if (main_scan == 0){
+		  fuck_yeah++;
+	   }
+	   else if (main_scan == EOF){
+		  error++;
+	   }
     }
-
-    int main_scan = scan_port(ip.c_str(), argp.ports, argp.timeout_ms, source_port);
-    if (main_scan == 0){
-	   fuck_yeah++;
-    }
-    else if (main_scan == EOF){
-	   error++;
-    }
-}
     std::cout << std::endl << np.main_nesca_out("NESCA4", "FINISH scan", 5, "success", "errors", std::to_string(fuck_yeah), std::to_string(error)) << std::endl;
 
     /*Конец*/
@@ -998,12 +999,10 @@ help_menu(void){
     std::cout << "\narguments port_scan:" << std::endl;
     np.reset_colors();
     std::cout << "  -fin                   Using FIN scan.\n";
-    std::cout << "  -xmas                Using XMAS scan.\n";
-    std::cout << "  -null			 Using TCP NULL scan.\n\n";
+    std::cout << "  -xmas                  Using XMAS scan.\n";
+    std::cout << "  -null                  Using TCP NULL scan.\n\n";
     std::cout << "  -ports, -p <1,2,3>     Set ports on scan.\n";
-    std::cout << "     - example ports:    all, nesca, top100, top50\n";
-    std::cout << "  -scan-s-timeout <ms>   Set timeout for send packet on port.\n";
-    std::cout << "  -scan-r-timeout <ms>   Set timeout for getting packet on port.\n";
+    std::cout << "  -recv-timeout <ms>     Set timeout for getting packet on port.\n";
     std::cout << "  -scan-db, scan-debug   Display verbose info for syn port scan.\n";
 
     np.sea_green_on();
@@ -1485,6 +1484,9 @@ parse_args(int argc, char** argv){
 	      case 95:
 		     argp.nmap_mode = true;
 			break;
+	      case 101:
+			argp.recv_timeout_ms = atoi(optarg);
+			break;
         }
     }
 }
@@ -1527,19 +1529,8 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms, const int
 
     for (const auto& port : ports){
 	   int result = nesca_scan(&ncopts, ip, port, timeout_ms);
-
-	   std::future<int> recv_result = std::async(std::launch::async, recv_packet, argp.recv_timeout_ms, argp.syn_debug);
-	   std::future_status status = recv_result.wait_for(std::chrono::milliseconds(argp.recv_timeout_ms));
-
-	   /*Сам таймаут.*/
-	   if (status == std::future_status::ready){
-		  recv_value = recv_result.get();
-		  processing_tcp_scan_ports(ip, port, recv_value);
-	   }
-	   else if (status == std::future_status::timeout){
-		  /*Ответ не был получен значит filtered.*/
-		  processing_tcp_scan_ports(ip, port, 2);
-	   }
+	   recv_value = recv_packet(argp.recv_timeout_ms, argp.syn_debug);
+	   processing_tcp_scan_ports(ip, port, recv_value);
     }
 
     return recv_value;
