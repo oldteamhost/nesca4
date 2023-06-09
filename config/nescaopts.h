@@ -11,13 +11,14 @@ public:
 	   /*Scan options*/
 	   const char* source_ip;
 	   int type = 1;
-	   bool nmap_mode;
 	   bool fin_scan;
 	   bool null_scan;
 	   bool xmas_scan;
+	   bool packet_trace;
 
-        bool timeout = 0;
-        int timeout_ms = 0;
+        bool timeout;
+        int timeout_ms = 70;
+	   bool custom_recv_timeout_ms;
         int recv_timeout_ms = 1000;
         int scanning_count = 2;
         int log_set = 20;
@@ -26,6 +27,7 @@ public:
         std::vector<int> ports = {80};
 	   std::vector<int> source_ports = {46566, 42849, 38872, 58098,
 								 34343, 54075, 54176, 54784};
+	   bool no_proc;
 
         bool debug;
         bool print_errors;
@@ -67,7 +69,7 @@ public:
         const char* path_ips;
 
 	   /*Ping options*/
-	   int icmp_ping_timeout = 500;
+	   int icmp_ping_timeout = 200;
 	   int tcp_ping_timeout = 300;
 	   int threads_ping = 10;
 	   int ping_log = 20;

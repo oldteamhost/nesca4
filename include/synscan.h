@@ -53,6 +53,7 @@ struct nesca_scan_opts{
     int source_port;
     bool debug;
     const char* source_ip;
+    unsigned int seq;
 };
 
 /*Для расчёта фейковой контрольной суммы

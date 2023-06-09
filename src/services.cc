@@ -34,6 +34,10 @@ services_nesca::parse_services(const std::string& filename){
 
 std::string
 services_nesca::probe_service(int port){
+    std::string service = data[port];
+    if (service.empty()){
+	   return "N/A";
+    }
     return data[port];
 }
 

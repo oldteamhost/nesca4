@@ -46,9 +46,7 @@ scan_debug_log(std::string mes, bool debug){
 }
 
 int 
-nesca_scan(struct nesca_scan_opts *ncot ,const char* ip, int port, int timeout_ms){
-    unsigned int seq_res = generate_seq(); 
-
+nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_ms){
     char datagram[SEND_BUFFER_SIZE];
     memset(datagram, 0, SEND_BUFFER_SIZE);
 
@@ -64,7 +62,7 @@ nesca_scan(struct nesca_scan_opts *ncot ,const char* ip, int port, int timeout_m
     scan_debug_log("Source IP is: "+std::string(ncot->source_ip)+"\n", debug);
     scan_debug_log("Port is: "+std::to_string(port)+"\n", debug);
     scan_debug_log("Source Port is: "+std::to_string(ncot->source_port)+"\n", debug);
-    scan_debug_log("Seq is: "+std::to_string(seq_res)+"\n", debug);
+    scan_debug_log("Seq is: "+std::to_string(ncot->seq)+"\n", debug);
 
     /*Таймаут, он реально помогает и очень сильно влияет.*/
     std::this_thread::sleep_for(std::chrono::milliseconds(timeout_ms));
@@ -125,14 +123,14 @@ nesca_scan(struct nesca_scan_opts *ncot ,const char* ip, int port, int timeout_m
     /*Заполнение TCP заголовка.*/
     scan_debug_log("Fill TCP header.\n", debug);
 
-    fill_tcp_header(tcph_send, ncot->source_port, port, seq_res, 0, WINDOWS_SIZE, 0,
+    fill_tcp_header(tcph_send, ncot->source_port, port, ncot->seq, 0, WINDOWS_SIZE, 0,
 		  5, 0, tpf);
 
     /*Заполнение IP заголовка.*/
     scan_debug_log("Fill IP header.\n", debug);
 
     fill_ip_header(iph_send, ncot->source_ip, ip, sizeof(struct iphdr) + sizeof(struct tcphdr),
-		        IPPROTO_TCP, seq_res+2, IP_DF, IP_HEADER_TTL, 5, 4, 0);
+		        IPPROTO_TCP, ncot->seq, IP_DF, IP_HEADER_TTL, 5, 4, 0);
 
     scan_debug_log("Calculate sum for IP header.\n", debug);
 

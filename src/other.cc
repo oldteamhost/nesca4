@@ -74,7 +74,7 @@ write_ports(std::string mode){
         return temp;
     }
     else if (mode == "http"){
-        temp = {80,81,8080,8081,8888};
+        temp = {80,81,8080,8081,8888, 8008};
         return temp;
     }
     return {-1};
