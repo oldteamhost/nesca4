@@ -291,41 +291,21 @@ int main(int argc, char** argv){
             double ping_time_temp;
             double ping_temp;
             if (argp.tcp_ping_mode == "live" || argp.tcp_ping_mode == "1"){
-			 /*
-                for (;;){
-				bool icmp_ping = icp.ping(argp.hosts_test[0].c_str(), 1, argp.icmp_ping_timeout);
-				ping_time_temp = icp.get_last_time();
-                    if (icmp_ping){
-                        std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 3,
-                        "rtt", "", std::to_string(ping_time_temp)+"ms", "") << std::endl;
-                    }
-                    else {
-                        std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 3,
-                        "rtt", "", "down", "") << std::endl;
-                    }
-                    delay_ms(argp.timeout_ms);
-                }
-			 */
+			 for (;;){
+				process_ping(argp.hosts_test[0]);
+                    std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 3,
+                    "rtt", "", "ms", "") << std::endl;
+			 }
             }
             else if (argp.tcp_ping_mode == "default" || argp.tcp_ping_mode == "0") {
-			 /*
                 for (auto& host : argp.hosts_test){
-				bool icmp_ping = icp.ping(argp.hosts_test[0].c_str(), 1, argp.icmp_ping_timeout);
-				ping_time_temp = icp.get_last_time();
+				bool icmp_ping = process_ping(host);
 
                     if (icmp_ping){
                         std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 3,
-                        "rtt", "", std::to_string(ping_time_temp)+"ms", "") << std::endl;
-                    }
-                    else {
-                        std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 3,
-                        "rtt", "", "down", "") << std::endl;
-
-                        // Delay
-                        delay_ms(argp.icmp_ping_timeout);
+                        "rtt", "", "ms", "") << std::endl;
                     }
                 }
-			 */
             }
             else {
                 np.nlog_custom("TT", argp.hosts_test[0] + " ping mode not found! Only (0,1) ala (default, live)",2);
@@ -1590,6 +1570,7 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms, const int
 	   int result = nesca_scan(&ncopts, ip, port, timeout_ms);
 	   if (result != PORT_OPEN){
 		  free(buffer);
+		  /*Значит была ошибка.*/
 		  processing_tcp_scan_ports(ip, port, PORT_ERROR);
 		  continue;
 	   }
@@ -1600,6 +1581,7 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms, const int
 	   int read = ncread(ip, recv_timeout_result, &buffer, argp.syn_debug);
 	   if (read != SUCCESS_READ){
 		  free(buffer);
+		  /*Значит порт filtered.*/
 		  processing_tcp_scan_ports(ip, port, PORT_FILTER);
 		  continue;
 	   }

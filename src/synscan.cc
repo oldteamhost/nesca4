@@ -24,9 +24,7 @@
 #include "../ncsock/include/socket.h"
 #include "../ncsock/include/other.h"
 
-struct in_addr dest_ip;
 nesca_prints nspr;
-bool no_syn_scan;
 
 unsigned int
 generate_seq(){
@@ -52,11 +50,10 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
 
     struct sockaddr_in dest;
     struct pseudo_header psh;
+    bool debug = ncot->debug;
 
     struct iphdr *iph_send = (struct iphdr*)datagram;
     struct tcphdr *tcph_send = (struct tcphdr*)(datagram + sizeof (struct iphdr));
-
-    bool debug = ncot->debug;
 
     scan_debug_log("IP is: "+std::string(ip)+"\n", debug);
     scan_debug_log("Source IP is: "+std::string(ncot->source_ip)+"\n", debug);
@@ -79,9 +76,6 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
         return PORT_ERROR;
     }
 
-    /*Для обработки пакета.*/
-    dest_ip.s_addr = inet_addr(ip);
-
     /*Сообщаем ядру, что не нужно генерировать IP заголовок
 	* потому что мы сами его сделали.*/
     int set_hdrincl = set_socket_hdrincl(sock);
@@ -99,7 +93,6 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
 	   tpf.fin = 0;
 	   tpf.psh = 0;
 	   tpf.urg = 0;
-	   no_syn_scan = false;
     }
     else if (ncot->scan_type == XMAS_SCAN){
 	   tpf.syn = 0;
@@ -172,7 +165,6 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
 	   return PORT_ERROR;
     }
     close(sock);
-    // int result = recv_packet(ncot->recv_timeout_ms, debug, no_syn_scan);
 
     return PORT_OPEN;
 }
