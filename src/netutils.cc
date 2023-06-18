@@ -69,7 +69,8 @@ dns_utils::get_ip_by_dns(const char* dns){
     return ip;
 }
 
-std::vector<std::string> dns_utils::get_all_ips_by_dns(const char* dns){
+std::vector<std::string>
+dns_utils::get_all_ips_by_dns(const char* dns){
     std::vector<std::string> ip_addresses;
     struct addrinfo* result;
 
