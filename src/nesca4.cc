@@ -13,7 +13,6 @@
 #include <future>
 #include <thread>
 #include <iomanip>
-#include <getopt.h>
 #include <mutex>
 #include <algorithm> 
 #include <random>
@@ -23,10 +22,10 @@
 #include <vector>
 #include <string.h>
 #include <functional>
-#include <unistd.h>
 #include <termios.h>
 
 #include "../include/bruteforce.h"
+#include "../include/getopt.h"
 #include "../include/callbacks.h"
 #include "../include/files.h"
 #include "../include/generation.h"
@@ -381,6 +380,7 @@ int main(int argc, char** argv){
                         std::lock_guard<std::mutex> lock(mtx);
                         std::cout << np.main_nesca_out("BA", "http://" + result, 3, "T", "", get_http_title(html), "") << std::endl;
                     }
+				delay_ms(argp.timeout_ms);
                 }
             }).detach();
 
