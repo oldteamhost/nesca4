@@ -5,7 +5,7 @@
  * - Сделано от души 2023.
 */
 
-#include "../include/target.h"
+#include "include/target.h"
 
 std::vector<std::string>
 range_to_ips(const std::vector<std::string>& ip_ranges){

@@ -5,7 +5,7 @@
  * - Сделано от души 2023.
 */
 
-#include "../include/prints.h"
+#include "include/prints.h"
 
 void 
 nesca_prints::disable_colors(void){

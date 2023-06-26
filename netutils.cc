@@ -5,7 +5,7 @@
  * - Сделано от души 2023.
 */
 
-#include "../include/netutils.h"
+#include "include/netutils.h"
 #include <sys/socket.h>
 #include <unistd.h>
 

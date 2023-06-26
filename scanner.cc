@@ -1,4 +1,4 @@
-#include "../include/scanner.h"
+#include "include/scanner.h"
 
 checking_finds cf;
 

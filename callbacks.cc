@@ -5,7 +5,7 @@
  * - Сделано от души 2023.
 */
 
-#include "../include/callbacks.h"
+#include "include/callbacks.h"
 
 size_t 
 write_callback(char* ptr, size_t size, size_t nmemb, void* userdata) {

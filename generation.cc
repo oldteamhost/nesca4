@@ -5,7 +5,7 @@
  * - Сделано от души 2023.
 */
 
-#include "../include/generation.h"
+#include "include/generation.h"
 
 const char*
 generate_ipv6(int num_octets){

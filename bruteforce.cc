@@ -5,7 +5,7 @@
  * - Сделано от души 2023.
 */
 
-#include "../include/bruteforce.h"
+#include "include/bruteforce.h"
 #include <sys/socket.h>
 
 nesca_prints nsp;

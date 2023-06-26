@@ -5,7 +5,7 @@
  * - Сделано от души 2023.
 */
 
-#include "../include/files.h"
+#include "include/files.h"
 
 int 
 get_count_lines(const char* path){

@@ -18,11 +18,11 @@
 #include <unistd.h>
 #include <poll.h>
 
-#include "../include/synscan.h"
-#include "../ncsock/include/ncread.h"
-#include "../ncsock/include/headers.h"
-#include "../ncsock/include/socket.h"
-#include "../ncsock/include/other.h"
+#include "include/synscan.h"
+#include "ncsock/include/ncread.h"
+#include "ncsock/include/headers.h"
+#include "ncsock/include/socket.h"
+#include "ncsock/include/other.h"
 
 nesca_prints nspr;
 

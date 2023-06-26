@@ -5,7 +5,7 @@
  * - Сделано от души 2023.
 */
 
-#include "../include/other.h"
+#include "include/other.h"
 
 const char*
 get_time(){

@@ -17,7 +17,7 @@ public:
 	   bool packet_trace;
 
         bool timeout;
-        int timeout_ms = 70;
+        int timeout_ms = 0;
 	   bool custom_recv_timeout_ms;
         int recv_timeout_ms = 1000;
         int log_set = 20;

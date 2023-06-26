@@ -5,7 +5,7 @@
  * - Сделано от души 2023.
 */
 
-#include "../include/services.h"
+#include "include/services.h"
 
 std::map<int,std::string>
 services_nesca::parse_services(const std::string& filename){
