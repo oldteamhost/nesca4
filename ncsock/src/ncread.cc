@@ -1,4 +1,13 @@
+/*
+ * NESCA4
+ * by oldteam & lomaster
+ * license GPL-3.0
+ * - Сделано от души 2023.
+*/
+
 #include "../include/ncread.h"
+#include <cstdlib>
+#include <unistd.h>
 
 int
 ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool debug){
@@ -8,11 +17,9 @@ ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool de
     /*Временный буфер.*/
     unsigned char *read_buffer = *buffer;
 
-    /*Создание сокета.*/
+     /*Создание сокета.*/
     int sock = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
-    if (sock == -1){
-	   return SOCKET_ERROR;
-    }
+    if (sock == -1){return SOCKET_ERROR;}
 
     /*Устанока таймаута на recvfrom.*/
     struct pollfd poll_fds[1];
@@ -20,12 +27,12 @@ ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool de
     poll_fds[0].events = POLLIN;
     int poll_result = poll(poll_fds, 1, recv_timeout_ms);
     if (poll_result == -1) {
-	   close(sock);
 	   /*Poll не смогла чё-то сделать.*/
+	   close(sock);
 	   return POLL_ERROR;
     }else if (poll_result == 0) {
-	   close(sock);
 	   /*Вышел таймаут на recvfrom.*/
+	   close(sock);
 	   return POLL_TIMEOUT_EXITED;
     }
 
@@ -57,11 +64,10 @@ ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool de
 	   source.sin_addr.s_addr = iph->saddr;
 
 	   /*Сравнение айпи сходиться ли он с тем на который мы отпаравляли.
-	    * Это нужно в качестве сортировки.*/
+	    * Это нужно для отброса других пакетов.*/
 	   if (source.sin_addr.s_addr != dest.s_addr){
-		  if (debug){
-			 std::cout << "Got the wrong package.\n";
-		  }
+		  if (debug){std::cout << "Got the wrong package.\n";}
+
 		  /*Тут может сработать таймаут на бесокнечный цикл.*/
 		  auto current_time = std::chrono::steady_clock::now();
 		  auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
@@ -69,18 +75,21 @@ ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool de
 			 close(sock);
 			 return INFINITY_TIMEOUT_EXITED;
 		  }
+
 		  /*Если не тот то снова ловит, пока не выйдет таймаут,
 		   * на бесокнечный цикл. Или пока не придёт тот пакет.*/
 		  continue;
 	   }
 	   else {
-		  /*Если пришёл правильный пакет.*/
+		  /*Если пришёл правильный пакет.
+		   * Заполняем буфер им.*/
 		  *buffer = read_buffer;
 		  close(sock);
 		  return SUCCESS_READ;
 	   }
     }
     /*Ну ок :)*/
+    close(sock);
     return READ_ERROR;
 }
 

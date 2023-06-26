@@ -79,10 +79,17 @@ public:
 
 	   /*Don`t touch*/
         int fuck_yeah = 0;
+	   int error_fuck = 0;
         bool warning_threads;
         bool print_help_menu;
         int threads_temp;
         std::string ports_temp;
+
+	   std::map<std::string, std::vector<int>> success_target;
+	   std::map<std::string, std::vector<int>> error_target;
+	   std::map<std::string, std::vector<int>> filtered_target;
+	   std::map<std::string, std::vector<int>> closed_target;
+
         bool thread_on_port;
 	   bool info_version;
         bool html;

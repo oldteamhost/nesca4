@@ -12,14 +12,10 @@
 const char*
 dns_utils::get_dns_by_ip(const char* ip, int port){
     struct in_addr addr;
-    if (inet_pton(AF_INET, ip, &addr) != 1) {
-        return "N/A";
-    }
+    if (inet_pton(AF_INET, ip, &addr) != 1){return "N/A";}
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == -1) {
-        return "N/A";
-    }
+    if (sock == -1){return "N/A";}
 
     struct sockaddr_in sa;
     memset(&sa, 0, sizeof(sa));
@@ -44,9 +40,7 @@ const char*
 dns_utils::get_ip_by_dns(const char* dns){
     int sock = socket(AF_INET, SOCK_STREAM, 0);
 
-    if (sock == -1){
-        return "N/A";
-    }
+    if (sock == -1){return "N/A";}
 
     struct addrinfo hints, *res;
     memset(&hints, 0, sizeof(hints));
@@ -55,10 +49,7 @@ dns_utils::get_ip_by_dns(const char* dns){
 
     int status = getaddrinfo(dns, NULL, &hints, &res);
 
-    if (status != 0){
-        close(sock);
-        return "N/A";
-    }
+    if (status != 0){close(sock);return "N/A";}
 
     struct sockaddr_in *addr = (struct sockaddr_in *)res->ai_addr;
     const char* ip = inet_ntoa(addr->sin_addr);
@@ -116,9 +107,7 @@ ip_utils::get_local_ip(){
     socklen_t namelen;
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0){
-        return "-1";
-    }
+    if (sock < 0){return "-1";}
 
     const char *kGoogleDnsIp = "8.8.8.8";
     int dns_port = 53;
@@ -129,18 +118,12 @@ ip_utils::get_local_ip(){
     serv.sin_port = htons(dns_port);
 
     int err = connect(sock, (const struct sockaddr*)&serv, sizeof(serv));
-    if (err < 0){
-	   close(sock);
-        return "-1";
-    }
+    if (err < 0){close(sock);return "-1";}
 
     struct sockaddr_in name;
     namelen = sizeof(name);
     memset(&name, 0, sizeof(name));
-    if (getsockname(sock, (struct sockaddr*)&name, &namelen)){
-        close(sock);
-        return "-1";
-    }
+    if (getsockname(sock, (struct sockaddr*)&name, &namelen)){close(sock);return "-1";}
 
     const char *p = inet_ntop(AF_INET, &name.sin_addr, buffer, sizeof(buffer));
     close(sock);

@@ -20,7 +20,9 @@
 #include <future>
 #include <sstream>
 #include <vector>
+#include <execution>
 #include <string.h>
+#include <semaphore>
 #include <functional>
 #include <termios.h>
 
@@ -48,7 +50,7 @@
 #include "../ncping/include/tcpping.h"
 #include "../ncsock/include/ncread.h"
 
-#define VERSION "20230609"
+#define VERSION "20230626"
 #define DELIMITER ','
 
 std::mutex mtx;
@@ -57,6 +59,8 @@ brute_ftp_data bfd_;
 ip_utils _iu;
 dns_utils dus;
 services_nesca sn;
+arguments_program argp; // config
+nesca_prints np;
 
 void 
 help_menu(void);
@@ -78,9 +82,8 @@ void
 parse_args(int argc, char** argv);
 void
 pre_check();
-
-arguments_program argp; // config
-nesca_prints np;
+void
+print_results();
 
 const struct option long_options[] = {
         {"threads", required_argument, 0, 'T'},
@@ -155,8 +158,6 @@ pre_check(){
 	   std::cout << np.main_nesca_out("NESCA4", "COLORSCHEME_DATA", 5, "STATE", "", "OK","") << std::endl;
     }
 
-    np.nlog_custom("NESCA4", "This version disabled threads on port scan!\n", 1);
-
     if (argp.info_version){
 	   np.gray_nesca_on();
 	   std::cout << np.print_get_time(get_time());
@@ -215,6 +216,7 @@ pre_check(){
 }
 
 int main(int argc, char** argv){
+
     run = argv[0];
 
     if (argc <= 1){
@@ -496,53 +498,81 @@ int main(int argc, char** argv){
     else if (argp.xmas_scan){argp.xmas_scan = true;}
 
     if (argp.fin_scan){
-	   std::cout << np.main_nesca_out("NESCA4", "FIN_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;
-    }else if (argp.null_scan){
-	   std::cout << np.main_nesca_out("NESCA4", "NULL_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;
-    }else if (argp.xmas_scan){
-	   std::cout << np.main_nesca_out("NESCA4", "XMAS_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;
-    }else {
-	   std::cout << np.main_nesca_out("NESCA4", "SYN_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;
-    }
+	   /*#cleanCode*/
+	   std::cout << np.main_nesca_out("NESCA4", "FIN_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;}else if (argp.null_scan){std::cout << np.main_nesca_out("NESCA4", "NULL_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;}else if (argp.xmas_scan){std::cout << np.main_nesca_out("NESCA4", "XMAS_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;}else {std::cout << np.main_nesca_out("NESCA4", "SYN_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;}
 
     /*Само сканирование.*/
     long long size = result_main.size();
 
-    int fuck_yeah = 0;
-    int error = 0;
+    std::vector<std::future<int>> futures;
 
     for (const auto& ip : result_main) {
-	   std::random_device rd;
-	   std::mt19937 gen(rd());
-	   std::uniform_int_distribution<> dist(49151, 65535);
-	   int source_port = dist(gen);
-
-	   std::cout << std::endl;
-	   std::string dns = dus.get_dns_by_ip(ip.c_str(), source_port);
-	   double time_ms;
-
-	   if (argp.rtts.count(ip) > 0){time_ms = argp.rtts.at(ip);} 
-	   else {time_ms = -1.0;}
-
-	   std::cout << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", dns, std::to_string(time_ms)) << std::endl;
+	   int source_port = generate_port();
 
 	   ip_count++;
 
-	   if (ip_count % argp.log_set == 0) {
+	   if (ip_count % argp.log_set == 0){
 		  double procents = (static_cast<double>(ip_count) / size) * 100;
 		  std::string result = format_percentage(procents);
-		  std::cout << np.main_nesca_out("^NESCASYNLOG", std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs", 4, "P", "", result + "%", "") << std::endl;
+		  // std::cout << np.main_nesca_out("^NESCASYNLOG", std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs", 4, "P", "", result + "%", "") << std::endl;
 	   }
 
-	   int main_scan = scan_port(ip.c_str(), argp.ports, argp.timeout_ms, source_port);
-	   if (main_scan == 0){
-		  fuck_yeah++;
+	   std::future<int> fut = std::async(std::launch::async, scan_port, ip.c_str(), argp.ports, argp.timeout_ms, source_port);
+	   futures.push_back(std::move(fut));
+
+	   if (futures.size() >= argp._threads){
+            int main_scan = futures.front().get();
+            futures.erase(futures.begin());
+        }
+    }
+    for (auto& fut : futures){
+	   int main_scan = fut.get();
+    }
+    std::cout << np.main_nesca_out("NESCA4", "FINISH scan", 5, "success", "errors", std::to_string(argp.fuck_yeah), std::to_string(argp.error_fuck)) << std::endl;
+
+    for (auto& ip : result_main){
+	   if (argp.success_target.count(ip) > 0 || argp.debug){
+		  std::string dns = dus.get_dns_by_ip(ip.c_str(),4445);
+		  double time_ms;
+		  if (argp.rtts.count(ip) > 0){time_ms = argp.rtts.at(ip);} 
+		  else {time_ms = -1.0;}
+		  std::cout << std::endl;
+		  std::cout << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", dns, std::to_string(time_ms)) << std::endl;
 	   }
-	   else if (main_scan == EOF){
-		  error++;
+
+	   if (argp.success_target.count(ip) > 0) {
+        const std::vector<int>& second_element = argp.success_target[ip];
+		  for (size_t i = 0; i < second_element.size(); ++i) {
+			 processing_tcp_scan_ports(ip, second_element[i], PORT_OPEN);
+		  }
+	   }
+
+	   if (argp.error_target.count(ip) > 0) {
+        const std::vector<int>& second_element = argp.error_target[ip];
+		  for (size_t i = 0; i < second_element.size(); ++i) {
+			 processing_tcp_scan_ports(ip, second_element[i], PORT_ERROR);
+		  }
+	   }
+
+	   if (argp.filtered_target.count(ip) > 0) {
+        const std::vector<int>& second_element = argp.filtered_target[ip];
+		  for (size_t i = 0; i < second_element.size(); ++i) {
+			 processing_tcp_scan_ports(ip, second_element[i], PORT_FILTER);
+		  }
+	   }
+	   
+	   if (argp.closed_target.count(ip) > 0) {
+        const std::vector<int>& second_element = argp.closed_target[ip];
+		  for (size_t i = 0; i < second_element.size(); ++i) {
+			 processing_tcp_scan_ports(ip, second_element[i], PORT_CLOSED);
+		  }
 	   }
     }
-    std::cout << std::endl << np.main_nesca_out("NESCA4", "FINISH scan", 5, "success", "errors", std::to_string(fuck_yeah), std::to_string(error)) << std::endl;
+
+    argp.success_target.clear();
+    argp.error_target.clear();
+    argp.filtered_target.clear();
+    argp.closed_target.clear();
 
     /*Конец*/
 
@@ -691,14 +721,13 @@ print_port_state(int status, int port, std::string service){
 // > Я сам не понимаю что тут написано, но работает правильно.
 void 
 processing_tcp_scan_ports(std::string ip, int port, int result){
+
         if (result == PORT_OPEN) {
 		  np.gray_nesca_on();
-            argp.fuck_yeah++;
 		  if (argp.no_proc){
 			 print_port_state(PORT_OPEN, port, sn.probe_service(port));
 			 return;
 		  }
-
             std::string result = ip + ":" + std::to_string(port);
             std::string brute_temp;
             std::string result_print;
@@ -1531,6 +1560,9 @@ format_percentage(double procents){
     std::string result = oss.str();
     return result;
 }
+
+std::mutex ls;
+
 int
 scan_port(const char* ip, std::vector<int>ports, const int timeout_ms, const int source_port){
     struct nesca_scan_opts ncopts;
@@ -1555,6 +1587,7 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms, const int
 		  recv_timeout_result = rtt_ping * 4;
 		  ncopts.recv_timeout_ms = recv_timeout_result;
 	   } 
+	   /*В другом случае по стандарту 600.*/
 	   else {
 		  recv_timeout_result = 600;
 		  ncopts.recv_timeout_ms = recv_timeout_result;
@@ -1562,36 +1595,61 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms, const int
     }
     for (const auto& port : ports){
 	   /*Буфер для ответа.*/
+	   ls.lock();
 	   unsigned char *buffer = (unsigned char *)calloc(READ_BUFFER_SIZE, sizeof(unsigned char));
+	   ls.unlock();
 
 	   /*Отправка пакета.*/
+	   int result = nesca_scan(&ncopts, ip, port, timeout_ms);
+	   /*Лог.*/
 	   if (argp.packet_trace){np.nlog_custom("SEND", "TCP >> "+ std::string(argp.source_ip)+
 			 ":"+std::to_string(source_port)+" >> "+ std::string(ip)+":"+std::to_string(port)+"\n", 1);}
-	   int result = nesca_scan(&ncopts, ip, port, timeout_ms);
+
+	   /*Если функция не вернула PORT_OPEN,
+	    * Это означает что функция успешно выполнилась.*/
 	   if (result != PORT_OPEN){
-		  free(buffer);
 		  /*Значит была ошибка.*/
-		  processing_tcp_scan_ports(ip, port, PORT_ERROR);
+		  ls.lock();
+		  free(buffer);
+		  ls.unlock();
+
+		  argp.error_target[ip].push_back(port);
+		  argp.error_fuck++;
+		  /*Переход к следующему порту.*/
 		  continue;
 	   }
 
-	   /*Принятие пакета.*/
+	   /*В другом случае, запускается
+	    * "Принятие пакета" или скорее его ожидание.*/
+	   int read = ncread(ip, recv_timeout_result, &buffer, argp.syn_debug);
+	   /*Лог.*/
 	   if (argp.packet_trace){np.nlog_custom("RECV", "TCP >> "+ std::string(ip)+
 			 ":"+std::to_string(port)+" >> "+ std::string(argp.source_ip)+":"+std::to_string(source_port)+"\n", 1);}
-	   int read = ncread(ip, recv_timeout_result, &buffer, argp.syn_debug);
+
+
+	   /*Если функция не получила пакет.*/
 	   if (read != SUCCESS_READ){
-		  free(buffer);
 		  /*Значит порт filtered.*/
-		  processing_tcp_scan_ports(ip, port, PORT_FILTER);
+		  ls.lock();
+		  free(buffer);
+		  ls.unlock();
+		  argp.filtered_target[ip].push_back(port);
 		  continue;
 	   }
 
-	   /*Обработка пакета.*/
+	   /*В другом случае идёт обработка пакета.
+	    * И только на этом этапе мы получаем статус порта.*/
 	   int port_status = get_port_status(buffer, false);
-	   processing_tcp_scan_ports(ip, port, port_status);
 
-	   /*Очистка буфера.*/
+	   if (port_status == PORT_CLOSED){argp.closed_target[ip].push_back(port);}
+	   else if (port_status == PORT_OPEN){argp.success_target[ip].push_back(port); argp.fuck_yeah++;}
+	   else if (port_status == PORT_FILTER){argp.filtered_target[ip].push_back(port);}
+	   else {argp.error_target[ip].push_back(port); argp.error_fuck++;}
+
+	   /*Дальше уже операции что делать с этим портом.*/
+	   ls.lock();
 	   free(buffer);
+	   ls.unlock();
     }
     return 0;
 }

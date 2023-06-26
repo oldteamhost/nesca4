@@ -3,7 +3,10 @@
 #include <string.h>
 #include "../include/getopt.h"
 
-/*А вы знали что C очень читабелен?*/
+/*А вы знали что код на C очень читабельный?
+ * Я вот тоже так считаю.
+ *
+*/
 
 int optind=1, opterr=1, optopt=0;
 char *optarg=0;

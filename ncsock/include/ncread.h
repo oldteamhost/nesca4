@@ -1,5 +1,14 @@
+/*
+ * NESCA4
+ * by oldteam & lomaster
+ * license GPL-3.0
+ * - Сделано от души 2023.
+*/
+
 /*Конечно не nsock_read в nmap, но тоже неплохо.
- * Главное стабильно.*/
+ * Функция по принятию и сортировки пакетов.
+ * Вообще любые которые приходят на систему.
+*/
 
 #ifndef NCREAD_H
 #define NCREAD_H
@@ -23,8 +32,6 @@
 #define INFINITY_TIMEOUT_EXITED	 -6
 #define IP_HEADER_LEN_ERROR		 -7
 
-/*Функция по принятию и сортировки пакетов.
- * Вообще любые которые приходят на систему.*/
 int
 ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool debug);
 
