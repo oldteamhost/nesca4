@@ -514,7 +514,7 @@ int main(int argc, char** argv){
 	   if (ip_count % argp.log_set == 0){
 		  double procents = (static_cast<double>(ip_count) / size) * 100;
 		  std::string result = format_percentage(procents);
-		  // std::cout << np.main_nesca_out("^NESCASYNLOG", std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs", 4, "P", "", result + "%", "") << std::endl;
+		  std::cout << np.main_nesca_out("^NESCASYNLOG", std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs", 4, "P", "", result + "%", "") << std::endl;
 	   }
 
 	   std::future<int> fut = std::async(std::launch::async, scan_port, ip.c_str(), argp.ports, argp.timeout_ms, source_port);
