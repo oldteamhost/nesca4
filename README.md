@@ -10,7 +10,7 @@
     git clone https://github.com/oldteamhost/nesca4
     cd nesca4
     cmake .
-    make
+    make -j12
 ```
 #### Arch linux:
 ```
@@ -18,7 +18,7 @@
     git clone https://github.com/oldteamhost/nesca4
     cd nesca4
     cmake .
-    make
+    make -j12
 ```
 
 # Крос?
