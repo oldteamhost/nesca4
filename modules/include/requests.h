@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <poll.h>
 
 #define HTTPREQUEST_ERROR "HTTPREQUEST: error"
 
@@ -20,8 +21,5 @@ send_http_request(const std::string& node, int port);
 
 int
 get_response_code(const std::string& node, int port);
-
-std::string
-get_headers(const std::string &node, int port);
 
 #endif

@@ -10,7 +10,7 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
 include_directories(lib)
 link_directories(lib/platform/linux)
 
-file(GLOB SRCS src/*.cc)
+file(GLOB SRCS *.cc)
 file(GLOB MODULE_SRCS modules/src/*.cc)
 file(GLOB PLUS_NCSOCK_SRCS ncsock/src/*.cc)
 

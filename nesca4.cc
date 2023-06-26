@@ -23,6 +23,7 @@
 #include <execution>
 #include <string.h>
 #include <semaphore>
+#include <set>
 #include <functional>
 #include <termios.h>
 
@@ -83,7 +84,7 @@ parse_args(int argc, char** argv);
 void
 pre_check();
 void
-print_results();
+print_results(std::string ip);
 
 const struct option long_options[] = {
         {"threads", required_argument, 0, 'T'},
@@ -108,12 +109,10 @@ const struct option long_options[] = {
         {"txt", required_argument, 0, 22},
         {"TP", required_argument, 0, 57},
         {"debug", no_argument, 0, 27},
-        {"on-get-dns", no_argument, 0, 8},
         {"er", no_argument, 0, 28},
         {"no-get-path", no_argument, 0, 50},
         {"path-log", no_argument, 0, 53},
         {"import-color", required_argument, 0, 54},
-        {"scan-count", required_argument, 0, 1},
         {"null", no_argument, 0, 91},
         {"fin", no_argument, 0, 92},
         {"xmas", no_argument, 0, 93},
@@ -180,11 +179,11 @@ pre_check(){
 	   exit(0);
     }
     if (!check_file("./resources/nesca-services")){
-	   std::cout << np.main_nesca_out("NESCA4", "SERVICES_DATA", 5, "STATE", "", "FAILED","") << std::endl;
+	   std::cout << np.main_nesca_out("NESCA4", "SERVICES_DATA", 5, "status", "", "FAILED","") << std::endl;
     }
     else {
 	   sn.init_services();
-	   std::cout << np.main_nesca_out("NESCA4", "SERVICES_DATA", 5, "STATE", "", "OK","") << std::endl;
+	   std::cout << np.main_nesca_out("NESCA4", "SERVICES_DATA", 5, "status", "", "OK","") << std::endl;
     }
 
     if (check_ansi_support() != true){
@@ -227,8 +226,6 @@ int main(int argc, char** argv){
     parse_args(argc, argv);
     pre_check();
 
-    /*GOTO*/
-
     if (optind < argc){
         size_t cidr = std::string(argv[optind]).find("/");
         size_t range = std::string(argv[optind]).find("-");
@@ -257,7 +254,6 @@ int main(int argc, char** argv){
     if (argp.host_testing){
         // Код ответа
         if (argp.response_code_test){
-
             for (auto& host : argp.hosts_test){
                 std::ostringstream strs;
                 strs << get_response_code(host, 80);
@@ -268,7 +264,6 @@ int main(int argc, char** argv){
         }
         // HTTP запрос
         if (argp.http_request){
-
             for (auto& host : argp.hosts_test){
                 np.golder_rod_on(); /**/ std::cout << send_http_request(host, 80); /**/ np.reset_colors(); 
                 std::cout << np.main_nesca_out("TT", "[^]:HTTP REQUEST " + host, 2,
@@ -499,14 +494,22 @@ int main(int argc, char** argv){
 
     if (argp.fin_scan){
 	   /*#cleanCode*/
-	   std::cout << np.main_nesca_out("NESCA4", "FIN_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;}else if (argp.null_scan){std::cout << np.main_nesca_out("NESCA4", "NULL_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;}else if (argp.xmas_scan){std::cout << np.main_nesca_out("NESCA4", "XMAS_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;}else {std::cout << np.main_nesca_out("NESCA4", "SYN_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;}
+	   std::cout << np.main_nesca_out("NESCA4", "START_FIN_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;}else if (argp.null_scan){std::cout << np.main_nesca_out("NESCA4", "START_NULL_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;}else if (argp.xmas_scan){std::cout << np.main_nesca_out("NESCA4", "START_XMAS_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;}else {std::cout << np.main_nesca_out("NESCA4", "START_SYN_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;}
 
     /*Само сканирование.*/
     long long size = result_main.size();
 
     std::vector<std::future<int>> futures;
+    std::set<std::string> processed_ip;
+    int skipped_ip = 0;
 
     for (const auto& ip : result_main) {
+	   if (processed_ip.count(ip) > 0) {
+		  skipped_ip++;
+		  continue;
+	   }
+
+	   processed_ip.insert(ip);
 	   int source_port = generate_port();
 
 	   ip_count++;
@@ -528,45 +531,22 @@ int main(int argc, char** argv){
     for (auto& fut : futures){
 	   int main_scan = fut.get();
     }
-    std::cout << np.main_nesca_out("NESCA4", "FINISH scan", 5, "success", "errors", std::to_string(argp.fuck_yeah), std::to_string(argp.error_fuck)) << std::endl;
+    std::cout << np.main_nesca_out("NESCA4", "FINISH_SCAN", 5, "success", "errors", std::to_string(argp.fuck_yeah), std::to_string(argp.error_fuck)) << std::endl;
 
-    for (auto& ip : result_main){
+
+    for (auto& ip : processed_ip){
 	   if (argp.success_target.count(ip) > 0 || argp.debug){
 		  std::string dns = dus.get_dns_by_ip(ip.c_str(),4445);
 		  double time_ms;
 		  if (argp.rtts.count(ip) > 0){time_ms = argp.rtts.at(ip);} 
 		  else {time_ms = -1.0;}
-		  std::cout << std::endl;
-		  std::cout << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", dns, std::to_string(time_ms)) << std::endl;
+		  std::cout << std::endl << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", dns, std::to_string(time_ms)) << std::endl;
 	   }
 
-	   if (argp.success_target.count(ip) > 0) {
-        const std::vector<int>& second_element = argp.success_target[ip];
-		  for (size_t i = 0; i < second_element.size(); ++i) {
-			 processing_tcp_scan_ports(ip, second_element[i], PORT_OPEN);
-		  }
-	   }
-
-	   if (argp.error_target.count(ip) > 0) {
-        const std::vector<int>& second_element = argp.error_target[ip];
-		  for (size_t i = 0; i < second_element.size(); ++i) {
-			 processing_tcp_scan_ports(ip, second_element[i], PORT_ERROR);
-		  }
-	   }
-
-	   if (argp.filtered_target.count(ip) > 0) {
-        const std::vector<int>& second_element = argp.filtered_target[ip];
-		  for (size_t i = 0; i < second_element.size(); ++i) {
-			 processing_tcp_scan_ports(ip, second_element[i], PORT_FILTER);
-		  }
-	   }
-	   
-	   if (argp.closed_target.count(ip) > 0) {
-        const std::vector<int>& second_element = argp.closed_target[ip];
-		  for (size_t i = 0; i < second_element.size(); ++i) {
-			 processing_tcp_scan_ports(ip, second_element[i], PORT_CLOSED);
-		  }
-	   }
+	   print_results(ip);
+    }
+    if (skipped_ip > 0){
+	   std::cout << std::endl << np.main_nesca_out("NESCA4", "Missed "+std::to_string(skipped_ip)+" identical IPs", 5, "status", "", "OK", "") << std::endl;
     }
 
     argp.success_target.clear();
@@ -578,14 +558,50 @@ int main(int argc, char** argv){
 
     return 0;
 }
+void
+print_results(std::string ip){
+    auto it = argp.success_target.find(ip);
+    if (it != argp.success_target.end()) {
+    const std::vector<int>& second_element = argp.success_target[ip];
+	   for (size_t i = 0; i < second_element.size(); ++i) {
+		  processing_tcp_scan_ports(ip, second_element[i], PORT_OPEN);
+	   }
+    }
+
+    auto it1 = argp.error_target.find(ip);
+    if (it1 != argp.error_target.end()) {
+    const std::vector<int>& second_element = argp.error_target[ip];
+	   for (size_t i = 0; i < second_element.size(); ++i) {
+		  processing_tcp_scan_ports(ip, second_element[i], PORT_ERROR);
+	   }
+    }
+
+    auto it2 = argp.filtered_target.find(ip);
+    if (it2 != argp.filtered_target.end()) {
+    const std::vector<int>& second_element = argp.filtered_target[ip];
+	   for (size_t i = 0; i < second_element.size(); ++i) {
+		  processing_tcp_scan_ports(ip, second_element[i], PORT_FILTER);
+	   }
+    }
+	   
+    auto it3 = argp.closed_target.find(ip);
+    if (it3 != argp.closed_target.end()) {
+    const std::vector<int>& second_element = argp.closed_target[ip];
+	   for (size_t i = 0; i < second_element.size(); ++i) {
+		  processing_tcp_scan_ports(ip, second_element[i], PORT_CLOSED);
+	   }
+    }
+}
 
 bool
 process_ping(std::string ip){
     // Обычный через connect 
+    /*
     bool tcp_ping = connect_tcp_ping(ip.c_str(), 80, argp.tcp_ping_timeout);
     if (tcp_ping){
 	   return true;
     }
+    */
 
     // 3 Метода ICMP пинга
     delay_ms(argp.icmp_ping_timeout);
@@ -680,10 +696,10 @@ checking_default_files(void){
     check_files(argp.path_hikvision_login.c_str(), argp.path_hikvision_pass.c_str());
 
     if (errors_files == 0){
-	   std::cout << np.main_nesca_out("NESCA4", "BRUTEFORCE_DATA", 5, "STATE", "", "OK","");
+	   std::cout << np.main_nesca_out("NESCA4", "BRUTEFORCE_DATA", 5, "status", "", "OK","");
     }
     else {
-	   std::cout << np.main_nesca_out("NESCA4", "BRUTEFORCE_DATA", 5, "STATE", "ERRORS", "FAILED", std::to_string(errors_files));
+	   std::cout << np.main_nesca_out("NESCA4", "BRUTEFORCE_DATA", 5, "status", "ERRORS", "FAILED", std::to_string(errors_files));
     }
 }
 
@@ -721,48 +737,35 @@ print_port_state(int status, int port, std::string service){
 // > Я сам не понимаю что тут написано, но работает правильно.
 void 
 processing_tcp_scan_ports(std::string ip, int port, int result){
-
         if (result == PORT_OPEN) {
 		  np.gray_nesca_on();
 		  if (argp.no_proc){
 			 print_port_state(PORT_OPEN, port, sn.probe_service(port));
 			 return;
 		  }
+
             std::string result = ip + ":" + std::to_string(port);
             std::string brute_temp;
             std::string result_print;
-     
+
             if (port == 80 || port == 81 || port == 8080 ||
 			 port == 8081 || port == 8888 || port == 8008){
 			 print_port_state(PORT_OPEN, port, "HTTP");
-                std::lock_guard<std::mutex> guard(mtx);
+                result.insert(0, "http://");
                 bool status_path = false;
 
-                // Add protocol
-                result.insert(0, "http://");
-
                 std::string redirect;
-
-                // for check length
                 std::string default_result = "http://" + ip + ":" + std::to_string(port) + "/";
-
-                // get page code
                 std::string html = send_http_request(ip, port);
 
-                // get redirect
-                if (argp.no_get_path != true){
-                    if (argp.fix_get_path){
-                        redirect = parse_redirect(html, html, ip, false, port);
-                    }
-                    else {
-                        redirect = parse_redirect(html, html, ip, true, port);
-                    }
+                if (argp.no_get_path != true){ /*Получение перенаправления.*/
+                    if (argp.fix_get_path){redirect = parse_redirect(html, html, ip, false, port);}
+                    else {redirect = parse_redirect(html, html, ip, true, port);}
                 }
 
-                // brute http axis
+			 /*Брутфорс AXIS камер.*/
                 std::string temp_check_axis = cfs.check_axis_camera(redirect); // check axis redirect
                 if (argp.off_http_brute != true && temp_check_axis != "no" && argp.no_get_path != true){
-
 				np.yellow_html_on();
 				std::cout << "[>][AXIS]:" + ip + " [BRUTEFORCE]\n";
 				np.reset_colors();
@@ -771,35 +774,24 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
                              argp.http_brute_log, argp.http_brute_verbose, argp.brute_timeout_ms);
                 }
 
-                // get title
+			 /*Получение заголовка.*/
                 std::string http_title_result = get_http_title(html);
-			 if (http_title_result == HTTPTITLE_ERROR){
-				http_title_result = get_http_title_pro(ip);
-			 }
+			 if (http_title_result == HTTPTITLE_ERROR){http_title_result = get_http_title_pro(ip);}
 
-                // clear title
+			 /*Удаление переносов из заголовка.*/
                 http_title_result.erase(std::remove(http_title_result.begin(), http_title_result.end(), '\r'), http_title_result.end());
                 http_title_result.erase(std::remove(http_title_result.begin(), http_title_result.end(), '\n'), http_title_result.end());
-                
-                // print only success brute result
-                if (argp.http_only){
-                    if (brute_temp.length() > 1){
-                        result_print = np.main_nesca_out("BA", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "", http_title_result, "");
-                    }
-                }
-                else {
-                    if (argp.get_dns != true){
-                        result_print = np.main_nesca_out("BA", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "", http_title_result, "");
-                    }
-                    else {
-                        result_print = np.main_nesca_out("BA", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "DNS", http_title_result, dus.get_dns_by_ip(ip.c_str(), port));
-                    }
-                }
 
-                // print
+                result_print = np.main_nesca_out("BA", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "", http_title_result, "");
+
+                if (argp.http_only){if (brute_temp.length() > 1)
+				{result_print = np.main_nesca_out("BA", "http://" + brute_temp + ip + ":" + std::to_string(port),
+					   3, "T", "", http_title_result, "");}}
+
+
                 std::cout << result_print << std::endl;
 
-                // GOTO print redirect
+			 /*Вывод перенаправления.*/
                 if (argp.no_get_path != true && redirect.length() != default_result.length()){
                     if (argp.fix_get_path){
                             if (redirect.length() != 0){
@@ -823,11 +815,10 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
                     }
                 }
 
-                // print response
+			 /*Вывод ответа http.*/
                 if (argp.get_response){
                     std::string result_code =  np.main_nesca_out("TT", html, 2, "", "", "", "");
-                    std::cout << result_code << std::endl;
-                }
+                    std::cout << result_code << std::endl;}
             }
             else if (port == 20 || port == 21){
 			 print_port_state(PORT_OPEN, port, "FTP");
@@ -993,16 +984,19 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
         }
         else if (result == -1){
             if (argp.print_errors){
+                std::lock_guard<std::mutex> guard(mtx);
 			 print_port_state(PORT_ERROR, port, sn.probe_service(port));
             }
         }
         else if (result == 2){
             if (argp.debug){
+                std::lock_guard<std::mutex> guard(mtx);
 			 print_port_state(PORT_FILTER, port, sn.probe_service(port));
             }
         }
         else if (result == 1) {
             if (argp.debug){
+                std::lock_guard<std::mutex> guard(mtx);
 			 print_port_state(PORT_CLOSED, port, sn.probe_service(port));
             }
         }
@@ -1136,18 +1130,12 @@ parse_args(int argc, char** argv){
                 }
                 break;
             }
-            case 1:
-                argp.scanning_count = atoi(optarg);
-                break;
             case 3:
             {
                argp.ip_cidr_scan_import = true;
                argp.path_cidr = optarg;
                break;
             }
-           case 8:
-               argp.get_dns = true;
-               break;
            case 12:
            {
                std::vector<std::string> what = split_string_string(optarg, DELIMITER);

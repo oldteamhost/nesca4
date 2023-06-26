@@ -20,9 +20,8 @@ public:
         int timeout_ms = 70;
 	   bool custom_recv_timeout_ms;
         int recv_timeout_ms = 1000;
-        int scanning_count = 2;
         int log_set = 20;
-        int _threads = 15;
+        int _threads = 50;
 
         std::vector<int> ports = {80};
 	   std::vector<int> source_ports = {46566, 42849, 38872, 58098,
@@ -39,7 +38,6 @@ public:
         bool fix_get_path;
 
         bool get_response;
-        bool get_dns;
 
 	   /*DNS scan options*/
         bool dns_scan;
