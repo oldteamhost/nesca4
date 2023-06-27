@@ -7,9 +7,10 @@
 
 #ifndef NCSOCK_OTHER_H
 #define NCSOCK_OTHER_H
+#include <stdio.h>
+#include <sys/time.h>
 
 #ifdef __cplusplus
-#include <sys/time.h>
 extern "C" {
 #endif
 

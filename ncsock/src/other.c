@@ -5,8 +5,6 @@
  * - Сделано от души 2023.
 */
 
-#include <stdio.h>
-#include <sys/time.h>
 #include "../include/other.h"
 
 struct timeval 

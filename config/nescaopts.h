@@ -35,7 +35,6 @@ public:
 
         bool ping_off;
         bool no_get_path;
-        bool fix_get_path;
 
         bool get_response;
 

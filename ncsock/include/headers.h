@@ -10,6 +10,8 @@
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
+#include <string.h>
+#include <netinet/ip_icmp.h>
 
 #ifdef __cplusplus
 extern "C" {

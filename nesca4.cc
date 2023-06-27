@@ -20,12 +20,7 @@
 #include <future>
 #include <sstream>
 #include <vector>
-#include <execution>
-#include <string.h>
-#include <semaphore>
 #include <set>
-#include <functional>
-#include <termios.h>
 
 #include "include/bruteforce.h"
 #include "include/getopt.h"
@@ -62,6 +57,9 @@ dns_utils dus;
 services_nesca sn;
 arguments_program argp; // config
 nesca_prints np;
+
+struct nesca_scan_opts ncopts;
+std::mutex ls;
 
 void 
 help_menu(void);
@@ -116,7 +114,6 @@ const struct option long_options[] = {
         {"null", no_argument, 0, 91},
         {"fin", no_argument, 0, 92},
         {"xmas", no_argument, 0, 93},
-        {"fix-get-path", no_argument, 0, 52},
         {"on-http-response", no_argument, 0, 51},
         {"recv-timeout", required_argument, 0, 101},
         {"no-ping", no_argument, 0, 29},
@@ -497,6 +494,10 @@ int main(int argc, char** argv){
 	   std::cout << np.main_nesca_out("NESCA4", "START_FIN_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;}else if (argp.null_scan){std::cout << np.main_nesca_out("NESCA4", "START_NULL_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;}else if (argp.xmas_scan){std::cout << np.main_nesca_out("NESCA4", "START_XMAS_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;}else {std::cout << np.main_nesca_out("NESCA4", "START_SYN_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;}
 
     /*Само сканирование.*/
+    ncopts.source_ip = argp.source_ip;
+    ncopts.debug = argp.syn_debug;
+    ncopts.scan_type = argp.type;
+
     long long size = result_main.size();
 
     std::vector<std::future<int>> futures;
@@ -534,12 +535,10 @@ int main(int argc, char** argv){
     std::cout << np.main_nesca_out("NESCA4", "FINISH_SCAN", 5, "success", "errors", std::to_string(argp.fuck_yeah), std::to_string(argp.error_fuck)) << std::endl;
 
 
-    for (auto& ip : processed_ip){
-	   if (argp.success_target.count(ip) > 0 || argp.debug){
+    for (const auto& ip : processed_ip){
+	   if (argp.success_target.find(ip) != argp.success_target.end() || argp.debug){
 		  std::string dns = dus.get_dns_by_ip(ip.c_str(),4445);
-		  double time_ms;
-		  if (argp.rtts.count(ip) > 0){time_ms = argp.rtts.at(ip);} 
-		  else {time_ms = -1.0;}
+		  double time_ms = -1.0;
 		  std::cout << std::endl << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", dns, std::to_string(time_ms)) << std::endl;
 	   }
 
@@ -759,8 +758,7 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
                 std::string html = send_http_request(ip, port);
 
                 if (argp.no_get_path != true){ /*Получение перенаправления.*/
-                    if (argp.fix_get_path){redirect = parse_redirect(html, html, ip, false, port);}
-                    else {redirect = parse_redirect(html, html, ip, true, port);}
+				redirect = parse_redirect(html, html, ip, true, port);
                 }
 
 			 /*Брутфорс AXIS камер.*/
@@ -792,26 +790,13 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
                 std::cout << result_print << std::endl;
 
 			 /*Вывод перенаправления.*/
-                if (argp.no_get_path != true && redirect.length() != default_result.length()){
-                    if (argp.fix_get_path){
-                            if (redirect.length() != 0){
-						  np.gray_nesca_on();
-						  std::cout << "[^][REDIRT]:";
-						  np.yellow_html_on();
-						  std::cout << redirect + "\n";
-						  np.reset_colors();
-                            }
-                    }
-                    else {
-                        if (redirect.length() != default_result.length()){
-                            if (redirect.length() != 0){
-						  np.gray_nesca_on();
-						  std::cout << "[^][REDIRT]:";
-						  np.yellow_html_on();
-						  std::cout << redirect + "\n";
-						  np.reset_colors();
-                            }
-                        }
+                if (redirect.length() != default_result.length()){
+                    if (redirect.length() != 0){
+				    np.gray_nesca_on();
+				    std::cout << "[^][REDIRT]:";
+				    np.yellow_html_on();
+				    std::cout << redirect + "\n";
+				    np.reset_colors();
                     }
                 }
 
@@ -1073,7 +1058,6 @@ help_menu(void){
     std::cout << "  -packet-trace          Display packet_trace.\n";
     std::cout << "  -no-get-path           Disable getting paths.\n";
     std::cout << "  -path-log              Display paths method log.\n";
-    std::cout << "  -fix-get-path          Display paths no processing (original).\n";
     std::cout << "  -on-get-dns            On get dns for scanning ports.\n";
     std::cout << "  -on-http-response      On print response from port 80.\n";
     std::cout << "  -log-set <count>       Change change the value of ips after which, will be displayed information about how much is left.\n";
@@ -1464,9 +1448,6 @@ parse_args(int argc, char** argv){
            case 51:
                argp.get_response = true;
                break;
-           case 52:
-               argp.fix_get_path = true;
-               break;
            case 53:
                argp.get_path_log = true;
                break;
@@ -1549,23 +1530,15 @@ format_percentage(double procents){
     return result;
 }
 
-std::mutex ls;
-
 int
 scan_port(const char* ip, std::vector<int>ports, const int timeout_ms, const int source_port){
-    struct nesca_scan_opts ncopts;
-    ncopts.source_ip = argp.source_ip;
-    ncopts.debug = argp.syn_debug;
-    ncopts.scan_type = argp.type;
     ncopts.source_port = source_port;
     ncopts.seq = generate_seq();
 
     int recv_timeout_result;
     if (argp.custom_recv_timeout_ms){
 	   recv_timeout_result = argp.recv_timeout_ms;
-	   ncopts.recv_timeout_ms = recv_timeout_result;
-    }
-    else {
+    }else {
 	   /*Расчёт таймаута для приёма данных
 	   * самая простая формула, время ответа
 	   * умножить на 4.*/
@@ -1573,14 +1546,13 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms, const int
 	   if (it != argp.rtts.end()) {
 		  double rtt_ping = argp.rtts.at(ip);
 		  recv_timeout_result = rtt_ping * 4;
-		  ncopts.recv_timeout_ms = recv_timeout_result;
 	   } 
 	   /*В другом случае по стандарту 600.*/
 	   else {
 		  recv_timeout_result = 600;
-		  ncopts.recv_timeout_ms = recv_timeout_result;
 	   }
     }
+
     for (const auto& port : ports){
 	   /*Буфер для ответа.*/
 	   ls.lock();

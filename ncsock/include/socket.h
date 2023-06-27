@@ -7,6 +7,17 @@
 
 #ifndef NCSOCK_SOCKET_H
 #define NCSOCK_SOCKET_H
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <string.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -5,12 +5,6 @@
  * - Сделано от души 2023.
 */
 
-#include <netinet/in.h>
-#include <stdint.h>
-#include <string.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
-#include <netinet/ip_icmp.h>
 #include "../include/headers.h"
 
 uint16_t checksum_16bit(const uint16_t* data, int length) {

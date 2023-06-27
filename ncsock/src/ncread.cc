@@ -6,8 +6,6 @@
 */
 
 #include "../include/ncread.h"
-#include <cstdlib>
-#include <unistd.h>
 
 int
 ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool debug){

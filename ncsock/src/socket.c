@@ -5,17 +5,6 @@
  * - Сделано от души 2023.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <string.h>
-#include <stdbool.h>
 #include "../include/socket.h"
 
 int 

@@ -49,7 +49,6 @@
 /*Опции для nesca_scan.*/
 struct nesca_scan_opts{
     int scan_type;
-    int recv_timeout_ms;
     int source_port;
     bool debug;
     const char* source_ip;
