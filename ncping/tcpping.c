@@ -1,4 +1,4 @@
-#include "../include/tcpping.h"
+#include "include/tcpping.h"
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <errno.h>

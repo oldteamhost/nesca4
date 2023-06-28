@@ -1,4 +1,4 @@
-#include "../include/ftpinfo.h"
+#include "include/ftpinfo.h"
 
 std::string get_ftp_description(std::string server, std::string port, std::string username, std::string password) {
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);

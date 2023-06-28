@@ -5,7 +5,7 @@
  * - Сделано от души 2023.
 */
 
-#include "../include/headers.h"
+#include "include/headers.h"
 
 uint16_t checksum_16bit(const uint16_t* data, int length) {
     uint32_t sum = 0;

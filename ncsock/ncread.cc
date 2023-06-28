@@ -5,7 +5,7 @@
  * - Сделано от души 2023.
 */
 
-#include "../include/ncread.h"
+#include "include/ncread.h"
 
 int
 ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool debug){

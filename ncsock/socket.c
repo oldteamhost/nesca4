@@ -5,7 +5,7 @@
  * - Сделано от души 2023.
 */
 
-#include "../include/socket.h"
+#include "include/socket.h"
 
 int 
 set_socket_timeout(int sock, int timeout_ms, int on_send, int on_recv){

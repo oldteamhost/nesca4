@@ -1,5 +1,4 @@
-#include "../include/smtpinfo.h"
-#include <sys/socket.h>
+#include "include/smtpinfo.h"
 
 std::string smtp_get_220_response(const std::string& ip, int port, int verbose) {
     int sock = socket(AF_INET, SOCK_STREAM, 0);

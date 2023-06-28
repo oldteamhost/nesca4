@@ -16,9 +16,9 @@
 #include <netdb.h>
 #include <unistd.h>
 
-#include "../include/icmpping.h"
-#include "../../ncsock/include/headers.h"
-#include "../../ncsock/include/other.h"
+#include "include/icmpping.h"
+#include "../ncsock/include/headers.h"
+#include "../ncsock/include/other.h"
 
 double
 icmp_ping(const char* dest_ip, int count, int timeout_ms,
