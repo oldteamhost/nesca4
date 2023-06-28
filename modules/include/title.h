@@ -18,6 +18,6 @@ get_http_title(std::string &html_content);
 
 // all get (libcurl)
 std::string
-get_http_title_pro(std::string& node);
+get_http_title_pro(const std::string& node);
 
 #endif
