@@ -5,7 +5,6 @@
  * - Сделано от души 2023.
 */
 
-/*GOTO*/
 #include <cstdio>
 #include <iostream>
 #include <cstdlib>
@@ -55,7 +54,7 @@ brute_ftp_data bfd_;
 ip_utils _iu;
 dns_utils dus;
 services_nesca sn;
-arguments_program argp; // config
+arguments_program argp;
 nesca_prints np;
 
 struct nesca_scan_opts ncopts;
@@ -85,64 +84,62 @@ void
 print_results(std::string ip);
 
 const struct option long_options[] = {
-        {"threads", required_argument, 0, 'T'},
-        {"timeout", required_argument, 0, 't'},
-        {"import-ip", required_argument, 0, 23},
-        {"import-cidr", required_argument, 0, 3},
-        {"import-range", required_argument, 0, 32},
-        {"random-ip", required_argument, 0, 5},
-        {"brute-login", required_argument, 0, 12},
-        {"brute-pass", required_argument, 0, 11},
-        {"ping-log", required_argument, 0, 90},
-        {"brute-log", required_argument, 0, 30},
-        {"brute-verbose", required_argument, 0, 31},
-        {"thread-on-port", no_argument, 0, 48},
-        {"no-brute", required_argument, 0, 44},
-        {"brute-only", required_argument, 0, 46},
-        {"brute-timeout", required_argument, 0, 47},
-        {"sftp-brute-known-hosts", no_argument, 0, 45},
-        {"dns-scan", required_argument, 0, 19},
-        {"dns-length", required_argument, 0, 20},
-        {"dns-dict", required_argument, 0, 21},
-        {"txt", required_argument, 0, 22},
-        {"TP", required_argument, 0, 57},
-        {"debug", no_argument, 0, 27},
-        {"er", no_argument, 0, 28},
-        {"no-get-path", no_argument, 0, 50},
-        {"path-log", no_argument, 0, 53},
-        {"import-color", required_argument, 0, 54},
-        {"null", no_argument, 0, 91},
-        {"fin", no_argument, 0, 92},
-        {"xmas", no_argument, 0, 93},
-        {"on-http-response", no_argument, 0, 51},
-        {"recv-timeout", required_argument, 0, 101},
-        {"no-ping", no_argument, 0, 29},
-        {"no-proc", no_argument, 0, 95},
-        {"no-color", no_argument, 0, 26},
-        {"log-set", required_argument, 0, 24},
-        {"packet-trace", no_argument, 0, 96},
-        {"scan-db", no_argument, 0, 59},
-        {"scan-debug", no_argument, 0, 60},
-        {"res-time", no_argument, 0, 61},
-        {"help", no_argument, 0, 'h'},
-        {"version", no_argument, 0, 'v'},
-        {"ports", no_argument, 0, 'p'},
-        {"db", no_argument, 0, 7},
-        {"error", no_argument, 0, 25},
-        {"response-code", no_argument, 0, 35},
-        {"http-request", no_argument, 0, 56},
-        {"gen-ipv4", no_argument, 0, 36},
-        {"host-test", required_argument, 0, 34},
-        {"icmp-ping", required_argument, 0, 37},
-        {"gen-count", required_argument, 0, 38},
-        {"redirect", no_argument, 0, 55},
-        {"gen-ipv6", required_argument, 0, 39},
-        {"icmp-timeout", required_argument, 0, 49},
-        {0,0,0,0}
-    };
-const char* short_options = "hvt:T:p:";
-
-const char* run; // for help menu
+    {"threads", required_argument, 0, 'T'},
+    {"timeout", required_argument, 0, 't'},
+    {"import-ip", required_argument, 0, 23},
+    {"import-cidr", required_argument, 0, 3},
+    {"import-range", required_argument, 0, 32},
+    {"random-ip", required_argument, 0, 5},
+    {"brute-login", required_argument, 0, 12},
+    {"brute-pass", required_argument, 0, 11},
+    {"ping-log", required_argument, 0, 90},
+    {"brute-log", required_argument, 0, 30},
+    {"brute-verbose", required_argument, 0, 31},
+    {"thread-on-port", no_argument, 0, 48},
+    {"no-brute", required_argument, 0, 44},
+    {"brute-only", required_argument, 0, 46},
+    {"brute-timeout", required_argument, 0, 47},
+    {"sftp-brute-known-hosts", no_argument, 0, 45},
+    {"dns-scan", required_argument, 0, 19},
+    {"dns-length", required_argument, 0, 20},
+    {"dns-dict", required_argument, 0, 21},
+    {"txt", required_argument, 0, 22},
+    {"TP", required_argument, 0, 57},
+    {"debug", no_argument, 0, 27},
+    {"er", no_argument, 0, 28},
+    {"no-get-path", no_argument, 0, 50},
+    {"path-log", no_argument, 0, 53},
+    {"import-color", required_argument, 0, 54},
+    {"null", no_argument, 0, 91},
+    {"fin", no_argument, 0, 92},
+    {"xmas", no_argument, 0, 93},
+    {"on-http-response", no_argument, 0, 51},
+    {"recv-timeout", required_argument, 0, 101},
+    {"no-ping", no_argument, 0, 29},
+    {"no-proc", no_argument, 0, 95},
+    {"no-color", no_argument, 0, 26},
+    {"log-set", required_argument, 0, 24},
+    {"packet-trace", no_argument, 0, 96},
+    {"scan-db", no_argument, 0, 59},
+    {"scan-debug", no_argument, 0, 60},
+    {"res-time", no_argument, 0, 61},
+    {"help", no_argument, 0, 'h'},
+    {"version", no_argument, 0, 'v'},
+    {"ports", no_argument, 0, 'p'},
+    {"db", no_argument, 0, 7},
+    {"error", no_argument, 0, 25},
+    {"response-code", no_argument, 0, 35},
+    {"http-request", no_argument, 0, 56},
+    {"gen-ipv4", no_argument, 0, 36},
+    {"host-test", required_argument, 0, 34},
+    {"icmp-ping", required_argument, 0, 37},
+    {"gen-count", required_argument, 0, 38},
+    {"redirect", no_argument, 0, 55},
+    {"gen-ipv6", required_argument, 0, 39},
+    {"icmp-timeout", required_argument, 0, 49},
+    {0,0,0,0}
+}; const char* short_options = "hvt:T:p:";
+const char* run; /*for help menu*/
 
 void
 pre_check(){
@@ -175,6 +172,7 @@ pre_check(){
 	   std::cout << std::endl;
 	   exit(0);
     }
+
     if (!check_file("./resources/nesca-services")){
 	   std::cout << np.main_nesca_out("NESCA4", "SERVICES_DATA", 5, "status", "", "FAILED","") << std::endl;
     }
@@ -207,8 +205,7 @@ pre_check(){
         std::ostringstream oss;
         oss << std::put_time(tm, "%d.%m.%Y");
         std::string date_str = oss.str();
-        write_line(np.file_path_save, "\n\nNESCA4:[" + date_str + "]:[" + get_time() + "]-------------------------------\n");    
-    }
+        write_line(np.file_path_save, "\n\nNESCA4:[" + date_str + "]:[" + get_time() + "]-------------------------------\n");}
 }
 
 int main(int argc, char** argv){
@@ -732,24 +729,24 @@ print_port_state(int status, int port, std::string service){
     np.reset_colors();
 }
 
-// Welcome to HELL :)
-// > Я сам не понимаю что тут написано, но работает правильно.
+/*Функция где происходят все операции с открытими портами.
+ * До разбивки по файлам, выглядела как ад. Но сейчас вполне
+ * читабельна.*/
 void 
 processing_tcp_scan_ports(std::string ip, int port, int result){
+
         if (result == PORT_OPEN) {
-		  np.gray_nesca_on();
-		  if (argp.no_proc){
-			 print_port_state(PORT_OPEN, port, sn.probe_service(port));
-			 return;
-		  }
+		  	if (argp.no_proc){
+			 	print_port_state(PORT_OPEN, port, sn.probe_service(port));return;}
 
             std::string result = ip + ":" + std::to_string(port);
             std::string brute_temp;
             std::string result_print;
 
+			/*HTTP порты.*/
             if (port == 80 || port == 81 || port == 8080 ||
-			 port == 8081 || port == 8888 || port == 8008){
-			 print_port_state(PORT_OPEN, port, "HTTP");
+			port == 8081 || port == 8888 || port == 8008){
+			    print_port_state(PORT_OPEN, port, "HTTP");
                 result.insert(0, "http://");
                 bool status_path = false;
 
@@ -758,53 +755,55 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
                 std::string html = send_http_request(ip, port);
 
                 if (argp.no_get_path != true){ /*Получение перенаправления.*/
-				redirect = parse_redirect(html, html, ip, true, port);
+					redirect = parse_redirect(html, html, ip, true, port);
                 }
 
 			 /*Брутфорс AXIS камер.*/
-                std::string temp_check_axis = cfs.check_axis_camera(redirect); // check axis redirect
-                if (argp.off_http_brute != true && temp_check_axis != "no" && argp.no_get_path != true){
-				np.yellow_html_on();
+             std::string temp_check_axis = cfs.check_axis_camera(redirect); // check axis redirect
+             if (argp.off_http_brute != true && temp_check_axis != "no" && argp.no_get_path != true){
+			 	np.yellow_html_on();
 				std::cout << "[>][AXIS]:" + ip + " [BRUTEFORCE]\n";
 				np.reset_colors();
 
-                    brute_temp = threads_brute_http("http://" + ip + redirect, argp.http_logins, argp.http_passwords,
-                             argp.http_brute_log, argp.http_brute_verbose, argp.brute_timeout_ms);
-                }
+                brute_temp = threads_brute_http("http://" + ip + redirect, argp.http_logins, argp.http_passwords,
+                        argp.http_brute_log, argp.http_brute_verbose, argp.brute_timeout_ms);
+             }
 
 			 /*Получение заголовка.*/
-                std::string http_title_result = get_http_title(html);
+             std::string http_title_result = get_http_title(html);
 			 if (http_title_result == HTTPTITLE_ERROR){http_title_result = get_http_title_pro(ip);}
 
 			 /*Удаление переносов из заголовка.*/
-                http_title_result.erase(std::remove(http_title_result.begin(), http_title_result.end(), '\r'), http_title_result.end());
-                http_title_result.erase(std::remove(http_title_result.begin(), http_title_result.end(), '\n'), http_title_result.end());
+             http_title_result.erase(std::remove(http_title_result.begin(), http_title_result.end(), '\r'), http_title_result.end());
+             http_title_result.erase(std::remove(http_title_result.begin(), http_title_result.end(), '\n'), http_title_result.end());
 
-                result_print = np.main_nesca_out("BA", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "", http_title_result, "");
+             result_print = np.main_nesca_out("BA", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "", http_title_result, "");
 
-                if (argp.http_only){if (brute_temp.length() > 1)
-				{result_print = np.main_nesca_out("BA", "http://" + brute_temp + ip + ":" + std::to_string(port),
-					   3, "T", "", http_title_result, "");}}
+             if (argp.http_only){if (brute_temp.length() > 1)
+       		 {result_print = np.main_nesca_out("BA", "http://" + brute_temp + ip + ":" + std::to_string(port),
+			  		3, "T", "", http_title_result, "");}}
 
 
-                std::cout << result_print << std::endl;
+             std::cout << result_print << std::endl;
 
 			 /*Вывод перенаправления.*/
-                if (redirect.length() != default_result.length()){
-                    if (redirect.length() != 0){
+             if (redirect.length() != default_result.length()){
+                if (redirect.length() != 0){
 				    np.gray_nesca_on();
 				    std::cout << "[^][REDIRT]:";
 				    np.yellow_html_on();
 				    std::cout << redirect + "\n";
 				    np.reset_colors();
-                    }
                 }
+             }
 
 			 /*Вывод ответа http.*/
-                if (argp.get_response){
-                    std::string result_code =  np.main_nesca_out("TT", html, 2, "", "", "", "");
-                    std::cout << result_code << std::endl;}
+             if (argp.get_response){
+                 std::string result_code =  np.main_nesca_out("TT", html, 2, "", "", "", "");
+                 std::cout << result_code << std::endl;
+			 }
             }
+
             else if (port == 20 || port == 21){
 			 print_port_state(PORT_OPEN, port, "FTP");
                 std::lock_guard<std::mutex> guard(mtx);
@@ -1084,6 +1083,7 @@ help_menu(void){
     std::cout << "  -gen-ipv6 <octets>     Generate ip version 6.\n";
     std::cout << "  -gen-ipv4              Generate ip version 6.\n";
 }
+
 void 
 parse_args(int argc, char** argv){
     int rez;
@@ -1505,31 +1505,27 @@ void
 init_bruteforce(){
     argp.ftp_logins = write_file(argp.path_ftp_login);
     argp.ftp_passwords = write_file(argp.path_ftp_pass);
-
     argp.sftp_logins = write_file(argp.path_sftp_login);
     argp.sftp_passwords = write_file(argp.path_sftp_pass);
-
     argp.rtsp_logins = write_file(argp.path_rtsp_login);
     argp.rtsp_passwords = write_file(argp.path_rtsp_pass);
-
     argp.http_logins = write_file(argp.path_http_login);
     argp.http_passwords = write_file(argp.path_http_pass);
-
     argp.hikvision_logins = write_file(argp.path_hikvision_login);
     argp.hikvision_passwords = write_file(argp.path_hikvision_pass);
-
     argp.smtp_logins = write_file(argp.path_smtp_login);
-    argp.smtp_passwords = write_file(argp.path_smtp_pass);
-}
+    argp.smtp_passwords = write_file(argp.path_smtp_pass);}
 
 std::string 
 format_percentage(double procents){
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(1) << procents << "%";
     std::string result = oss.str();
-    return result;
-}
+    return result;}
 
+
+/*Функция через которую происходит само сканирование
+ * портов. Вроде бы стабильно.*/
 int
 scan_port(const char* ip, std::vector<int>ports, const int timeout_ms, const int source_port){
     ncopts.source_port = source_port;
@@ -1586,7 +1582,6 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms, const int
 	   if (argp.packet_trace){np.nlog_custom("RECV", "TCP >> "+ std::string(ip)+
 			 ":"+std::to_string(port)+" >> "+ std::string(argp.source_ip)+":"+std::to_string(source_port)+"\n", 1);}
 
-
 	   /*Если функция не получила пакет.*/
 	   if (read != SUCCESS_READ){
 		  /*Значит порт filtered.*/
@@ -1606,7 +1601,6 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms, const int
 	   else if (port_status == PORT_FILTER){argp.filtered_target[ip].push_back(port);}
 	   else {argp.error_target[ip].push_back(port); argp.error_fuck++;}
 
-	   /*Дальше уже операции что делать с этим портом.*/
 	   ls.lock();
 	   free(buffer);
 	   ls.unlock();

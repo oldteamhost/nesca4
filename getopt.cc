@@ -47,9 +47,7 @@ _getopt(int argc, char * argv[], const char *opts){
         } else if(*(++s) != ':') {
           charind = 0;
           if(++optind >= argc) {
-            if(opterr) fprintf(stderr,
-                                "%s: option requires an argument -- %c\n",
-                                argv[0], optopt);
+		  	if(opterr) fprintf(stderr,"This bad, check help_menu.\n");
             opt = (colon_mode == ':') ? ':' : '?';
             goto my_getopt_ok;
           }
@@ -60,7 +58,7 @@ _getopt(int argc, char * argv[], const char *opts){
       goto my_getopt_ok;
     }
     if(opterr) fprintf(stderr,
-                        "%s: illegal option -- %c\n",
+                        "%s: What fuck? -- %c\n",
                         argv[0], optopt);
     opt = '?';
     if(argv[optind][++charind] == '\0') {
@@ -196,9 +194,7 @@ _getopt_internal(int argc, char * argv[], const char *shortopts,
 	   if(argv[optind][charind] == '=') {
 		  if(longopts[found].has_arg == 0) {
 		  opt = '?';
-		  if(opterr) fprintf(stderr,
-						  "%s: option `--%s' doesn't allow an argument\n",
-						  argv[0], longopts[found].name);
+		  if(opterr) fprintf(stderr,"This bad, check help_menu.\n");
 		  } else {
 		  optarg = argv[optind] + ++charind;
 		  charind = 0;
@@ -206,9 +202,7 @@ _getopt_internal(int argc, char * argv[], const char *shortopts,
 	   } else if(longopts[found].has_arg == 1) {
 		  if(++optind >= argc) {
 		  opt = (colon_mode == ':') ? ':' : '?';
-		  if(opterr) fprintf(stderr,
-						  "%s: option `--%s' requires an argument\n",
-						  argv[0], longopts[found].name);
+		  if(opterr) fprintf(stderr,"This bad, check help_menu.\n");
 		  } else optarg = argv[optind];
 	   }
 	   if(!opt) {

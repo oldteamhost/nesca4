@@ -9,11 +9,10 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-const char*
+std::string
 dns_utils::get_dns_by_ip(const char* ip, int port){
-    struct in_addr addr;
+	struct in_addr addr;
     if (inet_pton(AF_INET, ip, &addr) != 1){return "N/A";}
-
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1){return "N/A";}
 
@@ -30,32 +29,26 @@ dns_utils::get_dns_by_ip(const char* ip, int port){
         return "N/A";
     }
 
-    char* dns_name = new char[strlen(host) + 1];
-    strcpy(dns_name, host);
     close(sock);
-    return dns_name;
+    return std::string(host);
 }
 
 const char* 
 dns_utils::get_ip_by_dns(const char* dns){
     int sock = socket(AF_INET, SOCK_STREAM, 0);
-
     if (sock == -1){return "N/A";}
 
     struct addrinfo hints, *res;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
-
     int status = getaddrinfo(dns, NULL, &hints, &res);
-
     if (status != 0){close(sock);return "N/A";}
 
     struct sockaddr_in *addr = (struct sockaddr_in *)res->ai_addr;
     const char* ip = inet_ntoa(addr->sin_addr);
 
     freeaddrinfo(res);
-
     close(sock);
     return ip;
 }

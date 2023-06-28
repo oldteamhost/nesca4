@@ -44,15 +44,9 @@ generate_ipv4(void){
 std::string
 generate_random_str(int len, std::string dictionary){
     std::string result;
-
     std::random_device rd;
     std::mt19937 engine(rd());
-
     std::uniform_int_distribution<int> dist(0, dictionary.length() - 1);
-
-    for (int i = 0; i < len; i++) {
-        result += dictionary[dist(engine)];
-    }
-
+    for (int i = 0; i < len; i++){result += dictionary[dist(engine)];}
     return result;
 }

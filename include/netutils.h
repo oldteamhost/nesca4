@@ -19,7 +19,7 @@
 
 class dns_utils{
 public:
-    const char* 
+	std::string
     get_dns_by_ip(const char* ip, int port);
     const char* 
     get_ip_by_dns(const char* dns);
