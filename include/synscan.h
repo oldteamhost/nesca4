@@ -34,17 +34,18 @@
 #define RECV_BUFFER_SIZE 4096
 
 #define IP_HEADER_TTL 122
-#define WINDOWS_SIZE 32768
+#define WINDOWS_SIZE  32768
 
-#define PORT_OPEN 0
+#define PORT_OPEN   0
 #define PORT_CLOSED 1
 #define PORT_FILTER 2
 #define PORT_ERROR -1
 
-#define SYN_SCAN 1
+#define SYN_SCAN  1
 #define XMAS_SCAN 2
-#define FIN_SCAN 3
+#define FIN_SCAN  3
 #define NULL_SCAN 4
+#define ACK_PING  5
 
 /*Опции для nesca_scan.*/
 struct nesca_scan_opts{

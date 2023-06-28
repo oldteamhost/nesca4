@@ -42,10 +42,11 @@
 
 #include "config/nescaopts.h"
 #include "ncping/include/icmpping.h"
+#include "ncping/include/ackping.h"
 #include "ncping/include/tcpping.h"
 #include "ncsock/include/ncread.h"
 
-#define VERSION "20230626"
+#define VERSION "20230629"
 #define DELIMITER ','
 
 std::mutex mtx;
@@ -136,7 +137,7 @@ const struct option long_options[] = {
     {"gen-count", required_argument, 0, 38},
     {"redirect", no_argument, 0, 55},
     {"gen-ipv6", required_argument, 0, 39},
-    {"icmp-timeout", required_argument, 0, 49},
+    {"recv-ping-timeout", required_argument, 0, 49},
     {0,0,0,0}
 }; const char* short_options = "hvt:T:p:";
 const char* run; /*for help menu*/
@@ -421,7 +422,7 @@ int main(int argc, char** argv){
     
     /*Пинг сканирования*/
     if (!argp.ping_off) {
-	   std::cout << np.main_nesca_out("NESCA4", "PING_SCAN", 5, "timeout", "threads", std::to_string(argp.icmp_ping_timeout), std::to_string(argp.threads_ping)) << std::endl;
+	   std::cout << np.main_nesca_out("NESCA4", "PING_SCAN", 5, "recv-timeout", "threads", std::to_string(argp.ping_timeout), std::to_string(argp.threads_ping)) << std::endl;
 
         int threads_ping = argp.threads_ping;  // Количество потоков
         int ips_per_thread = result.size() / threads_ping;
@@ -535,7 +536,7 @@ int main(int argc, char** argv){
     for (const auto& ip : processed_ip){
 	   if (argp.success_target.find(ip) != argp.success_target.end() || argp.debug){
 		  std::string dns = dus.get_dns_by_ip(ip.c_str(),4445);
-		  double time_ms = -1.0;
+		  double time_ms = argp.rtts[ip];
 		  std::cout << std::endl << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", dns, std::to_string(time_ms)) << std::endl;
 	   }
 
@@ -591,7 +592,14 @@ print_results(std::string ip){
 
 bool
 process_ping(std::string ip){
-    // Обычный через connect 
+
+	/*TCP_ACK PING*/
+	double status_time = tcp_ack_ping(ip.c_str(), argp.source_ip, argp.ping_timeout);
+	if (status_time != -1){
+		argp.rtts[ip] = status_time;
+		return true;
+	}
+
     /*
     bool tcp_ping = connect_tcp_ping(ip.c_str(), 80, argp.tcp_ping_timeout);
     if (tcp_ping){
@@ -599,27 +607,29 @@ process_ping(std::string ip){
     }
     */
 
-    // 3 Метода ICMP пинга
+	/*ICMP*/
+	/*
     delay_ms(argp.icmp_ping_timeout);
     double icmp_casual = icmp_ping(ip.c_str(), 1, 1000, 8, 0, 64);
-    if (icmp_casual != PING_ERROR){
+    if (icmp_casual != -1){
 	   argp.rtts[ip] = icmp_casual;
 	   return true;
     }
     else {
 	   double icmp_rev = icmp_ping(ip.c_str(), 1, 1000, 13, 0, 64);
-	   if (icmp_rev != PING_ERROR){
+	   if (icmp_rev != -1){
 		  argp.rtts[ip] = icmp_rev;
 		  return true;
 	   }
 	   else {
 		  int icmp_rev1 = icmp_ping(ip.c_str(), 1, 1000, 15, 0, 64);
-		  if (icmp_rev1 != PING_ERROR){
+		  if (icmp_rev1 != -1){
 		      argp.rtts[ip] = icmp_rev1;
 			 return true;
 		  }
 	   }
     }
+	*/
 
     return false;
 }
@@ -683,20 +693,16 @@ checking_default_files(void){
        }
     }
 
-    // Чек паролей и логинов
-    check_files(argp.path_ftp_login.c_str(), argp.path_ftp_pass.c_str());
-    check_files(argp.path_sftp_login.c_str(), argp.path_sftp_pass.c_str());
-    check_files(argp.path_http_login.c_str(), argp.path_http_pass.c_str());
-    check_files(argp.path_rtsp_login.c_str(), argp.path_rtsp_pass.c_str());
-    check_files(argp.path_smtp_login.c_str(), argp.path_smtp_pass.c_str());
-    check_files(argp.path_hikvision_login.c_str(), argp.path_hikvision_pass.c_str());
+	/*Чек паролей и логин.*/
+	check_files(argp.path_ftp_login.c_str(),argp.path_ftp_pass.c_str());
+    check_files(argp.path_sftp_login.c_str(),argp.path_sftp_pass.c_str());
+    check_files(argp.path_http_login.c_str(),argp.path_http_pass.c_str());
+    check_files(argp.path_rtsp_login.c_str(),argp.path_rtsp_pass.c_str());
+    check_files(argp.path_smtp_login.c_str(),argp.path_smtp_pass.c_str());
+    check_files(argp.path_hikvision_login.c_str(),argp.path_hikvision_pass.c_str());
 
-    if (errors_files == 0){
-	   std::cout << np.main_nesca_out("NESCA4", "BRUTEFORCE_DATA", 5, "status", "", "OK","");
-    }
-    else {
-	   std::cout << np.main_nesca_out("NESCA4", "BRUTEFORCE_DATA", 5, "status", "ERRORS", "FAILED", std::to_string(errors_files));
-    }
+    if (errors_files == 0){std::cout << np.main_nesca_out("NESCA4", "BRUTEFORCE_DATA", 5, "status", "", "OK","");}
+    else {std::cout << np.main_nesca_out("NESCA4", "BRUTEFORCE_DATA", 5, "status", "ERRORS", "FAILED", std::to_string(errors_files));}
 }
 
 void
@@ -1440,7 +1446,7 @@ parse_args(int argc, char** argv){
                break;
            }
            case 49:
-		     argp.icmp_ping_timeout = atoi(optarg);
+			   argp.ping_timeout = atoi(optarg);
                break;
            case 50:
                argp.no_get_path = true;
@@ -1551,9 +1557,6 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms, const int
 
     for (const auto& port : ports){
 	   /*Буфер для ответа.*/
-	   ls.lock();
-	   unsigned char *buffer = (unsigned char *)calloc(READ_BUFFER_SIZE, sizeof(unsigned char));
-	   ls.unlock();
 
 	   /*Отправка пакета.*/
 	   int result = nesca_scan(&ncopts, ip, port, timeout_ms);
@@ -1565,15 +1568,15 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms, const int
 	    * Это означает что функция успешно выполнилась.*/
 	   if (result != PORT_OPEN){
 		  /*Значит была ошибка.*/
-		  ls.lock();
-		  free(buffer);
-		  ls.unlock();
-
 		  argp.error_target[ip].push_back(port);
 		  argp.error_fuck++;
 		  /*Переход к следующему порту.*/
 		  continue;
 	   }
+
+	   ls.lock();
+	   unsigned char *buffer = (unsigned char *)calloc(READ_BUFFER_SIZE, sizeof(unsigned char));
+	   ls.unlock();
 
 	   /*В другом случае, запускается
 	    * "Принятие пакета" или скорее его ожидание.*/

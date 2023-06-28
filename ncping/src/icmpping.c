@@ -33,13 +33,13 @@ icmp_ping(const char* dest_ip, int count, int timeout_ms,
     /*Создание сокета.*/
     int sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (sock < 0) {
-        return PING_ERROR;
+        return -1;
     }
 
     /*Установка TTL на сокет.*/
     if (setsockopt(sock, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) < 0) {
         close(sock);
-        return PING_ERROR;
+        return -1;
     }
 
     /*Установка цели.*/
@@ -64,7 +64,7 @@ icmp_ping(const char* dest_ip, int count, int timeout_ms,
         int send = sendto(sock, outpack, sizeof(struct icmp), 0, (struct sockaddr*)&whereto, sizeof(struct sockaddr));
         if (send < 0) {
             close(sock);
-            return PING_ERROR;
+            return -1;
         }
 	   /*С каждым новым отправленым пакетом seq должен расти на 1.*/
 	   icp->icmp_seq = count_packets;
@@ -87,18 +87,18 @@ icmp_ping(const char* dest_ip, int count, int timeout_ms,
 	   case -1:
 		  /*Не удалось запустить select.*/
 		  close(sock);
-		  return PING_ERROR;
+	      return -1;
 
 	   case 0:
 		  /*Если таймаут вышел.*/
 		  close(sock);
-		  return PING_ERROR;
+	      return -1;
 
 	   default:{
 		  /*Принятие пакета от хоста, в буфер.*/
 		  if (recv(sock, packet, sizeof(packet), 0) < 0) {
 			 close(sock);
-			 return PING_ERROR;
+			 return -1;
 		  }
 		  gettimeofday(&recv_time, NULL);
 	   }
@@ -142,5 +142,5 @@ icmp_ping(const char* dest_ip, int count, int timeout_ms,
     /* Источник - https://datatracker.ietf.org/doc/html/rfc792*/
 
     close(sock);
-    return PING_ERROR;
+    return -1;
 }

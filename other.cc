@@ -6,6 +6,7 @@
 */
 
 #include "include/other.h"
+#include <cstdio>
 
 const char*
 get_time(){
@@ -83,13 +84,12 @@ write_ports(std::string mode){
 
 void
 logo(void){
-    std::cout << "d8b   db d88888b .d8888.  .o88b.  .d8b.         j88D  \n";
-    std::cout << "888o  88 88'     88'  YP d8P  Y8 d8' `8b       j8~88  \n"; 
-    std::cout << "88V8o 88 88ooooo `8bo.   8P      88ooo88      j8' 88  \n";
-    std::cout << "88 V8o88 88~~~~~   `Y8b. 8b      88~~~88      V88888D \n";
-    std::cout << "88  V888 88.     db   8D Y8b  d8 88   88          88  \n";
-    std::cout << "VP   V8P Y88888P `8888Y'  `Y88P' YP   YP          VP  \n";
-    std::cout << std::endl;
+    puts("d8b   db d88888b .d8888.  .o88b.  .d8b.         j88D  ");
+    puts("888o  88 88'     88'  YP d8P  Y8 d8' `8b       j8~88  "); 
+    puts("88V8o 88 88ooooo `8bo.   8P      88ooo88      j8' 88  ");
+    puts("88 V8o88 88~~~~~   `Y8b. 8b      88~~~88      V88888D ");
+    puts("88  V888 88.     db   8D Y8b  d8 88   88          88  ");
+    puts("VP   V8P Y88888P `8888Y'  `Y88P' YP   YP          VP  \n");
 }
 
 std::vector<int>

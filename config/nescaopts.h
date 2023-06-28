@@ -66,11 +66,10 @@ public:
         const char* path_ips;
 
 	   /*Ping options*/
-	   int icmp_ping_timeout = 200;
-	   int tcp_ping_timeout = 300;
-	   int threads_ping = 10;
+	   int ping_timeout = 2000;
+	   int threads_ping = 100;
 	   int ping_log = 20;
-        bool display_response_time;
+       bool display_response_time;
 
 	   std::map<std::string,double> rtts;
 

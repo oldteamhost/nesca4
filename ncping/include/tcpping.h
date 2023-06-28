@@ -2,9 +2,6 @@
 #define TCP_PING_H
 #include <stdio.h>
 
-#define PING_SUCCESS 0
-#define PING_ERROR -1
-
 #ifdef __cplusplus
 extern "C" {
 #endif

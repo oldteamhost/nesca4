@@ -12,17 +12,17 @@ int
 connect_tcp_ping(const char* ip, int port, int timeout_ms){
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1) {
-	   return PING_ERROR;
+	   return -1;
     }
 
     int flags = fcntl(sockfd, F_GETFL, 0);
     if (flags < 0) {
         close(sockfd);
-	   return PING_ERROR;
+	   return -1;
     }
     if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) < 0) {
         close(sockfd);
-	   return PING_ERROR;
+	   return -1;
     }
 
     // Установка адреса назначения
@@ -31,7 +31,7 @@ connect_tcp_ping(const char* ip, int port, int timeout_ms){
     server_address.sin_port = htons(port);
     if (inet_pton(AF_INET, ip, &(server_address.sin_addr)) <= 0) {
         close(sockfd);
-	   return PING_ERROR;
+	   return -1;
     }
 
     struct timeval timeout;
@@ -39,14 +39,14 @@ connect_tcp_ping(const char* ip, int port, int timeout_ms){
     timeout.tv_usec = (timeout_ms % 1000) * 1000;
     if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
         close(sockfd);
-	   return PING_ERROR;
+	   return -1;
     }
 
     int result = connect(sockfd, (struct sockaddr*)&server_address, sizeof(server_address));
 
     if (result == 0 || errno == ECONNREFUSED) {
         close(sockfd);
-	   return PING_ERROR;
+	   return -1;
     } 
     else if (errno == EINPROGRESS) {
         fd_set fds;
@@ -56,10 +56,10 @@ connect_tcp_ping(const char* ip, int port, int timeout_ms){
         result = select(sockfd + 1, NULL, &fds, NULL, &timeout);
         if (result > 0) {
             close(sockfd);
-		  return PING_ERROR;
+		  return -1;
         }
     }
 
     close(sockfd);
-    return PING_ERROR;
+    return -1;
 }

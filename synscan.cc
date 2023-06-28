@@ -111,7 +111,13 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
 	   tpf.fin = 0;
 	   tpf.psh = 0;
 	   tpf.urg = 0;
-    }
+    }else if (ncot->scan_type == ACK_PING){
+	   tpf.syn = 0;
+	   tpf.fin = 0;
+	   tpf.psh = 0;
+	   tpf.urg = 0;
+       tpf.ack = 1;
+	}
 
     /*Заполнение TCP заголовка.*/
     scan_debug_log("Fill TCP header.\n", debug);
