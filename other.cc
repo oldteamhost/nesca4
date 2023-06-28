@@ -51,7 +51,8 @@ write_ports(std::string mode){
         return temp;
     }
     else if (mode == "nesca" || mode == "nesca3"){
-        temp = {80,81,88,8080,8081,60001,60002,8008,8888,554,9000,3536,21};
+		/*On https://github.com/cora32/Nesca/blob/master/resource.h*/
+        temp = {80,81,88,8080,8081,60001,60002,8008,8888,554,9000,441,4111,6667,3536,22,21};
         return temp;
     }
     else if (mode == "top100"){
