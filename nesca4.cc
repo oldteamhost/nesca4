@@ -109,7 +109,6 @@ const struct option long_options[] = {
     {"debug", no_argument, 0, 27},
     {"er", no_argument, 0, 28},
     {"no-get-path", no_argument, 0, 50},
-    {"path-log", no_argument, 0, 53},
     {"import-color", required_argument, 0, 54},
     {"null", no_argument, 0, 91},
     {"fin", no_argument, 0, 92},
@@ -209,15 +208,25 @@ pre_check(){
 }
 
 int main(int argc, char** argv){
-
     run = argv[0];
-
-    if (argc <= 1){
-        help_menu();
-        return 1;
-    }
-
+    if (argc <= 1){help_menu();return 1;}
     parse_args(argc, argv);
+
+    /*Предупреждение о потоках*/
+    if (argp.warning_threads){
+        char what;
+        np.nlog_custom("WARNING","You set "+ std::to_string(argp.threads_temp) + 
+                " threads this can severely overload a weak cpu, are you sure you want to continue (y,n): ", 2);
+        std::cin >> what;
+        std::cout << std::endl;
+
+        if (what != 'y'){
+            return 0;
+        }
+        else {
+            argp._threads = argp.threads_temp;
+        }
+    }
     pre_check();
 
 	/*Получение IP компютера.*/
@@ -257,7 +266,6 @@ int main(int argc, char** argv){
                 std::string code = strs.str();
                 std::cout << np.main_nesca_out("TT", host, 3, "C", "", code, "") << std::endl;
             }
-
         }
         // HTTP запрос
         if (argp.http_request){
@@ -266,7 +274,6 @@ int main(int argc, char** argv){
                 std::cout << np.main_nesca_out("TT", "[^]:HTTP REQUEST " + host, 2,
                 "", "", "", "") << std::endl;
             }
-
         }
         // Получение путей
         if (argp.get_redirect){
@@ -328,22 +335,6 @@ int main(int argc, char** argv){
         return 0;
     }
 
-    /*Предупреждение о потоках*/
-    if (argp.warning_threads){
-        char what;
-        np.nlog_custom("WARNING","You set "+ std::to_string(argp.threads_temp) + 
-                " threads this can severely overload a weak cpu, are you sure you want to continue (y,n): ", 2);
-        std::cin >> what;
-        std::cout << std::endl;
-
-        if (what != 'y'){
-            return 0;
-        }
-        else {
-            argp._threads = argp.threads_temp;
-        }
-    }
-
     checking_default_files();
     std::cout << std::endl;
 
@@ -389,7 +380,6 @@ int main(int argc, char** argv){
         std::getchar();
         std::cout << np.main_nesca_out("NN", "Stoping threads...", 0, "", "", "", "") << std::endl;
     }
-
 
     /*Тут начинаеться само сканирование, брутфорс и всё остальное.
 	* nesca 4*/
@@ -1053,7 +1043,6 @@ help_menu(void){
     std::cout << "  -no-proc               Only scan.\n";
     std::cout << "  -packet-trace          Display packet_trace.\n";
     std::cout << "  -no-get-path           Disable getting paths.\n";
-    std::cout << "  -path-log              Display paths method log.\n";
     std::cout << "  -on-get-dns            On get dns for scanning ports.\n";
     std::cout << "  -on-http-response      On print response from port 80.\n";
     std::cout << "  -log-set <count>       Change change the value of ips after which, will be displayed information about how much is left.\n";
@@ -1444,9 +1433,6 @@ parse_args(int argc, char** argv){
            case 51:
                argp.get_response = true;
                break;
-           case 53:
-               argp.get_path_log = true;
-               break;
            case 54:
                argp.import_color_scheme = true;
                argp.path_color_scheme = optarg;
@@ -1543,8 +1529,6 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms, const int
     }
 
     for (const auto& port : ports){
-	   /*Буфер для ответа.*/
-
 	   /*Отправка пакета.*/
 	   int result = nesca_scan(&ncopts, ip, port, timeout_ms);
 	   /*Лог.*/
@@ -1562,6 +1546,7 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms, const int
 	   }
 
 	   ls.lock();
+	   /*Буфер для ответа.*/
 	   unsigned char *buffer = (unsigned char *)calloc(READ_BUFFER_SIZE, sizeof(unsigned char));
 	   ls.unlock();
 
