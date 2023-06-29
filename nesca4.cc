@@ -483,12 +483,8 @@ int main(int argc, char** argv){
        argp.xmas_scan ||
 	  argp.null_scan){np.nlog_custom("WARNING", "XMAS | FIN | NULL scan, results may be inaccurate!\n", 2);}
 
-    if (argp.fin_scan){argp.fin_scan = true;}
-    else if (argp.null_scan){argp.null_scan = true;}
-    else if (argp.xmas_scan){argp.xmas_scan = true;}
-
     if (argp.fin_scan){
-	   /*#cleanCode*/
+	   /*clean code - FAILED*/
 	   std::cout << np.main_nesca_out("NESCA4", "START_FIN_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;}else if (argp.null_scan){std::cout << np.main_nesca_out("NESCA4", "START_NULL_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;}else if (argp.xmas_scan){std::cout << np.main_nesca_out("NESCA4", "START_XMAS_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;}else {std::cout << np.main_nesca_out("NESCA4", "START_SYN_SCAN", 5, "targets", "threads", std::to_string(result_main.size()), std::to_string(argp._threads)) << std::endl;}
 
     /*Само сканирование.*/
@@ -1597,7 +1593,13 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms, const int
 
 	   /*В другом случае идёт обработка пакета.
 	    * И только на этом этапе мы получаем статус порта.*/
-	   int port_status = get_port_status(buffer, false);
+	   int port_status;
+	   if (ncopts.scan_type == SYN_SCAN){
+	       port_status = get_port_status(buffer, false);
+	   }
+	   else {
+	       port_status = get_port_status(buffer, true);
+	   }
 
 	   if (port_status == PORT_CLOSED){argp.closed_target[ip].push_back(port);}
 	   else if (port_status == PORT_OPEN){argp.success_target[ip].push_back(port); argp.fuck_yeah++;}

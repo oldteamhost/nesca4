@@ -191,9 +191,8 @@ get_port_status(unsigned char* buffer, bool no_syn){
 		  case 0x04:{
 			 return PORT_CLOSED;
 		  }
-		  default:{
-			 return PORT_OPEN;
-		  }
+		  default:
+	   		return PORT_OPEN;
 	   }
     } 
     else {
