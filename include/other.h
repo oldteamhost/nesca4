@@ -7,7 +7,6 @@
 
 #ifndef OTHER_H
 #define OTHER_H
-
 #include <vector>
 #include <iostream>
 #include <regex>
@@ -40,10 +39,10 @@ parse_range(const std::string& range_string);
 bool 
 check_root_perms();
 
-bool 
-dns_or_ip(std::string &node);
-
 int
 generate_port();
+
+bool 
+dns_or_ip(std::string &node);
 
 #endif

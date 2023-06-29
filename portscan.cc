@@ -18,22 +18,14 @@
 #include <unistd.h>
 #include <poll.h>
 
-#include "include/synscan.h"
+#include "include/portscan.h"
 #include "ncsock/include/ncread.h"
 #include "ncsock/include/headers.h"
 #include "ncsock/include/socket.h"
 #include "ncsock/include/other.h"
+#include "include/generation.h"
 
 nesca_prints nspr;
-
-unsigned int
-generate_seq(){
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned int> dis(0, 4294967295);
-    unsigned int seq_res = dis(gen);
-    return seq_res;
-}
 
 void
 scan_debug_log(std::string mes, bool debug){
@@ -170,8 +162,8 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
 	   close(sock);
 	   return PORT_ERROR;
     }
-    close(sock);
 
+    close(sock);
     return PORT_OPEN;
 }
 

@@ -13,18 +13,16 @@ services_nesca::parse_services(const std::string& filename){
     std::ifstream file(filename);
 
     if (!file){return result;}
-
     std::string line;
 
     while (std::getline(file, line)){
         std::istringstream lineIss(line);
         int key;
         std::string value;
-
         if (lineIss >> value >> key){result[key] = value;}
     }
-    file.close();
 
+    file.close();
     return result;
 }
 

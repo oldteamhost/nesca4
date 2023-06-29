@@ -50,3 +50,21 @@ generate_random_str(int len, std::string dictionary){
     for (int i = 0; i < len; i++){result += dictionary[dist(engine)];}
     return result;
 }
+
+unsigned int
+generate_seq(void){
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned int> dis(0, 4294967295);
+    unsigned int seq_res = dis(gen);
+    return seq_res;
+}
+
+int
+generate_port(){
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dist(49151, 65535);
+    int result = dist(gen);
+    return result;
+}

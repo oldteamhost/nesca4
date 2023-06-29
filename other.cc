@@ -125,13 +125,3 @@ dns_or_ip(std::string &node){
     std::regex dnsRegex("^[a-zA-Z0-9]+([-.][a-zA-Z0-9]+)*\\.[a-zA-Z]{2,}(\\.[a-zA-Z]{2,})?$");
     return std::regex_match(node, dnsRegex);
 }
-
-int
-generate_port(){
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dist(49151, 65535);
-    int result = dist(gen);
-    return result;
-}
-

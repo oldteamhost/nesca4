@@ -1,5 +1,4 @@
 #include "include/ackping.h"
-#include <ctime>
 
 double
 tcp_ack_ping(const char* ip, const char* source_ip, int timeout_ms){

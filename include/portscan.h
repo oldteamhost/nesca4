@@ -71,10 +71,6 @@ struct pseudo_header{
 int 
 nesca_scan(struct nesca_scan_opts *ncot ,const char* ip, int port, int timeout_ms);
 
-/*Для генерации рандомного seq.*/
-unsigned int
-generate_seq();
-
 /*Более простой вывод лога.*/
 void
 scan_debug_log(std::string mes, bool debug);

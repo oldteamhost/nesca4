@@ -99,23 +99,25 @@ nesca_prints::import_color_scheme(const std::string file_name, std::map<std::str
 }
 
 void
-nesca_prints::golder_rod_on(void){
-   std::cout << golder_rod;
-}
+nesca_prints::golder_rod_on(void){std::cout << golder_rod;}
 
 void 
-nesca_prints::sea_green_on(void){
-   std::cout << sea_green;
-}
+nesca_prints::sea_green_on(void){std::cout << sea_green;}
 
 void 
-nesca_prints::reset_colors(void){
-    std::cout << reset_color;
-}
+nesca_prints::reset_colors(void){std::cout << reset_color;}
+
 void
-nesca_prints::gray_nesca_on(void){
-    std::cout << gray_nesca;
-}
+nesca_prints::gray_nesca_on(void){std::cout << gray_nesca;}
+
+void
+nesca_prints::yellow_html_on(void){std::cout << yellow_html;}
+
+void 
+nesca_prints::green_html_on(void){std::cout << green_html;}
+
+void 
+nesca_prints::red_html_on(void){std::cout << red_html;}
 
 int 
 nesca_prints::processing_color_scheme(const std::map<std::string, std::string> config_values){
@@ -159,7 +161,6 @@ nesca_prints::nlog_error(std::string message){
     if (save_file){
         write_line(file_path_save, log);
     }
-
 }
 
 void
@@ -181,18 +182,4 @@ nesca_prints::nlog_custom(std::string auth, std::string message, int color){
     if (save_file){
         write_line(file_path_save, log);
     }
-}
-void
-nesca_prints::yellow_html_on(void){
-    std::cout << yellow_html;
-}
-
-void 
-nesca_prints::green_html_on(void){
-    std::cout << green_html;
-}
-
-void 
-nesca_prints::red_html_on(void){
-    std::cout << red_html;
 }

@@ -1,6 +1,7 @@
 #ifndef SYN_PING_H
 #define SYN_PING_H
-#include "../../include/synscan.h"
+#include "../../include/portscan.h"
+#include "../../include/generation.h"
 #include "../../ncsock/include/ncread.h"
 
 #define DEFAULT_SEND_PORT 80

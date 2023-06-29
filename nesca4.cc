@@ -30,7 +30,7 @@
 #include "include/scanner.h"
 #include "include/target.h"
 #include "include/prints.h"
-#include "include/synscan.h"
+#include "include/portscan.h"
 #include "include/netutils.h"
 #include "include/services.h"
 
