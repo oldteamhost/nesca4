@@ -64,7 +64,7 @@ std::mutex ls;
 void 
 help_menu(void);
 void
-init_bruteforce();
+init_bruteforce(void);
 void 
 processing_tcp_scan_ports(std::string ip, int port, int result);
 std::string 
@@ -80,7 +80,7 @@ process_ping(std::string ip);
 void 
 parse_args(int argc, char** argv);
 void
-pre_check();
+pre_check(void);
 void
 print_results(std::string ip);
 
@@ -141,7 +141,7 @@ const struct option long_options[] = {
 const char* run; /*for help menu*/
 
 void
-pre_check(){
+pre_check(void){
     logo();
 
     if (argp.import_color_scheme){
@@ -1481,7 +1481,7 @@ parse_args(int argc, char** argv){
     }
 }
 void
-init_bruteforce(){
+init_bruteforce(void){
     argp.ftp_logins = write_file(argp.path_ftp_login);
     argp.ftp_passwords = write_file(argp.path_ftp_pass);
     argp.sftp_logins = write_file(argp.path_sftp_login);
