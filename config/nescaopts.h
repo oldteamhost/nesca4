@@ -66,10 +66,9 @@ public:
         const char* path_ips;
 
 	   /*Ping options*/
-	   int ping_timeout = 2000;
+	   int ping_timeout = 1500;
 	   int threads_ping = 100;
 	   int ping_log = 20;
-       bool display_response_time;
 
 	   std::map<std::string,double> rtts;
 
@@ -152,7 +151,6 @@ public:
 
 	   /*Testing*/
         bool host_testing;
-        std::vector<std::string> hosts_test;
         bool get_redirect;
         bool response_code_test;
         bool http_request;

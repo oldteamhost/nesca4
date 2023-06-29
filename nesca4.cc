@@ -43,7 +43,7 @@
 #include "config/nescaopts.h"
 #include "ncping/include/icmpping.h"
 #include "ncping/include/ackping.h"
-#include "ncping/include/tcpping.h"
+#include "ncping/include/synping.h"
 #include "ncsock/include/ncread.h"
 
 #define VERSION "20230629"
@@ -123,7 +123,6 @@ const struct option long_options[] = {
     {"packet-trace", no_argument, 0, 96},
     {"scan-db", no_argument, 0, 59},
     {"scan-debug", no_argument, 0, 60},
-    {"res-time", no_argument, 0, 61},
     {"help", no_argument, 0, 'h'},
     {"version", no_argument, 0, 'v'},
     {"ports", no_argument, 0, 'p'},
@@ -132,12 +131,12 @@ const struct option long_options[] = {
     {"response-code", no_argument, 0, 35},
     {"http-request", no_argument, 0, 56},
     {"gen-ipv4", no_argument, 0, 36},
-    {"host-test", required_argument, 0, 34},
-    {"icmp-ping", required_argument, 0, 37},
+    {"host-test", no_argument, 0, 34},
+    {"tcp-ping", required_argument, 0, 37},
     {"gen-count", required_argument, 0, 38},
     {"redirect", no_argument, 0, 55},
     {"gen-ipv6", required_argument, 0, 39},
-    {"recv-ping-timeout", required_argument, 0, 49},
+    {"ping-timeout", required_argument, 0, 49},
     {0,0,0,0}
 }; const char* short_options = "hvt:T:p:";
 const char* run; /*for help menu*/
@@ -221,6 +220,9 @@ int main(int argc, char** argv){
     parse_args(argc, argv);
     pre_check();
 
+	/*Получение IP компютера.*/
+    argp.source_ip = _iu.get_local_ip();
+ 
     if (optind < argc){
         size_t cidr = std::string(argv[optind]).find("/");
         size_t range = std::string(argv[optind]).find("-");
@@ -249,7 +251,7 @@ int main(int argc, char** argv){
     if (argp.host_testing){
         // Код ответа
         if (argp.response_code_test){
-            for (auto& host : argp.hosts_test){
+            for (auto& host : argp._ip){
                 std::ostringstream strs;
                 strs << get_response_code(host, 80);
                 std::string code = strs.str();
@@ -259,7 +261,7 @@ int main(int argc, char** argv){
         }
         // HTTP запрос
         if (argp.http_request){
-            for (auto& host : argp.hosts_test){
+            for (auto& host : argp._ip){
                 np.golder_rod_on(); /**/ std::cout << send_http_request(host, 80); /**/ np.reset_colors(); 
                 std::cout << np.main_nesca_out("TT", "[^]:HTTP REQUEST " + host, 2,
                 "", "", "", "") << std::endl;
@@ -268,7 +270,7 @@ int main(int argc, char** argv){
         }
         // Получение путей
         if (argp.get_redirect){
-            for (auto& host : argp.hosts_test){
+            for (auto& host : argp._ip){
                 bool status_path;
 			 std::string redirect = "N/A";
                 std::string html = send_http_request(host, 80);
@@ -279,27 +281,31 @@ int main(int argc, char** argv){
 
         // Пинг
         if (argp.tcp_ping_test){
-            double ping_time_temp;
-            double ping_temp;
             if (argp.tcp_ping_mode == "live" || argp.tcp_ping_mode == "1"){
 			 for (;;){
-				process_ping(argp.hosts_test[0]);
-                    std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 3,
-                    "rtt", "", "ms", "") << std::endl;
+				 bool ping = process_ping(argp._ip[0]);
+                 std::cout << np.main_nesca_out("TT", argp._ip[0], 3,
+                 "rtt", "", std::to_string(argp.rtts[argp._ip[0]]) +"ms", "") << std::endl;
+				 if (ping == false){
+                 	std::cout << np.main_nesca_out("TT", argp._ip[0], 3,
+                 	"rtt", "", "Host down :)", "") << std::endl;
+				 }
+				 delay_ms(600);
 			 }
             }
             else if (argp.tcp_ping_mode == "default" || argp.tcp_ping_mode == "0") {
-                for (auto& host : argp.hosts_test){
-				bool icmp_ping = process_ping(host);
-
-                    if (icmp_ping){
-                        std::cout << np.main_nesca_out("TT", argp.hosts_test[0], 3,
-                        "rtt", "", "ms", "") << std::endl;
-                    }
-                }
-            }
+                for (auto& host : argp._ip){
+				 	bool ping = process_ping(host);
+                 	std::cout << np.main_nesca_out("TT", host, 3,
+                 	"rtt", "", std::to_string(argp.rtts[host]) +"ms", "") << std::endl;
+				 	if (ping == false){
+                 		std::cout << np.main_nesca_out("TT", host, 3,
+                 		"rtt", "", "Host down :)", "") << std::endl;
+				 	}
+            	}
+			}
             else {
-                np.nlog_custom("TT", argp.hosts_test[0] + " ping mode not found! Only (0,1) ala (default, live)",2);
+                np.nlog_custom("TT", argp._ip[0] + " ping mode not found! Only (0,1) ala (default, live)",2);
            }
         }
         return 0;
@@ -387,15 +393,9 @@ int main(int argc, char** argv){
 
     /*Тут начинаеться само сканирование, брутфорс и всё остальное.
 	* nesca 4*/
-    
-
     init_bruteforce();
-
     std::vector<std::string> result;
-
-    // получение ip компютера
-    argp.source_ip = _iu.get_local_ip();
-   
+  
     /*Установка цели из аргумента.*/
     if (argp.ip_scan_import || argp.ip_scan){
         result = argp._ip;
@@ -452,10 +452,6 @@ int main(int argc, char** argv){
 
                 if (ping) {
                     result_main.push_back(ip);
-
-                    if (argp.display_response_time) {
-                        std::cout << np.main_nesca_out("PING", ip, 1, "opt: result: mode:", "rtt", "", "ms") << std::endl;
-                    }
                 }
             }
 
@@ -588,6 +584,12 @@ print_results(std::string ip){
 
 bool
 process_ping(std::string ip){
+	/*TCP_SYN PING*/
+	double status_time1 = tcp_syn_ping(ip.c_str(), argp.source_ip, argp.ping_timeout);
+	if (status_time1 != -1){
+		argp.rtts[ip] = status_time1;
+		return true;
+	}
 
 	/*TCP_ACK PING*/
 	double status_time = tcp_ack_ping(ip.c_str(), argp.source_ip, argp.ping_timeout);
@@ -595,13 +597,6 @@ process_ping(std::string ip){
 		argp.rtts[ip] = status_time;
 		return true;
 	}
-
-    /*
-    bool tcp_ping = connect_tcp_ping(ip.c_str(), 80, argp.tcp_ping_timeout);
-    if (tcp_ping){
-	   return true;
-    }
-    */
 
 	/*ICMP*/
 	/*
@@ -1024,7 +1019,7 @@ help_menu(void){
     np.sea_green_on();
     std::cout << "\narguments ping:" << std::endl;
     np.reset_colors();
-    std::cout << "  -icmp-timeout <ms>     Set timeout for icmp ping.\n";
+    std::cout << "  -ping-timeout <ms>     Set timeout for icmp ping.\n";
     std::cout << "  -no-ping               Off ping.\n";
 
     np.sea_green_on();
@@ -1076,7 +1071,7 @@ help_menu(void){
     std::cout << "  -response-code         Get response code from host.\n";
     std::cout << "  -redirect              Get redirect from host.\n";
     std::cout << "  -http-request          Send http request from host.\n";
-    std::cout << "  -icmp-ping <mode>      Get response time from host, modes (live) or (default).\n";
+    std::cout << "  -tcp-ping <mode>       Get response time from host, modes (live) or (default).\n";
 
     np.sea_green_on();
     std::cout << "\narguments generation:" << std::endl;
@@ -1418,7 +1413,6 @@ parse_args(int argc, char** argv){
                break;
            case 34:
                argp.host_testing = true;
-               argp.hosts_test = split_string_string(optarg, DELIMITER);
                break;
            case 35:
                argp.response_code_test = true;
@@ -1471,9 +1465,6 @@ parse_args(int argc, char** argv){
                break;
            case 60:
                argp.syn_debug = true;
-               break;
-           case 61:
-               argp.display_response_time = true;
                break;
 	      case 90:
 			argp.ping_log = atoi(optarg);
@@ -1594,12 +1585,8 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms, const int
 	   /*В другом случае идёт обработка пакета.
 	    * И только на этом этапе мы получаем статус порта.*/
 	   int port_status;
-	   if (ncopts.scan_type == SYN_SCAN){
-	       port_status = get_port_status(buffer, false);
-	   }
-	   else {
-	       port_status = get_port_status(buffer, true);
-	   }
+	   if (ncopts.scan_type == SYN_SCAN){port_status = get_port_status(buffer, false);}
+	   else {port_status = get_port_status(buffer, true);}
 
 	   if (port_status == PORT_CLOSED){argp.closed_target[ip].push_back(port);}
 	   else if (port_status == PORT_OPEN){argp.success_target[ip].push_back(port); argp.fuck_yeah++;}

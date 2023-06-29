@@ -1,15 +1,14 @@
-#include "include/ackping.h"
-#include <ctime>
+#include "include/synping.h"
 
 double
-tcp_ack_ping(const char* ip, const char* source_ip, int timeout_ms){
-	/*Отпкавка пакета с флагом ACK.*/
+tcp_syn_ping(const char* ip, const char* source_ip, int timeout_ms){
+	/*Отпкавка пакета с флагом SYN.*/
 	double response_time = -1;
 	int source_port = generate_port();
 	nesca_scan_opts ncops;
 	ncops.debug = false;
 	ncops.source_ip = source_ip;
-	ncops.scan_type = 5;
+	ncops.scan_type = 1;
 	ncops.seq = generate_seq();
 	ncops.source_port = source_port;
 	nesca_scan(&ncops, ip, DEFAULT_SEND_PORT, 0);
@@ -33,7 +32,7 @@ tcp_ack_ping(const char* ip, const char* source_ip, int timeout_ms){
     struct tcphdr *tcph = (struct tcphdr*)((char*)buffer + iphdrlen);
 
 	/*Если ответило флагом RST значит спалился.*/
-	if (tcph->th_flags == 0x04){
+	if (tcph->th_flags != 0){
 		response_time = (end_time.tv_sec - start_time.tv_sec) * 1000.0; 
     	response_time += (end_time.tv_nsec - start_time.tv_nsec) / 1000000.0;
 	}
