@@ -1,4 +1,5 @@
 #include "include/synping.h"
+std::mutex fuck_syn;
 
 double
 tcp_syn_ping(const char* ip, const char* source_ip, int timeout_ms){
@@ -14,14 +15,21 @@ tcp_syn_ping(const char* ip, const char* source_ip, int timeout_ms){
 	nesca_scan(&ncops, ip, DEFAULT_SEND_PORT, 0);
 
 	/*Буфер для приёма ответа.*/
+	fuck_syn.lock();
 	unsigned char *buffer = (unsigned char *)calloc(READ_BUFFER_SIZE, sizeof(unsigned char));
+	fuck_syn.unlock();
 
 	/*Ожидание пакета, и запуск таймера на время ответа.*/
 	struct timespec start_time;
     clock_gettime(CLOCK_MONOTONIC, &start_time);
 	int read = ncread(ip, timeout_ms, &buffer, 0);
 	/*Не дождалась пакета.*/
-	if (read != SUCCESS_READ){free(buffer);return -1;}
+	if (read != SUCCESS_READ){
+		fuck_syn.lock();
+		free(buffer);
+		fuck_syn.unlock();
+		return -1;
+	}
 	struct timespec end_time;
     clock_gettime(CLOCK_MONOTONIC, &end_time);
 
@@ -37,6 +45,8 @@ tcp_syn_ping(const char* ip, const char* source_ip, int timeout_ms){
     	response_time += (end_time.tv_nsec - start_time.tv_nsec) / 1000000.0;
 	}
 
+	fuck_syn.lock();
 	free(buffer);
+	fuck_syn.unlock();
 	return response_time;
 }

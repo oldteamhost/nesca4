@@ -3,20 +3,6 @@
 checking_finds cf;
 
 std::string 
-checking_finds::check_axis_camera(std::string ip){
-    bool status = false;
-
-    for (auto& path : cf.axis_path){
-        size_t pos = ip.find(path);
-        if (pos != std::string::npos){
-            status = true;
-            return path;
-        }
-    }
-    return "no";
-}
-
-std::string 
 checking_finds::check_basic_auth(std::string ip){
     bool status = false;
 

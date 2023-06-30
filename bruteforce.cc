@@ -309,6 +309,8 @@ brute_ssh(const std::string& ip, int port, const std::string login, const std::s
         return "";
     }
 
+	int timeout = 3;
+	ssh_options_set(sshSession, SSH_OPTIONS_TIMEOUT, &timeout);
     ssh_options_set(sshSession, SSH_OPTIONS_HOST, ip.c_str());
     ssh_options_set(sshSession, SSH_OPTIONS_PORT, &port);
     ssh_options_set(sshSession, SSH_OPTIONS_USER, login.c_str());
@@ -386,7 +388,7 @@ brute_rtsp(const std::string ip, const std::string login, const std::string pass
         }
         curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 1L);
         curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1L);
-        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 15L);
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
         curl_easy_setopt(curl, CURLOPT_USERAGENT, "LibVLC/2.1.5 (LIVE555 Streaming Media v2014.05.27"); 
         curl_easy_setopt(curl, CURLOPT_RTSP_TRANSPORT, "TCP");

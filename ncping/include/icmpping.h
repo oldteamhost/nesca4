@@ -3,22 +3,17 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*Классический IMCP пинг.
  * Поддерживает проверку по типам:
  * ICMP_ECHO,
  * ICMP_TIMESTAMP,
  * ICMP_INFO_REQUEST.*/
 
-double
-icmp_ping(const char* dest_ip, int count, int timeout_ms,
-	   u_int8_t type, u_int8_t code, u_int8_t ttl);
+int
+send_icmp_packet(const char* dest_ip, const char* source_ip, int timeout_ms,
+	             u_int8_t type, u_int8_t code, u_int8_t ttl, int seq);
 
-#ifdef __cplusplus
-}
-#endif
+double
+icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int type_ping);
 
 #endif

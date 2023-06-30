@@ -30,8 +30,8 @@
 #include "../include/prints.h"
 #include "../include/other.h"
 
-#define SEND_BUFFER_SIZE 4096
-#define RECV_BUFFER_SIZE 4096
+#define SEND_BUFFER_SIZE 2048
+#define RECV_BUFFER_SIZE 2048
 
 #define IP_HEADER_TTL 122
 #define WINDOWS_SIZE  32768
