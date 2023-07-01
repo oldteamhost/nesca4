@@ -1,4 +1,5 @@
 #include "include/requests.h"
+#include <unistd.h>
 
 std::string 
 send_http_request(const std::string& node, int port) {
@@ -57,12 +58,12 @@ send_http_request(const std::string& node, int port) {
 
     while (true) {
         bytesRead = recv(sockfd, buffer, sizeof(buffer) - 1, 0);
-        if (bytesRead == -1) {
-            close(sockfd);
-            return HTTPREQUEST_ERROR;
-        } else if (bytesRead == 0) {
-            break;
-        }
+        if (bytesRead == 0) {
+			break;
+        }else {
+			close(sockfd);
+			return HTTPREQUEST_ERROR;
+		}
         buffer[bytesRead] = '\0';
         response_string += buffer;
     }

@@ -759,6 +759,7 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
 					redirect = parse_redirect(html, html, ip, true, port);
                 }
 
+
 			 /*Брутфорс HTTP basic auth.*/
              std::string temp_check_http = cfs.check_basic_auth(redirect); // check axis redirect
              if (argp.off_http_brute != true && temp_check_http != "no" && argp.no_get_path != true){
