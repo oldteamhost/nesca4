@@ -46,7 +46,7 @@
 #include "ncping/include/synping.h"
 #include "ncsock/include/ncread.h"
 
-#define VERSION "20230629"
+#define VERSION "20230701"
 #define DELIMITER ','
 
 std::mutex mtx;
@@ -83,6 +83,8 @@ void
 pre_check(void);
 void
 print_results(std::string ip);
+void
+get_dns_thread(std::string ip);
 
 const struct option long_options[] = {
     {"threads", required_argument, 0, 'T'},
@@ -128,12 +130,15 @@ const struct option long_options[] = {
     {"ports", no_argument, 0, 'p'},
     {"db", no_argument, 0, 7},
     {"error", no_argument, 0, 25},
+    {"TD", required_argument, 0, 52},
+    {"resol-delay", required_argument, 0, 40},
     {"response-code", no_argument, 0, 35},
     {"http-request", no_argument, 0, 56},
     {"gen-ipv4", no_argument, 0, 36},
     {"testing", no_argument, 0, 34},
     {"tcp-ping", required_argument, 0, 37},
     {"gen-count", required_argument, 0, 38},
+    {"resol-port", required_argument, 0, 33},
     {"redirect", no_argument, 0, 55},
     {"gen-ipv6", required_argument, 0, 39},
     {"ping-timeout", required_argument, 0, 49},
@@ -461,8 +466,25 @@ int main(int argc, char** argv){
     	int error_count = result.size() - result_main.size();
     	// std::cout << np.main_nesca_out("NESCA4", "FINISH ping", 5, "success", "errors", std::to_string(result_main.size()), std::to_string(error_count)) << std::endl;
     }
-
     if (argp.ping_off){result_main = result;}
+
+	if (argp.my_life_my_rulez){
+		if (result_main.size() >= 2000){argp.dns_threads = 2000;}
+		else {argp.dns_threads = result_main.size();}
+	}
+
+	/*Начало получения DNS.*/
+	std::cout << np.main_nesca_out("NESCA4", "DNS_RESOLUTION", 5, "threads", "", std::to_string(argp.dns_threads), "") << std::endl;
+	std::vector<std::future<void>> futures_dns;
+	for (const auto& ip : result_main) {
+        futures_dns.emplace_back(std::async(std::launch::async, get_dns_thread, ip));
+        if (futures_dns.size() >= argp.dns_threads) {
+            for (auto& future : futures_dns){future.get();}
+            futures_dns.clear();
+        }
+    }
+	for (auto& future : futures_dns){future.wait();}
+	/*Конец получения DNS.*/
 
     /*Определение метода.*/
     if (argp.fin_scan ||argp.xmas_scan ||argp.null_scan)
@@ -518,12 +540,12 @@ int main(int argc, char** argv){
     std::cout << np.main_nesca_out("NESCA4", "FINISH_SCAN", 5, "success", "errors", std::to_string(argp.fuck_yeah), std::to_string(argp.error_fuck)) << std::endl;
 	/*Конец сканирования портов.*/
 
+
 	/*Начало обрабоки.*/
     for (const auto& ip : processed_ip){
 	   if (argp.success_target.find(ip) != argp.success_target.end() || argp.debug){
-		  std::string dns = dus.get_dns_by_ip(ip.c_str(),4445);
 		  double time_ms = argp.rtts[ip];
-		  std::cout << std::endl << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", dns, std::to_string(time_ms)) << std::endl;
+		  std::cout << std::endl << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", argp.dns_completed[ip], std::to_string(time_ms)) << std::endl;
 	   }
 	   print_results(ip);}
     if (skipped_ip > 0){std::cout << std::endl << np.main_nesca_out("NESCA4", "Missed "+std::to_string(skipped_ip)+" identical IPs", 5, "status", "", "OK", "") << std::endl;}
@@ -997,6 +1019,13 @@ help_menu(void){
     std::cout << "  -scan-db, scan-debug   Display verbose info for syn port scan.\n";
 
     np.sea_green_on();
+    std::cout << "\narguments dns-resolution:" << std::endl;
+    np.reset_colors();
+    std::cout << "  -TD <count>            Set max threads for dns-resolution.\n";
+    std::cout << "  -resol-port <port>     Edit source port for dns-resolution.\n";
+    std::cout << "  -resol-delay <ms>      Set delay for dns-resolution.\n";
+
+    np.sea_green_on();
     std::cout << "\narguments ping:" << std::endl;
     np.reset_colors();
     std::cout << "  -ping-timeout <ms>     Set recv timeout for ping.\n";
@@ -1417,11 +1446,20 @@ parse_args(int argc, char** argv){
            case 49:
 			   argp.ping_timeout = atoi(optarg);
                break;
+           case 33:
+			   argp.resol_source_port = atoi(optarg);
+               break;
+           case 40:
+			   argp.resol_delay = atoi(optarg);
+               break;
            case 50:
                argp.no_get_path = true;
                break;
            case 51:
                argp.get_response = true;
+               break;
+           case 52:
+			   argp.dns_threads = atoi(optarg);
                break;
            case 53:
 			   argp.my_life_my_rulez = true;
@@ -1577,3 +1615,8 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms){
     return 0;
 }
 
+void
+get_dns_thread(std::string ip){
+	delay_ms(argp.resol_delay);
+	std::string temp_dns = dus.get_dns_by_ip(ip.c_str(), argp.resol_source_port);
+	argp.dns_completed.insert(std::make_pair(ip, temp_dns));}

@@ -46,6 +46,9 @@ public:
 	   /*Scan target*/
        bool random_ip;
        int random_ip_count;
+	   int dns_threads = 50;
+	   int resol_source_port = 4555;
+	   int resol_delay = 0;
 
        bool ip_scan;
        bool ip_cidr_scan;
@@ -84,6 +87,7 @@ public:
 	   std::map<std::string, std::vector<int>> filtered_target;
 	   std::map<std::string, std::vector<int>> closed_target;
 
+	   std::map<std::string, std::string> dns_completed;
        bool thread_on_port;
 	   bool info_version;
        bool html;
