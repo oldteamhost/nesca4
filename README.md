@@ -23,7 +23,7 @@
 
 # Options Summary
 ``` yaml
-Version - 20230702
+Version: 20230702
 
 d8b   db d88888b .d8888.  .o88b.  .d8b.         j88D  
 888o  88 88'     88'  YP d8P  Y8 d8' `8b       j8~88  
@@ -58,9 +58,9 @@ arguments dns-resolution:
   -resol-delay <ms>      Set delay for dns-resolution.
 
 arguments ping:
-  -PS, -PA <port>        On TCP ping: SYN|ACK and edit dest port.
-  -PE, -PI, -PM          On IMCP ping: ECHO|INFO|TIMESTAMP
-  -max-ping              Using all ping methods: ICMP and TCP.
+  -PS, -PA <port>        On TCP ping - SYN|ACK and edit dest port.
+  -PE, -PI, -PM          On IMCP ping - ECHO|INFO|TIMESTAMP
+  -max-ping              Using all ping methods - ICMP and TCP.
   -no-ping               Off ping scan.
 
 arguments ping speed:
