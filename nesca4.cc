@@ -1084,7 +1084,7 @@ help_menu(void){
     std::cout << "\narguments ping:" << std::endl;
     np.reset_colors();
     std::cout << "  -PS, -PA <port>        On TCP ping: SYN|ACK and edit dest port.\n";
-    std::cout << "  -PE, -PI, -PM          On IMCP ping: ECHO|INFO|TIMESTAMP\n";
+    std::cout << "  -PE, -PI, -PM          On ICMP ping: ECHO|INFO|TIMESTAMP\n";
     std::cout << "  -max-ping              Using all ping methods: ICMP and TCP.\n";
     std::cout << "  -no-ping               Off ping scan.\n";
 
