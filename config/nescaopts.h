@@ -11,6 +11,7 @@ public:
 	   /*Scan options*/
 	   const char* source_ip;
 	   int type = 1;
+	   int speed_type = 3;
 	   bool fin_scan;
 	   bool null_scan;
 	   bool xmas_scan;
@@ -71,6 +72,15 @@ public:
 	   int ping_timeout = 1000;
 	   int threads_ping = 100;
 	   int ping_log = 20;
+
+	   bool ack_ping;
+	   bool syn_ping;
+	   bool echo_ping;
+	   bool info_ping;
+	   bool timestamp_ping;
+
+	   int ack_dest_port = 80;
+	   int syn_dest_port = 80;
 
 	   std::map<std::string,double> rtts;
 

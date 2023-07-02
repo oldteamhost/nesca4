@@ -4,16 +4,9 @@
 #include <sys/types.h>
 
 /*Классический IMCP пинг.
- * Поддерживает проверку по типам:
- * ICMP_ECHO,
- * ICMP_TIMESTAMP,
- * ICMP_INFO_REQUEST.*/
-
-int
-send_icmp_packet(const char* dest_ip, const char* source_ip, int timeout_ms,
-	             u_int8_t type, u_int8_t code, u_int8_t ttl, int seq);
+ * По всем типам и кодам.*/
 
 double
-icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int type_ping);
+icmp_ping(const char* dest_ip, int timeout_ms, int type, int code, int seq, int ttl);
 
 #endif

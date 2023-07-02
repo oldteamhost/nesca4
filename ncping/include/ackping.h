@@ -4,9 +4,7 @@
 #include "../../include/generation.h"
 #include "../../ncsock/include/ncread.h"
 
-#define DEFAULT_SEND_PORT 80
-
 double
-tcp_ack_ping(const char* ip, const char* source_ip, int timeout_ms);
+tcp_ack_ping(const char* ip, const char* source_ip, int dest_port, int timeout_ms, int ttl);
 
 #endif

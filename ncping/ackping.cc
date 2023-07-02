@@ -2,7 +2,7 @@
 std::mutex fuck_ack;
 
 double
-tcp_ack_ping(const char* ip, const char* source_ip, int timeout_ms){
+tcp_ack_ping(const char* ip, const char* source_ip, int dest_port, int timeout_ms, int ttl){
 	/*Отпкавка пакета с флагом ACK.*/
 	double response_time = -1;
 	int source_port = generate_port();
@@ -11,8 +11,11 @@ tcp_ack_ping(const char* ip, const char* source_ip, int timeout_ms){
 	ncops.source_ip = source_ip;
 	ncops.scan_type = 5;
 	ncops.seq = generate_seq();
+	ncops.ttl = ttl;
 	ncops.source_port = source_port;
-	nesca_scan(&ncops, ip, DEFAULT_SEND_PORT, 0);
+
+	/*Отправка.*/
+	nesca_scan(&ncops, ip, dest_port, 0);
 
 	/*Буфер для приёма ответа.*/
 	fuck_ack.lock();

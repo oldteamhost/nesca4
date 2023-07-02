@@ -54,6 +54,7 @@ struct nesca_scan_opts{
     bool debug;
     const char* source_ip;
     unsigned int seq;
+    int ttl;
 };
 
 /*Для расчёта фейковой контрольной суммы

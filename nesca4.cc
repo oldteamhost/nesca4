@@ -131,19 +131,28 @@ const struct option long_options[] = {
     {"db", no_argument, 0, 7},
     {"error", no_argument, 0, 25},
     {"TD", required_argument, 0, 52},
+
+    {"PS", required_argument, 0, 80},
+    {"PA", required_argument, 0, 81},
+
+    {"PE", no_argument, 0, 82},
+    {"PI", no_argument, 0, 86},
+    {"PM", no_argument, 0, 87},
+
     {"resol-delay", required_argument, 0, 40},
     {"response-code", no_argument, 0, 35},
     {"http-request", no_argument, 0, 56},
     {"gen-ipv4", no_argument, 0, 36},
     {"testing", no_argument, 0, 34},
     {"tcp-ping", required_argument, 0, 37},
+    {"speed", required_argument, 0, 'S'},
     {"gen-count", required_argument, 0, 38},
     {"resol-port", required_argument, 0, 33},
     {"redirect", no_argument, 0, 55},
     {"gen-ipv6", required_argument, 0, 39},
     {"ping-timeout", required_argument, 0, 49},
     {0,0,0,0}
-}; const char* short_options = "hvd:T:p:a";
+}; const char* short_options = "hvd:T:p:aS:";
 const char* run; /*for help menu*/
 
 void
@@ -421,10 +430,36 @@ int main(int argc, char** argv){
     int ip_count = 0;
     int flag_desing = 0;
 
-	if (argp.my_life_my_rulez){
-		if (result.size() >= 2000){argp.threads_ping = 2000;}
-		else {argp.threads_ping = result.size();}
+	if (argp.my_life_my_rulez){argp.threads_ping = result.size(); argp.ping_timeout = 250;}
+	if (argp.speed_type == 5){
 		argp.ping_timeout = 400;
+		if (result.size() >= 2000){argp.threads_ping = 2000;}
+		else{argp.threads_ping = result.size();}
+	}
+	else if (argp.speed_type == 4){
+		argp.ping_timeout = 600;
+		if (result.size() >= 1500){argp.threads_ping = 1500;}
+		else{argp.threads_ping = result.size();}
+	}
+	else if (argp.speed_type == 3){
+		argp.ping_timeout = 1000;
+		if (result.size() >= 1000){argp.threads_ping = 1000;}
+		else{argp.threads_ping = result.size();}
+	}
+	else if (argp.speed_type == 2){
+		argp.ping_timeout = 2000;
+		if (result.size() >= 500){argp.threads_ping = 500;}
+		else{argp.threads_ping = result.size();}
+	}
+	else if (argp.speed_type == 1){
+		argp.ping_timeout = 3000;
+		if (result.size() >= 100){argp.threads_ping = 100;}
+		else{argp.threads_ping = result.size();}
+	}
+
+	if (!argp.syn_ping && !argp.ack_ping && !argp.echo_ping && !argp.info_ping && !argp.timestamp_ping){
+		argp.ack_ping = true;
+		argp.echo_ping = true;
 	}
     
     /*Пинг сканирования*/
@@ -467,10 +502,27 @@ int main(int argc, char** argv){
     	// std::cout << np.main_nesca_out("NESCA4", "FINISH ping", 5, "success", "errors", std::to_string(result_main.size()), std::to_string(error_count)) << std::endl;
     }
     if (argp.ping_off){result_main = result;}
+	if (argp.my_life_my_rulez){argp.dns_threads = result_main.size();}
 
-	if (argp.my_life_my_rulez){
-		if (result_main.size() >= 2000){argp.dns_threads = 2000;}
-		else {argp.dns_threads = result_main.size();}
+	if (argp.speed_type == 5){
+		if (result_main.size() >= 2000){argp.dns_threads = 2000;argp._threads = 2000;}
+		else{argp._threads = result_main.size();argp.dns_threads = result_main.size();}
+	}
+	if (argp.speed_type == 4){
+		if (result_main.size() >= 1500){argp.dns_threads = 1500;argp._threads = 1500;}
+		else{argp._threads = result_main.size();argp.dns_threads = result_main.size();}
+	}
+	if (argp.speed_type == 3){
+		if (result_main.size() >= 1000){argp.dns_threads = 1000;argp._threads = 1000;}
+		else{argp._threads = result_main.size();argp.dns_threads = result_main.size();}
+	}
+	if (argp.speed_type == 2){
+		if (result_main.size() >= 500){argp.dns_threads = 500;argp._threads = 500;}
+		else{argp._threads = result_main.size();argp.dns_threads = result_main.size();}
+	}
+	if (argp.speed_type == 1){
+		if (result_main.size() >= 100){argp.dns_threads = 100;argp._threads = 100;}
+		else{argp._threads = result_main.size();argp.dns_threads = result_main.size();}
 	}
 
 	/*Начало получения DNS.*/
@@ -491,10 +543,7 @@ int main(int argc, char** argv){
 	{np.nlog_custom("WARNING", "XMAS | FIN | NULL scan, results may be inaccurate!\n", 2);}
 
 	/*HARD режим.*/
-	if (argp.my_life_my_rulez){
-		if (result_main.size() >= 1000){argp._threads = 1000;}
-		else{argp._threads = result_main.size();}
-	}
+	if (argp.my_life_my_rulez){argp._threads = result_main.size();}
 
     if (argp.fin_scan){
 	   /*Как тебе такое компилятор?!
@@ -509,6 +558,7 @@ int main(int argc, char** argv){
 
 
     ncopts.source_ip = argp.source_ip;
+	ncopts.ttl = IP_HEADER_TTL;
     ncopts.debug = argp.syn_debug;
     ncopts.scan_type = argp.type;
 
@@ -591,40 +641,45 @@ print_results(std::string ip){
 bool
 process_ping(std::string ip){
 	/*TCP_SYN PING*/
-	double status_time1 = tcp_syn_ping(ip.c_str(), argp.source_ip, argp.ping_timeout);
-	if (status_time1 != -1){
-		argp.rtts[ip] = status_time1;
-		return true;
+	if (argp.syn_ping){
+		double status_time1 = tcp_syn_ping(ip.c_str(), argp.source_ip, argp.syn_dest_port, argp.ping_timeout, IP_HEADER_TTL);
+		if (status_time1 != -1){
+			argp.rtts[ip] = status_time1;
+			return true;
+		}
 	}
 
 	/*TCP_ACK PING*/
-	double status_time = tcp_ack_ping(ip.c_str(), argp.source_ip, argp.ping_timeout);
-	if (status_time != -1){
-		argp.rtts[ip] = status_time;
-		return true;
+	if (argp.ack_ping){
+		double status_time = tcp_ack_ping(ip.c_str(), argp.source_ip, argp.ack_dest_port, argp.ping_timeout, IP_HEADER_TTL);
+		if (status_time != -1){
+			argp.rtts[ip] = status_time;
+			return true;
+		}
 	}
 
-	/*
-    double icmp_casual = icmp_ping(ip.c_str(), argp.source_ip, 1500, 1);
-    if (icmp_casual != -1){
-	   argp.rtts[ip] = icmp_casual;
-	   return true;
-    }
-    else {
-       double icmp_rev = icmp_ping(ip.c_str(), argp.source_ip, 1500, 2);
-	   if (icmp_rev != -1){
-		  argp.rtts[ip] = icmp_rev;
-		  return true;
-	   }
-	   else {
-          double icmp_rev1 = icmp_ping(ip.c_str(), argp.source_ip, 1500, 3);
-		  if (icmp_rev1 != -1){
-		      argp.rtts[ip] = icmp_rev1;
-			 return true;
-		  }
-	   }
-    }
-	*/
+	/*ICMP пинг 3 методами.*/
+	if (argp.echo_ping){
+    	double icmp_casual = icmp_ping(ip.c_str(), 1500, 8, 0, 0, 64);
+    	if (icmp_casual != -1){
+	   		argp.rtts[ip] = icmp_casual;
+	   		return true;
+    	}
+	}
+	if (argp.info_ping){
+    	double icmp_rev = icmp_ping(ip.c_str(), 1500, 13, 0, 0, 64);
+		if (icmp_rev != -1){
+			argp.rtts[ip] = icmp_rev;
+			return true;
+		}
+	}
+	if (argp.timestamp_ping){
+    	double icmp_rev1 = icmp_ping(ip.c_str(), 1500, 15, 0, 0, 64);
+		if (icmp_rev1 != -1){
+			argp.rtts[ip] = icmp_rev1;
+			return true;
+		}
+	}
 
     return false;
 }
@@ -1007,13 +1062,14 @@ help_menu(void){
     np.sea_green_on();
     std::cout << "\narguments speed:" << std::endl;
     np.reset_colors();
-    std::cout << "  -my-life-my-rulez      Using MAX speed settings.\n";
-    std::cout << "  -threads, -T <count>   Edit max threads for scan.\n";
-    std::cout << "  -delay, -d <ms>        Set delay for scan.\n";
+    std::cout << "  -speed, -S <1-5>       Edit max speed.\n";
+    std::cout << "  -my-life-my-rulez      Using very MAX speed settings.\n";
 
     np.sea_green_on();
     std::cout << "\narguments port_scan:" << std::endl;
     np.reset_colors();
+    std::cout << "  -delay, -d <ms>        Set delay for scan.\n";
+    std::cout << "  -threads, -T <count>   Edit max threads for scan.\n";
     std::cout << "  -fin, -xmas, -null     Using another scan method.\n";
     std::cout << "  -ports, -p <1,2,3>     Set ports on scan.\n";
     std::cout << "  -scan-timeout <ms>     Set timeout for getting packet on port.\n";
@@ -1029,9 +1085,16 @@ help_menu(void){
     np.sea_green_on();
     std::cout << "\narguments ping:" << std::endl;
     np.reset_colors();
-    std::cout << "  -ping-timeout <ms>     Set recv timeout for ping.\n";
+    std::cout << "  -PS, -PA <port>        On TCP ping: SYN|ACK and edit dest port.\n";
+    std::cout << "  -PE, -PI, -PM          On IMCP ping: ECHO|INFO|TIMESTAMP\n";
+    std::cout << "  -max-ping              Using all ping methods: ICMP and TCP.\n";
+    std::cout << "  -no-ping               Off ping scan.\n";
+
+    np.sea_green_on();
+    std::cout << "\narguments ping speed:" << std::endl;
+    np.reset_colors();
     std::cout << "  -TP <count>            Set max threads for ping.\n";
-    std::cout << "  -no-ping               Off ping.\n";
+    std::cout << "  -ping-timeout <ms>     Set recv timeout for ping.\n";
 
     np.sea_green_on();
     std::cout << "\narguments bruteforce:" << std::endl;
@@ -1102,6 +1165,9 @@ parse_args(int argc, char** argv){
                 break;
             case 'v':
 			 argp.info_version = true;
+                break;
+            case 'S':
+				argp.speed_type = atoi(optarg);
                 break;
             case 'p':
             {
@@ -1464,6 +1530,7 @@ parse_args(int argc, char** argv){
                break;
            case 53:
 			   argp.my_life_my_rulez = true;
+			   argp.speed_type = 0;
                break;
            case 54:
                argp.import_color_scheme = true;
@@ -1484,6 +1551,26 @@ parse_args(int argc, char** argv){
            case 60:
                argp.syn_debug = true;
                break;
+
+		  /*Пинг аргументы влкючения.*/
+	      case 80:
+			 argp.syn_ping = true;
+			 argp.syn_dest_port = atoi(optarg);
+		     break;
+	      case 81:
+			 argp.ack_ping = true;
+			 argp.ack_dest_port = atoi(optarg);
+		     break;
+	      case 82:
+			 argp.echo_ping = true;
+		     break;
+	      case 86:
+			 argp.info_ping = true;
+		     break;
+	      case 87:
+			 argp.timestamp_ping= true;
+		     break;
+
 	      case 90:
 			argp.ping_log = atoi(optarg);
 		     break;
@@ -1547,16 +1634,17 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms){
     if (argp.custom_recv_timeout_ms){
 	   recv_timeout_result = argp.recv_timeout_ms;
     }else {
-	   /*Расчёт таймаута для приёма данных
-	   * самая простая формула, время ответа
-	   * умножить на 4. Но если включен хард режим,
-	   * то умножаться будет на 2*/
+	   /*Расчёт таймаута для приёма данных*/
 	   auto it = argp.rtts.find(ip);
 	   if (it != argp.rtts.end()) {
 		  double rtt_ping = argp.rtts.at(ip);
-		  if (!argp.my_life_my_rulez){recv_timeout_result = rtt_ping * 4;}
-		  else{recv_timeout_result = rtt_ping * 2;}
-	   } /*В другом случае по стандарту 600.*/
+		  if (argp.my_life_my_rulez){recv_timeout_result = rtt_ping + 100;}
+		  if (argp.speed_type == 5){recv_timeout_result = rtt_ping * 2;}
+		  if (argp.speed_type == 4){recv_timeout_result = rtt_ping * 3;}
+		  if (argp.speed_type == 3){recv_timeout_result = rtt_ping * 4;}
+		  if (argp.speed_type == 2 || argp.speed_type == 1){recv_timeout_result = rtt_ping * 5;}
+	   }
+	   else{recv_timeout_result = 600;}/*В другом случае по стандарту 600.*/
     }
 
     for (const auto& port : ports){

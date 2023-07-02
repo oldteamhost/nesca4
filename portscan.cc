@@ -121,7 +121,7 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
     scan_debug_log("Fill IP header.\n", debug);
 
     fill_ip_header(iph_send, ncot->source_ip, ip, sizeof(struct iphdr) + sizeof(struct tcphdr),
-		        IPPROTO_TCP, ncot->seq, IP_DF, IP_HEADER_TTL, 5, 4, 0);
+		        IPPROTO_TCP, ncot->seq, IP_DF, ncot->ttl, 5, 4, 0);
 
     scan_debug_log("Calculate sum for IP header.\n", debug);
 
