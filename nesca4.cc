@@ -648,7 +648,6 @@ process_ping(std::string ip){
 			return true;
 		}
 	}
-
 	/*TCP_ACK PING*/
 	if (argp.ack_ping){
 		double status_time = tcp_ack_ping(ip.c_str(), argp.source_ip, argp.ack_dest_port, argp.ping_timeout, IP_HEADER_TTL);
@@ -657,7 +656,6 @@ process_ping(std::string ip){
 			return true;
 		}
 	}
-
 	/*ICMP пинг 3 методами.*/
 	if (argp.echo_ping){
     	double icmp_casual = icmp_ping(ip.c_str(), 1500, 8, 0, 0, 64);

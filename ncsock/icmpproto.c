@@ -1,6 +1,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <netinet/ip_icmp.h>
+#include <poll.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <time.h>
@@ -68,6 +69,21 @@ recv_icmp_packet(const char* dest_ip, int timeout_ms, int type,
 				int code, int identm){
 	int fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 	if (fd== -1){return -1;}
+
+	/*Устанока таймаута на recvfrom.*/
+    struct pollfd poll_fds[1];
+    poll_fds[0].fd = fd;
+    poll_fds[0].events = POLLIN;
+    int poll_result = poll(poll_fds, 1, timeout_ms);
+    if (poll_result == -1) {
+	   /*Poll не смогла чё-то сделать.*/
+	   close(fd);
+	   return -1;
+    }else if (poll_result == 0) {
+	   /*Вышел таймаут на recvfrom.*/
+	   close(fd);
+	   return -1;
+    }
 
     char buffer[1500];
     struct sockaddr_in peer_addr;
