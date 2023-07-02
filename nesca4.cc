@@ -139,6 +139,8 @@ const struct option long_options[] = {
     {"PI", no_argument, 0, 86},
     {"PM", no_argument, 0, 87},
 
+    {"max-ping", no_argument, 0, 88},
+
     {"resol-delay", required_argument, 0, 40},
     {"response-code", no_argument, 0, 35},
     {"http-request", no_argument, 0, 56},
@@ -455,6 +457,14 @@ int main(int argc, char** argv){
 		argp.ping_timeout = 3000;
 		if (result.size() >= 100){argp.threads_ping = 100;}
 		else{argp.threads_ping = result.size();}
+	}
+
+	if (argp.max_ping){
+		argp.syn_ping = true;
+		argp.ack_ping = true;
+		argp.echo_ping = true;
+		argp.info_ping = true;
+		argp.timestamp_ping = true;
 	}
 
 	if (!argp.syn_ping && !argp.ack_ping && !argp.echo_ping && !argp.info_ping && !argp.timestamp_ping){
@@ -1567,6 +1577,9 @@ parse_args(int argc, char** argv){
 		     break;
 	      case 87:
 			 argp.timestamp_ping= true;
+		     break;
+	      case 88:
+			 argp.max_ping = true;
 		     break;
 
 	      case 90:

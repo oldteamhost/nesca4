@@ -78,6 +78,7 @@ public:
 	   bool echo_ping;
 	   bool info_ping;
 	   bool timestamp_ping;
+	   bool max_ping;
 
 	   int ack_dest_port = 80;
 	   int syn_dest_port = 80;
