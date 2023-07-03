@@ -2,10 +2,9 @@
 std::mutex fuck_syn;
 
 double
-tcp_syn_ping(const char* ip, const char* source_ip, int dest_port, int timeout_ms, int ttl){
+tcp_syn_ping(const char* ip, const char* source_ip, int dest_port, int source_port, int timeout_ms, int ttl){
 	/*Отпкавка пакета с флагом SYN.*/
 	double response_time = -1;
-	int source_port = generate_port();
 	nesca_scan_opts ncops;
 	ncops.debug = false;
 	ncops.source_ip = source_ip;

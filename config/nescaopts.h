@@ -12,12 +12,24 @@ public:
 	   const char* source_ip;
 	   int type = 1;
 	   int speed_type = 3;
+	   bool custom_source_ip;
+
+	   bool custom_source_port;
+	   bool custom_ttl;
+
+	   int _custom_ttl;
+	   int _custom_source_port;
+
 	   bool fin_scan;
 	   bool null_scan;
 	   bool xmas_scan;
+	   bool ack_scan;
+	   bool window_scan;
+	   bool maimon_scan;
 	   bool packet_trace;
 
        bool timeout;
+       bool response_code_test;
        int timeout_ms = 0;
    	   bool custom_recv_timeout_ms;
        int recv_timeout_ms = 1000;
@@ -96,6 +108,8 @@ public:
 	   std::map<std::string, std::vector<int>> success_target;
 	   std::map<std::string, std::vector<int>> error_target;
 	   std::map<std::string, std::vector<int>> filtered_target;
+	   std::map<std::string, std::vector<int>> open_or_filtered_target;
+	   std::map<std::string, std::vector<int>> no_filtered_target;
 	   std::map<std::string, std::vector<int>> closed_target;
 
 	   std::map<std::string, std::string> dns_completed;
@@ -162,21 +176,6 @@ public:
        bool hikvision_only;
 
        bool sftp_using_know_hosts;
-
-	   /*Testing*/
-       bool host_testing;
-       bool get_redirect;
-       bool response_code_test;
-       bool http_request;
-       bool tcp_ping_test; // icmp :)
-       std::string tcp_ping_mode;
-
-	   /*Generation*/
-       bool generation_test;
-       int generate_count;
-       bool generate_ipv4_test;
-       bool generate_ipv6_test;
-       int octets;
 
 	   /*Color options*/
        bool color_off;

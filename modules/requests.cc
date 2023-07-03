@@ -1,4 +1,5 @@
 #include "include/requests.h"
+#include <cstdio>
 #include <unistd.h>
 
 std::string 
@@ -56,17 +57,13 @@ send_http_request(const std::string& node, int port) {
     char buffer[4096];
     ssize_t bytesRead;
 
-    while (true) {
-        bytesRead = recv(sockfd, buffer, sizeof(buffer) - 1, 0);
-        if (bytesRead == 0) {
-			break;
-        }else {
-			close(sockfd);
-			return HTTPREQUEST_ERROR;
-		}
-        buffer[bytesRead] = '\0';
-        response_string += buffer;
-    }
+    bytesRead = recv(sockfd, buffer, sizeof(buffer) - 1, 0);
+	if (bytesRead == -1){
+		close(sockfd);
+		return HTTPREQUEST_ERROR;
+	}
+    buffer[bytesRead] = '\0';
+    response_string += buffer;
 
     close(sockfd);
     return response_string;

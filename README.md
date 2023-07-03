@@ -23,7 +23,7 @@
 
 # Options Summary
 ``` yaml
-Version: 20230702
+Version: 20230703
 
 d8b   db d88888b .d8888.  .o88b.  .d8b.         j88D  
 888o  88 88'     88'  YP d8P  Y8 d8' `8b       j8~88  
@@ -35,80 +35,76 @@ VP   V8P Y88888P `8888Y'  `Y88P' YP   YP          VP
 usage: ./nesca4 [target 1,2,3] [flags]
 
 arguments target:
-  -import-ip <path>      Set ip on target from file.
-  -import-cidr <path>    Set cidr on target from file.
-  -import-range <path>   Set range on target from file.
-  -random-ip <count>     Set random ip target.
+  -import-ip <path>        Set ip on target from file.
+  -import-cidr <path>      Set cidr on target from file.
+  -import-range <path>     Set range on target from file.
+  -random-ip <count>       Set random ip target.
 
 arguments speed:
-  -speed, -S <1-5>       Edit max speed.
-  -my-life-my-rulez      Using very MAX speed settings.
+  -speed, -S <1-5>         Edit max speed.
+  -my-life-my-rulez        Using very MAX speed settings.
 
-arguments port_scan:
-  -delay, -d <ms>        Set delay for scan.
-  -threads, -T <count>   Edit max threads for scan.
-  -fin, -xmas, -null     Using another scan method.
-  -ports, -p <1,2,3>     Set ports on scan.
-  -scan-timeout <ms>     Set timeout for getting packet on port.
-  -scan-db, scan-debug   Display verbose info for syn port scan.
+arguments port scan methods:
+  -fin, -xmas, -null       Use one of these scanning methods.
+  -ack, -windows -maimon   Use ack or window scan method.
+
+arguments port scan:
+  -delay, -d <ms>          Set delay for scan.
+  -threads, -T <count>     Edit max threads for scan.
+  -ports, -p <1,2,3>       Set ports on scan.
+  -scan-timeout <ms>       Set timeout for getting packet on port.
+  -scan-db, scan-debug     Display verbose info for syn port scan.
 
 arguments dns-resolution:
-  -TD <count>            Set max threads for dns-resolution.
-  -resol-port <port>     Edit source port for dns-resolution.
-  -resol-delay <ms>      Set delay for dns-resolution.
+  -TD <count>              Set max threads for dns-resolution.
+  -resol-port <port>       Edit source port for dns-resolution.
+  -resol-delay <ms>        Set delay for dns-resolution.
 
 arguments ping:
-  -PS, -PA <port>        On TCP ping - SYN|ACK and edit dest port.
-  -PE, -PI, -PM          On ICMP ping - ECHO|INFO|TIMESTAMP
-  -max-ping              Using all ping methods - ICMP and TCP.
-  -no-ping               Off ping scan.
+  -PS, -PA <port>          On TCP ping: SYN|ACK and edit dest port.
+  -PE, -PI, -PM            On ICMP ping: ECHO|INFO|TIMESTAMP
+  -max-ping                Using all ping methods: ICMP and TCP.
+  -no-ping                 Off ping scan.
 
 arguments ping speed:
-  -TP <count>            Set max threads for ping.
-  -ping-timeout <ms>     Set recv timeout for ping.
+  -TP <count>              Set max threads for ping.
+  -ping-timeout <ms>       Set recv timeout for ping.
 
 arguments bruteforce:
-  -brute-login <ss,path> Set path for <ss> logins.
-  -brute-pass <ss,path>  Set path for <ss> passwords.
-  -brute-timeout <ms>    Edit brute timout.
-  -brute-only <ss,2>     Display only success <ss> bruteforce.
-  -no-brute <ss,2>       Disable <ss> bruteforce.
+  -brute-login <ss,path>   Set path for <ss> logins.
+  -brute-pass <ss,path>    Set path for <ss> passwords.
+  -brute-timeout <ms>      Edit brute timout.
+  -brute-only <ss,2>       Display only success <ss> bruteforce.
+  -no-brute <ss,2>         Disable <ss> bruteforce.
 
 arguments other bruteforce:
-  -brute-verbose <ss,2>  Display bruteforce <ss> all info.
-  -brute-log <ss,2>      Display bruteforce <ss> info.
-  -sftp-brute-known-hosts Reading known_host for connection.
+  -brute-verbose <ss,2>    Display bruteforce <ss> all info.
+  -brute-log <ss,2>        Display bruteforce <ss> info.
+  -sftp-brute-known-hosts  Reading known_host for connection.
 
 arguments dns-scan:
-  -dns-scan <.dns>       On dns-scan and set domain 1 level.
-  -dns-length <count>    Edit length generating domain.
-  -dns-dict <dict>       Edit dictionary for generation.
+  -dns-scan <.dns>         On dns-scan and set domain 1 level.
+  -dns-length <count>      Edit length generating domain.
+  -dns-dict <dict>         Edit dictionary for generation.
 
 arguments output:
-  -db, -debug            On debug mode, save and display not even working hosts.
-  -er, -error            On display errors.
-  -no-proc               Only scan.
-  -packet-trace          Display packet_trace.
-  -no-get-path           Disable getting paths.
-  -on-http-response      On print response from port 80.
-  -log-set <count>       Change change the value of ips after which, will be displayed information about how much is left.
-  -txt <path>            Save result to text document.
+  -db, -debug              On debug mode, save and display not even working hosts.
+  -er, -error              On display errors.
+  -no-proc                 Only scan.
+  -packet-trace            Display packet_trace.
+  -no-get-path             Disable getting paths.
+  -log-set <count>         Change change the value of ips after which, will be displayed information about how much is left.
+  -on-http-response        On print response from port 80.
+  -txt <path>              Save result to text document.
 
 arguments colors:
-  -no-color              Disable colors.
-  -import-color <path>   Import color scheme from file.
+  -no-color                Disable colors.
+  -import-color <path>     Import color scheme from file.
 
-arguments testing:
-  -testing               On testing mode.
-  -response-code         Get response code from host.
-  -redirect              Get redirect from host.
-  -http-request          Send http request from host.
-  -tcp-ping <mode>       Get response time from host, modes (live) or (default).
-
-arguments generation:
-  -gen-count <count>     Set count for generation.
-  -gen-ipv6 <octets>     Generate ip version 6.
-  -gen-ipv4              Generate ip version 6.
+arguments other:
+  -source-ip               Set custom source_ip.
+  -source-port             Set custom source_port.
+  -ttl                     Set custom ip_header_ttl.
 ```
 
 # Error
@@ -116,6 +112,13 @@ arguments generation:
 On start using:
     export LD_LIBRARY_PATH=lib/platform/linux
 ```
+## 20230703
+- Передрочено почти всё, убраны ненужные аргументы.
+- Добавлено ACK, WINDOW, MAIMON сканирование.
+- Исправлено FIN, XMAS, NULL сканирование.
+- Улучшен пинг.
+- Добавлено больше опций.
+
 ## 20230702
 - Добавлен ICMP пинг на этот раз 100% рабочий.
 	- ICMP ECHO классика.

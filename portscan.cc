@@ -85,27 +85,30 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
 	   tpf.fin = 0;
 	   tpf.psh = 0;
 	   tpf.urg = 0;
-    }
-    else if (ncot->scan_type == XMAS_SCAN){
+    }else if (ncot->scan_type == XMAS_SCAN){
 	   tpf.syn = 0;
 	   tpf.fin = 1;
 	   tpf.psh = 1;
 	   tpf.urg = 1;
-    }
-    else if (ncot->scan_type == FIN_SCAN){
+    }else if (ncot->scan_type == FIN_SCAN){
 	   tpf.syn = 0;
 	   tpf.fin = 1;
 	   tpf.psh = 0;
 	   tpf.urg = 0;
-    }
-    else if (ncot->scan_type == NULL_SCAN){
+    }else if (ncot->scan_type == NULL_SCAN){
 	   tpf.syn = 0;
 	   tpf.fin = 0;
 	   tpf.psh = 0;
 	   tpf.urg = 0;
-    }else if (ncot->scan_type == ACK_PING){
+    }else if (ncot->scan_type == ACK_SCAN || ncot->scan_type == WINDOW_SCAN){
 	   tpf.syn = 0;
 	   tpf.fin = 0;
+	   tpf.psh = 0;
+	   tpf.urg = 0;
+       tpf.ack = 1;
+	}else if (ncot->scan_type == MAIMON_SCAN){
+	   tpf.syn = 0;
+	   tpf.fin = 1;
 	   tpf.psh = 0;
 	   tpf.urg = 0;
        tpf.ack = 1;
@@ -168,7 +171,7 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
 }
 
 int
-get_port_status(unsigned char* buffer, bool no_syn){
+get_port_status(unsigned char* buffer, bool no_syn, bool ack_scan, bool window_scan, bool maimon_scan){
     struct iphdr *iph = (struct iphdr*)buffer;
     unsigned short iphdrlen = (iph->ihl) * 4;
 
@@ -177,7 +180,32 @@ get_port_status(unsigned char* buffer, bool no_syn){
     struct tcphdr *tcph = (struct tcphdr*)((char*)buffer + iphdrlen);
 
     /*Обработка пакета, писалась используя
-    эту статью: https://nmap.org/book/synscan.html*/
+    эти статьи:
+	* https://nmap.org/book/synscan.html
+	* https://nmap.org/man/ru/man-port-scanning-techniques.html
+	* https://nmap.org/book/scan-methods-window-scan.html
+	* https://nmap.org/book/scan-methods-maimon-scan.html*/
+	if (maimon_scan){
+		if (tcph->th_flags == 0x04){
+			return PORT_CLOSED;
+		}
+		else {
+			return PORT_OPEN_OR_FILTER;
+		}
+	}
+	if (window_scan){
+		if (tcph->th_flags == 0x04){
+			if (tcph->window > 0){
+				return PORT_OPEN;
+			}
+			else {
+				return PORT_CLOSED;
+			}
+		}
+		else {
+			return PORT_FILTER;
+		}
+	}
     if (no_syn){
 	   switch (tcph->th_flags) {
 		  case 0x04:{
@@ -186,7 +214,15 @@ get_port_status(unsigned char* buffer, bool no_syn){
 		  default:
 	   		return PORT_OPEN;
 	   }
-    } 
+    }else if (ack_scan){
+	   switch (tcph->th_flags) {
+		  case 0x04:{
+			 return PORT_NO_FILTER;
+		  }
+		  default:
+	   		return PORT_FILTER;
+	   }
+	}
     else {
 	   switch (tcph->th_flags) {
 		  case 0x12:{

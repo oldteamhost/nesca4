@@ -5,6 +5,6 @@
 #include "../../ncsock/include/ncread.h"
 
 double
-tcp_ack_ping(const char* ip, const char* source_ip, int dest_port, int timeout_ms, int ttl);
+tcp_ack_ping(const char* ip, const char* source_ip, int dest_port, int source_port, int timeout_ms, int ttl);
 
 #endif
