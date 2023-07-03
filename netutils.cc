@@ -11,10 +11,18 @@
 
 std::string
 dns_utils::get_dns_by_ip(const char* ip, int port){
+	if (ip == nullptr) {
+    	return "N/A";
+	}
 	struct in_addr addr;
     if (inet_pton(AF_INET, ip, &addr) != 1){return "N/A";}
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1){return "N/A";}
+
+	struct timeval timeout;
+	timeout.tv_sec = 1;
+	timeout.tv_usec = 0;
+	setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
     struct sockaddr_in sa;
     memset(&sa, 0, sizeof(sa));

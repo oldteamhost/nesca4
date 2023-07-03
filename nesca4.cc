@@ -191,9 +191,7 @@ pre_check(void){
 	   exit(0);
     }
 
-    if (!check_file("./resources/nesca-services")){
-	   std::cout << np.main_nesca_out("NESCA4", "SERVICES_DATA", 5, "status", "", "FAILED","") << std::endl;
-    }
+    if (!check_file("./resources/nesca-services")){std::cout << np.main_nesca_out("NESCA4", "SERVICES_DATA", 5, "status", "", "FAILED","") << std::endl;}
     else {
 	   sn.init_services();
 	   std::cout << np.main_nesca_out("NESCA4", "SERVICES_DATA", 5, "status", "", "OK","") << std::endl;
@@ -205,15 +203,8 @@ pre_check(void){
         np.disable_colors();
     }
 
-    if (argp.print_help_menu){
-        help_menu();
-        exit(0);
-    }
-
-    if (!check_root_perms()){
-        np.nlog_error("RAW socket only sudo run!\n");
-        exit(1);
-    }
+    if (argp.print_help_menu){help_menu();exit(0);}
+    if (!check_root_perms()){np.nlog_error("RAW socket only sudo run!\n");exit(1);}
 
 
     if (np.save_file){
@@ -348,45 +339,52 @@ int main(int argc, char** argv){
     int ip_count = 0;
     int flag_desing = 0;
 
-	if (argp.my_life_my_rulez){argp.threads_ping = result.size(); argp.ping_timeout = 250;}
-	if (argp.speed_type == 5){
-		argp.ping_timeout = 400;
-		if (result.size() >= 2000){argp.threads_ping = 2000;}
-		else{argp.threads_ping = result.size();}
+	if (!argp.custom_threads){
+		if (argp.my_life_my_rulez){argp.threads_ping = result.size(); argp.ping_timeout = 250;}
+		if (argp.speed_type == 5){
+			argp.ping_timeout = 400;
+			if (result.size() >= 2000){argp.threads_ping = 2000;}
+			else{argp.threads_ping = result.size();}
+		}
+		else if (argp.speed_type == 4){
+			argp.ping_timeout = 600;
+			if (result.size() >= 1500){argp.threads_ping = 1500;}
+			else{argp.threads_ping = result.size();}
+		}
+		else if (argp.speed_type == 3){
+			argp.ping_timeout = 1000;
+			if (result.size() >= 1000){argp.threads_ping = 1000;}
+			else{argp.threads_ping = result.size();}
+		}
+		else if (argp.speed_type == 2){
+			argp.ping_timeout = 2000;
+			if (result.size() >= 500){argp.threads_ping = 500;}
+			else{argp.threads_ping = result.size();}
+		}
+		else if (argp.speed_type == 1){
+			argp.ping_timeout = 3000;
+			if (result.size() >= 100){argp.threads_ping = 100;}
+			else{argp.threads_ping = result.size();}
+		}
 	}
-	else if (argp.speed_type == 4){
-		argp.ping_timeout = 600;
-		if (result.size() >= 1500){argp.threads_ping = 1500;}
-		else{argp.threads_ping = result.size();}
-	}
-	else if (argp.speed_type == 3){
-		argp.ping_timeout = 1000;
-		if (result.size() >= 1000){argp.threads_ping = 1000;}
-		else{argp.threads_ping = result.size();}
-	}
-	else if (argp.speed_type == 2){
-		argp.ping_timeout = 2000;
-		if (result.size() >= 500){argp.threads_ping = 500;}
-		else{argp.threads_ping = result.size();}
-	}
-	else if (argp.speed_type == 1){
-		argp.ping_timeout = 3000;
-		if (result.size() >= 100){argp.threads_ping = 100;}
-		else{argp.threads_ping = result.size();}
-	}
-
-	if (argp.max_ping){
+	if (argp.max_ping || argp.speed_type == 1){
 		argp.syn_ping = true;
 		argp.ack_ping = true;
 		argp.echo_ping = true;
 		argp.info_ping = true;
 		argp.timestamp_ping = true;
 	}
-
-	if (!argp.syn_ping && !argp.ack_ping && !argp.echo_ping && !argp.info_ping && !argp.timestamp_ping){
+	if (argp.speed_type == 5){argp.ack_ping = true;}
+	else if (argp.speed_type == 4){argp.echo_ping = true;argp.ack_ping = true;}
+	else if (argp.speed_type == 2 || argp.speed_type == 3){
 		argp.ack_ping = true;
+		argp.syn_ping = true;
 		argp.echo_ping = true;
+		argp.info_ping = true;
 	}
+
+	if (!argp.syn_ping && !argp.ack_ping && !argp.echo_ping && !argp.info_ping && !argp.timestamp_ping){argp.ack_ping = true;argp.echo_ping = true;}
+
     
     /*Пинг сканирования*/
     if (!argp.ping_off) {
@@ -428,27 +426,28 @@ int main(int argc, char** argv){
     	// std::cout << np.main_nesca_out("NESCA4", "FINISH ping", 5, "success", "errors", std::to_string(result_main.size()), std::to_string(error_count)) << std::endl;
     }
     if (argp.ping_off){result_main = result;}
-	if (argp.my_life_my_rulez){argp.dns_threads = result_main.size();}
-
-	if (argp.speed_type == 5){
-		if (result_main.size() >= 2000){argp.dns_threads = 2000;argp._threads = 2000;}
-		else{argp._threads = result_main.size();argp.dns_threads = result_main.size();}
-	}
-	if (argp.speed_type == 4){
-		if (result_main.size() >= 1500){argp.dns_threads = 1500;argp._threads = 1500;}
-		else{argp._threads = result_main.size();argp.dns_threads = result_main.size();}
-	}
-	if (argp.speed_type == 3){
-		if (result_main.size() >= 1000){argp.dns_threads = 1000;argp._threads = 1000;}
-		else{argp._threads = result_main.size();argp.dns_threads = result_main.size();}
-	}
-	if (argp.speed_type == 2){
-		if (result_main.size() >= 500){argp.dns_threads = 500;argp._threads = 500;}
-		else{argp._threads = result_main.size();argp.dns_threads = result_main.size();}
-	}
-	if (argp.speed_type == 1){
-		if (result_main.size() >= 100){argp.dns_threads = 100;argp._threads = 100;}
-		else{argp._threads = result_main.size();argp.dns_threads = result_main.size();}
+	if (!argp.custom_threads_resolv){
+		if (argp.my_life_my_rulez){argp.dns_threads = result_main.size();}
+		if (argp.speed_type == 5){
+			if (result_main.size() >= 2000){argp.dns_threads = 2000;}
+			else{argp.dns_threads = result_main.size();}
+		}
+		if (argp.speed_type == 4){
+			if (result_main.size() >= 1500){argp.dns_threads = 1500;}
+			else{argp.dns_threads = result_main.size();}
+		}
+		if (argp.speed_type == 3){
+			if (result_main.size() >= 1000){argp.dns_threads = 1000;}
+			else{argp.dns_threads = result_main.size();}
+		}
+		if (argp.speed_type == 2){
+			if (result_main.size() >= 500){argp.dns_threads = 500;}
+			else{argp.dns_threads = result_main.size();}
+		}
+		if (argp.speed_type == 1){
+			if (result_main.size() >= 100){argp.dns_threads = 100;}
+			else{argp.dns_threads = result_main.size();}
+		}
 	}
 
 	/*Начало получения DNS.*/
@@ -465,7 +464,29 @@ int main(int argc, char** argv){
 	/*Конец получения DNS.*/
 
 	/*HARD режим.*/
-	if (argp.my_life_my_rulez){argp._threads = result_main.size();}
+	if (!argp.custom_threads_scan){
+		if (argp.my_life_my_rulez){argp._threads = result_main.size();}
+		if (argp.speed_type == 5){
+			if (result_main.size() >= 2000){argp._threads= 2000;}
+			else{argp._threads= result_main.size();}
+		}
+		if (argp.speed_type == 4){
+			if (result_main.size() >= 1500){argp._threads= 1500;}
+			else{argp._threads= result_main.size();}
+		}
+		if (argp.speed_type == 3){
+			if (result_main.size() >= 1000){argp._threads= 1000;}
+			else{argp._threads = result_main.size();}
+		}
+		if (argp.speed_type == 2){
+			if (result_main.size() >= 500){argp._threads = 500;}
+			else{argp._threads = result_main.size();}
+		}
+		if (argp.speed_type == 1){
+			if (result_main.size() >= 100){argp._threads = 100;}
+			else{argp._threads = result_main.size();}
+		}
+	}
 
 	   /*Как тебе такое компилятор?!*/
 	   /*Open source конечно open source, но придёться
@@ -632,21 +653,21 @@ process_ping(std::string ip){
 	}
 	/*ICMP пинг 3 методами.*/
 	if (argp.echo_ping){
-    	double icmp_casual = icmp_ping(ip.c_str(), 1500, 8, 0, 0, 64);
+    	double icmp_casual = icmp_ping(ip.c_str(), argp.ping_timeout, 8, 0, 0, 64);
     	if (icmp_casual != -1){
 	   		argp.rtts[ip] = icmp_casual;
 	   		return true;
     	}
 	}
 	if (argp.info_ping){
-    	double icmp_rev = icmp_ping(ip.c_str(), 1500, 13, 0, 0, 64);
+    	double icmp_rev = icmp_ping(ip.c_str(), argp.ping_timeout, 13, 0, 0, 64);
 		if (icmp_rev != -1){
 			argp.rtts[ip] = icmp_rev;
 			return true;
 		}
 	}
 	if (argp.timestamp_ping){
-    	double icmp_rev1 = icmp_ping(ip.c_str(), 1500, 15, 0, 0, 64);
+    	double icmp_rev1 = icmp_ping(ip.c_str(), argp.ping_timeout, 15, 0, 0, 64);
 		if (icmp_rev1 != -1){
 			argp.rtts[ip] = icmp_rev1;
 			return true;
@@ -1066,7 +1087,7 @@ help_menu(void){
     std::cout << "\narguments port scan methods:" << std::endl;
     np.reset_colors();
     std::cout << "  -fin, -xmas, -null       Use one of these scanning methods.\n";
-    std::cout << "  -ack, -windows -maimon   Use ack or window scan method.\n";
+    std::cout << "  -ack, -windows -maimon   Use ack or window or maimon scan method.\n";
 
     np.sea_green_on();
     std::cout << "\narguments port scan:" << std::endl;
@@ -1075,7 +1096,7 @@ help_menu(void){
     std::cout << "  -threads, -T <count>     Edit max threads for scan.\n";
     std::cout << "  -ports, -p <1,2,3>       Set ports on scan.\n";
     std::cout << "  -scan-timeout <ms>       Set timeout for getting packet on port.\n";
-    std::cout << "  -scan-db, scan-debug     Display verbose info for syn port scan.\n";
+    std::cout << "  -scan-db, scan-debug     Display verbose info for send packets.\n";
 
     np.sea_green_on();
     std::cout << "\narguments dns-resolution:" << std::endl;
@@ -1087,9 +1108,9 @@ help_menu(void){
     np.sea_green_on();
     std::cout << "\narguments ping:" << std::endl;
     np.reset_colors();
-    std::cout << "  -PS, -PA <port>          On TCP ping: SYN|ACK and edit dest port.\n";
-    std::cout << "  -PE, -PI, -PM            On ICMP ping: ECHO|INFO|TIMESTAMP\n";
-    std::cout << "  -max-ping                Using all ping methods: ICMP and TCP.\n";
+    std::cout << "  -PS, -PA <port>          On TCP ping SYN|ACK and edit dest port.\n";
+    std::cout << "  -PE, -PI, -PM            On ICMP ping ECHO|INFO|TIMESTAMP\n";
+    std::cout << "  -max-ping                Using all ping methods ICMP and TCP.\n";
     std::cout << "  -no-ping                 Off ping scan.\n";
 
     np.sea_green_on();
@@ -1429,7 +1450,8 @@ parse_args(int argc, char** argv){
                 argp.timeout_ms = atoi(optarg);
                 break;
           case 'T':
-                if (atoi(optarg) >= 200){
+				argp.custom_threads_scan = true;
+                if (atoi(optarg) >= 600){
                     argp.warning_threads = true;
                     argp.threads_temp = atoi(optarg);
                 }
@@ -1514,6 +1536,7 @@ parse_args(int argc, char** argv){
                argp.get_response = true;
                break;
            case 52:
+			   argp.custom_threads_resolv = true;
 			   argp.dns_threads = atoi(optarg);
                break;
            case 53:
@@ -1527,6 +1550,7 @@ parse_args(int argc, char** argv){
            case 55:
                break;
            case 57:
+			   argp.custom_threads = true;
 			   argp.threads_ping = atoi(optarg);
                break;
            case 56:
@@ -1719,3 +1743,4 @@ get_dns_thread(std::string ip){
 	delay_ms(argp.resol_delay);
 	std::string temp_dns = dus.get_dns_by_ip(ip.c_str(), argp.resol_source_port);
 	argp.dns_completed.insert(std::make_pair(ip, temp_dns));}
+

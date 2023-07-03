@@ -1,10 +1,6 @@
 #ifndef ICMP_PROTO_H
 #define ICMP_PROTO_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdio.h>
 #include <stdint.h>
 
@@ -31,9 +27,5 @@ send_icmp_packet(struct sockaddr_in* addr, int type,
 int 
 recv_icmp_packet(const char* dest_ip, int timeout_ms, int type,
 				int code, int identm);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

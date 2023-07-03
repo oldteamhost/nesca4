@@ -13,6 +13,7 @@ public:
 	   int type = 1;
 	   int speed_type = 3;
 	   bool custom_source_ip;
+	   bool custom_threads_scan;
 
 	   bool custom_source_port;
 	   bool custom_ttl;
@@ -55,6 +56,7 @@ public:
        std::string domain_1level;
        std::string dns_dictionary = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	   int dns_scan_domain_count = 5;
+	   bool custom_threads_resolv;
 
 	   /*Scan target*/
        bool random_ip;
@@ -84,6 +86,7 @@ public:
 	   int ping_timeout = 1000;
 	   int threads_ping = 100;
 	   int ping_log = 20;
+	   bool custom_threads;
 
 	   bool ack_ping;
 	   bool syn_ping;
