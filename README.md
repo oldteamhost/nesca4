@@ -63,7 +63,7 @@ arguments dns-resolution:
 arguments ping:
   -PS, -PA <port>          On TCP ping - SYN|ACK and edit dest port.
   -PE, -PI, -PM            On ICMP ping - ECHO|INFO|TIMESTAMP
-  -max-ping                Using all ping methods: ICMP and TCP.
+  -max-ping                Using all ping methods - ICMP and TCP.
   -no-ping                 Off ping scan.
 
 arguments ping speed:
