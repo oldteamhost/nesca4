@@ -13,7 +13,7 @@
 
 Поддерживает пинг сканирование такими методами как -
 - `SYN ACK:`  Оба работают по протоколу TCP, выполняются с псевдо заголовком, и по стандарту порт отправки у них 80.
-- `ICMP ECHO ICMP INFO ICMP TIMESTAMP:`  Классический ECHO, украденный из ![nmap](https://nmap.org/download.html) INFO и TIMESTAMP.
+- `ICMP ECHO` `ICMP INFO` `ICMP TIMESTAMP:`  Классический ECHO, украденный из ![nmap](https://nmap.org/download.html) INFO и TIMESTAMP.
 Все три работают по протоколу ICMP, за счёт этого им не нужен порт, и долбят красиво.
 
 Может сканировать -
