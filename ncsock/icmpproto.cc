@@ -90,8 +90,8 @@ recv_icmp_packet(const char* dest_ip, int timeout_ms, int type,
         close(fd);
         return -1;
 	}
-
     auto start_time = std::chrono::steady_clock::now();
+
 	for (;;){
     	int bytes = recvfrom(fd, buffer, sizeof(buffer), 0,(struct sockaddr*)&peer_addr, (socklen_t *)&addr_len);
     	if (bytes < 0) {

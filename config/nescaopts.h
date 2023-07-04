@@ -14,6 +14,8 @@ public:
 	   int speed_type = 3;
 	   bool custom_source_ip;
 	   bool custom_threads_scan;
+	   bool custom_group_max;
+	   int group_size = 10;
 
 	   bool custom_source_port;
 	   bool custom_ttl;

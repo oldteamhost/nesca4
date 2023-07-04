@@ -145,6 +145,7 @@ option long_options[] = {
     {"PM", no_argument, 0, 87},
     {"source-port", required_argument, 0, 36},
     {"ttl", required_argument, 0, 37},
+    {"max-group", required_argument, 0, 38},
     {"max-ping", no_argument, 0, 88},
     {"source-ip", required_argument, 0, 34},
     {"ack", no_argument, 0, 89},
@@ -535,7 +536,6 @@ int main(int argc, char** argv){
 			<< std::endl;
 	}
 
-
     ncopts.source_ip = argp.source_ip;
 	if (!argp.custom_ttl){ncopts.ttl = 121;}
 	else{ncopts.ttl = argp._custom_ttl;}
@@ -548,95 +548,78 @@ int main(int argc, char** argv){
     std::set<std::string> processed_ip;
     int skipped_ip = 0;
 
-	/*Само сканирование портов.*/
-	for (const auto& ip : result_main) {
-	   if (processed_ip.count(ip) > 0){skipped_ip++;continue;}
+	/*Сканирование по группам.*/
+	for (int i = 0; i < size; i += argp.group_size) {
+		/*Сканирование текущей группы.*/
+        const int groupEnd = std::min(i + argp.group_size, static_cast<int>(size));
+        std::vector<std::string> ipGroup(result_main.begin() + i, result_main.begin() + groupEnd);
 
-	   ip_count++;
-	   processed_ip.insert(ip);
-	   if (ip_count % argp.log_set == 0){
-		  double procents = (static_cast<double>(ip_count) / size) * 100;
-		  std::string result = format_percentage(procents);
-		  std::cout << np.main_nesca_out("^NESCASYNLOG", std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs", 4, "P", "", result + "%", "","") << std::endl;
-	   }
-	   std::future<int> fut = std::async(std::launch::async, scan_port, ip.c_str(), argp.ports, argp.timeout_ms);
-	   futures.push_back(std::move(fut));
+        for (const auto& ip : ipGroup) {
+            if (processed_ip.count(ip) > 0) {
+                skipped_ip++;
+                continue;
+            }
 
-	   if (futures.size() >= argp._threads){
-            int main_scan = futures.front().get();
-            futures.erase(futures.begin());
+            ip_count++;
+            processed_ip.insert(ip);
+
+	   		if (ip_count % argp.log_set == 0){
+		  		double procents = (static_cast<double>(ip_count) / size) * 100;
+		  		std::string result = format_percentage(procents);
+		  		std::cout << std::endl << np.main_nesca_out("^NESCASYNLOG", std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs", 4, "P", "", result + "%", "","") << std::endl;
+	   		}
+
+	   		std::future<int> fut = std::async(std::launch::async, scan_port, ip.c_str(), argp.ports, argp.timeout_ms);
+            futures.push_back(std::move(fut));
+
+			if (futures.size() >= argp._threads) {
+                int main_scan = futures.front().get();
+                futures.erase(futures.begin());
+            }
+        }
+
+        for (auto& fut : futures){int main_scan = fut.get();}
+
+        futures.clear();
+
+        /*Обработка результатов для текущей группы*/
+        for (const auto& ip : ipGroup) {
+	   		if (argp.success_target.find(ip) != argp.success_target.end() 
+			   		|| argp.debug 
+			   		|| argp.open_or_filtered_target.find(ip) != argp.open_or_filtered_target.end()
+	           		|| argp.no_filtered_target.find(ip) != argp.no_filtered_target.end()){
+		  		double time_ms = argp.rtts[ip];
+		  		if (np.save_file){write_line(np.file_path_save, "\n");}
+		  		std::cout << std::endl << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", argp.dns_completed[ip], std::to_string(time_ms),"") << std::endl;
+	   			print_results(ip);
+			}
         }
     }
-    for (auto& fut : futures){int main_scan = fut.get();}
-    std::cout << np.main_nesca_out("NESCA4", "FINISH_SCAN", 5, "success", "errors", std::to_string(argp.fuck_yeah), std::to_string(argp.error_fuck),"") << std::endl;
-	/*Конец сканирования портов.*/
 
-
-	/*Начало обрабоки.*/
-    for (const auto& ip : processed_ip){
-	   if (argp.success_target.find(ip) != argp.success_target.end() 
-			   || argp.debug 
-			   || argp.open_or_filtered_target.find(ip) != argp.open_or_filtered_target.end()
-	           || argp.no_filtered_target.find(ip) != argp.no_filtered_target.end()){
-		  double time_ms = argp.rtts[ip];
-		  if (np.save_file){write_line(np.file_path_save, "\n");}
-		  std::cout << std::endl << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", argp.dns_completed[ip], std::to_string(time_ms),"") << std::endl;
-	   }
-	   print_results(ip);}
+    std::cout << std::endl << np.main_nesca_out("NESCA4", "FINISH_SCAN", 5, "success", "errors", std::to_string(argp.fuck_yeah), std::to_string(argp.error_fuck),"") << std::endl;
     if (skipped_ip > 0){std::cout << std::endl << np.main_nesca_out("NESCA4", "Missed "+std::to_string(skipped_ip)+" identical IPs", 5, "status", "", "OK", "","") << std::endl;}
-    /*Конец обрабоки.*/
 
     return 0;
 }
+
 void
 print_results(std::string ip){
-    auto it = argp.success_target.find(ip);
-    if (it != argp.success_target.end()) {
-    const std::vector<int>& second_element = argp.success_target[ip];
-	   for (size_t i = 0; i < second_element.size(); ++i) {
-		  processing_tcp_scan_ports(ip, second_element[i], PORT_OPEN);
-	   }
-    }
+	auto process_ports = [&](const std::map<std::string, std::vector<int>>& target_map, int port_type) {
+        auto it = target_map.find(ip);
+        if (it != target_map.end()) {
+            const std::vector<int>& ports = it->second;
+            for (int port : ports) {
+                processing_tcp_scan_ports(ip, port, port_type);
+            }
+        }
+    };
 
-    auto it1 = argp.error_target.find(ip);
-    if (it1 != argp.error_target.end()) {
-    const std::vector<int>& second_element = argp.error_target[ip];
-	   for (size_t i = 0; i < second_element.size(); ++i) {
-		  processing_tcp_scan_ports(ip, second_element[i], PORT_ERROR);
-	   }
-    }
-
-    auto it2 = argp.filtered_target.find(ip);
-    if (it2 != argp.filtered_target.end()) {
-    const std::vector<int>& second_element = argp.filtered_target[ip];
-	   for (size_t i = 0; i < second_element.size(); ++i) {
-		  processing_tcp_scan_ports(ip, second_element[i], PORT_FILTER);
-	   }
-    }
-	   
-    auto it3 = argp.closed_target.find(ip);
-    if (it3 != argp.closed_target.end()) {
-    const std::vector<int>& second_element = argp.closed_target[ip];
-	   for (size_t i = 0; i < second_element.size(); ++i) {
-		  processing_tcp_scan_ports(ip, second_element[i], PORT_CLOSED);
-	   }
-    }
-
-    auto it4 = argp.open_or_filtered_target.find(ip);
-    if (it4 != argp.open_or_filtered_target.end()) {
-    const std::vector<int>& second_element = argp.open_or_filtered_target[ip];
-	   for (size_t i = 0; i < second_element.size(); ++i) {
-		  processing_tcp_scan_ports(ip, second_element[i], PORT_OPEN_OR_FILTER);
-	   }
-    }
-
-    auto it5 = argp.no_filtered_target.find(ip);
-    if (it5 != argp.no_filtered_target.end()) {
-    const std::vector<int>& second_element = argp.no_filtered_target[ip];
-	   for (size_t i = 0; i < second_element.size(); ++i) {
-		  processing_tcp_scan_ports(ip, second_element[i], PORT_NO_FILTER);
-	   }
-    }
+    process_ports(argp.success_target, PORT_OPEN);
+    process_ports(argp.error_target, PORT_ERROR);
+    process_ports(argp.filtered_target, PORT_FILTER);
+    process_ports(argp.closed_target, PORT_CLOSED);
+    process_ports(argp.open_or_filtered_target, PORT_OPEN_OR_FILTER);
+    process_ports(argp.no_filtered_target, PORT_NO_FILTER);
 }
 
 bool
@@ -696,60 +679,57 @@ process_ping(std::string ip){
 int errors_files = 0;
 
 void check_files(const char* path, const char* path1){
-       if (!check_file(path)){
-		 std::cout << std::endl;
-           np.nlog_error(std::string(path) + " (" + std::to_string(get_count_lines(path)) + ") entries");
-		 errors_files++;
-       }else if (!check_file(path1)){
-		 std::cout << std::endl;
-		 np.nlog_error(std::string(path1) + " (" + std::to_string(get_count_lines(path1)) + ") entries");
-		 errors_files++;
-       }
+    if (!check_file(path)){
+		std::cout << std::endl;
+        np.nlog_error(std::string(path) + " (" + std::to_string(get_count_lines(path)) + ") entries");
+		errors_files++;
+    }else if (!check_file(path1)){
+		std::cout << std::endl;
+		np.nlog_error(std::string(path1) + " (" + std::to_string(get_count_lines(path1)) + ") entries");
+		errors_files++;
+    }
 }
 
 void 
 checking_default_files(void){
-    const char* path0 = "ip.txt";
+	if (argp.ip_cidr_scan_import && check_file(argp.path_cidr)) {
+        if (argp.ip_cidr_scan) {
+            np.nlog_trivial(std::string(argp.path_cidr) + " (" + std::to_string(get_count_lines(argp.path_cidr)) + ") entries\n");
+        }
+        argp.ip_cidr = write_file(argp.path_cidr);
+    }else if (argp.ip_cidr_scan_import) {
+        np.nlog_error(std::string(argp.path_cidr) + " (" + std::to_string(get_count_lines(argp.path_cidr)) + ") entries\n");
+        errors_files++;
+    }
 
-    if (argp.ip_cidr_scan_import){
-       if (check_file(argp.path_cidr)){
-            if (argp.ip_cidr_scan){
-                np.nlog_trivial(std::string(argp.path_cidr) + " (" + std::to_string(get_count_lines(argp.path_cidr)) + ") entries\n");
-            }
-            argp.ip_cidr = write_file(argp.path_cidr);  
-       }
-       else {
-            np.nlog_error(std::string(argp.path_cidr) + " (" + std::to_string(get_count_lines(argp.path_cidr)) + ") entries\n");
-		  errors_files++;
-       }
+    if (argp.ip_range_scan_import && check_file(argp.path_range)) {
+        if (argp.ip_range_scan) {
+            np.nlog_trivial(std::string(argp.path_range) + " (" + std::to_string(get_count_lines(argp.path_range)) + ") entries\n");
+        }
+        argp.ip_range = write_file(argp.path_range);
+    }else if (argp.ip_range_scan_import) {
+        np.nlog_error(std::string(argp.path_range) + " (" + std::to_string(get_count_lines(argp.path_range)) + ") entries\n");
+        errors_files++;
+    }
+
+    if (argp.ip_scan_import && check_file(argp.path_ips)) {
+        np.nlog_trivial(std::string(argp.path_ips) + " (" + std::to_string(get_count_lines(argp.path_ips)) + ") entries\n");
+        argp._ip = write_file(argp.path_ips);
+    }else if (argp.ip_scan_import) {
+        np.nlog_error(std::string(argp.path_ips) + " (" + std::to_string(get_count_lines(argp.path_ips)) + ") entries\n");
+        errors_files++;
     }
 
     if (argp.ip_range_scan_import){
         if (check_file(argp.path_range)){
             if (argp.ip_range_scan){
-                np.nlog_trivial(std::string(argp.path_range) + " (" + std::to_string(get_count_lines(argp.path_range)) 
-                                + ") entries\n");
+                np.nlog_trivial(std::string(argp.path_range) + " (" + std::to_string(get_count_lines(argp.path_range)) + ") entries\n");
             }
             argp.ip_range = write_file(argp.path_range);
-        }
-        else {
-            np.nlog_error(std::string(argp.path_range) + " (" + std::to_string(get_count_lines(argp.path_range)) 
-                            + ") entries\n");
+        }else {
+            np.nlog_error(std::string(argp.path_range) + " (" + std::to_string(get_count_lines(argp.path_range)) + ") entries\n");
 		  errors_files++;
         }
-    }
-
-    if (argp.ip_scan_import){
-       if (check_file(argp.path_ips)){
-            np.nlog_trivial(std::string(argp.path_ips) + " (" + std::to_string(get_count_lines(argp.path_ips)) 
-                            + ") entries\n");
-            argp._ip = write_file(argp.path_ips);  
-       }
-       else {
-            np.nlog_error(std::string(argp.path_ips) + " (" + std::to_string(get_count_lines(argp.path_ips)) 
-                            + ") entries\n");
-		  errors_files++;
-       }
     }
 
 	/*Чек паролей и логин.*/
@@ -1113,6 +1093,7 @@ help_menu(void){
     std::cout << "\narguments speed:" << std::endl;
     np.reset_colors();
     std::cout << "  -speed, -S <1-5>         Edit max speed.\n";
+    std::cout << "  -max-group <count>       Edit max group for scan ip.\n";
     std::cout << "  -my-life-my-rulez        Using very MAX speed settings.\n";
 
     np.sea_green_on();
@@ -1551,6 +1532,8 @@ parse_args(int argc, char** argv){
 			   argp._custom_ttl = atoi(optarg);
                break;
            case 38:
+			   argp.custom_group_max = true;
+			   argp.group_size = atoi(optarg);
                break;
            case 39:
                break;
@@ -1673,14 +1656,16 @@ init_bruteforce(void){
     argp.hikvision_logins = write_file(argp.path_hikvision_login);
     argp.hikvision_passwords = write_file(argp.path_hikvision_pass);
     argp.smtp_logins = write_file(argp.path_smtp_login);
-    argp.smtp_passwords = write_file(argp.path_smtp_pass);}
+    argp.smtp_passwords = write_file(argp.path_smtp_pass);
+}
 
 std::string 
 format_percentage(double procents){
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(1) << procents << "%";
     std::string result = oss.str();
-    return result;}
+    return result;
+}
 
 
 /*Функция через которую происходит само сканирование

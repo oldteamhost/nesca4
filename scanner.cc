@@ -60,6 +60,7 @@ checking_finds::set_target_at_path(const std::string& path){
 	if (contains_word("?password-protected=login", path)){return LIFE_IS_GOOD;}
 	if (contains_word("/webpages/index.html", path)){return TP_LINK;}
 	if (contains_word("/K3Cloud/HTML5", path)){return KINGDEE;}
+
 	return "fuck";
 }
 
@@ -91,6 +92,7 @@ checking_finds::set_target_at_http_header(const std::string& buffer){
 std::string
 checking_finds::set_target_at_title(const std::string& title){
 	if (contains_word("Error 404 (Not Found)!!1", title)){return GOOGLE_404;}
+
 	return "fuck";
 }
 
