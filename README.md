@@ -48,7 +48,7 @@
 `PS:` Подробнее о разработке, принципах работы можете прочитать в resources/do_not_read.txt
 
 ## Installation
-#### Debian 11:
+**Debian 11:**  
 ```
     sudo apt-get install libcurl4-openssl-dev
     sudo apt install g++ make git cmake libssh-dev
@@ -57,7 +57,7 @@
     cmake .
     make -j12
 ```
-#### Arch Linux:
+**Arch Linux:**  
 ```
     sudo pacman -S curl cmake
     git clone https://github.com/oldteamhost/nesca4
