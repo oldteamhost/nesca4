@@ -1,9 +1,25 @@
 ![alt text](https://i.imgur.com/fb5pG53.png)
-
 ![alt text](https://i.imgur.com/BgVOFcv.png)
 ![alt text](https://i.imgur.com/fceQpgg.png)
 
-# COMPILE
+# About
+**Многопоточный сканер портов, с точностью nmap-а.**  
+Был сделан с вдохновлением от ![nesca3](https://github.com/pantyusha/nesca) и ![nmap](https://nmap.org/download.html).  
+
+Поддерживает сканирования портов такими методами как - 
+- `SYN:` Классика, самый быстрый, точный, и аннонимный.
+- `FIN` `NULL` `XMAS:` Подходят для более редких хостов.
+- `WINDOW` `ACK` `MAIMON`: Для распозвания фаервола или брэндаумера
+  
+Может брутфорсить - 
+- `SSH` `FTP` `RTSP` `SMTP` `HIKVISION` `HTTPBASICAUTH`  
+
+Может сканировать -  
+- `PORTS:` И так понятно.
+- `DNS:` Заключаеться в генерации рандомных DNS и проверки их доступности. Был взят из ![nesca3](https://github.com/pantyusha/nesca)
+- `FIREWALL:` Или же брандмауэр - защита которая может блокировать входящие пакеты, запрещая сканирование.
+
+
 #### Debian 11:
 ```
     sudo apt-get install libcurl4-openssl-dev
