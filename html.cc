@@ -32,14 +32,20 @@ html_output::html_add_result(const std::string& filepath, std::string time, std:
 		std::string opt, std::string res, std::string opt1, std::string res1,
 		std::string opt2, std::string res2){
 
+	char dots[3] = {':', ':', ':'};
+	if (res.empty()){dots[0] = ' ';}
+	if (res1.empty()){dots[1] = ' ';}
+	if (res2.empty()){dots[2] = ' ';}
+
 	std::string data_html = R"(
-	<div id="ipd" style="color:#707070;text-decoration: none;">[)" + time + R"(] <span id="hostSpan">
-        <a href=")" + href + R"(" target="_blank">
-		<font color=MediumSeaGreen>)" + text + R"(</font></a>;</span>
-		<span id="recvSpan">)" + opt + R"(: <font color=SteelBlue>)" + res + R"(</font>;</span>
-		<span id="recvSpan">)" + opt1 + R"(: <font color=GoldenRod>)" + res1 + R"(</font>;</span>)" + opt2
-		+ R"(: <font color=GoldenRod>)" + res2 + R"(</font> 
- 		</div>)";
+	<div id="ipd" style="color:#707070;text-decoration: none;">
+	[)" + time + R"(] 
+	<span id="hostSpan"><a href=")" + href + R"(" target="_blank">
+	<font color=MediumSeaGreen>)" + text + R"(</font></a>;</span>
+	<span id="recvSpan">)" + opt + dots[0] + R"( <font color=SteelBlue>)" + res + R"(</font> </span>
+	<span id="recvSpan">)" + opt1 + dots[1] + R"( <font color=GoldenRod>)" + res1 + R"(</font></span>)" 
+	+ opt2 + dots[2] + R"( <font color=GoldenRod>)" + res2 + R"(</font>
+	</div>)";
 
 	int write = write_line(filepath, data_html);
 	if (write != 0){return -1;}
