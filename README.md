@@ -1,5 +1,5 @@
 ![alt text](https://i.imgur.com/fb5pG53.png)
-![alt text](https://i.imgur.com/BgVOFcv.png)
+![alt text](https://i.imgur.com/iKNrgKj.png)
 ![alt text](https://i.imgur.com/fceQpgg.png)
 
 ## About
