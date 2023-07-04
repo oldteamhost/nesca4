@@ -2,7 +2,7 @@
 ![alt text](https://i.imgur.com/BgVOFcv.png)
 ![alt text](https://i.imgur.com/fceQpgg.png)
 
-# About
+## About
 **Многопоточный сканер портов, с точностью nmap-а.**  
 Был сделан с вдохновлением от ![nesca3](https://github.com/pantyusha/nesca) и ![nmap](https://nmap.org/download.html).  
 
@@ -19,7 +19,16 @@
 - `DNS:` Заключаеться в генерации рандомных DNS и проверки их доступности. Был взят из ![nesca3](https://github.com/pantyusha/nesca)
 - `FIREWALL:` Или же брандмауэр - защита которая может блокировать входящие пакеты, запрещая сканирование.
 
+Этапы сканирования -
+- `PING:` Проверяет все указанные хосты на доступность и получает их время ответа.
+- `RESOLV:` Получает DNS всех хостов которые отсеил ping.
+- `PORT:` Само сканирование портов, только на этом этапе.
+- `PROC:` И только уже на этом этапе результаты выводяться, и сохраняються в файл.
 
+- Да, схема почти полностью взята с ![nmap](https://nmap.org/download.html)
+
+
+## Installation
 #### Debian 11:
 ```
     sudo apt-get install libcurl4-openssl-dev
