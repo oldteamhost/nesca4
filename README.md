@@ -66,11 +66,12 @@
     make -j12
 ```
 
-# Error
+## Bugs & Errors
 ```
 On start using:
     export LD_LIBRARY_PATH=lib/platform/linux
 ```
+
 ## 20230704
 - Добавлено и настроено оригинальное сохранение в html.
 	- Страница с nesca3.
