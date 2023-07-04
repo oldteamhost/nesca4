@@ -1,7 +1,7 @@
 ![alt text](https://i.imgur.com/fb5pG53.png)
 
-![alt text](https://i.imgur.com/jua1lAW.png)
-![alt text](https://i.imgur.com/05DUkwf.png)
+![alt text](https://i.imgur.com/BgVOFcv.png)
+![alt text](https://i.imgur.com/fceQpgg.png)
 
 # COMPILE
 #### Debian 11:
