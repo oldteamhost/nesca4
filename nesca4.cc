@@ -136,7 +136,7 @@ option long_options[] = {
     {"ports", no_argument, 0, 'p'},
     {"db", no_argument, 0, 7},
     {"error", no_argument, 0, 25},
-    {"html", required_argument, 0, 55},
+    {"html", required_argument, 0, 'l'},
     {"TD", required_argument, 0, 52},
     {"PS", required_argument, 0, 80},
     {"PA", required_argument, 0, 81},
@@ -151,12 +151,11 @@ option long_options[] = {
     {"window", no_argument, 0, 94},
     {"maimon", no_argument, 0, 97},
     {"resol-delay", required_argument, 0, 40},
-    {"response-code", no_argument, 0, 35},
     {"speed", required_argument, 0, 'S'},
     {"resol-port", required_argument, 0, 33},
     {"ping-timeout", required_argument, 0, 49},
     {0,0,0,0}
-}; const char* short_options = "hvd:T:p:aS:";
+}; const char* short_options = "hl:vd:T:p:aS:";
 const char* run; /*Для help_menu()*/
 
 void
@@ -166,8 +165,13 @@ pre_check(void){
 	if (np.html_save){
 		std::vector<std::string> temp = write_file("resources/data");
 		auto it = std::find(temp.begin(), temp.end(), np.html_file_path);
-		if (it == temp.end() || temp[0] == "-1"){ho.html_main_init(np.html_file_path);}
-		else {if (!check_file(np.html_file_path.c_str())){ho.html_main_init(np.html_file_path);}}
+		if (it == temp.end() || temp[0] == "-1"){
+			ho.html_main_init(np.html_file_path);
+		}
+		else {if (!check_file(np.html_file_path.c_str())){
+			ho.html_main_init(np.html_file_path);
+		}}
+
 		ho.html_pre_init(np.html_file_path);
 		write_temp(np.html_file_path);
 	}
@@ -826,14 +830,30 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
                 std::string default_result = "http://" + ip + ":" + std::to_string(port) + "/";
                 std::string html = send_http_request(ip, port);
 
-                if (argp.no_get_path != true){ /*Получение перенаправления.*/
-					redirect = parse_redirect(html, html, ip, true, port);
-                }
+				/*Получение перенаправления.*/
+                if (argp.no_get_path != true){redirect = parse_redirect(html, html, ip, true, port);}
 
+			 /*Получение заголовка.*/
+             std::string http_title_result = get_http_title(html);
+			 if (http_title_result == HTTPTITLE_ERROR){http_title_result = get_http_title_pro(ip);}
+
+			 /*Удаление переносов из заголовка.*/
+             http_title_result.erase(std::remove(http_title_result.begin(), http_title_result.end(), '\r'), http_title_result.end());
+             http_title_result.erase(std::remove(http_title_result.begin(), http_title_result.end(), '\n'), http_title_result.end());
+			 if (http_title_result.empty()){http_title_result = "n/a";}
+
+			 /*Получение характеристики.*/
+			 std::string type_target = "n/a";
+             std::string temp_check_http = cfs.set_target_at_path(redirect);
+			 std::string temp_check_http1 = cfs.set_target_at_http_header(html);
+			 std::string temp_check_http2 = cfs.set_target_at_title(http_title_result);
+			 if (temp_check_http != "fuck"){type_target = temp_check_http;}
+			 if (temp_check_http1 != "fuck"){type_target = temp_check_http1;}
+			 if (temp_check_http2 != "fuck"){type_target = temp_check_http2;}
+			 int brute = cfs.than_bruteforce(type_target);
 
 			 /*Брутфорс HTTP basic auth.*/
-             std::string temp_check_http = cfs.check_basic_auth(redirect); // check axis redirect
-             if (argp.off_http_brute != true && temp_check_http != "no" && argp.no_get_path != true){
+             if (argp.off_http_brute != true && temp_check_http != "no" && argp.no_get_path != true && brute != -1){
 			 	np.yellow_html_on();
 				std::cout << "[>][HTTP]:" + ip + " [BRUTEFORCE]\n";
 				np.reset_colors();
@@ -842,28 +862,11 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
                         argp.http_brute_log, argp.http_brute_verbose, argp.brute_timeout_ms);
              }
 
-			 /*Получение заголовка.*/
-             std::string http_title_result = get_http_title(html);
-			 if (http_title_result == HTTPTITLE_ERROR){http_title_result = get_http_title_pro(ip);}
-
-			 /*Получение кода ответа.*/
-			 std::string res_code = "";
-			 std::string val_res_code = "";
-			 if (argp.response_code_test){
-				 res_code = std::to_string(get_response_code(ip, port));
-			 	 val_res_code = "C";
-			 }
-
-			 /*Удаление переносов из заголовка.*/
-             http_title_result.erase(std::remove(http_title_result.begin(), http_title_result.end(), '\r'), http_title_result.end());
-             http_title_result.erase(std::remove(http_title_result.begin(), http_title_result.end(), '\n'), http_title_result.end());
-			 if (http_title_result.empty()){http_title_result = "N/A";}
-
-             result_print = np.main_nesca_out("BA", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", val_res_code, http_title_result, res_code,rtt_log);
+             result_print = np.main_nesca_out("BA", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "F", http_title_result, type_target,rtt_log);
 
              if (argp.http_only){if (brute_temp.length() > 1)
        		 {result_print = np.main_nesca_out("BA", "http://" + brute_temp + ip + ":" + std::to_string(port),
-			  		3, "T", val_res_code, http_title_result, res_code, rtt_log);}}
+			  		3, "T", "F", http_title_result, type_target, rtt_log);}}
 
 
              std::cout << result_print << std::endl;
@@ -1526,9 +1529,6 @@ parse_args(int argc, char** argv){
 			   argp.custom_source_ip = true;
 			   argp.source_ip = optarg;
                break;
-           case 35:
-               argp.response_code_test = true;
-               break;
            case 36:
 			   argp.custom_source_port = true;
 			   argp._custom_source_port = atoi(optarg);
@@ -1568,7 +1568,7 @@ parse_args(int argc, char** argv){
                argp.import_color_scheme = true;
                argp.path_color_scheme = optarg;
                break;
-           case 55:
+           case 'l':
 			   np.html_save = true;
 			   np.html_file_path = optarg;
                break;

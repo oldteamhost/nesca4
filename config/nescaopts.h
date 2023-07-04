@@ -30,7 +30,6 @@ public:
 	   bool packet_trace;
 
        bool timeout;
-       bool response_code_test;
        int timeout_ms = 0;
    	   bool custom_recv_timeout_ms;
        int recv_timeout_ms = 1000;

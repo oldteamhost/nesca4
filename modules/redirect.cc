@@ -40,18 +40,16 @@ parse_http_equiv(std::string& html) {
 
 std::string 
 parse_url_from_js(std::string& html) {
-    std::string search_str = "window.location.href";
+	std::string search_str = "window.location.href = \"";
     std::string end_str = "\"";
     std::string result;
 
-    auto search_it = std::search(html.begin(), html.end(), search_str.begin(), search_str.end(),
-        [](char c1, char c2) { return std::tolower(c1) == std::tolower(c2); });
-    if (search_it != html.end()) {
-        auto end_it = std::search(search_it, html.end(), end_str.begin(), end_str.end(),
-            [](char c1, char c2) { return std::tolower(c1) == std::tolower(c2); });
-        if (end_it != html.end()) {
-            result = std::string(search_it + search_str.size(), end_it);
-            result.erase(std::remove(result.begin(), result.end(), ' '), result.end());
+    auto start_pos = html.find(search_str);
+    if (start_pos != std::string::npos) {
+        start_pos += search_str.length();
+        auto end_pos = html.find(end_str, start_pos);
+        if (end_pos != std::string::npos) {
+            result = html.substr(start_pos, end_pos - start_pos);
         }
     }
 

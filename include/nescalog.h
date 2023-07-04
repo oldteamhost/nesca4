@@ -60,8 +60,8 @@ private:
 		run_log();
 
 		std::string /*Главный лог.*/
-	    main_nesca_out(std::string opt, std::string result, int mode, std::string opt1, std::string opt2,
-                       std::string result1, std::string result2, std::string rtt);
+		main_nesca_out(std::string opt, std::string result, int mode, std::string opt1, std::string opt2,
+                        std::string result1, std::string result2, std::string rtt, std::string type = "n/a");
 
 		/*Другие логи.*/
         void

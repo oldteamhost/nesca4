@@ -1,72 +1,34 @@
 #include "include/requests.h"
 #include <cstdio>
 #include <unistd.h>
+#include "../include/callbacks.h"
+#include <curl/curl.h>
 
 std::string 
 send_http_request(const std::string& node, int port) {
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) {return HTTPREQUEST_ERROR;}
+	curl_global_init(CURL_GLOBAL_DEFAULT);
+    CURL* curl = curl_easy_init();
+    if (curl){
+        std::string buffer;
+		std::string headerBuffer;
+        curl_easy_setopt(curl, CURLOPT_URL, node.c_str());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, http_request);
+		curl_easy_setopt(curl, CURLOPT_PORT, port);
+		curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Linux x86_64; rv:35.0) Gecko/20100101 Firefox/35.0");
+		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+		curl_easy_setopt(curl, CURLOPT_HEADERDATA, &headerBuffer);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2L);
+        CURLcode res = curl_easy_perform(curl);
+        if (res != CURLE_OK){return "";}
 
-    struct addrinfo hints{}, *res = nullptr;
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_CANONNAME;
+        curl_easy_cleanup(curl);
+        curl_global_cleanup();
 
-    std::stringstream port_str;
-    port_str << port;
-
-    if (getaddrinfo(node.c_str(), port_str.str().c_str(), &hints, &res) != 0) {
-        close(sockfd);
-        return HTTPREQUEST_ERROR;
+		std::string response = headerBuffer + buffer;
+        return response;
     }
-
-    if (connect(sockfd, res->ai_addr, res->ai_addrlen) < 0) {
-        close(sockfd);
-        return HTTPREQUEST_ERROR;
-    }
-
-    std::stringstream request_stream;
-    request_stream << "GET / HTTP/1.1\r\n";
-    request_stream << "Host: " << node << "\r\n";
-    request_stream << "Connection: close\r\n";
-    request_stream << "\r\n";
-    std::string request = request_stream.str();
-
-    ssize_t bytesSent = send(sockfd, request.c_str(), request.length(), 0);
-    if (bytesSent < 0) {
-        close(sockfd);
-        return HTTPREQUEST_ERROR;
-    }
-
-    struct pollfd fds[1];
-    int timeout = 2000; /*2 секунды*/
-
-    fds[0].fd = sockfd;
-    fds[0].events = POLLIN;
-
-    int result = poll(fds, 1, timeout);
-    if (result == -1) {
-        close(sockfd);
-        return HTTPREQUEST_ERROR;
-    } else if (result == 0) {
-        close(sockfd);
-        return HTTPREQUEST_ERROR;
-    }
-
-    std::string response_string;
-    char buffer[4096];
-    ssize_t bytesRead;
-
-    bytesRead = recv(sockfd, buffer, sizeof(buffer) - 1, 0);
-	if (bytesRead == -1){
-		close(sockfd);
-		return HTTPREQUEST_ERROR;
-	}
-    buffer[bytesRead] = '\0';
-    response_string += buffer;
-
-    close(sockfd);
-    return response_string;
+    return "";
 }
 
 int
