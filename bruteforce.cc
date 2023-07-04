@@ -8,8 +8,8 @@
 #include "include/bruteforce.h"
 #include <sys/socket.h>
 
-nesca_prints nsp;
 brute_ftp_data bfd;
+nesca_prints np1;
 
 std::string 
 base64_encode(const std::string& input){
@@ -50,7 +50,7 @@ base64_encode(const std::string& input){
 std::string 
 brute_smtp(const std::string& ip, int port, const std::string& login, const std::string& pass, int brute_log, int verbose){
     if (brute_log) {
-        nsp.nlog_custom("SMTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
+        np1.nlog_custom("SMTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
     }
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -195,7 +195,7 @@ threads_brute_smtp(const std::string ip, int port, const std::vector<std::string
 std::string 
 brute_ftp(const std::string ip, int port, const std::string login, const std::string pass, int brute_log, int verbose){
     if (brute_log){
-            nsp.nlog_custom("FTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
+        np1.nlog_custom("FTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
     }
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -301,7 +301,7 @@ threads_brute_ftp(const std::string ip, int port, const std::vector<std::string>
 std::string 
 brute_ssh(const std::string& ip, int port, const std::string login, const std::string pass, int brute_log, int verbose, int known_hosts){
     if (brute_log) {
-        nsp.nlog_custom("SSH", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
+        np1.nlog_custom("SSH", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
     }
 
     ssh_session sshSession = ssh_new();
@@ -400,7 +400,7 @@ brute_rtsp(const std::string ip, const std::string login, const std::string pass
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
         if (brute_log){
-            nsp.nlog_custom("RTSP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
+            np1.nlog_custom("RTSP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
         }
         curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
         curl_easy_setopt(curl, CURLOPT_PASSWORD, pass.c_str());
@@ -471,7 +471,7 @@ brute_http(const std::string ip, const std::string login, const std::string pass
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
 
         if (brute_log) {
-            nsp.nlog_custom("HTTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
+            np1.nlog_custom("HTTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
         }
 
         curl_easy_setopt(curl, CURLOPT_FAILONERROR, true);
@@ -565,7 +565,7 @@ brute_hikvision(const std::string ip, const std::string login, const std::string
   NET_DVR_DEVICEINFO_V40 deviceInfo = {0};
 
   if (brute_log){
-      nsp.nlog_custom("HIKVISION", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
+      np1.nlog_custom("HIKVISION", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
   }
 
   LONG userId = NET_DVR_Login_V40(&loginInfo, &deviceInfo);

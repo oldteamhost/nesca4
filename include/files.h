@@ -9,6 +9,7 @@
 #define FILES_H
 
 #include <iostream>
+#include <algorithm>
 #include <vector>
 #include <fstream>
 #include <string>
@@ -25,5 +26,9 @@ check_file(const char* path);
 // get count lines
 int 
 get_count_lines(const char* path);
+
+int
+delete_line_from_file(const std::string& filename,
+		const std::string& line_to_delete);
 
 #endif

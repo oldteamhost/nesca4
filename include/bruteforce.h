@@ -23,7 +23,7 @@
 
 #include "../include/callbacks.h"
 #include "../include/other.h"
-#include "../include/prints.h"
+#include "../include/nescalog.h"
 
 #include "../lib/HCNetSDK.h"
 

@@ -1,6 +1,7 @@
 ![alt text](https://i.imgur.com/fb5pG53.png)
 
-![alt text](https://i.imgur.com/U9hDGpD.png)
+![alt text](https://i.imgur.com/jua1lAW.png)
+![alt text](https://i.imgur.com/05DUkwf.png)
 
 # COMPILE
 #### Debian 11:
@@ -21,97 +22,17 @@
     make -j12
 ```
 
-# Options Summary
-``` yaml
-Version: 20230703
-
-d8b   db d88888b .d8888.  .o88b.  .d8b.         j88D  
-888o  88 88'     88'  YP d8P  Y8 d8' `8b       j8~88  
-88V8o 88 88ooooo `8bo.   8P      88ooo88      j8' 88  
-88 V8o88 88~~~~~   `Y8b. 8b      88~~~88      V88888D 
-88  V888 88.     db   8D Y8b  d8 88   88          88  
-VP   V8P Y88888P `8888Y'  `Y88P' YP   YP          VP  
-
-usage: ./nesca4 [target 1,2,3] [flags]
-
-arguments target:
-  -import-ip <path>        Set ip on target from file.
-  -import-cidr <path>      Set cidr on target from file.
-  -import-range <path>     Set range on target from file.
-  -random-ip <count>       Set random ip target.
-
-arguments speed:
-  -speed, -S <1-5>         Edit max speed.
-  -my-life-my-rulez        Using very MAX speed settings.
-
-arguments port scan methods:
-  -fin, -xmas, -null       Use one of these scanning methods.
-  -ack, -windows -maimon   Use ack or window scan method.
-
-arguments port scan:
-  -delay, -d <ms>          Set delay for scan.
-  -threads, -T <count>     Edit max threads for scan.
-  -ports, -p <1,2,3>       Set ports on scan.
-  -scan-timeout <ms>       Set timeout for getting packet on port.
-  -scan-db, scan-debug     Display verbose info for syn port scan.
-
-arguments dns-resolution:
-  -TD <count>              Set max threads for dns-resolution.
-  -resol-port <port>       Edit source port for dns-resolution.
-  -resol-delay <ms>        Set delay for dns-resolution.
-
-arguments ping:
-  -PS, -PA <port>          On TCP ping - SYN|ACK and edit dest port.
-  -PE, -PI, -PM            On ICMP ping - ECHO|INFO|TIMESTAMP
-  -max-ping                Using all ping methods - ICMP and TCP.
-  -no-ping                 Off ping scan.
-
-arguments ping speed:
-  -TP <count>              Set max threads for ping.
-  -ping-timeout <ms>       Set recv timeout for ping.
-
-arguments bruteforce:
-  -brute-login <ss,path>   Set path for <ss> logins.
-  -brute-pass <ss,path>    Set path for <ss> passwords.
-  -brute-timeout <ms>      Edit brute timout.
-  -brute-only <ss,2>       Display only success <ss> bruteforce.
-  -no-brute <ss,2>         Disable <ss> bruteforce.
-
-arguments other bruteforce:
-  -brute-verbose <ss,2>    Display bruteforce <ss> all info.
-  -brute-log <ss,2>        Display bruteforce <ss> info.
-  -sftp-brute-known-hosts  Reading known_host for connection.
-
-arguments dns-scan:
-  -dns-scan <.dns>         On dns-scan and set domain 1 level.
-  -dns-length <count>      Edit length generating domain.
-  -dns-dict <dict>         Edit dictionary for generation.
-
-arguments output:
-  -db, -debug              On debug mode, save and display not even working hosts.
-  -er, -error              On display errors.
-  -no-proc                 Only scan.
-  -packet-trace            Display packet_trace.
-  -no-get-path             Disable getting paths.
-  -log-set <count>         Change change the value of ips after which, will be displayed information about how much is left.
-  -on-http-response        On print response from port 80.
-  -txt <path>              Save result to text document.
-
-arguments colors:
-  -no-color                Disable colors.
-  -import-color <path>     Import color scheme from file.
-
-arguments other:
-  -source-ip               Set custom source_ip.
-  -source-port             Set custom source_port.
-  -ttl                     Set custom ip_header_ttl.
-```
-
 # Error
 ```
 On start using:
     export LD_LIBRARY_PATH=lib/platform/linux
 ```
+## 20230704
+- Добавлено и настроено оригинальное сохранение в html.
+	- Страница с nesca3.
+- Улучше лог.
+- Исправлены баги.
+
 ## 20230703
 - Передрочено почти всё, убраны ненужные аргументы.
 - Добавлено ACK, WINDOW, MAIMON сканирование.

@@ -6,7 +6,10 @@
 */
 
 #include "include/other.h"
+#include "include/files.h"
 #include <cstdio>
+#include <vector>
+#include <filesystem>
 
 const char*
 get_time(){
@@ -19,6 +22,21 @@ get_time(){
 
     sprintf(time_str, "%02d:%02d:%02d", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
     return time_str;
+}
+
+std::string get_current_date() {
+    std::time_t current_time = std::time(nullptr);
+    std::tm* local_time = std::localtime(&current_time);
+    
+    int year = local_time->tm_year + 1900;
+    int month = local_time->tm_mon + 1;
+    int day = local_time->tm_mday;
+    
+    std::string formatted_date = std::to_string(year) + "-" +
+                                (month < 10 ? "0" : "") + std::to_string(month) + "-" +
+                                (day < 10 ? "0" : "") + std::to_string(day);
+    
+    return formatted_date;
 }
 
 bool
@@ -124,4 +142,21 @@ bool
 dns_or_ip(std::string &node){
     std::regex dnsRegex("^[a-zA-Z0-9]+([-.][a-zA-Z0-9]+)*\\.[a-zA-Z]{2,}(\\.[a-zA-Z]{2,})?$");
     return std::regex_match(node, dnsRegex);
+}
+
+int
+write_temp(const std::string& data){
+	std::vector<std::string> temp = write_file("resources/data");
+	for (auto& str : temp) {
+        if (str == data) {return -1;}
+    }
+	if (temp.size() > 2000){
+		std::filesystem::path file_path("resources/data");
+        std::filesystem::remove(file_path);
+	}
+	int write = write_line("resources/data", data + "\n");
+	if (write != 0){return -1;}
+
+	return 0;
+
 }

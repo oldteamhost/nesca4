@@ -7,6 +7,7 @@
 
 #include "include/files.h"
 
+
 int 
 get_count_lines(const char* path){
     std::ifstream file(path);
@@ -26,6 +27,9 @@ std::vector<std::string>
 write_file(const std::string& filename){
     std::string line;
     std::ifstream file(filename);
+	if (file.fail()){
+		return {"-1"};
+	}
     std::vector<std::string> lines;
     while (std::getline(file, line))
     {lines.push_back(line);}
@@ -42,4 +46,30 @@ write_line(std::string path, std::string line){
     outfile.close();
     if (outfile.fail()){return -3;}
     return 0;
+}
+
+int
+delete_line_from_file(const std::string& filename,
+		const std::string& line_to_delete){
+	std::ifstream input_file(filename);
+    if (!input_file){return -1;}
+
+	std::vector<std::string> lines;
+    std::string line;
+    while (std::getline(input_file, line))
+    {lines.push_back(line);}
+
+    input_file.close();
+
+    auto it = std::find(lines.begin(), lines.end(), line_to_delete);
+    if (it == lines.end()){return -1;}
+
+    lines.erase(it);
+
+    std::ofstream output_file(filename);
+    if (!output_file){return -1;}
+    for (const auto& updated_line : lines){output_file << updated_line << std::endl;}
+
+    output_file.close();
+	return 0;
 }

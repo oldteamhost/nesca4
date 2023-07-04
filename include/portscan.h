@@ -27,7 +27,7 @@
 #include <netinet/in.h>
 #include <vector>
 
-#include "../include/prints.h"
+#include "../include/nescalog.h"
 #include "../include/other.h"
 
 #define SEND_BUFFER_SIZE 2048

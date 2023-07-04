@@ -21,6 +21,12 @@
 const char* 
 get_time();
 
+int
+write_temp(const std::string& data);
+
+std::string
+get_current_date();
+
 void 
 delay_ms(int milliseconds);
 

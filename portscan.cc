@@ -25,12 +25,12 @@
 #include "ncsock/include/other.h"
 #include "include/generation.h"
 
-nesca_prints nspr;
+nesca_prints np2;
 
 void
 scan_debug_log(std::string mes, bool debug){
     if (debug){
-	   nspr.nlog_custom("SCAN", mes, 1);
+	   np2.nlog_custom("SCAN", mes, 1);
 	   fflush(stdout);
     }
 }
@@ -57,7 +57,7 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
     std::this_thread::sleep_for(std::chrono::milliseconds(timeout_ms));
 
     if (debug){
-	   nspr.nlog_custom("", "===============================SEND===============================\n", 0);
+	   np2.nlog_custom("", "===============================SEND===============================\n", 0);
     }
     /*Создание raw сокета, для более глубокой работы
     с сокетом.*/

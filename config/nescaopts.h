@@ -118,7 +118,6 @@ public:
 	   std::map<std::string, std::string> dns_completed;
        bool thread_on_port;
 	   bool info_version;
-       bool html;
 
 	   /*Bruteforce auth data*/
        std::vector<std::string> ftp_logins;
