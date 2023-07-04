@@ -50,7 +50,7 @@
 #include "ncsock/include/ncread.h"
 
 /*Угадайте?*/
-#define VERSION "20230704"
+#define VERSION "20230705"
 
 /*Классы, структуры.*/
 std::mutex mtx;
