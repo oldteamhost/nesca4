@@ -1111,7 +1111,7 @@ help_menu(void){
     np.sea_green_on();
     std::cout << "\narguments saving to file:" << std::endl;
     np.reset_colors();
-    std::cout << "  -html <path>             Classic nesca save, write on html page.\n";
+    std::cout << "  -html, -l <path>         Classic nesca save, write on html page.\n";
     std::cout << "  -txt <path>              Save result to text document.\n";
 
     np.sea_green_on();
