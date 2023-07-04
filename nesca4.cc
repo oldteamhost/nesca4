@@ -176,6 +176,16 @@ pre_check(void){
 		write_temp(np.html_file_path);
 	}
 
+    if (np.save_file){
+        auto now = std::chrono::system_clock::now();
+        std::time_t time = std::chrono::system_clock::to_time_t(now);
+        std::tm* tm = std::localtime(&time);
+        std::ostringstream oss;
+        oss << std::put_time(tm, "%d.%m.%Y");
+        std::string date_str = oss.str();
+        write_line(np.file_path_save, "\n\n\t\tNESCA4:[" + date_str + "]:[" + get_time() + "]\n\n");}
+
+
     if (argp.import_color_scheme){
         np.import_color_scheme(argp.path_color_scheme, np.config_values);
         np.processing_color_scheme(np.config_values);
@@ -218,15 +228,6 @@ pre_check(void){
 
     if (argp.print_help_menu){help_menu();exit(0);}
     if (!check_root_perms()){np.nlog_error("RAW socket only sudo run!\n");exit(1);}
-
-    if (np.save_file){
-        auto now = std::chrono::system_clock::now();
-        std::time_t time = std::chrono::system_clock::to_time_t(now);
-        std::tm* tm = std::localtime(&time);
-        std::ostringstream oss;
-        oss << std::put_time(tm, "%d.%m.%Y");
-        std::string date_str = oss.str();
-        write_line(np.file_path_save, "\n\nNESCA4:[" + date_str + "]:[" + get_time() + "]-------------------------------\n");}
 
 }
 
@@ -578,6 +579,7 @@ int main(int argc, char** argv){
 			   || argp.open_or_filtered_target.find(ip) != argp.open_or_filtered_target.end()
 	           || argp.no_filtered_target.find(ip) != argp.no_filtered_target.end()){
 		  double time_ms = argp.rtts[ip];
+		  if (np.save_file){write_line(np.file_path_save, "\n");}
 		  std::cout << std::endl << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", argp.dns_completed[ip], std::to_string(time_ms),"") << std::endl;
 	   }
 	   print_results(ip);}
@@ -764,6 +766,7 @@ checking_default_files(void){
 
 void
 print_port_state(int status, int port, std::string service){
+	std::string result_txt = "[&][REPORT]:" + std::to_string(port) + "/tcp STATE: ";
     np.gray_nesca_on();
     std::cout << "[&][REPORT]:";
     np.green_html_on();
@@ -772,26 +775,32 @@ print_port_state(int status, int port, std::string service){
     std::cout << " STATE: ";
     if (status == PORT_OPEN){
 	   np.green_html_on();
+	   result_txt += "open";
 	   std::cout << "open"; 
     }
     else if (status == PORT_CLOSED){
 	   np.reset_colors();
+	   result_txt += "closed";
 	   std::cout << "closed"; 
     }
     else if (status == PORT_FILTER){
 	   np.yellow_html_on();
+	   result_txt += "filtered";
 	   std::cout << "filtered"; 
     }
     else if (status == PORT_ERROR){
 	   np.red_html_on();
+	   result_txt += "error";
 	   std::cout << "error"; 
     }
     else if (status == PORT_OPEN_OR_FILTER){
 	   np.yellow_html_on();
+	   result_txt += "open|filtered";
 	   std::cout << "open|filtered"; 
     }
     else if (status == PORT_NO_FILTER){
 	   np.green_html_on();
+	   result_txt += "unfiltered";
 	   std::cout << "unfiltered"; 
     }
     np.gray_nesca_on();
@@ -799,6 +808,9 @@ print_port_state(int status, int port, std::string service){
     np.green_html_on();
     std::cout << service << std::endl;
     np.reset_colors();
+	result_txt += " SERVICE: " + service;
+
+	if (np.save_file){write_line(np.file_path_save, result_txt + "\n");}
 }
 
 /*Функция где происходят все операции с открытими портами.
@@ -879,6 +891,7 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
 				    np.yellow_html_on();
 				    std::cout << redirect + "\n";
 				    np.reset_colors();
+					if (np.save_file){write_line(np.file_path_save, "[^][REDIRT]:" + redirect + "\n");}
                 }
              }
 

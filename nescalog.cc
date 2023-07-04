@@ -36,12 +36,12 @@ nesca_prints::main_nesca_out(std::string opt, std::string result, int mode, std:
         temp_file = print_get_time(get_time()) + "[" + opt + "]" + dots[1] + result;
     }
     else if (mode == 3) {
-        temp = gray_nesca + "[>]" + "[" + opt + "]" + dots[0] + reset_color +
+        temp = gray_nesca + "[>][" + opt + "]" + dots[0] + reset_color +
             sea_green + result + reset_color + gray_nesca + " " + opt1 + dots[1] + " " + reset_color +
             golder_rod + result1 + reset_color + gray_nesca + " " + opt2 + dots[2] + " " + reset_color +
             golder_rod + result2 + reset_color;
 
-        temp_file = print_get_time(get_time()) + "[" + opt + "]" + dots[0] +
+        temp_file = "[>][" + opt + "]" + dots[0] +
             result + " " + opt1 + dots[1] + " " + result1 + " " + opt2 + dots[2] + " " + result2;
 
 		if (html_save){hou.html_add_result(html_file_path,get_time(), result, result, "RTT", rtt+"ms", opt2, result2, opt1,result1 );}
