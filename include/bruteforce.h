@@ -42,6 +42,7 @@ class brute_ftp_data{
 	   set_success_pass(std::string success_pass);
 };
 
+
 // brutforce smtp
 std::string 
 base64_encode(const std::string& input);
@@ -85,4 +86,10 @@ brute_hikvision(const std::string ip, const std::string login, const std::string
 std::string 
 threads_brute_hikvision(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int brute_timeout_ms);
 
+// bruteforce rvi
+std::string 
+brute_rvi(const std::string ip, int port, const std::string login, const std::string pass, int brute_log);
+// on threads
+std::string 
+threads_brute_rvi(const std::string ip, const int port, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int brute_timeout_ms);
 #endif

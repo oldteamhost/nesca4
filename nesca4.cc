@@ -978,7 +978,32 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
                 }
 
                 std::cout << result_print << std::endl;
-            }
+            }else if (port == 37777){
+			    print_port_state(PORT_OPEN, port, "RVI");
+                std::lock_guard<std::mutex> guard(mtx);
+
+                if (argp.off_rvi_brute != true){
+				np.yellow_html_on();
+				std::cout << "[>][RVI]:" + ip + " [BRUTEFORCE]\n";
+				np.reset_colors();
+                    brute_temp = threads_brute_rvi(ip, port, argp.rvi_logins, argp.rvi_passwords, argp.rvi_brute_log,
+                                                  argp.brute_timeout_ms);
+
+                    if (argp.rvi_only){
+                        if (brute_temp.length() > 1){
+                            result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "",rtt_log);
+                        }
+                    }
+                    else {
+                        result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "",rtt_log);
+                    }
+                }
+                else {
+                    result_print = np.main_nesca_out("BA", "" + result, 3, "", "", "", "",rtt_log);
+                }
+
+                std::cout << result_print << std::endl;
+			}
             else if (port == 8000){
 			 print_port_state(PORT_OPEN, port, "HIKVISION");
                 std::lock_guard<std::mutex> guard(mtx);
@@ -1249,6 +1274,9 @@ parse_args(int argc, char** argv){
                else if (what[0] == "hikvision"){
                    argp.path_hikvision_login = what_convert;
                }
+               else if (what[0] == "rvi"){
+                   argp.path_rvi_login = what_convert;
+               }
                else {
                    break;
               }
@@ -1280,6 +1308,9 @@ parse_args(int argc, char** argv){
                else if (what[0] == "hikvision"){
                    argp.path_hikvision_pass = what_convert;
                }
+               else if (what[0] == "rvi"){
+                   argp.path_rvi_pass = what_convert;
+               }
                else {
                    break;
               }
@@ -1308,11 +1339,14 @@ parse_args(int argc, char** argv){
                         argp.hikvision_brute_log = true;
                     }
                     else if (what[i] == "smtp"){
-				    argp.smtp_brute_log = true;
-                    }
+				    	argp.smtp_brute_log = true;
+                    }else if (what[i] == "rvi"){
+                   		argp.rvi_brute_log = true;
+               		}
                     else if (what[i] == "all"){
                         argp.ftp_brute_log = true;
-				    argp.smtp_brute_log = true;
+				    	argp.smtp_brute_log = true;
+                   		argp.rvi_brute_log = true;
                         argp.sftp_brute_log = true;
                         argp.rtsp_brute_log = true;
                         argp.http_brute_log = true;
@@ -1386,12 +1420,16 @@ parse_args(int argc, char** argv){
                        argp.off_hikvision_brute = true;
                    }
                    else if (what[i] == "smtp"){
-				   argp.off_smtp_brute = true;
+				   	argp.off_smtp_brute = true;
                    }
+               	   else if (what[i] == "rvi"){
+					   argp.off_rvi_brute = true;
+               	   }
                    else if (what[i] == "all"){
                        argp.off_ftp_brute = true;
                        argp.off_sftp_brute = true;
-				   argp.off_smtp_brute = true;
+					   argp.off_rvi_brute = true;
+				   	   argp.off_smtp_brute = true;
                        argp.off_rtsp_brute = true;
                        argp.off_http_brute = true;
                        argp.off_hikvision_brute = true;
@@ -1427,12 +1465,16 @@ parse_args(int argc, char** argv){
                        argp.hikvision_only = true;
                    }
                    else if (what[i] == "smtp"){
-				   argp.smtp_only = true;
+				       argp.smtp_only = true;
+                   }
+                   else if (what[i] == "rvi"){
+				       argp.rvi_only = true;
                    }
                    else if (what[i] == "all"){
                        argp.sftp_only = true;
+				       argp.rvi_only = true;
                        argp.ftp_only = true;
-				   argp.smtp_only = true;
+				   	   argp.smtp_only = true;
                        argp.rtsp_only = true;
                        argp.http_only = true;
                        argp.hikvision_only = true;
@@ -1657,6 +1699,8 @@ init_bruteforce(void){
     argp.hikvision_passwords = write_file(argp.path_hikvision_pass);
     argp.smtp_logins = write_file(argp.path_smtp_login);
     argp.smtp_passwords = write_file(argp.path_smtp_pass);
+    argp.rvi_logins = write_file(argp.path_rvi_login);
+    argp.rvi_passwords = write_file(argp.path_rvi_pass);
 }
 
 std::string 

@@ -382,10 +382,7 @@ brute_rtsp(const std::string ip, const std::string login, const std::string pass
     if (curl)
     {
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
-        if (verbose)
-        {
-            curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-        }
+        if (verbose){curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);}
         curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 1L);
         curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1L);
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
@@ -399,9 +396,7 @@ brute_rtsp(const std::string ip, const std::string login, const std::string pass
         std::string url = "rtsp://" + ip;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
-        if (brute_log){
-            np1.nlog_custom("RTSP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
-        }
+        if (brute_log){np1.nlog_custom("RTSP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
         curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
         curl_easy_setopt(curl, CURLOPT_PASSWORD, pass.c_str());
 
@@ -593,6 +588,97 @@ threads_brute_hikvision(const std::string ip, const std::vector<std::string> log
             delay_ms(brute_timeout_ms);
             threads.emplace_back([ip, login, password, brute_log, &results]() {
                 std::string temp = brute_hikvision(ip, login, password, brute_log);
+                if (!temp.empty() && temp.length() > 3) {
+                    results.push_back(temp);
+                }
+            });
+        }
+    }
+
+    for (auto& thread : threads) {
+        thread.join();
+    }
+
+    if (!results.empty()) {
+        return results[0];
+    } else {
+        return "";
+    }
+    return "";
+}
+
+std::string 
+brute_rvi(const std::string ip, int port, const std::string login, const std::string pass, int brute_log){
+	const unsigned char headerRVI[32] = {
+		0xa0, 0x00, 0x00, 0x60, 0x00, 0x00, 0x00, 0x00,
+		0x61, 0x64, 0x6d, 0x69, 0x6e, 0x00, 0x00, 0x00,
+		0x61, 0x64, 0x6d, 0x69, 0x6e, 0x00, 0x00, 0x00,
+		0x04, 0x01, 0x00, 0x00, 0x00, 0x00, 0xa1, 0xaa
+	};
+	const unsigned char loginRVIHeaderStart[8] = {
+		0xa0, 0x00, 0x00, 0x60, 0x00, 0x00, 0x00, 0x00
+	};
+	const unsigned char loginRVIHeaderEnd[8] = {
+		0x04, 0x01, 0x00, 0x00, 0x00, 0x00, 0xa1, 0xaa
+	};
+
+	sockaddr_in sa{};
+    sa.sin_family = AF_INET;
+    sa.sin_port = htons(port);
+
+	if (inet_pton(AF_INET, ip.c_str(), &(sa.sin_addr)) != 1) {
+        hostent* host = gethostbyname(ip.c_str());
+        if (host == nullptr) {
+            return "-1";
+        }
+        sa.sin_addr.s_addr = reinterpret_cast<in_addr*>(host->h_addr_list[0])->s_addr;
+    }
+
+	int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (sock == -1){return "-1";}
+
+	if (connect(sock, reinterpret_cast<sockaddr*>(&sa), sizeof(sa)) == -1) {
+        close(sock);
+        return "-1";
+    }
+
+	char new_login_packet[32] = {0};
+    memcpy(new_login_packet, loginRVIHeaderStart, sizeof(loginRVIHeaderStart));
+    memcpy(new_login_packet + 8, login.c_str(), login.length());
+    memcpy(new_login_packet + 16, pass.c_str(), pass.length());
+    memcpy(new_login_packet + 24, loginRVIHeaderEnd, sizeof(loginRVIHeaderEnd));
+
+  	if (brute_log){np1.nlog_custom("RVI", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
+
+	int s = send(sock, new_login_packet, sizeof(new_login_packet), 0);
+    if (s < 0){close(sock);return "-1";}
+
+    char buff[100] = {0};
+    int r = recv(sock, buff, sizeof(buff), 0);
+    if (r < 0){close(sock);return "-1";}
+
+    close(sock);
+
+    if (buff[9] == 0x08) {
+        std::string result_passwd = login + ":" + pass + "@";
+        return result_passwd;
+    }else {
+        return "-1";
+    }
+
+	return "-1";
+}
+
+std::string 
+threads_brute_rvi(const std::string ip, const int port, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int brute_timeout_ms){
+    std::vector<std::thread> threads;
+    std::vector<std::string> results;
+
+    for (const auto& login : logins) {
+        for (const auto& password : passwords) {
+            delay_ms(brute_timeout_ms);
+            threads.emplace_back([ip, port, login, password, brute_log, &results]() {
+                std::string temp = brute_rvi(ip, port, login, password, brute_log);
                 if (!temp.empty() && temp.length() > 3) {
                     results.push_back(temp);
                 }

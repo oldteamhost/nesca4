@@ -133,6 +133,8 @@ public:
        std::vector<std::string> hikvision_passwords;
        std::vector<std::string> smtp_logins;
        std::vector<std::string> smtp_passwords;
+       std::vector<std::string> rvi_logins;
+       std::vector<std::string> rvi_passwords;
 
 	   /*Bruteforce paths*/
        std::string path_ftp_login = "passwd/ftp_logins.txt";
@@ -147,6 +149,8 @@ public:
        std::string path_hikvision_pass = "passwd/hikvision_passwords.txt";
        std::string path_smtp_login = "passwd/smtp_logins.txt";
        std::string path_smtp_pass = "passwd/smtp_passwords.txt";
+       std::string path_rvi_login = "passwd/rvi_logins.txt";
+       std::string path_rvi_pass = "passwd/rvi_passwords.txt";
 
 	   /*Bruteforce options*/
        int brute_timeout_ms = 10;
@@ -160,6 +164,7 @@ public:
        bool off_ftp_brute;
        bool off_sftp_brute;
        bool off_rtsp_brute;
+	   bool off_rvi_brute;
        bool off_http_brute;
        bool off_smtp_brute;
        bool off_hikvision_brute;
@@ -167,6 +172,7 @@ public:
        bool ftp_brute_log;
        bool sftp_brute_log;
        bool rtsp_brute_log;
+	   bool rvi_brute_log;
        bool http_brute_log;
 	   bool smtp_brute_log;
        bool hikvision_brute_log;
@@ -174,6 +180,7 @@ public:
        bool ftp_only;
        bool sftp_only;
        bool rtsp_only;
+	   bool rvi_only;
        bool http_only;
        bool smtp_only;
        bool hikvision_only;

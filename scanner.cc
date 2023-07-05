@@ -98,7 +98,12 @@ checking_finds::set_target_at_title(const std::string& title){
 
 int
 checking_finds::than_bruteforce(const std::string type){
-	if (type == CAMERA_AXIS || type == CAMERA_AXIS_205 || type == CAMERA_AXIS_2400 || type == HTTP_BASIC_AUTH){
+	if (type == CAMERA_AXIS || type == CAMERA_AXIS_205 ||
+		type == CAMERA_AXIS_2400 || type == HTTP_BASIC_AUTH ||
+		type == CAMERA_BB_SC384 || type == CAMERA_VB_M40 ||
+		type == CAMERA_PANASONIC || type == CAMERA_UA ||
+		type == CAMERA_SONY || type == CAMERA_LG_SMART ||
+		type == CAMERA_EAGLE_EYE || type == CAMERA_QLIK){
 		return HTTP_BASIC_AUTH_BRUTE;
 	} 
 	return -1;
