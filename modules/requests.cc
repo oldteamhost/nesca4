@@ -15,7 +15,6 @@ send_http_request(const std::string& node, int port) {
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, http_request);
 		curl_easy_setopt(curl, CURLOPT_PORT, port);
 		curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Linux x86_64; rv:35.0) Gecko/20100101 Firefox/35.0");
-		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 		curl_easy_setopt(curl, CURLOPT_HEADERDATA, &headerBuffer);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2L);

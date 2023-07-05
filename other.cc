@@ -160,3 +160,14 @@ write_temp(const std::string& data){
 	return 0;
 
 }
+
+std::string
+parse_word(const std::vector<std::string>& options,
+		   const std::string& search_word){
+	for (const std::string& option : options) {
+		if (option == search_word) {
+            return option;
+        }
+    }
+    return "failed";
+}

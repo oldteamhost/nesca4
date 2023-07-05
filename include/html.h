@@ -66,9 +66,9 @@ public:
 	html_pre_init(const std::string& filepath);
 
 	int 
-	html_add_result(const std::string& filepath, std::string time, std::string href, std::string text,
-			std::string opt, std::string res, std::string opt1, std::string res1,
-			std::string opt2, std::string res2);
+	html_add_result(const std::string& filepath, const std::string& time, const std::string& href, const std::string& text,
+		const std::string& opt, const std::string& res, const std::string& opt1, const std::string& res1,
+		const std::string& opt2, const std::string& res2, const std::string& opt3, const std::string& res3);
 };
 
 #endif

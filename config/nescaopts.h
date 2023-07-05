@@ -15,7 +15,7 @@ public:
 	   bool custom_source_ip;
 	   bool custom_threads_scan;
 	   bool custom_group_max;
-	   int group_size = 10;
+	   int group_size = 20;
 
 	   bool custom_source_port;
 	   bool custom_ttl;

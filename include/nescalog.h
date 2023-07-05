@@ -61,7 +61,7 @@ private:
 
 		std::string /*Главный лог.*/
 		main_nesca_out(std::string opt, std::string result, int mode, std::string opt1, std::string opt2,
-                        std::string result1, std::string result2, std::string rtt, std::string type = "n/a");
+                        std::string result1, std::string result2, std::string rtt, std::string type = "n/a", std::string protocol = "n/a");
 
 		/*Другие логи.*/
         void

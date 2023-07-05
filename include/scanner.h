@@ -92,7 +92,7 @@ class checking_finds{
 	/*Заголовок HTTP*/
 	std::vector<std::string> basic_auth_header = {"401 authorization", "401 unauthorized", "www-authenticate",
 											"401 unauthorized access denied", "401 unauthorised", "www-authenticate",
-											"digest realm", "basic realm"};
+											"digest realm", "basic realm", "401 Unauthorized"};
 
 	/*Перенаплавления.*/
     std::vector<std::string> axis_2400_path = {"/view/viewer_index.shtml", "/view/viewer_index.shtml?", "/check_user.cgi",

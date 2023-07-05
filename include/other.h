@@ -45,6 +45,10 @@ parse_range(const std::string& range_string);
 bool 
 check_root_perms();
 
+std::string
+parse_word(const std::vector<std::string>& options,
+		   const std::string& search_word);
+
 int
 generate_port();
 

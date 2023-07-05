@@ -434,7 +434,7 @@ int main(int argc, char** argv){
 			if (ip_count_ping % argp.ping_log == 0) {
             	double procents = (static_cast<double>(ip_count_ping) / result.size()) * 100;
             	std::string _result = format_percentage(procents);
-            	std::cout << np.main_nesca_out("^NESCAPINGLOG", std::to_string(ip_count_ping) + " out of " + std::to_string(result.size()) 
+            	std::cout << np.main_nesca_out("^NESCALOG", std::to_string(ip_count_ping) + " out of " + std::to_string(result.size()) 
 						+ " IPs", 4, "P", "", _result + "%", "","") << std::endl;
 			}
     	}
@@ -566,7 +566,7 @@ int main(int argc, char** argv){
 	   		if (ip_count % argp.log_set == 0){
 		  		double procents = (static_cast<double>(ip_count) / size) * 100;
 		  		std::string result = format_percentage(procents);
-		  		std::cout << std::endl << np.main_nesca_out("^NESCASYNLOG", std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs", 4, "P", "", result + "%", "","") << std::endl;
+		  		std::cout << std::endl << np.main_nesca_out("^NESCALOG", std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs", 4, "P", "", result + "%", "","") << std::endl;
 	   		}
 
 	   		std::future<int> fut = std::async(std::launch::async, scan_port, ip.c_str(), argp.ports, argp.timeout_ms);
@@ -596,6 +596,7 @@ int main(int argc, char** argv){
         }
     }
 
+	if (np.save_file){write_line(np.file_path_save, "\n");}
     std::cout << std::endl << np.main_nesca_out("NESCA4", "FINISH_SCAN", 5, "success", "errors", std::to_string(argp.fuck_yeah), std::to_string(argp.error_fuck),"") << std::endl;
     if (skipped_ip > 0){std::cout << std::endl << np.main_nesca_out("NESCA4", "Missed "+std::to_string(skipped_ip)+" identical IPs", 5, "status", "", "OK", "","") << std::endl;}
 
@@ -804,6 +805,7 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
 
 
         if (result == PORT_OPEN) {
+			std::string protocol = sn.probe_service(port);
 		  	if (argp.no_proc){
 			 	print_port_state(PORT_OPEN, port, sn.probe_service(port));return;}
 
@@ -854,11 +856,12 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
                         argp.http_brute_log, argp.http_brute_verbose, argp.brute_timeout_ms);
              }
 
-             result_print = np.main_nesca_out("BA", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "F", http_title_result, type_target,rtt_log);
+             result_print = np.main_nesca_out("BA", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "F", http_title_result, 
+					 type_target, rtt_log, "", protocol );
 
              if (argp.http_only){if (brute_temp.length() > 1)
        		 {result_print = np.main_nesca_out("BA", "http://" + brute_temp + ip + ":" + std::to_string(port),
-			  		3, "T", "F", http_title_result, type_target, rtt_log);}}
+			  		3, "T", "F", http_title_result, type_target, rtt_log, "", protocol);}}
 
 
              std::cout << result_print << std::endl;
@@ -899,17 +902,17 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
                     if (argp.ftp_only){
                         if (brute_temp.length() > 1){
                             result_print = np.main_nesca_out("BA", "ftp://" + brute_temp + result, 3, "D", "",
-                                    ftp_version ,"",rtt_log);
+                                    ftp_version ,rtt_log, "", protocol);
                         }
                     }
                     else {
                         result_print = np.main_nesca_out("BA", "ftp://" + brute_temp + result, 3, "D", "",
-                                ftp_version, "",rtt_log);
+                                ftp_version ,rtt_log, "", protocol);
                     }
                 }
                 else {
                     result_print = np.main_nesca_out("BA", "ftp://" + brute_temp + result, 3, "D", "",
-                            ftp_version, "",rtt_log);
+                            ftp_version ,rtt_log, "", protocol);
                 }
                 
                 std::cout << result_print << std::endl;
@@ -928,15 +931,15 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
 
                     if (argp.sftp_only){
                         if (brute_temp.length() > 1){
-                            result_print = np.main_nesca_out("BA", "sftp://" + brute_temp + result, 3, "", "", "", "",rtt_log);
+                            result_print = np.main_nesca_out("BA", "sftp://" + brute_temp + result, 3, "", "", "", "",rtt_log, "", protocol);
                         }
                     }
                     else {
-                        result_print = np.main_nesca_out("BA", "sftp://" + brute_temp + result, 3, "", "", "", "",rtt_log);
+                        result_print = np.main_nesca_out("BA", "sftp://" + brute_temp + result, 3, "", "", "", "",rtt_log, "", protocol);
                     }
                 }
                 else {
-                    result_print = np.main_nesca_out("BA", "sftp://" + result, 3, "", "", "", "",rtt_log);
+                    result_print = np.main_nesca_out("BA", "sftp://" + result, 3, "", "", "", "",rtt_log,"", protocol);
                 }
 
                 std::cout << result_print << std::endl;
@@ -966,15 +969,15 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
 
                     if (argp.rtsp_only){
                         if (brute_temp.length() > 1){
-                            result_print = np.main_nesca_out("BA", "rtsp://" + brute_temp + result + path_yes, 3, "", "", "", "",rtt_log);
+                            result_print = np.main_nesca_out("BA", "rtsp://" + brute_temp + result + path_yes, 3, "", "", "", "",rtt_log, "", protocol);
                         }
                     }
                     else {
-                        result_print = np.main_nesca_out("BA", "rtsp://" + brute_temp + result + path_yes, 3, "", "", "", "",rtt_log);
+                        result_print = np.main_nesca_out("BA", "rtsp://" + brute_temp + result + path_yes, 3, "", "", "", "",rtt_log, "", protocol);
                     }
                 }
                 else {
-                    result_print = np.main_nesca_out("BA", "rtsp://" + result, 3, "", "", "", "",rtt_log);
+                    result_print = np.main_nesca_out("BA", "rtsp://" + result, 3, "", "", "", "",rtt_log,"", protocol);
                 }
 
                 std::cout << result_print << std::endl;
@@ -991,15 +994,15 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
 
                     if (argp.rvi_only){
                         if (brute_temp.length() > 1){
-                            result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "",rtt_log);
+                            result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "",rtt_log, "", protocol);
                         }
                     }
                     else {
-                        result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "",rtt_log);
+                        result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "",rtt_log,"", protocol);
                     }
                 }
                 else {
-                    result_print = np.main_nesca_out("BA", "" + result, 3, "", "", "", "",rtt_log);
+                    result_print = np.main_nesca_out("BA", "" + result, 3, "", "", "", "",rtt_log,"", protocol);
                 }
 
                 std::cout << result_print << std::endl;
@@ -1017,22 +1020,22 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
 
                     if (argp.hikvision_only){
                         if (brute_temp.length() > 1){
-                            result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "",rtt_log);
+                            result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "",rtt_log, "", protocol);
                         }
                     }
                     else {
-                        result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "",rtt_log);
+                        result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "",rtt_log, "", protocol);
                     }
                 }
                 else {
-                    result_print = np.main_nesca_out("BA", "" + result, 3, "", "", "", "",rtt_log);
+                    result_print = np.main_nesca_out("BA", "" + result, 3, "", "", "", "",rtt_log, "", protocol);
                 }
 
                 std::cout << result_print << std::endl;
             }
             else if (port == 443){
 			 print_port_state(PORT_OPEN, port, "HTTPS");
-                std::string result_print = np.main_nesca_out("BA", "https://" + result, 3, "", "", "", "",rtt_log);
+                std::string result_print = np.main_nesca_out("BA", "https://" + result, 3, "", "", "", "",rtt_log, "" ,protocol);
                 std::lock_guard<std::mutex> guard(mtx);
                 std::cout << result_print << std::endl;
 
@@ -1052,22 +1055,23 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
 
                     if (argp.sftp_only){
                         if (brute_temp.length() > 1){
-                            result_print = np.main_nesca_out("BA", "smtp://" + brute_temp + result, 3, "D", "", responce_220, "",rtt_log);
+                            result_print = np.main_nesca_out("BA", "smtp://" + brute_temp + result, 3, "D", "", responce_220, "",rtt_log, "", protocol);
                         }
                     }
                     else {
-                        result_print = np.main_nesca_out("BA", "smtp://" + brute_temp + result, 3, "D", "", responce_220, "",rtt_log);
+                        result_print = np.main_nesca_out("BA", "smtp://" + brute_temp + result, 3, "D", "", responce_220, "",rtt_log, "", protocol);
                     }
                 }
                 else {
-                    result_print = np.main_nesca_out("BA", "smtp://" + result, 3, "", "", responce_220, "",rtt_log);
+                    result_print = np.main_nesca_out("BA", "smtp://" + result, 3, "", "", responce_220, "",rtt_log, "", protocol);
                 }
 
                 std::cout << result_print << std::endl;
 		  }
             else{
                 std::lock_guard<std::mutex> guard(mtx);
-			 print_port_state(PORT_OPEN, port, sn.probe_service(port));
+				std::string result_print = np.main_nesca_out("BA", result, 3, "", "", "", "",rtt_log, "", protocol);
+			 	print_port_state(PORT_OPEN, port, sn.probe_service(port));
             }
         }
         else if (result == -1){

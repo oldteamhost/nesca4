@@ -16,7 +16,7 @@ html_output hou;
 
 std::string 
 nesca_prints::main_nesca_out(std::string opt, std::string result, int mode, std::string opt1, std::string opt2,
-                                        std::string result1, std::string result2, std::string rtt, std::string type){
+                                        std::string result1, std::string result2, std::string rtt, std::string type, std::string protocol){
 	std::string temp, temp_file;
 	char dots[3] = {':', ':', ':'};
     if (opt.empty()){dots[0] = ' '; }
@@ -44,7 +44,7 @@ nesca_prints::main_nesca_out(std::string opt, std::string result, int mode, std:
         temp_file = "[>][" + opt + "]" + dots[0] +
             result + " " + opt1 + dots[1] + " " + result1 + " " + opt2 + dots[2] + " " + result2;
 
-		if (html_save){hou.html_add_result(html_file_path,get_time(), result, result, "RTT", rtt+"ms", opt2, result2, opt1,result1 );}
+		if (html_save){hou.html_add_result(html_file_path,get_time(), result, result, "RTT", rtt+"ms", opt2, result2, opt1, result1, "SERVICE", protocol);}
     }
     else if (mode == 4) {
         temp = gray_nesca + print_get_time(get_time()) + "[" + opt + "]" + dots[0] + reset_color +
