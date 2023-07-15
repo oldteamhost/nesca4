@@ -1,3 +1,10 @@
+/*
+ * NESCA4
+ * by oldteam & lomaster
+ * license GPL-3.0
+ * - Сделано от души 2023.
+*/
+
 #include <arpa/inet.h>
 #include <errno.h>
 #include <iostream>
@@ -91,7 +98,6 @@ recv_icmp_packet(const char* dest_ip, int timeout_ms, int type,
         return -1;
 	}
     auto start_time = std::chrono::steady_clock::now();
-
 	for (;;){
     	int bytes = recvfrom(fd, buffer, sizeof(buffer), 0,(struct sockaddr*)&peer_addr, (socklen_t *)&addr_len);
     	if (bytes < 0) {
@@ -119,7 +125,6 @@ recv_icmp_packet(const char* dest_ip, int timeout_ms, int type,
 			 	close(fd);
 			 	return -1;
 		  	}
-
 			continue;
 		}
 		else {

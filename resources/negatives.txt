@@ -1,0 +1,8 @@
+// Allows you to avoid saving and outputting processing results for specific purposes.
+// NEGATIVE | TYPE
+// TYPE: 1 (HTTP_TITLE)
+// TYPE: 2 (CODE & HTTP_HEADER)
+// TYPE: 3 (REDIRECT)
+
+// NEGATIVES:
+404 not found | 1

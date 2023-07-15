@@ -1,3 +1,10 @@
+/*
+ * NESCA4
+ * by oldteam & lomaster
+ * license GPL-3.0
+ * - Сделано от души 2023.
+*/
+
 #ifndef SYN_PING_H
 #define SYN_PING_H
 #include "../../include/portscan.h"

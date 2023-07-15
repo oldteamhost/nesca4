@@ -15,6 +15,13 @@
 #include <string>
 #include <algorithm>
 #include <vector>
+#include <poll.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include "../ncsock/include/ncread.h"
 
 #define CAMERA_AXIS                    "Cam AXIS"
 #define WEB_CAMERA_HIKVISION           "Cam HIKVISION"
@@ -69,7 +76,9 @@
 #define LIFE_IS_GOOD                   "Auth LIFE-IS-GOOD"
 #define TP_LINK                        "Auth tp-link"
 #define KINGDEE                        "Auth Kingdee"
-
+#define HTTP_DIGEST_AUTH               "DIGEST-HTTP-AUTH"
+#define NGNIX                          "ngnix"
+#define INVALID_URL                    "Invalid URL"
 
 #define HTTP_BASIC_AUTH_BRUTE  999
 
@@ -79,10 +88,12 @@
  *
  * Именно для этого и нужен этот, класс, что-бы точно убеждатся что там стоит именно тот свервис.*/
 class service_probes{
-	int http_probe();
-	int ftp_probe();
-	int smtp_probe();
-	int ssh_probe();
+	int
+	http_probe(const std::string& ip, const int port);
+	int
+	ftp_probe(const std::string& ip, const int port);
+	int
+	smtp_probe(const std::string& ip, const int port);
 };
 
 /*Получение характеристики.*/

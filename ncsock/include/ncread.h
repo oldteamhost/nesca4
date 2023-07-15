@@ -22,7 +22,7 @@
 #include <unistd.h>
 
 #define SUCCESS_READ			 0
-#define READ_BUFFER_SIZE			 4096
+#define READ_BUFFER_SIZE		 2048
 
 #define SOCKET_ERROR			 -1
 #define BUFFER_CALLOC_ERROR		 -2
@@ -34,5 +34,8 @@
 
 int
 ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool debug);
+
+ssize_t 
+ncread_recv(int sockfd, void* buf, size_t len, int timeout_ms);
 
 #endif

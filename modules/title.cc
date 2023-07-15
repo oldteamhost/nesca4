@@ -1,3 +1,10 @@
+/*
+ * NESCA4
+ * by oldteam & lomaster
+ * license GPL-3.0
+ * - Сделано от души 2023.
+*/
+
 #include "include/title.h"
 
 size_t write_callback(char* ptr, size_t size, size_t nmemb, std::string* data) {

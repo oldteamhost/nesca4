@@ -91,3 +91,23 @@ ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool de
     return READ_ERROR;
 }
 
+ssize_t 
+ncread_recv(int sockfd, void* buf, size_t len, int timeout_ms){
+	struct pollfd fds[1];
+    fds[0].fd = sockfd;
+    fds[0].events = POLLIN;
+
+    int ready = poll(fds, 1, timeout_ms);
+    if (ready == -1) {
+        return POLL_ERROR;
+    } else if (ready == 0) {
+        return POLL_TIMEOUT_EXITED;
+    } else {
+        ssize_t bytes_received = recv(sockfd, buf, len, 0);
+        if (bytes_received == -1) {
+            return READ_ERROR;
+        } else {
+            return bytes_received;
+        }
+    }
+}

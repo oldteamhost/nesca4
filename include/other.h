@@ -55,4 +55,7 @@ generate_port();
 bool 
 dns_or_ip(std::string &node);
 
+std::string
+to_lower_case(const std::string& str);
+
 #endif

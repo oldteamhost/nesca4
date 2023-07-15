@@ -79,7 +79,20 @@ PS: Подробнее о разработке, принципах работы 
 ```
 On start using:
     export LD_LIBRARY_PATH=lib/platform/linux
+
+ICMP ping:
+    Infinity recvfrom.
+
+Random scan:
+    free() errror.
 ```
+
+## 20230715
+- Добавлен лист negatives с конфигом для них.
+- Обновлён do_not_read.txt
+- Увеличена скорость обработки.
+- Исправлен http request.
+- Да и вцелом баги.
 
 ## 20230705
 - Добавлен брутфорс RVI камер.

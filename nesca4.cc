@@ -25,7 +25,6 @@
 
 #include "include/bruteforce.h"
 #include "include/getopt.h"
-#include "include/callbacks.h"
 #include "include/files.h"
 #include "include/generation.h"
 #include "include/other.h"
@@ -40,6 +39,7 @@
 #include "modules/include/requests.h"
 #include "modules/include/title.h"
 #include "modules/include/redirect.h"
+#include "modules/include/negatives.h"
 #include "modules/include/ftpinfo.h"
 #include "modules/include/smtpinfo.h"
 
@@ -62,6 +62,7 @@ html_output ho;
 ip_utils _iu;
 dns_utils dus;
 services_nesca sn;
+nesca_negatives nn;
 arguments_program argp;
 struct nesca_scan_opts ncopts;
 
@@ -149,6 +150,7 @@ option long_options[] = {
     {"max-ping", no_argument, 0, 88},
     {"source-ip", required_argument, 0, 34},
     {"ack", no_argument, 0, 89},
+    {"mg", required_argument, 0, 78},
     {"window", no_argument, 0, 94},
     {"maimon", no_argument, 0, 97},
     {"resol-delay", required_argument, 0, 40},
@@ -162,6 +164,12 @@ const char* run; /*Для help_menu()*/
 void
 pre_check(void){
     logo();
+
+    if (check_ansi_support() != true){
+        std::cout << "You terminal don`t support ansi colors!\n";
+        std::cout << "Colors disable!\n";
+        np.disable_colors();
+    }
 
 	if (np.html_save){
 		std::vector<std::string> temp = write_file("resources/data");
@@ -221,11 +229,12 @@ pre_check(void){
 	   std::cout << np.main_nesca_out("NESCA4", "SERVICES_DATA", 5, "status", "", "OK","","") << std::endl;
     }
 
-    if (check_ansi_support() != true){
-        std::cout << "You terminal don`t support ansi colors!\n";
-        std::cout << "Colors disable!\n";
-        np.disable_colors();
-    }
+	if (!check_file(argp.negatives_path.c_str())){std::cout << np.main_nesca_out("NESCA4", "NEGATIVES_LOAD", 5, "status", "", "FAILED","","") << std::endl;}
+	else {
+	   nn.nesca_negatives = nn.parse_config_file(argp.negatives_path);
+	   std::size_t num_first_values = nn.nesca_negatives.size();
+	   std::cout << np.main_nesca_out("NESCA4", "NEGATIVES_LOAD", 5, "status", "count", "OK", std::to_string(num_first_values),"") << std::endl;
+	}
 
     if (argp.print_help_menu){help_menu();exit(0);}
     if (!check_root_perms()){np.nlog_error("RAW socket only sudo run!\n");exit(1);}
@@ -802,10 +811,9 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
 		std::stringstream stream;
     	stream << std::fixed << std::setprecision(2) << argp.rtts[ip];
     	std::string rtt_log = stream.str();
-
+		std::string protocol = sn.probe_service(port);
 
         if (result == PORT_OPEN) {
-			std::string protocol = sn.probe_service(port);
 		  	if (argp.no_proc){
 			 	print_port_state(PORT_OPEN, port, sn.probe_service(port));return;}
 
@@ -816,20 +824,49 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
 			/*HTTP порты.*/
             if (port == 80 || port == 81 || port == 8080 ||
 			port == 8081 || port == 8888 || port == 8008){
-			    print_port_state(PORT_OPEN, port, "HTTP");
-                result.insert(0, "http://");
-                bool status_path = false;
 
-                std::string redirect;
-                std::string default_result = "http://" + ip + ":" + std::to_string(port) + "/";
-                std::string html = send_http_request(ip, port);
+			print_port_state(PORT_OPEN, port, "HTTP");
 
-				/*Получение перенаправления.*/
-                if (argp.no_get_path != true){redirect = parse_redirect(html, html, ip, true, port);}
+			/*Получение заголовков и кода страницы.*/
+            std::string html = to_lower_case(send_http_request(ip, port));
 
-			 /*Получение заголовка.*/
-             std::string http_title_result = get_http_title(html);
-			 if (http_title_result == HTTPTITLE_ERROR){http_title_result = get_http_title_pro(ip);}
+            result.insert(0, "http://");
+            bool status_path = false;
+
+            std::string redirect;
+            std::string default_result = "http://" + ip + ":" + std::to_string(port) + "/";
+
+			/*Получение перенаправления.*/
+            if (argp.no_get_path != true){redirect = parse_redirect(html, html, ip, true, port);}
+
+			/*Получение заголовка.*/
+            std::string http_title_result = get_http_title(html);
+   		    if (http_title_result == HTTPTITLE_ERROR){http_title_result = get_http_title_pro(ip);}
+
+			/*Сравнение списка negatives*/
+			for (const auto& n : nn.nesca_negatives){
+				const std::string& first = n.first;
+        		const std::string& second = n.second;
+
+				if (second == "1" || second == "title"){
+					if(cfs.contains_word(first, http_title_result)){
+						if (argp.debug){np.nlog_custom("WARNING", "Skip negative: "+first+"\n", 2);}
+						return;
+					}
+				}
+				else if (second == "2" || second == "code" || second == "header"){
+					if(cfs.contains_word(first, html)){
+						if (argp.debug){np.nlog_custom("WARNING", "Skip negative: "+first+"\n", 2);}
+						return;
+					}
+				}
+				else if (second == "3" || second == "path" || second == "redirect"){
+					if(cfs.contains_word(first, redirect)){
+						if (argp.debug){np.nlog_custom("WARNING", "Skip negative: "+first+"\n", 2);}
+						return;
+					}
+				}
+			}
 
 			 /*Удаление переносов из заголовка.*/
              http_title_result.erase(std::remove(http_title_result.begin(), http_title_result.end(), '\r'), http_title_result.end());
@@ -1122,7 +1159,7 @@ help_menu(void){
     std::cout << "\narguments speed:" << std::endl;
     np.reset_colors();
     std::cout << "  -speed, -S <1-5>         Edit max speed.\n";
-    std::cout << "  -max-group <count>       Edit max group for scan ip.\n";
+    std::cout << "  -max-group, -ma <count>  Edit max group for scan ip.\n";
     std::cout << "  -my-life-my-rulez        Using very MAX speed settings.\n";
 
     np.sea_green_on();
@@ -1622,6 +1659,10 @@ parse_args(int argc, char** argv){
                break;
            case 59:
                argp.syn_debug = true;
+               break;
+           case 78:
+			   argp.custom_group_max = true;
+			   argp.group_size = atoi(optarg);
                break;
            case 60:
                argp.syn_debug = true;

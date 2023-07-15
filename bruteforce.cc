@@ -6,7 +6,6 @@
 */
 
 #include "include/bruteforce.h"
-#include <sys/socket.h>
 
 brute_ftp_data bfd;
 nesca_prints np1;
@@ -462,6 +461,7 @@ brute_http(const std::string ip, const std::string login, const std::string pass
         curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
         curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
         curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 3L);
         curl_easy_setopt(curl, CURLOPT_PASSWORD, pass.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
 
@@ -654,8 +654,8 @@ brute_rvi(const std::string ip, int port, const std::string login, const std::st
     if (s < 0){close(sock);return "-1";}
 
     char buff[100] = {0};
-    int r = recv(sock, buff, sizeof(buff), 0);
-    if (r < 0){close(sock);return "-1";}
+	int r = ncread_recv(sock, buff, sizeof(buff), 2000);
+	if (r < 0){close(sock);return "-1";}
 
     close(sock);
 

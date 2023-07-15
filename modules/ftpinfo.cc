@@ -1,3 +1,10 @@
+/*
+ * NESCA4
+ * by oldteam & lomaster
+ * license GPL-3.0
+ * - Сделано от души 2023.
+*/
+
 #include "include/ftpinfo.h"
 
 std::string get_ftp_description(std::string server, std::string port, std::string username, std::string password) {

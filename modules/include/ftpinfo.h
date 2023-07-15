@@ -1,3 +1,10 @@
+/*
+ * NESCA4
+ * by oldteam & lomaster
+ * license GPL-3.0
+ * - Сделано от души 2023.
+*/
+
 // Баг иногда выводиться то что не должно.
 #ifndef FTPINFO_H 
 #define FTPINFO_H 

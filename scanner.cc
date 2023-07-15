@@ -1,3 +1,10 @@
+/*
+ * NESCA4
+ * by oldteam & lomaster
+ * license GPL-3.0
+ * - Сделано от души 2023.
+*/
+
 #include "include/scanner.h"
 
 bool 
@@ -41,7 +48,8 @@ checking_finds::set_target_at_path(const std::string& path){
 	if (contains_word("/cgi-bin/data/viostor-220/viostor/viostor.cgi", path)){return NAX;}
 	if (contains_word("gui.css", path)){return DIGITAL_VIDEO_SERVER;}
 	if (contains_word("/config/index.cgi", path)){return CAMERA_PANASONIC_BB_HG;} /*???*/
-	if (contains_word("/videostream.cgi", path)){return CAMERA_QCAM;} /*???*/
+	if (contains_word("/login.asp", path)){return HTTP_DIGEST_AUTH;}
+	if (contains_word("/videostream.cgi", path)){return CAMERA_QCAM;}
 	if (contains_word("/gui/gui_outer_frame.shtml", path)){return CAMERA_NW;}
 	if (contains_word("liveview.html", path)){return CAMERA_AVISYS;}
 	if (contains_word("js/upfile.js", path)){return CAMERA_FOSCAM;}
@@ -59,7 +67,7 @@ checking_finds::set_target_at_path(const std::string& path){
 	if (contains_word("/ecoremote/index.html", path)){return METEDAS;}
 	if (contains_word("?password-protected=login", path)){return LIFE_IS_GOOD;}
 	if (contains_word("/webpages/index.html", path)){return TP_LINK;}
-	if (contains_word("/K3Cloud/HTML5", path)){return KINGDEE;}
+	if (contains_word("/k3cloud/html5", path)){return KINGDEE;}
 
 	return "fuck";
 }
@@ -71,9 +79,9 @@ checking_finds::set_target_at_http_header(const std::string& buffer){
 
 	/*Другие камеры.*/
 	if (contains_word("airos_logo", buffer)){return CAMERA_AIROS;}
-	if (contains_word("ACTi Corporation", buffer)){return CAMERA_ACKTI;}
-	if (contains_word("QlikView", buffer)){return CAMERA_QLIK;}
-	if (contains_word("webcamXP", buffer)){return CAMERA_WEBCAMXP5;}
+	if (contains_word("acti Corporation", buffer)){return CAMERA_ACKTI;}
+	if (contains_word("qlikview", buffer)){return CAMERA_QLIK;}
+	if (contains_word("webcamxp", buffer)){return CAMERA_WEBCAMXP5;}
 	if (contains_word("a valid username/password", buffer)){return CAMERA_WEBCAMXP5;}
 	if (contains_word("ieorforefox", buffer)){return CAMERA_IEORFOREFOX;}
 	if (contains_word("dvr_remember", buffer)){return NETWORK_VIDEO_CLIENT;}
@@ -81,9 +89,10 @@ checking_finds::set_target_at_http_header(const std::string& buffer){
 	if (contains_word("reecam ip camera", buffer)){return CAMERA_REE;}
 	if (contains_word("real-time ip camera monitoring system", buffer)){return IP_CAMERA_MONITORING;}
 	if (contains_word("server push mode", buffer)){return IP_CAMERA_MONITORING;}
+	if (contains_word("invalid url", buffer)){return INVALID_URL;}
 	if (contains_word("vilar ipcamera", buffer)){return CAMERA_VILIAR;}
-	if (contains_word("RouterOS", buffer)){return ROUTER_OS;}
-	if (contains_word("Apache2", buffer)){return APACHE2;}
+	if (contains_word("routeros", buffer)){return ROUTER_OS;}
+	if (contains_word("apache2", buffer)){return APACHE2;}
 	if (contains_word("cloudflare", buffer)){return CLOUD_FLARE;}
 	if (contains_word("www.rvi-cctv.ru", buffer)){return WEB_CAMERA_RVI;}
 
@@ -91,7 +100,8 @@ checking_finds::set_target_at_http_header(const std::string& buffer){
 }
 std::string
 checking_finds::set_target_at_title(const std::string& title){
-	if (contains_word("Error 404 (Not Found)!!1", title)){return GOOGLE_404;}
+	if (contains_word("error 404 (not found)!!1", title)){return GOOGLE_404;}
+	if (contains_word("ngnix", title)){return NGNIX;}
 
 	return "fuck";
 }
@@ -109,3 +119,110 @@ checking_finds::than_bruteforce(const std::string type){
 	return -1;
  }
 
+int
+service_probes::http_probe(const std::string& ip, const int port){
+	int socket_id = socket(AF_INET, SOCK_STREAM, 0);
+    if (socket_id == -1){return false;}
+
+    sockaddr_in server_address{};
+    server_address.sin_family = AF_INET;
+    server_address.sin_port = htons(port);
+    if (inet_pton(AF_INET, ip.c_str(), &(server_address.sin_addr)) <= 0){close(socket_id);return false;}
+    if (connect(socket_id, reinterpret_cast<sockaddr*>(&server_address), sizeof(server_address)) < 0) {close(socket_id);return false;}
+
+    const std::string http_request = "GET / HTTP/1.1\r\nHost: " + ip + "\r\nConnection: close\r\n\r\n";
+    if (send(socket_id, http_request.c_str(), http_request.size(), 0) < 0) {
+        close(socket_id);
+        return false;
+    }
+
+    char response_buffer[1024];
+	ssize_t recv_result = ncread_recv(socket_id, response_buffer, sizeof(response_buffer), 1500);
+	if (recv_result <= 0){
+        close(socket_id);
+        return false;
+    }
+    
+    std::string response(response_buffer);
+    bool is_http_protocol = response.find("HTTP") != std::string::npos;
+
+    close(socket_id);
+    return is_http_protocol;
+}
+
+
+int
+service_probes::ftp_probe(const std::string& ip, const int port){
+	int socket_id = socket(AF_INET, SOCK_STREAM, 0);
+    if (socket_id == -1) {return false;}
+
+    sockaddr_in server_address{};
+    server_address.sin_family = AF_INET;
+    server_address.sin_port = htons(port);
+    if (inet_pton(AF_INET, ip.c_str(), &(server_address.sin_addr)) <= 0) {
+        close(socket_id);
+        return false;
+    }
+
+    if (connect(socket_id, reinterpret_cast<sockaddr*>(&server_address), sizeof(server_address)) < 0){close(socket_id);return false;}
+
+    const std::string ftp_request = "USER anonymous\r\n";
+    if (send(socket_id, ftp_request.c_str(), ftp_request.size(), 0) < 0) {
+        close(socket_id);
+        return false;
+    }
+
+    char response_buffer[1024];
+	ssize_t recv_result = ncread_recv(socket_id, response_buffer, sizeof(response_buffer), 1500);
+    if (recv_result <= 0) {
+        close(socket_id);
+        return false;
+    }
+
+    std::string response(response_buffer);
+    bool is_ftp_protocol = response.find("230") != std::string::npos;
+
+    close(socket_id);
+    return is_ftp_protocol;
+}
+
+
+int
+service_probes::smtp_probe(const std::string& ip, const int port){
+	int socket_id = socket(AF_INET, SOCK_STREAM, 0);
+    if (socket_id == -1){return false;}
+
+    sockaddr_in server_address{};
+    server_address.sin_family = AF_INET;
+    server_address.sin_port = htons(port);
+    if (inet_pton(AF_INET, ip.c_str(), &(server_address.sin_addr)) <= 0) {
+        close(socket_id);
+        return false;
+    }
+
+    if (connect(socket_id, reinterpret_cast<sockaddr*>(&server_address), sizeof(server_address)) < 0){close(socket_id);return false;}
+
+    char response_buffer[1024];
+	ssize_t recv_result = ncread_recv(socket_id, response_buffer, sizeof(response_buffer), 1500);
+    if (recv_result <= 0) {
+        close(socket_id);
+        return false;
+    }
+
+    const std::string smtp_request = "EHLO example.com\r\n";
+    if (send(socket_id, smtp_request.c_str(), smtp_request.size(), 0) < 0) {
+        close(socket_id);
+        return false;
+    }
+
+    if (recv(socket_id, response_buffer, sizeof(response_buffer), 0) <= 0) {
+        close(socket_id);
+        return false;
+    }
+
+    std::string response(response_buffer);
+    bool is_smtp_protocol = response.find("250") != std::string::npos;
+
+    close(socket_id);
+    return is_smtp_protocol;
+}

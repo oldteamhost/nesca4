@@ -1,3 +1,10 @@
+/*
+ * NESCA4
+ * by oldteam & lomaster
+ * license GPL-3.0
+ * - Сделано от души 2023.
+*/
+
 #include "include/smtpinfo.h"
 
 std::string smtp_get_220_response(const std::string& ip, int port, int verbose) {

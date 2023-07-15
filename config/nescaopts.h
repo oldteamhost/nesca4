@@ -4,6 +4,9 @@
 
 class arguments_program{
 public:
+	   /*Other*/
+	   std::string negatives_path = "resources/negatives.txt";
+
 	   /*Save*/
        bool txt;
        std::string txt_save;
