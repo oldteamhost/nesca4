@@ -23,6 +23,7 @@
 #include <sys/time.h>
 #include <netinet/ip_icmp.h>
 #include <netdb.h>
+#include <thread>
 #include <unistd.h>
 
 #include "include/icmpping.h"

@@ -18,4 +18,6 @@ file(GLOB PLUS_NCPING_SRCS ncping/*.cc)
 
 add_executable(nesca4 ${SRCS} ${C_NCSOCK_SRCS} ${PLUS_NCSOCK_SRCS} ${MODULE_SRCS} ${PLUS_NCPING_SRCS})
 target_link_libraries(nesca4 curl pthread hcnetsdk ssh)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+
 

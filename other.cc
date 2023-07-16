@@ -140,8 +140,8 @@ check_root_perms(){
 
 bool 
 dns_or_ip(std::string &node){
-    std::regex dnsRegex("^[a-zA-Z0-9]+([-.][a-zA-Z0-9]+)*\\.[a-zA-Z]{2,}(\\.[a-zA-Z]{2,})?$");
-    return std::regex_match(node, dnsRegex);
+	struct sockaddr_in sa;
+    return (inet_pton(AF_INET, node.c_str(), &(sa.sin_addr)) == 0);
 }
 
 int

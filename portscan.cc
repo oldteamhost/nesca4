@@ -63,9 +63,9 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
     с сокетом.*/
     scan_debug_log("Creation RAW sock on SEND.\n", debug);
     int sock = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
-    if (sock == -1){
+    if (sock < 0){
 	   scan_debug_log("FAILED creation RAW sock on SEND.\n", debug);
-        return PORT_ERROR;
+       return PORT_ERROR;
     }
 
     /*Сообщаем ядру, что не нужно генерировать IP заголовок

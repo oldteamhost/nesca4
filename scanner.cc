@@ -63,6 +63,7 @@ checking_finds::set_target_at_path(const std::string& path){
 	if (contains_word("/cgi-sys/defaultwebpage.cgi", path)){return CPANEL;}
 	if (contains_word("/login.html", path)){return AUTH;}
 	if (contains_word("/cgi-bin/luci", path)){return AUTH_LUCI;}
+	if (contains_word("cgi-bin/luci", path)){return AUTH_LUCI;}
 	if (contains_word("/admin_login", path)){return AUTH_SIMIAN;}
 	if (contains_word("/ecoremote/index.html", path)){return METEDAS;}
 	if (contains_word("?password-protected=login", path)){return LIFE_IS_GOOD;}
@@ -91,6 +92,7 @@ checking_finds::set_target_at_http_header(const std::string& buffer){
 	if (contains_word("server push mode", buffer)){return IP_CAMERA_MONITORING;}
 	if (contains_word("invalid url", buffer)){return INVALID_URL;}
 	if (contains_word("vilar ipcamera", buffer)){return CAMERA_VILIAR;}
+	if (contains_word("welcome to nginx!", buffer)){return NGNIX;}
 	if (contains_word("routeros", buffer)){return ROUTER_OS;}
 	if (contains_word("apache2", buffer)){return APACHE2;}
 	if (contains_word("cloudflare", buffer)){return CLOUD_FLARE;}
@@ -102,6 +104,8 @@ std::string
 checking_finds::set_target_at_title(const std::string& title){
 	if (contains_word("error 404 (not found)!!1", title)){return GOOGLE_404;}
 	if (contains_word("ngnix", title)){return NGNIX;}
+	if (contains_word("302 found", title)){return RANDOM;}
+	if (contains_word("301 moved permanently", title)){return RANDOM;}
 
 	return "fuck";
 }

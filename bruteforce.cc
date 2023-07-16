@@ -461,7 +461,7 @@ brute_http(const std::string ip, const std::string login, const std::string pass
         curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
         curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
         curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
-        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 3L);
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 2L);
         curl_easy_setopt(curl, CURLOPT_PASSWORD, pass.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
 

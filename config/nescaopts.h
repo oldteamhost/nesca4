@@ -15,7 +15,6 @@ public:
 	   const char* source_ip;
 	   int type = 1;
 	   int speed_type = 3;
-	   bool custom_source_ip;
 	   bool custom_threads_scan;
 	   bool custom_group_max;
 	   int group_size = 20;
@@ -37,9 +36,9 @@ public:
        bool timeout;
        int timeout_ms = 0;
    	   bool custom_recv_timeout_ms;
-       int recv_timeout_ms = 1000;
+       int recv_timeout_ms;
        int log_set = 20;
-       int _threads = 50;
+       int _threads;
 
        std::vector<int> ports = {80,443};
 	   bool no_proc;
@@ -65,7 +64,7 @@ public:
 	   /*Scan target*/
        bool random_ip;
        int random_ip_count;
-	   int dns_threads = 50;
+	   int dns_threads;
 	   int resol_source_port = 4555;
 	   int resol_delay = 0;
 
@@ -77,9 +76,7 @@ public:
        bool ip_cidr_scan_import;
        bool ip_range_scan_import;
 
-	   std::vector<std::string> _ip;
-       std::vector<std::string> ip_cidr;
-       std::vector<std::string> ip_range;
+       std::vector<std::string> result;
        std::vector<std::string> dns; // ip_scan on
 
        const char* path_range;
@@ -87,8 +84,8 @@ public:
        const char* path_ips;
 
 	   /*Ping options*/
-	   int ping_timeout = 1000;
-	   int threads_ping = 100;
+	   int ping_timeout;
+	   int threads_ping;
 	   int ping_log = 20;
 	   bool custom_threads;
 

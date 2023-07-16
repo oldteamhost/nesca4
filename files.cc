@@ -7,7 +7,6 @@
 
 #include "include/files.h"
 
-
 int 
 get_count_lines(const char* path){
     std::ifstream file(path);

@@ -57,6 +57,9 @@
 PS: Подробнее о разработке, принципах работы можете прочитать в resources/do_not_read.txt
 
 ## Installation
+**Я не заливаю код которые не компилируется!
+Если не выходит, значит у вас что-то не так с системой.**
+
 **Debian 11:**  
 ```
     sudo apt-get install libcurl4-openssl-dev
@@ -66,7 +69,7 @@ PS: Подробнее о разработке, принципах работы 
     cmake .
     make -j12
 ```
-**Arch Linux:**  
+**Arch 2023:**  
 ```
     sudo pacman -S curl cmake
     git clone https://github.com/oldteamhost/nesca4
@@ -79,13 +82,14 @@ PS: Подробнее о разработке, принципах работы 
 ```
 On start using:
     export LD_LIBRARY_PATH=lib/platform/linux
-
-ICMP ping:
-    Infinity recvfrom.
-
-Random scan:
-    free() errror.
 ```
+## 20230716
+- Исправлен бесконечный цикл ICMP пинга.
+- Почти весь код main файла улучшен.
+- Добавлен top_negatives.txt.
+- Улучшен брутфорс.
+- Улучшено DNS сканирование.
+- База определения побольше.
 
 ## 20230715
 - Добавлен лист negatives с конфигом для них.
