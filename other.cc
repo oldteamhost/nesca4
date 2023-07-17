@@ -97,6 +97,10 @@ write_ports(std::string mode){
         temp = {80,81,8080,8081,8888, 8008};
         return temp;
     }
+    else if (mode == "nesca4"){
+        temp = {80,81,8080,8081,8888,8008,21,22,8000,37777};
+        return temp;
+    }
     return {-1};
 }
 

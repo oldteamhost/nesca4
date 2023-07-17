@@ -352,8 +352,8 @@ int main(int argc, char** argv){
                 int main_scan = futures.front().get();
                 futures.erase(futures.begin());
             }
-			for (auto& fut : futures){fut.wait();}
         }
+		for (auto& fut : futures){fut.wait();}
 
         for (auto& fut : futures){int main_scan = fut.get();}
         futures.clear();
