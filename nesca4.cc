@@ -243,7 +243,6 @@ int main(int argc, char** argv){
 			else{argp.dns_threads = result_main.size();}
 		}
 	}
-
 	/*Начало получения DNS.*/
 	std::cout << np.main_nesca_out("NESCA4", "DNS_RESOLUTION", 5, "threads", "", std::to_string(argp.dns_threads), "","") << std::endl;
 	std::vector<std::future<void>> futures_dns;
@@ -282,9 +281,9 @@ int main(int argc, char** argv){
 		}
 	}
 
-	   /*Как тебе такое компилятор?!*/
-	   /*Open source конечно open source, но придёться
-		* постараться :)*/
+	/*Как тебе такое компилятор?!*/
+	/*Open source конечно open source, но придёться
+	* постараться :)*/
     if (argp.fin_scan){
 	   std::cout << np.main_nesca_out("NESCA4", "START_FIN_SCAN", 5, "targets", "threads", std::to_string(result_main.size()),
 	   std::to_string(argp._threads),"") <<
@@ -337,7 +336,6 @@ int main(int argc, char** argv){
                 skipped_ip++;
                 continue;
             }
-
             ip_count++;
             processed_ip.insert(ip);
 
@@ -354,10 +352,10 @@ int main(int argc, char** argv){
                 int main_scan = futures.front().get();
                 futures.erase(futures.begin());
             }
+			for (auto& fut : futures){fut.wait();}
         }
 
         for (auto& fut : futures){int main_scan = fut.get();}
-
         futures.clear();
 
         /*Обработка результатов для текущей группы*/
@@ -376,7 +374,7 @@ int main(int argc, char** argv){
 
 	if (np.save_file){write_line(np.file_path_save, "\n");}
     std::cout << std::endl << np.main_nesca_out("NESCA4", "FINISH_SCAN", 5, "success", "errors", std::to_string(argp.fuck_yeah), std::to_string(argp.error_fuck),"") << std::endl;
-    if (skipped_ip > 0){std::cout << np.main_nesca_out("NESCA4", "Missed "+std::to_string(skipped_ip)+" identical IPs", 5, "status", "", "OK", "","") << std::endl;}
+    if (skipped_ip > 0){std::cout << np.main_nesca_out("NESCA4", std::to_string(skipped_ip)+" identical IPs", 5, "status", "", "OK", "","") << std::endl;}
 
     return 0;
 }

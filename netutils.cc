@@ -95,7 +95,6 @@ dns_utils::get_all_ips_by_dns(const char* dns){
 
         current = current->ai_next;
     }
-
     freeaddrinfo(result);
 
     return ip_addresses;

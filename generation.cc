@@ -61,7 +61,7 @@ generate_seq(void){
 }
 
 int
-generate_port(){
+generate_port(void){
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dist(49151, 65535);

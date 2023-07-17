@@ -24,4 +24,7 @@ generate_ipv4(void);
 
 unsigned int
 generate_seq(void);
+
+int
+generate_port(void);
 #endif
