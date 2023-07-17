@@ -84,6 +84,7 @@ public:
        const char* path_ips;
 
 	   /*Ping options*/
+	   bool custom_ping;
 	   int ping_timeout;
 	   int threads_ping;
 	   int ping_log = 20;

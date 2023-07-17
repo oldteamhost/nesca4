@@ -6,6 +6,9 @@
 */
 
 #include "include/nesca4.h"
+#include "ncping/include/icmpping.h"
+#include "ncsock/include/icmpproto.h"
+#include <string>
 
 struct nesca_scan_opts ncopts;
 const char* short_options = "hl:vd:T:p:aS:";
@@ -41,21 +44,23 @@ int main(int argc, char** argv){
     checking_default_files();
     std::cout << std::endl;
 
-	/*Установка методов пинга.*/
-	if (argp.max_ping || argp.speed_type == 1){
-		argp.syn_ping = true;
-		argp.ack_ping = true;
-		argp.echo_ping = true;
-		argp.info_ping = true;
-		argp.timestamp_ping = true;
-	}
-	if (argp.speed_type == 5){argp.ack_ping = true;}
-	else if (argp.speed_type == 4){argp.echo_ping = true;argp.ack_ping = true;}
-	else if (argp.speed_type == 2 || argp.speed_type == 3){
-		argp.ack_ping = true;
-		argp.syn_ping = true;
-		argp.echo_ping = true;
-		argp.info_ping = true;
+		/*Установка методов пинга.*/
+	if (!argp.custom_ping){
+		if (argp.max_ping || argp.speed_type == 1){
+			argp.syn_ping = true;
+			argp.ack_ping = true;
+			argp.echo_ping = true;
+			argp.info_ping = true;
+			argp.timestamp_ping = true;
+		}
+		if (argp.speed_type == 5){argp.ack_ping = true;}
+		else if (argp.speed_type == 4){argp.echo_ping = true;argp.ack_ping = true;}
+		else if (argp.speed_type == 2 || argp.speed_type == 3){
+			argp.ack_ping = true;
+			argp.syn_ping = true;
+			argp.echo_ping = true;
+			argp.info_ping = true;
+		}
 	}
 
     /*Начало DNS сканирования.*/
@@ -354,7 +359,6 @@ int main(int argc, char** argv){
             }
         }
 		for (auto& fut : futures){fut.wait();}
-
         for (auto& fut : futures){int main_scan = fut.get();}
         futures.clear();
 
@@ -1427,20 +1431,25 @@ parse_args(int argc, char** argv){
 
 		  /*Пинг аргументы влкючения.*/
 	      case 80:
+			 argp.custom_ping = true;
 			 argp.syn_ping = true;
 			 argp.syn_dest_port = atoi(optarg);
 		     break;
 	      case 81:
+			 argp.custom_ping = true;
 			 argp.ack_ping = true;
 			 argp.ack_dest_port = atoi(optarg);
 		     break;
 	      case 82:
+			 argp.custom_ping = true;
 			 argp.echo_ping = true;
 		     break;
 	      case 86:
+			 argp.custom_ping = true;
 			 argp.info_ping = true;
 		     break;
 	      case 87:
+			 argp.custom_ping = true;
 			 argp.timestamp_ping= true;
 		     break;
 	      case 88:
@@ -1704,3 +1713,36 @@ pre_check(void){
     if (!check_root_perms()){np.nlog_error("RAW socket only sudo run!\n");exit(1);}
 
 }
+
+/*Пока говно.*/
+#include <netinet/ip_icmp.h>
+int
+traceroute(std::string ip, int jumps){
+	std::cout << std::endl;
+	int ttl = 1;
+	int seq = 0;
+	int timeout_ms = 500;
+
+	auto it = argp.rtts.find(ip);
+	if (it != argp.rtts.end()) {timeout_ms = argp.rtts[ip] * 5;}
+
+	while (ttl <= jumps) {
+		for (int i = 1; i <= 3; i++){
+	    	auto it = argp.rtts.find(ip);
+	    	if (it != argp.rtts.end()) {timeout_ms = argp.rtts[ip] * 2;}
+	
+        	double icmp_casual = icmp_ping(ip.c_str(), timeout_ms, 8, 0, seq, ttl);
+    		if (icmp_casual != -1){
+				std::cout << np.main_nesca_out("TRACEROUTE", ip, 3, "TTL", "", std::to_string(ttl), "", "") << std::endl;
+				break;
+    		}
+			std::cout << np.main_nesca_out("TRACEROUTE", "not info", 4, "TTL", "", std::to_string(ttl), "", "") << std::endl;
+		}
+		ttl++;
+		seq++;
+	}
+	std::cout << std::endl;
+	return 0;
+}
+
+

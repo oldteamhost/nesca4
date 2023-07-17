@@ -41,9 +41,10 @@
 #include "../ncping/include/ackping.h"
 #include "../ncping/include/synping.h"
 #include "../ncsock/include/ncread.h"
+#include "../ncsock/include/icmpproto.h"
 
 /*Угадайте?*/
-#define VERSION "20230705"
+#define VERSION "20230717"
 
 void 
 help_menu(void);
@@ -69,6 +70,8 @@ void
 print_results(std::string ip);
 void
 get_dns_thread(std::string ip);
+int
+traceroute(std::string ip, int jumps);
 
 /*Аргументы.*/
 const struct 

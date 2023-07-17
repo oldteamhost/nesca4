@@ -34,6 +34,17 @@ ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool de
 	   return POLL_TIMEOUT_EXITED;
     }
 
+	/*Ещё один таймаут, иногда poll не работает просто.*/
+	struct timeval timeout;
+	timeout.tv_sec = recv_timeout_ms / 1000;
+	timeout.tv_usec = (recv_timeout_ms % 1000) * 1000;
+	int result = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+	if (result < 0) {
+	   /*Вышел таймаут на recvfrom.*/
+    	close(sock);
+    	return -1;
+	}
+
     /*Для сравнения айпи.*/
     struct sockaddr saddr;
     int saddr_size = sizeof(saddr);
