@@ -13,7 +13,6 @@ tcp_ack_ping(const char* ip, const char* source_ip, int dest_port, int source_po
 	/*Отпкавка пакета с флагом ACK.*/
 	double response_time = -1;
 	nesca_scan_opts ncops;
-	ncops.debug = false;
 	ncops.source_ip = source_ip;
 	ncops.scan_type = ACK_SCAN;
 	ncops.seq = generate_seq();

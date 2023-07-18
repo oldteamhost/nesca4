@@ -113,8 +113,7 @@ option long_options[] = {
     {"no-color", no_argument, 0, 26},
     {"log-set", required_argument, 0, 24},
     {"packet-trace", no_argument, 0, 96},
-    {"scan-db", no_argument, 0, 59},
-    {"scan-debug", no_argument, 0, 60},
+	/*59, 60*/
     {"help", no_argument, 0, 'h'},
     {"version", no_argument, 0, 'v'},
     {"ports", no_argument, 0, 'p'},

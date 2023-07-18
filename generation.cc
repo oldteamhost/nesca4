@@ -60,6 +60,15 @@ generate_seq(void){
     return seq_res;
 }
 
+unsigned int
+generate_ident(void){
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned int> dis(0, 65535);
+    unsigned int seq_res = dis(gen);
+    return seq_res;
+}
+
 int
 generate_port(void){
     std::random_device rd;
@@ -67,4 +76,14 @@ generate_port(void){
     std::uniform_int_distribution<> dist(49151, 65535);
     int result = dist(gen);
     return result;
+}
+
+int
+generate_ttl(void){
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dist(31, 64);
+    int result = dist(gen);
+    return result;
+
 }

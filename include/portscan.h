@@ -54,7 +54,6 @@
 struct nesca_scan_opts{
     int scan_type;
     int source_port;
-    bool debug;
     const char* source_ip;
     unsigned int seq;
     int ttl;

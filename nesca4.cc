@@ -6,6 +6,8 @@
 */
 
 #include "include/nesca4.h"
+#include "include/generation.h"
+#include "include/other.h"
 #include "ncping/include/icmpping.h"
 #include "ncsock/include/icmpproto.h"
 #include <string>
@@ -320,10 +322,6 @@ int main(int argc, char** argv){
 
     ncopts.source_ip = argp.source_ip;
 	ncopts.packet_trace = argp.packet_trace;
-	if (!argp.custom_ttl){ncopts.ttl = 121;}
-	else{ncopts.ttl = argp._custom_ttl;}
-
-    ncopts.debug = argp.syn_debug;
     ncopts.scan_type = argp.type;
 
     long long size = result_main.size();
@@ -938,7 +936,6 @@ help_menu(void){
     std::cout << "  -threads, -T <count>     Edit max threads for scan.\n";
     std::cout << "  -ports, -p <1,2,3>       Set ports on scan.\n";
     std::cout << "  -scan-timeout <ms>       Set timeout for getting packet on port.\n";
-    std::cout << "  -scan-db, scan-debug     Display verbose info for send packets.\n";
     std::cout << "  -packet-trace            Display packet_trace on port scan.\n";
 
     np.sea_green_on();
@@ -1531,9 +1528,6 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms){
 	if (!argp.custom_source_port){source_port = generate_port();}
 	else {source_port = argp._custom_source_port;}
 
-    ncopts.source_port = source_port;
-    ncopts.seq = generate_seq();
-
     int recv_timeout_result = 600;
     if (argp.custom_recv_timeout_ms){
 	   recv_timeout_result = argp.recv_timeout_ms;
@@ -1547,12 +1541,22 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms){
 		  if (argp.speed_type == 4){recv_timeout_result = rtt_ping * 3;}
 		  if (argp.speed_type == 3){recv_timeout_result = rtt_ping * 4;}
 		  if (argp.speed_type == 2 || argp.speed_type == 1){recv_timeout_result = rtt_ping * 5;}
+		  if (argp.my_life_my_rulez){recv_timeout_result = rtt_ping;}
 	   }
     }
 
+	/*Один рандомный порт отправки на каждый IP.
+	 * Можно и на каждый порт, но лучше менять не часто.*/
+    ncopts.source_port = source_port;
+
+	/*Рандомный SEQ на каждый IP. Не порт!*/
+    ncopts.seq = generate_seq();
+
     for (const auto& port : ports){
-		std::string source_ip = ncopts.source_ip;
-		std::string dest_ip = ip;
+		/*Настройка TTL.*/
+		if (!argp.custom_ttl){ncopts.ttl = generate_ttl();}
+		else{ncopts.ttl = argp._custom_ttl;}
+
 	   /*Отправка пакета.*/
 	   const int result = nesca_scan(&ncopts, ip, port, timeout_ms);
 
