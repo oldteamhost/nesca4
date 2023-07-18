@@ -41,6 +41,7 @@ icmp_ping(const char* dest_ip, int timeout_ms, int type, int code, int seq, int 
     int ident = getpid();
 
 	int ret = send_icmp_packet(&addr, type, code, ident, seq, ttl);
+
 	if (ret == -1){return -1;}
 
 	struct timespec start_time;

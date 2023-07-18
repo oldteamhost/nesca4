@@ -51,6 +51,7 @@ checking_finds::set_target_at_path(const std::string& path){
 	if (contains_word("/login.asp", path)){return HTTP_DIGEST_AUTH;}
 	if (contains_word("/videostream.cgi", path)){return CAMERA_QCAM;}
 	if (contains_word("/gui/gui_outer_frame.shtml", path)){return CAMERA_NW;}
+	if (contains_word("/admin/index.html", path)){return AUTH;}
 	if (contains_word("liveview.html", path)){return CAMERA_AVISYS;}
 	if (contains_word("js/upfile.js", path)){return CAMERA_FOSCAM;}
 	if (contains_word("ssi.cgi/login.htm", path)){return CAMERA_GEO;}
@@ -58,6 +59,7 @@ checking_finds::set_target_at_path(const std::string& path){
 	if (contains_word("/app/multi/single.asp", path)){return NETWORK_VIDEO_SYSTEM;}
 	if (contains_word("/app/live/sim/single.asp", path)){return NETWORK_VIDEO_SYSTEM;}
 	if (contains_word("/doc/page/login.asp?_", path)){return WEB_CAMERA_HIKVISION;}
+	if (contains_word("/login", path)){return AUTH;}
 
 	/*Другое*/
 	if (contains_word("/cgi-sys/defaultwebpage.cgi", path)){return CPANEL;}

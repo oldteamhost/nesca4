@@ -20,6 +20,7 @@
 #include <time.h>
 #include <string.h>
 #include <sys/time.h>
+#include <arpa/inet.h>
 #include <mutex>
 #include <unistd.h>
 #include "include/icmpproto.h"
@@ -51,7 +52,6 @@ uint16_t calculate_checksum(unsigned char* buffer, int bytes){
 int 
 send_icmp_packet(struct sockaddr_in* addr, int type,
 				int code, int ident, int seq, int ttl){
-
 	int fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 	if (fd== -1){return -1;}
 	if (setsockopt(fd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) < 0){close(fd);return -1;}
@@ -72,7 +72,6 @@ send_icmp_packet(struct sockaddr_in* addr, int type,
 		close(fd);
         return -1;
     }
-
 	close(fd);
 	return 0;
 }
@@ -80,6 +79,7 @@ send_icmp_packet(struct sockaddr_in* addr, int type,
 int 
 recv_icmp_packet(const char* dest_ip, int timeout_ms, int type,
 				int code, int identm){
+
 	int fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 	if (fd == -1){return -1;}
 

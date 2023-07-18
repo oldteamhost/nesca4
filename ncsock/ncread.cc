@@ -6,9 +6,19 @@
 */
 
 #include "include/ncread.h"
+#include <netinet/in.h>
 
-int
-ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool debug){
+#ifdef NESCA
+	#include "../include/nescalog.h"
+	nesca_prints np3;
+	int
+	ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool debug,
+		  int dest_port, int source_port, bool packet_trace){
+#else
+	int
+	ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool debug){
+#endif
+
     /*Создания структуры и передача в неё айпи получателя.*/
     struct in_addr dest; dest.s_addr = inet_addr(dest_ip);
 
@@ -90,6 +100,22 @@ ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool de
 		  continue;
 	   }
 	   else {
+
+#ifdef NESCA
+		  if (packet_trace){
+		  	struct in_addr addr;
+		  	addr.s_addr = iph->saddr;
+		  	std::string source_ip = inet_ntoa(addr);
+		  	addr.s_addr = iph->daddr;
+		  	std::string dest_ip = inet_ntoa(addr);
+
+		  	struct tcphdr *tcph = (struct tcphdr*)(buffer+ iphdrlen);
+		  	unsigned short id = ntohs(iph->id);
+		  	unsigned int seq = ntohl(tcph->seq);
+		  	unsigned int iplen = ntohs(iph->tot_len);
+		  	np3.nlog_packet_trace("RCVD", "TCP", source_ip, dest_ip, dest_port, source_port, "", iph->ttl, id, tcph->window, seq, iplen);
+		  }
+#endif
 		  /*Если пришёл правильный пакет.
 		   * Заполняем буфер им.*/
 		  *buffer = read_buffer;

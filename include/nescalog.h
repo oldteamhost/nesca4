@@ -72,6 +72,10 @@ private:
         nlog_result(const std::string& message);
         void
         nlog_custom(const std::string& auth, std::string message, int color);
+        void
+        nlog_packet_trace(std::string action, std::string protocol, std::string& source_ip,
+				std::string& dest_ip, int source_port, int dest_port,
+				std::string message, int ttl, int id, int win, int seq, int iplen);
 
 		/*Включение выключение цветов.*/
         void 

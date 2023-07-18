@@ -71,6 +71,23 @@ nesca_prints::main_nesca_out(std::string opt, std::string result, int mode, std:
 
 	return temp;
 }
+void
+nesca_prints::nlog_packet_trace(std::string action, std::string protocol, std::string& source_ip,
+				std::string& dest_ip, int source_port, int dest_port,
+				std::string message, int ttl, int id, int win,
+				int seq, int iplen){
+
+	std::string temp = gray_nesca + print_get_time(get_time()) + reset_color +
+            green_html + "  " + action + reset_color + green_html + "  " + protocol + "  " + reset_color +
+            green_html + source_ip + ":" + std::to_string(source_port) + " > " + dest_ip + ":" +
+			std::to_string(dest_port) + reset_color + golder_rod + message + reset_color +
+			gray_nesca + "  TTL  " + golder_rod + std::to_string(ttl) + gray_nesca + "  ID  " + golder_rod +
+			std::to_string(id) + gray_nesca + "  WINDOW  " + golder_rod + std::to_string(win) + gray_nesca +
+			"  IPLEN  " + golder_rod + std::to_string(iplen) + gray_nesca + "  SEQ  " + golder_rod + std::to_string(seq) +reset_color;
+
+	std::cout << temp << std::endl;
+
+}
 
 void 
 nesca_prints::disable_colors(void){

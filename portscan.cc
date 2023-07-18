@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <ctime>
 #include <libssh/libssh.h>
+#include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <string>
@@ -123,7 +124,9 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
     /*Заполнение IP заголовка.*/
     scan_debug_log("Fill IP header.\n", debug);
 
-    fill_ip_header(iph_send, ncot->source_ip, ip, sizeof(struct iphdr) + sizeof(struct tcphdr),
+	/*Да я просто сверху к длинне IP заголовка добавил 4. Что бы было как всегда 44.
+	 * Я хз как сделать это по другому :)*/
+    fill_ip_header(iph_send, ncot->source_ip, ip, sizeof(struct iphdr) + sizeof(struct tcphdr) + 4,
 		        IPPROTO_TCP, ncot->seq, IP_DF, ncot->ttl, 5, 4, 0);
 
     scan_debug_log("Calculate sum for IP header.\n", debug);
@@ -165,6 +168,12 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
 	   close(sock);
 	   return PORT_ERROR;
     }
+
+	if (ncot->packet_trace == true){
+		std::string source_ip = ncot->source_ip;
+		std::string dest_ip = ip;
+		np2.nlog_packet_trace("SENT", "TCP", source_ip, dest_ip, ncot->source_port, port, "", iph_send->ttl, iph_send->id, WINDOWS_SIZE, ncot->seq, sizeof(struct iphdr)+ sizeof(struct tcphdr)+4);
+	}
 
     close(sock);
     return PORT_OPEN;

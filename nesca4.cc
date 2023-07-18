@@ -319,6 +319,7 @@ int main(int argc, char** argv){
 	}
 
     ncopts.source_ip = argp.source_ip;
+	ncopts.packet_trace = argp.packet_trace;
 	if (!argp.custom_ttl){ncopts.ttl = 121;}
 	else{ncopts.ttl = argp._custom_ttl;}
 
@@ -938,6 +939,7 @@ help_menu(void){
     std::cout << "  -ports, -p <1,2,3>       Set ports on scan.\n";
     std::cout << "  -scan-timeout <ms>       Set timeout for getting packet on port.\n";
     std::cout << "  -scan-db, scan-debug     Display verbose info for send packets.\n";
+    std::cout << "  -packet-trace            Display packet_trace on port scan.\n";
 
     np.sea_green_on();
     std::cout << "\narguments dns resolution:" << std::endl;
@@ -989,7 +991,6 @@ help_menu(void){
     std::cout << "  -db, -debug              On debug mode, save and display not even working hosts.\n";
     std::cout << "  -er, -error              On display errors.\n";
     std::cout << "  -no-proc                 Only scan.\n";
-    std::cout << "  -packet-trace            Display packet_trace.\n";
     std::cout << "  -no-get-path             Disable getting paths.\n";
     std::cout << "  -log-set <count>         Change change the value of ips after which, will be displayed information about how much is left.\n";
     std::cout << "  -http-response           Display HTTP response.\n";
@@ -1550,11 +1551,10 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms){
     }
 
     for (const auto& port : ports){
+		std::string source_ip = ncopts.source_ip;
+		std::string dest_ip = ip;
 	   /*Отправка пакета.*/
 	   const int result = nesca_scan(&ncopts, ip, port, timeout_ms);
-	   /*Лог.*/
-	   if (argp.packet_trace){np.nlog_custom("SEND", "TCP >> "+ std::string(argp.source_ip)+
-			 ":"+std::to_string(source_port)+" >> "+ std::string(ip)+":"+std::to_string(port)+"\n", 1);}
 
 	   /*Если функция не вернула PORT_OPEN,
 	    * Это означает что функция успешно выполнилась.*/
@@ -1573,11 +1573,7 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms){
 
 	   /*В другом случае, запускается
 	    * "Принятие пакета" или скорее его ожидание.*/
-	   int read = ncread(ip, recv_timeout_result, &buffer, argp.syn_debug);
-	   /*Лог.*/
-	   if (argp.packet_trace){np.nlog_custom("RECV", "TCP >> "+ std::string(ip)+
-			 ":"+std::to_string(port)+" >> "+ std::string(argp.source_ip)+":"+std::to_string(source_port)+"\n", 1);}
-
+	   int read = ncread(ip, recv_timeout_result, &buffer, argp.syn_debug, port, source_port, argp.packet_trace);
 	   /*Если функция не получила пакет.*/
 	   if (read != SUCCESS_READ){
 		  ls.lock();

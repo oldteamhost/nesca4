@@ -11,7 +11,7 @@
 #include <sys/types.h>
 
 /*Классический IMCP пинг.
- * По всем типам и кодам.*/
+ * По всем многим типам.*/
 
 double
 icmp_ping(const char* dest_ip, int timeout_ms, int type, int code, int seq, int ttl);

@@ -58,6 +58,7 @@ struct nesca_scan_opts{
     const char* source_ip;
     unsigned int seq;
     int ttl;
+	bool packet_trace;
 };
 
 /*Для расчёта фейковой контрольной суммы
