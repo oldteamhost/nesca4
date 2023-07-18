@@ -11,6 +11,7 @@
 #include "include/portscan.h"
 #include "ncping/include/icmpping.h"
 #include "ncsock/include/icmpproto.h"
+#include "include/nescathread.h"
 #include <string>
 
 struct nesca_scan_opts ncopts;
@@ -47,7 +48,7 @@ int main(int argc, char** argv){
     checking_default_files();
     std::cout << std::endl;
 
-		/*Установка методов пинга.*/
+	/*Установка методов пинга.*/
 	if (!argp.custom_ping){
 		if (argp.max_ping || argp.speed_type == 1){
 			argp.syn_ping = true;
@@ -66,51 +67,66 @@ int main(int argc, char** argv){
 		}
 	}
 
-    /*Начало DNS сканирования.*/
-    if (argp.dns_scan){
-        argp.timeout_ms = 100;
-        std::mutex mtx;
-	   std::cout << np.main_nesca_out("NESCA4", "Starting "+std::to_string(argp._threads)+" threads...", 5, "on", "", "DNS","","") << std::endl << std::endl;
-        for (int i = 0; i < argp._threads; i++) {
+	/*Начало DNS сканирования.*/
+	if (argp.dns_scan) {
+    	argp.timeout_ms = 100;
+    	std::mutex mtx;
+    	std::cout << np.main_nesca_out("NESCA4", "Starting " + std::to_string(argp._threads) + " threads...", 5, "on", "", "DNS", "", "") << std::endl << std::endl;
+    	thread_pool dns_pool(argp._threads);
 
-            std::thread([&](){
-                for (;;) {
-                    std::string random_ = generate_random_str(argp.dns_scan_domain_count, argp.dns_dictionary);
-                    std::string result = random_ + argp.domain_1level;
-                    std::string ip = dus.get_ip_by_dns(result.c_str());
-					if (ip == "N/A"){
-				    	if (argp.debug){np.nlog_custom("BA", result + " [FaILEd]\n",2);}
-						continue;
-					}
-					if (ip == "-1"){
-				    	if (argp.debug){np.nlog_custom("BA", result + " [FaILEd]\n",2);}
-				    	continue;
-					}
+    	for (int i = 0; i < argp._threads; i++) {
+        	dns_pool.enqueue([&]() {
+            	for (;;) {
+                	std::string random_ = generate_random_str(argp.dns_scan_domain_count, argp.dns_dictionary);
+                	std::string result = random_ + argp.domain_1level;
+                	std::string ip = dus.get_ip_by_dns(result.c_str());
+
+                	if (ip == "N/A") {
+                    	if (argp.debug) {
+                        	std::lock_guard<std::mutex> lock(mtx);
+                        	np.nlog_custom("BA", result + " [FaILEd]\n", 2);
+                    	}
+                    	continue;
+                	}
+
+                	if (ip == "-1") {
+                    	if (argp.debug) {
+                        	std::lock_guard<std::mutex> lock(mtx);
+                        	np.nlog_custom("BA", result + " [FaILEd]\n", 2);
+                    	}
+                    	continue;
+                	}
+
                 	std::string result_print;
-					bool ping_status = process_ping(ip.c_str());
+                	bool ping_status = process_ping(ip.c_str());
+
                 	if (!ping_status) {
-                    	if (argp.debug){std::lock_guard<std::mutex> lock(mtx);np.nlog_custom("BA", result + " [FaILEd]\n",2);}
+                    	if (argp.debug) {
+                        	std::lock_guard<std::mutex> lock(mtx);
+                        	np.nlog_custom("BA", result + " [FaILEd]\n", 2);
+                    	}
                 	}
                 	else {
-                		std::string html = send_http_request(ip, 80);
+                    	std::string html = send_http_request(ip, 80);
                     	std::lock_guard<std::mutex> lock(mtx);
-						std::string rtt = std::to_string(argp.rtts[ip]) + "ms";
+                    	std::string rtt = std::to_string(argp.rtts[ip]) + "ms";
                     	std::cout << np.main_nesca_out("BA", "http://" + result, 3, "T", "RTT", get_http_title(html), rtt, rtt) << std::endl;
-						if (argp.get_response){
-                 			std::string result_code = np.main_nesca_out("TT", html, 2, "", "", "", "","");
-                 			std::cout << result_code << std::endl;
-						}
+
+                    	if (argp.get_response) {
+                        	std::string result_code = np.main_nesca_out("TT", html, 2, "", "", "", "", "");
+                        	std::cout << result_code << std::endl;
+                    	}
                 	}
             	}
-        	}).detach();
+        	});
+        
+        	if (argp.timeout) {delay_ms(argp.timeout_ms);}
+    	}
 
-            if (argp.timeout){
-                delay_ms(argp.timeout_ms);
-            }
-        }
-        std::getchar();
-        std::cout << np.main_nesca_out("NN", "Stoping threads...", 0, "", "", "", "","") << std::endl;
-    }
+    	std::getchar();
+    	std::cout << np.main_nesca_out("NN", "Stoping threads...", 0, "", "", "", "", "") << std::endl;
+	}
+
 
 	/*Иницилизация брутфорса.*/
     init_bruteforce();
@@ -185,9 +201,9 @@ int main(int argc, char** argv){
 	if (!argp.syn_ping && !argp.ack_ping && !argp.echo_ping && !argp.info_ping && !argp.timestamp_ping){argp.ack_ping = true;argp.echo_ping = true;}
 
     /*Пинг сканирования*/
-    if (!argp.ping_off) {
-		char ch;
-		std::cout << np.main_nesca_out("NESCA4", "PING_SCAN", 5, "recv-timeout", "threads", std::to_string(argp.ping_timeout), std::to_string(argp.threads_ping),"") << std::endl;
+	if (!argp.ping_off) {
+		thread_pool ping_pool(argp.threads_ping);
+    	std::cout << np.main_nesca_out("NESCA4", "PING_SCAN", 5, "recv-timeout", "threads", std::to_string(argp.ping_timeout), std::to_string(argp.threads_ping), "") << std::endl; opt: result: mode: opt1:
     	int threads_ping = argp.threads_ping;
     	int ips_per_thread = argp.result.size() / threads_ping;
     	int ip_count_ping = 0;
@@ -200,7 +216,7 @@ int main(int argc, char** argv){
 
         	for (int i = 0; i < tasks_to_execute; ++i) {
             	std::string ip = *result_iter;
-            	futures.push_back(std::async(std::launch::async, [ip]() -> std::pair<bool, std::string> {
+            	futures.push_back(ping_pool.enqueue([ip]() -> std::pair<bool, std::string> {
                 	bool ping = process_ping(ip);
                 	return std::make_pair(ping, ip);
             	}));
@@ -210,23 +226,24 @@ int main(int argc, char** argv){
             	auto result = future.get();
             	bool ping = result.first;
             	std::string ip = result.second;
-            	if (ping){result_main.push_back(ip);}
+            	if (ping) {
+                	result_main.push_back(ip);
+            	}
         	}
         	futures.clear();
 
-			for (auto& future : futures){future.wait();}
+        	for (auto& future : futures) {future.wait();}
         	ip_count_ping += tasks_to_execute;
 
-			if (ip_count_ping % argp.ping_log == 0) {
+        	if (ip_count_ping % argp.ping_log == 0) {
             	double procents = (static_cast<double>(ip_count_ping) / argp.result.size()) * 100;
             	std::string _result = format_percentage(procents);
-            	std::cout << np.main_nesca_out("^NESCALOG", std::to_string(ip_count_ping) + " out of " + std::to_string(argp.result.size()) 
-						+ " IPs", 4, "P", "", _result + "%", "","") << std::endl;
-			}
+            	std::cout << np.main_nesca_out("^NESCALOG", std::to_string(ip_count_ping) + " out of " + std::to_string(argp.result.size()) + " IPs", 4, "P", "", _result + "%", "", "") << std::endl;
+        	}
     	}
     	int error_count = argp.result.size() - result_main.size();
     	// std::cout << np.main_nesca_out("NESCA4", "FINISH ping", 5, "success", "errors", std::to_string(result_main.size()), std::to_string(error_count)) << std::endl;
-    }
+	}
     if (argp.ping_off){result_main = argp.result;}
 	if (!argp.custom_threads_resolv){
 		if (argp.my_life_my_rulez){argp.dns_threads = result_main.size();}
@@ -252,16 +269,20 @@ int main(int argc, char** argv){
 		}
 	}
 	/*Начало получения DNS.*/
-	std::cout << np.main_nesca_out("NESCA4", "DNS_RESOLUTION", 5, "threads", "", std::to_string(argp.dns_threads), "","") << std::endl;
-	std::vector<std::future<void>> futures_dns;
-	for (const auto& ip : result_main) {
-        futures_dns.emplace_back(std::async(std::launch::async, get_dns_thread, ip));
-        if (futures_dns.size() >= argp.dns_threads) {
-            for (auto& future : futures_dns){future.get();}
-            futures_dns.clear();
-        }
-    }
-	for (auto& future : futures_dns){future.wait();}
+	if (!argp.no_get_dns){
+		std::cout << np.main_nesca_out("NESCA4", "DNS_RESOLUTION", 5, "threads", "", std::to_string(argp.dns_threads), "","") << std::endl;
+		std::vector<std::future<void>> futures_dns;
+		thread_pool dns_pool(argp.dns_threads);
+
+		for (const auto& ip : result_main) {
+			futures_dns.emplace_back(dns_pool.enqueue(get_dns_thread, ip));
+        	if (futures_dns.size() >= argp.dns_threads) {
+            	for (auto& future : futures_dns){future.get();}
+            	futures_dns.clear();
+        	}
+    	}
+		for (auto& future : futures_dns){future.wait();}
+	}
 	/*Конец получения DNS.*/
 
 	/*HARD режим.*/
@@ -330,51 +351,56 @@ int main(int argc, char** argv){
     std::set<std::string> processed_ip;
     int skipped_ip = 0;
 
-	/*Сканирование по группам.*/
-	for (int i = 0; i < size; i += argp.group_size) {
-		/*Сканирование текущей группы.*/
-        const int groupEnd = std::min(i + argp.group_size, static_cast<int>(size));
-        std::vector<std::string> ipGroup(result_main.begin() + i, result_main.begin() + groupEnd);
+	/*Создание пула потоков.*/
+	thread_pool pool(argp._threads);
 
-        for (const auto& ip : ipGroup) {
-            if (processed_ip.count(ip) > 0) {
-                skipped_ip++;
-                continue;
-            }
-            ip_count++;
-            processed_ip.insert(ip);
+    /*Сканирование по группам*/
+    for (int i = 0; i < size; i += argp.group_size) {
+        /*Сканирование текущей группы*/
+        const int group_end = std::min(i + argp.group_size, static_cast<int>(size));
+        std::vector<std::string> ip_group(result_main.begin() + i, result_main.begin() + group_end);
 
-	   		if (ip_count % argp.log_set == 0){
-		  		double procents = (static_cast<double>(ip_count) / size) * 100;
-		  		std::string result = format_percentage(procents);
-		  		std::cout << std::endl << np.main_nesca_out("^NESCALOG", std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs", 4, "P", "", result + "%", "","") << std::endl;
-	   		}
+        for (const auto& ip : ip_group) {
+			/*Подсчёт повторившихся IP.*/
+            if (processed_ip.count(ip) > 0){skipped_ip++;continue;}
 
-	   		std::future<int> fut = std::async(std::launch::async, scan_port, ip.c_str(), argp.ports, argp.timeout_ms);
-            futures.push_back(std::move(fut));
+        	ip_count++;
+        	processed_ip.insert(ip);
 
-			if (futures.size() >= argp._threads) {
-                int main_scan = futures.front().get();
-                futures.erase(futures.begin());
-            }
-        }
-		for (auto& fut : futures){fut.wait();}
-        for (auto& fut : futures){int main_scan = fut.get();}
-        futures.clear();
+			/*Вывод лога каждые argp.log_set*/
+        	if (ip_count % argp.log_set == 0) {
+            	double procents = (static_cast<double>(ip_count) / size) * 100;
+            	std::string result = format_percentage(procents);
+            	std::cout << std::endl << np.main_nesca_out("^NESCALOG", std::to_string(ip_count) + " out of " + std::to_string(size) + " IPs", 4, "P", "", result + "%", "", "") << std::endl;
+        	}
+
+        	/*Добавление задачи сканирования портов в пул потоков*/
+        	auto fut = pool.enqueue(scan_port, ip.c_str(), argp.ports, argp.timeout_ms);
+        	futures.push_back(std::move(fut));
+
+        	if (futures.size() >= argp._threads) {
+            	/*Получение результата задачи из пула потоков*/
+            	int main_scan = futures.front().get();
+            	futures.erase(futures.begin());
+        	}
+    	}
+    	for (auto& fut : futures){fut.wait();} /*Ожидание оставшихся потоков.*/
+    	for (auto& fut : futures) {int main_scan = fut.get();} /*Получение результата функции.*/
+    	futures.clear(); /*Очистка после потоков.*/
 
         /*Обработка результатов для текущей группы*/
-        for (const auto& ip : ipGroup) {
+        for (const auto& ip : ip_group) {
 	   		if (argp.success_target.find(ip) != argp.success_target.end() 
-			   		|| argp.debug 
-			   		|| argp.open_or_filtered_target.find(ip) != argp.open_or_filtered_target.end()
-	           		|| argp.no_filtered_target.find(ip) != argp.no_filtered_target.end()){
+			   	|| argp.debug 
+			   	|| argp.open_or_filtered_target.find(ip) != argp.open_or_filtered_target.end()
+	           	|| argp.no_filtered_target.find(ip) != argp.no_filtered_target.end()){
 		  		double time_ms = argp.rtts[ip];
 		  		if (np.save_file){write_line(np.file_path_save, "\n");}
 		  		std::cout << std::endl << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", argp.dns_completed[ip], std::to_string(time_ms),"") << std::endl;
 	   			print_results(ip);
 			}
         }
-    }
+	}
 
 	if (np.save_file){write_line(np.file_path_save, "\n");}
     std::cout << std::endl << np.main_nesca_out("NESCA4", "FINISH_SCAN", 5, "success", "errors", std::to_string(argp.fuck_yeah), std::to_string(argp.error_fuck),"") << std::endl;
@@ -945,6 +971,7 @@ help_menu(void){
     std::cout << "  -TD <count>              Set max threads for dns-resolution.\n";
     std::cout << "  -resol-port <port>       Edit source port for dns-resolution.\n";
     std::cout << "  -resol-delay <ms>        Set delay for dns-resolution.\n";
+    std::cout << "  -no-resolv               Skip dns-resolution.\n";
 
     np.sea_green_on();
     std::cout << "\narguments ping scan:" << std::endl;
@@ -1414,12 +1441,12 @@ parse_args(int argc, char** argv){
                break;
            case 56:
                break;
-           case 59:
-               argp.syn_debug = true;
-               break;
            case 78:
 			   argp.custom_group_max = true;
 			   argp.group_size = atoi(optarg);
+               break;
+           case 59:
+			   argp.no_get_dns = true;
                break;
            case 76:
 			   argp.negatives_path = std::string(optarg);

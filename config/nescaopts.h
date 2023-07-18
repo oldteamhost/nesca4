@@ -38,7 +38,7 @@ public:
    	   bool custom_recv_timeout_ms;
        int recv_timeout_ms;
        int log_set = 20;
-       int _threads;
+       int _threads = 50;
 
        std::vector<int> ports = {80,443};
 	   bool no_proc;
@@ -63,6 +63,7 @@ public:
 
 	   /*Scan target*/
        bool random_ip;
+	   bool no_get_dns;
        int random_ip_count;
 	   int dns_threads;
 	   int resol_source_port = 4555;

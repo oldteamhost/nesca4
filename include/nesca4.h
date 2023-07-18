@@ -44,7 +44,7 @@
 #include "../ncsock/include/icmpproto.h"
 
 /*Угадайте?*/
-#define VERSION "20230718"
+#define VERSION "20230719"
 
 void 
 help_menu(void);
@@ -113,7 +113,8 @@ option long_options[] = {
     {"no-color", no_argument, 0, 26},
     {"log-set", required_argument, 0, 24},
     {"packet-trace", no_argument, 0, 96},
-	/*59, 60*/
+    {"no-resolv", no_argument, 0, 59},
+	/*60*/
     {"help", no_argument, 0, 'h'},
     {"version", no_argument, 0, 'v'},
     {"ports", no_argument, 0, 'p'},
