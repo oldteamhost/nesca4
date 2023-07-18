@@ -61,10 +61,7 @@ brute_smtp(const std::string& ip, int port, const std::string& login, const std:
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(port);
 
-    if (inet_pton(AF_INET, ip.c_str(), &(server_address.sin_addr)) <= 0) {
-        return "";
-    }
-
+    if (inet_pton(AF_INET, ip.c_str(), &(server_address.sin_addr)) <= 0){return "";}
     if (connect(sock, reinterpret_cast<sockaddr*>(&server_address), sizeof(server_address)) < 0) {
         return "";
     }
@@ -75,9 +72,7 @@ brute_smtp(const std::string& ip, int port, const std::string& login, const std:
         close(sock);
         return "";
     }
-    if (verbose) {
-        std::cout << buffer;
-    }
+    if (verbose) {std::cout << buffer;}
 
     std::string helo_command = "HELO localhost\r\n";
     if (send(sock, helo_command.c_str(), helo_command.length(), 0) < 0) {
@@ -90,9 +85,7 @@ brute_smtp(const std::string& ip, int port, const std::string& login, const std:
         close(sock);
         return "";
     }
-    if (verbose) {
-        std::cout << buffer;
-    }
+    if (verbose) {std::cout << buffer;}
 
     std::string auth_command = "AUTH LOGIN\r\n";
     if (send(sock, auth_command.c_str(), auth_command.length(), 0) < 0) {
@@ -105,9 +98,7 @@ brute_smtp(const std::string& ip, int port, const std::string& login, const std:
         close(sock);
         return "";
     }
-    if (verbose) {
-        std::cout << buffer;
-    }
+    if (verbose) {std::cout << buffer;}
 
     std::string encoded_login = base64_encode(login);
     if (send(sock, encoded_login.c_str(), encoded_login.length(), 0) < 0) {
@@ -115,10 +106,7 @@ brute_smtp(const std::string& ip, int port, const std::string& login, const std:
         return "";
     }
 
-    if (send(sock, "\r\n", 2, 0) < 0) {
-        close(sock);
-        return "";
-    }
+    if (send(sock, "\r\n", 2, 0) < 0){close(sock);return "";}
 
     memset(buffer, 0, 1024);
     if (recv(sock, buffer, 1024 - 1, 0) < 0) {
@@ -145,9 +133,7 @@ brute_smtp(const std::string& ip, int port, const std::string& login, const std:
         close(sock);
         return "";
     }
-    if (verbose) {
-        std::cout << buffer;
-    }
+    if (verbose) {std::cout << buffer;}
 
     if (std::string(buffer).find("235") != std::string::npos) {
         close(sock);

@@ -11,10 +11,8 @@
 
 std::string
 dns_utils::get_dns_by_ip(const char* ip, int port){
-	if (ip == nullptr) {
-    	return "n/a";
-	}
 	struct in_addr addr;
+	if (ip == nullptr){return "n/a";}
     if (inet_pton(AF_INET, ip, &addr) != 1){return "n/a";}
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1){return "n/a";}

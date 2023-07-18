@@ -28,37 +28,27 @@
 #include <vector>
 
 #include "../include/nescalog.h"
+#include "../ncsock/include/headers.h"
 #include "../include/other.h"
 
-#define SEND_BUFFER_SIZE 2048
-#define RECV_BUFFER_SIZE 2048
-#define WINDOWS_SIZE  32768
+#define PORT_OPEN             0
+#define PORT_CLOSED           1
+#define PORT_FILTER           2
+#define PORT_ERROR           -1
+#define PORT_OPEN_OR_FILTER   3
+#define PORT_NO_FILTER        4
 
-#define PORT_OPEN   0
-#define PORT_CLOSED 1
-#define PORT_FILTER 2
-#define PORT_ERROR -1
+#define SYN_SCAN              1
+#define XMAS_SCAN             2
+#define FIN_SCAN              3
+#define NULL_SCAN             4
+#define ACK_SCAN              5
+#define WINDOW_SCAN           6
+#define MAIMON_SCAN           7
 
-#define PORT_OPEN_OR_FILTER 3
-#define PORT_NO_FILTER      4
-
-#define SYN_SCAN      1
-#define XMAS_SCAN     2
-#define FIN_SCAN      3
-#define NULL_SCAN     4
-#define ACK_SCAN      5
-#define WINDOW_SCAN   6
-#define MAIMON_SCAN   7
-
-/*Опции для nesca_scan.*/
-struct nesca_scan_opts{
-    int scan_type;
-    int source_port;
-    const char* source_ip;
-    unsigned int seq;
-    int ttl;
-	bool packet_trace;
-};
+#define SEND_BUFFER_SIZE      2048
+#define RECV_BUFFER_SIZE      2048
+#define WINDOWS_SIZE          1024
 
 /*Для расчёта фейковой контрольной суммы
  * CAPEC-287: TCP SYN Scan*/
@@ -71,16 +61,26 @@ struct pseudo_header{
    struct tcphdr tcp;
 };
 
-/*Главная функция по сканированию.*/
-int 
+/*Опции для nesca_scan.
+ * Основные опции я решил добавить в аргументы,
+ * а другие долбануть в структуре, мне кажется
+ * так будет лучше.*/
+struct nesca_scan_opts{
+    int source_port;
+    const char* source_ip;
+    unsigned int seq;
+    int ttl;
+	bool packet_trace;
+	struct tcp_flags tcpf;
+};
+
+int /*Главная функция в сканирование, она отправляет TCP пакет.*/
 nesca_scan(struct nesca_scan_opts *ncot ,const char* ip, int port, int timeout_ms);
 
-/*Более простой вывод лога.*/
-void
-scan_debug_log(std::string mes, bool debug);
+struct tcp_flags /*Функция для установки TCP флагов.*/
+set_flags(int scan_type);
 
-/*Определение статуса порта.*/
-int
-get_port_status(unsigned char* buffer, bool no_syn, bool ack_scan, bool window_scan, bool maimon_scan);
+int /*Определение статуса порта.*/
+get_port_status(unsigned char* buffer, int scan_type);
 
 #endif

@@ -53,7 +53,7 @@
 #define NAX                            "NAX"
 #define CAMERA_MASPRO                  "MASPRO CAMERA"
 #define CAMERA_PANASONIC_BB_HG         "Panasonic-BB-HG CAMERA"
-#define CAMERA_AXIS_2400               "AXIS-2400|M3004 CAMERA"
+#define CAMERA_AXIS_2400               "AXIS-2400|M3004|Q1755 CAMERA"
 #define CAMERA_AXIS_205                "AXIS-205 CAMERA"
 #define NETWORK_VIDEO_SYSTEM           "Network-video-system"
 #define CAMERA_EASY                    "EASY CAMERA"

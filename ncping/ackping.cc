@@ -14,10 +14,10 @@ tcp_ack_ping(const char* ip, const char* source_ip, int dest_port, int source_po
 	double response_time = -1;
 	nesca_scan_opts ncops;
 	ncops.source_ip = source_ip;
-	ncops.scan_type = ACK_SCAN;
 	ncops.seq = generate_seq();
 	ncops.ttl = ttl;
 	ncops.source_port = source_port;
+	ncops.tcpf = set_flags(ACK_SCAN);
 
 	/*Отправка.*/
 	nesca_scan(&ncops, ip, dest_port, 0);

@@ -8,6 +8,7 @@
 #include "include/nesca4.h"
 #include "include/generation.h"
 #include "include/other.h"
+#include "include/portscan.h"
 #include "ncping/include/icmpping.h"
 #include "ncsock/include/icmpproto.h"
 #include <string>
@@ -322,7 +323,7 @@ int main(int argc, char** argv){
 
     ncopts.source_ip = argp.source_ip;
 	ncopts.packet_trace = argp.packet_trace;
-    ncopts.scan_type = argp.type;
+	ncopts.tcpf = set_flags(argp.type);
 
     long long size = result_main.size();
     std::vector<std::future<int>> futures;
@@ -1584,7 +1585,7 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms){
 		  free(buffer);
 		  ls.unlock();
 		  /*Значит порт open|filtered.*/
-		  if (ncopts.scan_type != SYN_SCAN && ncopts.scan_type != ACK_SCAN && ncopts.scan_type != WINDOW_SCAN){argp.open_or_filtered_target[ip].push_back(port);}
+		  if (argp.type != SYN_SCAN && argp.type != ACK_SCAN && argp.type != WINDOW_SCAN){argp.open_or_filtered_target[ip].push_back(port);}
 		  /*Значит порт filtered.*/
 		  else{argp.filtered_target[ip].push_back(port);}
 		  continue;
@@ -1593,11 +1594,11 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms){
 	   /*В другом случае идёт обработка пакета.
 	    * И только на этом этапе мы получаем статус порта.*/
 	   int port_status = -1;
-	   if (ncopts.scan_type == SYN_SCAN){port_status = get_port_status(buffer, false, false, false, false);}
-	   else if (ncopts.scan_type == ACK_SCAN){port_status = get_port_status(buffer, false, true, false, false);}
-	   else if (ncopts.scan_type == WINDOW_SCAN){port_status = get_port_status(buffer, false, false, true, false);}
-	   else if (ncopts.scan_type == MAIMON_SCAN){port_status = get_port_status(buffer, false, false, false, true);}
-	   else {port_status = get_port_status(buffer, true, false, false, false);}
+	   if (argp.type == SYN_SCAN){port_status = get_port_status(buffer, SYN_SCAN);}
+	   else if (argp.type == ACK_SCAN){port_status = get_port_status(buffer, ACK_SCAN);}
+	   else if (argp.type == WINDOW_SCAN){port_status = get_port_status(buffer, WINDOW_SCAN);}
+	   else if (argp.type == MAIMON_SCAN){port_status = get_port_status(buffer, MAIMON_SCAN);}
+	   else {port_status = get_port_status(buffer, FIN_SCAN);}
 
 	   if (port_status == PORT_CLOSED){argp.closed_target[ip].push_back(port);}
 	   else if (port_status == PORT_OPEN){argp.success_target[ip].push_back(port); argp.fuck_yeah++;}
