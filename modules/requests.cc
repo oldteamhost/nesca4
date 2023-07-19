@@ -40,7 +40,7 @@ send_http_request(const std::string& node, int port) {
 int
 get_response_code(const std::string& node, int port){
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd == -1){return -1;}
+    if (sockfd == EOF){return -1;}
 
     struct sockaddr_in server_addr{};
     server_addr.sin_family = AF_INET;
@@ -68,7 +68,7 @@ get_response_code(const std::string& node, int port){
     fds[0].events = POLLIN;
 
     int result = poll(fds, 1, timeout);
-    if (result == -1) {
+    if (result == EOF) {
         close(sockfd);
         return -1;
     } else if (result == 0) {

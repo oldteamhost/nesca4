@@ -39,7 +39,7 @@ get_http_title_pro(const std::string& node) {
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_string);
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2L);
         CURLcode res = curl_easy_perform(curl);
         if (res == CURLE_OK) {
             char* content_type;

@@ -15,7 +15,7 @@ dns_utils::get_dns_by_ip(const char* ip, int port){
 	if (ip == nullptr){return "n/a";}
     if (inet_pton(AF_INET, ip, &addr) != 1){return "n/a";}
     int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == -1){return "n/a";}
+    if (sock == EOF){return "n/a";}
 
 	struct timeval timeout;
 	timeout.tv_sec = 1;
@@ -42,7 +42,7 @@ dns_utils::get_dns_by_ip(const char* ip, int port){
 const char* 
 dns_utils::get_ip_by_dns(const char* dns){
     int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == -1){return "n/a";}
+    if (sock == EOF){return "n/a";}
 
     struct addrinfo hints, *res;
     memset(&hints, 0, sizeof(hints));
@@ -105,7 +105,7 @@ ip_utils::get_local_ip(){
     socklen_t namelen;
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0){return "-1";}
+    if (sock == EOF){return "-1";}
 
     const char *kGoogleDnsIp = "8.8.8.8";
     int dns_port = 53;

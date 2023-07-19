@@ -63,7 +63,6 @@ int main(int argc, char** argv){
 			argp.ack_ping = true;
 			argp.syn_ping = true;
 			argp.echo_ping = true;
-			argp.info_ping = true;
 		}
 	}
 
@@ -411,16 +410,16 @@ int main(int argc, char** argv){
 
 void
 print_results(std::string ip){
+	/*Лямбда функция.*/
 	auto process_ports = [&](const std::map<std::string, std::vector<int>>& target_map, int port_type) {
         auto it = target_map.find(ip);
         if (it != target_map.end()) {
             const std::vector<int>& ports = it->second;
-            for (int port : ports) {
-                processing_tcp_scan_ports(ip, port, port_type);
-            }
+            for (int port : ports){processing_tcp_scan_ports(ip, port, port_type);}
         }
     };
 
+	/*Её использование.*/
     process_ports(argp.success_target, PORT_OPEN);
     process_ports(argp.error_target, PORT_ERROR);
     process_ports(argp.filtered_target, PORT_FILTER);
@@ -429,7 +428,7 @@ print_results(std::string ip){
     process_ports(argp.no_filtered_target, PORT_NO_FILTER);
 }
 
-bool
+bool /*Лесенка ping-ов.*/
 process_ping(std::string ip){
 	int ttl = 121;
 	int source_port;
@@ -437,10 +436,18 @@ process_ping(std::string ip){
 	else {source_port = argp._custom_source_port;}
 	if (argp.custom_ttl){ttl = argp._custom_ttl;}
 
+	/*ICMP ECHO классика.*/
+	if (argp.echo_ping){
+    	double icmp_casual = icmp_ping(ip.c_str(), argp.ping_timeout, 8, 0, 0, 64);
+    	if (icmp_casual != EOF){
+	   		argp.rtts[ip] = icmp_casual;
+	   		return true;
+    	}
+	}
 	/*TCP_SYN PING*/
 	if (argp.syn_ping){
 		double status_time1 = tcp_syn_ping(ip.c_str(), argp.source_ip, argp.syn_dest_port, source_port, argp.ping_timeout, ttl);
-		if (status_time1 != -1){
+		if (status_time1 != EOF){
 			argp.rtts[ip] = status_time1;
 			return true;
 		}
@@ -448,34 +455,26 @@ process_ping(std::string ip){
 	/*TCP_ACK PING*/
 	if (argp.ack_ping){
 		double status_time = tcp_ack_ping(ip.c_str(), argp.source_ip, argp.ack_dest_port, source_port, argp.ping_timeout, ttl);
-		if (status_time != -1){
+		if (status_time != EOF){
 			argp.rtts[ip] = status_time;
 			return true;
 		}
 	}
-	/*ICMP пинг 3 методами.*/
-	if (argp.echo_ping){
-    	double icmp_casual = icmp_ping(ip.c_str(), argp.ping_timeout, 8, 0, 0, 64);
-    	if (icmp_casual != -1){
-	   		argp.rtts[ip] = icmp_casual;
-	   		return true;
-    	}
-	}
+	/*ICMP пинг 2 методами.*/
 	if (argp.info_ping){
     	double icmp_rev = icmp_ping(ip.c_str(), argp.ping_timeout, 13, 0, 0, 64);
-		if (icmp_rev != -1){
+		if (icmp_rev != EOF){
 			argp.rtts[ip] = icmp_rev;
 			return true;
 		}
 	}
 	if (argp.timestamp_ping){
     	double icmp_rev1 = icmp_ping(ip.c_str(), argp.ping_timeout, 15, 0, 0, 64);
-		if (icmp_rev1 != -1){
+		if (icmp_rev1 != EOF){
 			argp.rtts[ip] = icmp_rev1;
 			return true;
 		}
 	}
-
     return false;
 }
 
@@ -495,6 +494,7 @@ void check_files(const char* path, const char* path1){
 
 void 
 checking_default_files(void){
+	/*Чек целей из файлов.*/
 	std::vector<std::string> temp_ips;
 	if (argp.ip_cidr_scan_import && check_file(argp.path_cidr)) {
         np.nlog_trivial(std::string(argp.path_cidr) + " (" + std::to_string(get_count_lines(argp.path_cidr)) + ") entries\n");
@@ -505,7 +505,6 @@ checking_default_files(void){
         np.nlog_error(std::string(argp.path_cidr) + " (" + std::to_string(get_count_lines(argp.path_cidr)) + ") entries\n");
         errors_files++;
     }
-
     if (argp.ip_range_scan_import && check_file(argp.path_range)) {
         np.nlog_trivial(std::string(argp.path_range) + " (" + std::to_string(get_count_lines(argp.path_range)) + ") entries\n");
         if (argp.ip_range_scan){np.nlog_trivial(std::string(argp.path_range) + " (" + std::to_string(get_count_lines(argp.path_range)) + ") entries\n");}
@@ -515,7 +514,6 @@ checking_default_files(void){
         np.nlog_error(std::string(argp.path_range) + " (" + std::to_string(get_count_lines(argp.path_range)) + ") entries\n");
         errors_files++;
     }
-
     if (argp.ip_scan_import && check_file(argp.path_ips)) {
         np.nlog_trivial(std::string(argp.path_ips) + " (" + std::to_string(get_count_lines(argp.path_ips)) + ") entries\n");
         argp.result = write_file(argp.path_ips);
@@ -532,6 +530,7 @@ checking_default_files(void){
     check_files(argp.path_smtp_login.c_str(),argp.path_smtp_pass.c_str());
     check_files(argp.path_hikvision_login.c_str(),argp.path_hikvision_pass.c_str());
 
+	/*Ну чё там.*/
     if (errors_files == 0){std::cout << np.main_nesca_out("NESCA4", "BRUTEFORCE_DATA", 5, "status", "", "OK","","");}
     else {std::cout << np.main_nesca_out("NESCA4", "BRUTEFORCE_DATA", 5, "status", "ERRORS", "FAILED", std::to_string(errors_files),"");}
 }
@@ -665,7 +664,7 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
 			 int brute = cfs.than_bruteforce(type_target);
 
 			 /*Брутфорс HTTP basic auth.*/
-             if (argp.off_http_brute != true && temp_check_http != "no" && argp.no_get_path != true && brute != -1){
+             if (argp.off_http_brute != true && temp_check_http != "no" && argp.no_get_path != true && brute != EOF){
 			 	np.yellow_html_on();
 				std::cout << "[>][HTTP]:" + ip + " [BRUTEFORCE]\n";
 				np.reset_colors();
@@ -893,7 +892,7 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
 			 	print_port_state(PORT_OPEN, port, sn.probe_service(port));
             }
         }
-        else if (result == -1){
+        else if (result == EOF){
             if (argp.print_errors){
                 std::lock_guard<std::mutex> guard(mtx);
 			 print_port_state(PORT_ERROR, port, sn.probe_service(port));
@@ -1762,7 +1761,7 @@ traceroute(std::string ip, int jumps){
 	    	if (it != argp.rtts.end()) {timeout_ms = argp.rtts[ip] * 2;}
 	
         	double icmp_casual = icmp_ping(ip.c_str(), timeout_ms, 8, 0, seq, ttl);
-    		if (icmp_casual != -1){
+    		if (icmp_casual != EOF){
 				std::cout << np.main_nesca_out("TRACEROUTE", ip, 3, "TTL", "", std::to_string(ttl), "", "") << std::endl;
 				break;
     		}

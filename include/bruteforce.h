@@ -25,6 +25,7 @@
 #include "../include/other.h"
 #include "../include/nescalog.h"
 #include "../ncsock/include/ncread.h"
+#include "nescathread.h"
 
 #include "../lib/HCNetSDK.h"
 
@@ -42,7 +43,6 @@ class brute_ftp_data{
         void
 	   set_success_pass(std::string success_pass);
 };
-
 
 // brutforce smtp
 std::string 

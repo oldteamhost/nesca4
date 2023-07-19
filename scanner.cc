@@ -19,9 +19,7 @@ checking_finds::contains_word(const std::string& word, const std::string& senten
     while (pos != std::string::npos) {
         if (std::isalpha(lowerSentence[pos - 1]) || std::isalpha(lowerSentence[pos + lowerWord.length()])) {
             pos = lowerSentence.find(lowerWord, pos + 1);
-        } else {
-            return true;
-        }
+        } else{return true;}
     }
 
     return false;
@@ -128,7 +126,7 @@ checking_finds::than_bruteforce(const std::string type){
 int
 service_probes::http_probe(const std::string& ip, const int port){
 	int socket_id = socket(AF_INET, SOCK_STREAM, 0);
-    if (socket_id == -1){return false;}
+    if (socket_id == EOF){return false;}
 
     sockaddr_in server_address{};
     server_address.sin_family = AF_INET;
@@ -160,7 +158,7 @@ service_probes::http_probe(const std::string& ip, const int port){
 int
 service_probes::ftp_probe(const std::string& ip, const int port){
 	int socket_id = socket(AF_INET, SOCK_STREAM, 0);
-    if (socket_id == -1) {return false;}
+    if (socket_id == EOF) {return false;}
 
     sockaddr_in server_address{};
     server_address.sin_family = AF_INET;
@@ -196,7 +194,7 @@ service_probes::ftp_probe(const std::string& ip, const int port){
 int
 service_probes::smtp_probe(const std::string& ip, const int port){
 	int socket_id = socket(AF_INET, SOCK_STREAM, 0);
-    if (socket_id == -1){return false;}
+    if (socket_id == EOF){return false;}
 
     sockaddr_in server_address{};
     server_address.sin_family = AF_INET;

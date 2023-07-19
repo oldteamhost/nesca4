@@ -53,7 +53,7 @@ int
 send_icmp_packet(struct sockaddr_in* addr, int type,
 				int code, int ident, int seq, int ttl){
 	int fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-	if (fd== -1){return -1;}
+	if (fd == EOF){return -1;}
 	if (setsockopt(fd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) < 0){close(fd);return -1;}
 
 	struct icmp4_header icmp;
@@ -68,7 +68,7 @@ send_icmp_packet(struct sockaddr_in* addr, int type,
 	icmp.checksum = htons(calculate_checksum((unsigned char*)&icmp, sizeof(icmp)));
 
 	int bytes = sendto(fd, &icmp, sizeof(icmp), 0,(struct sockaddr*)addr, sizeof(*addr));
-    if (bytes == -1) {
+    if (bytes == EOF) {
 		close(fd);
         return -1;
     }
@@ -81,7 +81,7 @@ recv_icmp_packet(const char* dest_ip, int timeout_ms, int type,
 				int code, int identm){
 
 	int fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-	if (fd == -1){return -1;}
+	if (fd == EOF){return -1;}
 
     char buffer[1500];
     struct sockaddr_in peer_addr;
@@ -102,7 +102,7 @@ recv_icmp_packet(const char* dest_ip, int timeout_ms, int type,
     auto start_time = std::chrono::steady_clock::now();
 	for (;;){
     	int bytes = recvfrom(fd, buffer, sizeof(buffer), 0,(struct sockaddr*)&peer_addr, (socklen_t *)&addr_len);
-		if (bytes == -1) {
+		if (bytes == EOF) {
 			/*Сработал таймаут.*/
 			if (errno == EAGAIN || errno == EWOULDBLOCK){
 				close(fd);

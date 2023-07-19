@@ -50,7 +50,7 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
     /*Сообщаем ядру, что не нужно генерировать IP заголовок
 	* потому что мы сами его сделали.*/
     int set_hdrincl = set_socket_hdrincl(sock);
-    if (set_hdrincl == -1){close(sock);return PORT_ERROR;}
+    if (set_hdrincl == EOF){close(sock);return PORT_ERROR;}
 
     /*Заполнение TCP заголовка.*/
     fill_tcp_header(tcph_send, ncot->source_port, port, ncot->seq, 0, WINDOWS_SIZE, 0,
@@ -85,7 +85,7 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
     /*Отправка TCP пакета.*/
     ssize_t send = sendto(sock, datagram, packet_length, 0,
 		  (struct sockaddr*)&dest, sizeof(dest));
-    if (send == -1){
+    if (send == EOF){
 	   close(sock);
 	   return PORT_ERROR;
     }

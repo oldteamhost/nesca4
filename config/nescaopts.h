@@ -155,7 +155,7 @@ public:
        std::string path_rvi_pass = "passwd/rvi_passwords.txt";
 
 	   /*Bruteforce options*/
-       int brute_timeout_ms = 10;
+       int brute_timeout_ms = 0;
 
        bool ftp_brute_verbose;
        bool sftp_brute_verbose;

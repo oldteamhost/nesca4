@@ -9,7 +9,7 @@
 
 std::string get_ftp_description(std::string server, std::string port, std::string username, std::string password) {
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd == -1) {
+    if (sockfd == EOF) {
         return FTP_ERROR;
     }
 
@@ -21,7 +21,7 @@ std::string get_ftp_description(std::string server, std::string port, std::strin
         return FTP_ERROR;
     }
 
-    if (connect(sockfd, reinterpret_cast<struct sockaddr*>(&server_addr), sizeof(server_addr)) == -1) {
+    if (connect(sockfd, reinterpret_cast<struct sockaddr*>(&server_addr), sizeof(server_addr)) == EOF) {
         close(sockfd);
         return FTP_ERROR;
     }
@@ -30,25 +30,25 @@ std::string get_ftp_description(std::string server, std::string port, std::strin
     memset(buffer, 0, sizeof(buffer));
 
     ssize_t bytes_sent = send(sockfd, ("USER " + username + "\r\n").c_str(), strlen(("USER " + username + "\r\n").c_str()), 0);
-    if (bytes_sent == -1) {
+    if (bytes_sent == EOF) {
         close(sockfd);
         return FTP_ERROR;
     }
 
     bytes_sent = send(sockfd, ("PASS " + password + "\r\n").c_str(), strlen(("PASS " + password + "\r\n").c_str()), 0);
-    if (bytes_sent == -1) {
+    if (bytes_sent == EOF) {
         close(sockfd);
         return FTP_ERROR;
     }
 
     bytes_sent = send(sockfd, "QUIT\r\n", strlen("QUIT\r\n"), 0);
-    if (bytes_sent == -1) {
+    if (bytes_sent == EOF) {
         close(sockfd);
         return FTP_ERROR;
     }
 
     ssize_t bytes_received = recv(sockfd, buffer, sizeof(buffer) - 1, 0);
-    if (bytes_received == -1) {
+    if (bytes_received == EOF) {
         close(sockfd);
         return FTP_ERROR;
     }

@@ -77,6 +77,7 @@ nesca_prints::nlog_packet_trace(std::string action, std::string protocol, std::s
 				std::string message, int ttl, int id, int win,
 				int seq, int iplen){
 
+	/*Ужас но подругому не сделать.*/
 	std::string temp = gray_nesca + print_get_time(get_time()) + reset_color +
             green_html + "  " + action + reset_color + green_html + "  " + protocol + "  " + reset_color +
             green_html + source_ip + ":" + std::to_string(source_port) + " > " + dest_ip + ":" +
@@ -85,8 +86,16 @@ nesca_prints::nlog_packet_trace(std::string action, std::string protocol, std::s
 			std::to_string(id) + gray_nesca + "  WINDOW  " + golder_rod + std::to_string(win) + gray_nesca +
 			"  IPLEN  " + golder_rod + std::to_string(iplen) + gray_nesca + "  SEQ  " + golder_rod + std::to_string(seq) +reset_color;
 
-	std::cout << temp << std::endl;
 
+    if (save_file){
+		std::string temp_file = print_get_time(get_time()) +
+            	"  " + action + "  " + protocol + "  " + source_ip + ":" + std::to_string(source_port) + " > " + dest_ip + ":" +
+				std::to_string(dest_port) + message + "  TTL  " + std::to_string(ttl) + "  ID  " + std::to_string(id) + "  WINDOW  " +
+				std::to_string(win) +"  IPLEN  " + std::to_string(iplen) + "  SEQ  " + std::to_string(seq);
+		write_line(file_path_save, temp_file + "\n");
+	}
+
+	std::cout << temp << std::endl;
 }
 
 void 
@@ -169,7 +178,6 @@ void
 nesca_prints::nlog_trivial(const std::string& message){
     std::string log = print_get_time(get_time()) + "[OK]:" + message;
     std::cout << green_html << log << reset_color;
-
     if (save_file)write_line(file_path_save, log);
 }
 
@@ -177,7 +185,6 @@ void
 nesca_prints::nlog_error(const std::string& message){
     std::string log = print_get_time(get_time()) + "[ERROR]:" + message;
     std::cout << red_html << log << reset_color;
-
     if (save_file)write_line(file_path_save, log);
 }
 

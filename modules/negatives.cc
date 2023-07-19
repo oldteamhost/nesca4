@@ -33,6 +33,5 @@ nesca_negatives::parse_config_file(const std::string& file_path){
     }
     
     file.close();
-    
     return config_dict;
 }

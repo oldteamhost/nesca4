@@ -42,13 +42,13 @@ icmp_ping(const char* dest_ip, int timeout_ms, int type, int code, int seq, int 
 
 	int ret = send_icmp_packet(&addr, type, code, ident, seq, ttl);
 
-	if (ret == -1){return -1;}
+	if (ret == EOF){return -1;}
 
 	struct timespec start_time;
     clock_gettime(CLOCK_MONOTONIC, &start_time);
 
 	ret = recv_icmp_packet(dest_ip, timeout_ms, type, code, ident);
-	if (ret == -1){return -1;}
+	if (ret == EOF){return -1;}
 
 	struct timespec end_time;
     clock_gettime(CLOCK_MONOTONIC, &end_time);
