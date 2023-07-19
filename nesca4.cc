@@ -1548,6 +1548,8 @@ format_percentage(double procents){
     return result;
 }
 
+
+
 /*Функция через которую происходит само сканирование
  * портов. Вроде бы стабильно.*/
 int
