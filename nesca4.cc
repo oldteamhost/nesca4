@@ -6,8 +6,6 @@
 */
 
 #include "include/nesca4.h"
-#include <memory>
-#include <string>
 
 struct nesca_scan_opts ncopts;
 const char* short_options = "hl:vd:T:p:aS:";
@@ -1372,7 +1370,7 @@ parse_args(int argc, char** argv){
                break;
            case 'l':
 			   np.html_save = true;
-			   np.html_file_path = optarg;
+			   np.html_file_path = std::string(optarg) + ".html";
                break;
            case 57:
 			   argp.custom_threads = true;

@@ -99,7 +99,7 @@ class service_probes{
 
 /*Получение характеристики.*/
 class checking_finds{
-    public:
+public:
 
 	/*Заголовок HTTP*/
 	std::vector<std::string> basic_auth_header = {"401 authorization", "401 unauthorized", "www-authenticate",
