@@ -34,6 +34,4 @@ services_nesca::probe_service(int port){
 }
 
 void
-services_nesca::init_services(){
-    data = parse_services("./resources/nesca-services");
-}
+services_nesca::init_services(){data = parse_services("./resources/nesca-services");}

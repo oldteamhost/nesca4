@@ -12,6 +12,7 @@ public:
        std::string txt_save;
 
 	   /*Scan options*/
+	   bool no_scan;
 	   const char* source_ip;
 	   int type = 1;
 	   int speed_type = 3;
@@ -106,7 +107,6 @@ public:
 	   /*Don`t touch*/
        int fuck_yeah = 0;
 	   int error_fuck = 0;
-       bool warning_threads;
        bool print_help_menu;
        int threads_temp;
        std::string ports_temp;

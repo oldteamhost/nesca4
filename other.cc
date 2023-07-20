@@ -183,3 +183,8 @@ to_lower_case(const std::string& str) {
     return result;
 }
 
+size_t 
+find_char(const std::string& str, char ch){
+	return str.find(ch);
+}
+
