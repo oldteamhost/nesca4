@@ -1707,7 +1707,7 @@ pre_check(void){
 	   np.gray_nesca_on();
 	   std::cout << np.print_get_time(get_time());
 	   std::cout << "[VERSION]:";
-	   np.golder_rod_on();
+	   np.green_html_on();
 	   std::cout << VERSION << std::endl;
 	   np.gray_nesca_on();
 	   std::cout << np.print_get_time(get_time());

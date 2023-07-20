@@ -39,18 +39,22 @@ struct log_enty{
 
 class nesca_prints{
 private:
-	/*Цвета для лога.*/
-    std::string gray_nesca = "\033[38;2;112;112;112m";
+	/*Дефолтные цвета для лога.*/ 
+    std::string gray_nesca = "\033[38;2;110;110;110m";
     std::string golder_rod = "\033[38;2;218;165;32m";
     std::string sea_green = "\033[38;2;60;179;113;4m";
-    std::string green_html = "\033[38;2;45;235;65m";
+    std::string green_html = "\033[38;2;0;225;0m";
     std::string red_html = "\033[38;2;240;50;55m";
-    std::string yellow_html = "\033[38;2;240;215;75m";
+    std::string yellow_html = "\033[38;2;255;255;0m";
     std::string reset_color = "\033[0m";
+
+	std::string /*Преобразование HTML цвета в ANSI 256colors*/
+	html_to_ansi_color(const std::string& html_color);
 
     public:
 		bool save_file;
 		bool html_save;
+		bool colors = true;
         std::map<std::string, std::string> config_values;
 		std::string file_path_save;
 		std::string html_file_path;
@@ -58,6 +62,7 @@ private:
 		/*Создание класса*/
 		void
 		run_log();
+
 
 		std::string /*Главный лог.*/
 		main_nesca_out(std::string opt, std::string result, int mode, std::string opt1, std::string opt2,
@@ -94,6 +99,9 @@ private:
 	    yellow_html_on(void);
         void 
         red_html_on(void);
+
+		void /*Включить кастомный цвет.*/
+		custom_color_on(const std::string& html_color);
 
         int /*Импортирование кастомных цветов.*/
         import_color_scheme(const std::string& file_name, std::map<std::string, std::string>& config_values);

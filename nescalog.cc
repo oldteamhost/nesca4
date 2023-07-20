@@ -14,6 +14,20 @@
 
 html_output hou;
 
+std::string
+nesca_prints::html_to_ansi_color(const std::string& html_color){
+	if (html_color.size() != 7 || html_color[0] != '#'){return "";}
+    std::istringstream stream(html_color.substr(1));
+
+    /*Преобразуем значения к диапазону [0, 255]*/
+	int r = std::stoi(html_color.substr(1, 2), nullptr, 16);
+    int g = std::stoi(html_color.substr(3, 2), nullptr, 16);
+    int b = std::stoi(html_color.substr(5, 2), nullptr, 16);
+
+    return "\033[38;2;" + std::to_string(r) + ";" + std::to_string(g) + ";" + std::to_string(b) + "m";
+
+}
+
 std::string 
 nesca_prints::main_nesca_out(std::string opt, std::string result, int mode, std::string opt1, std::string opt2,
                                         std::string result1, std::string result2, std::string rtt, std::string type, std::string protocol){
@@ -100,6 +114,7 @@ nesca_prints::nlog_packet_trace(std::string action, std::string protocol, std::s
 
 void 
 nesca_prints::disable_colors(void){
+	colors = false;
     gray_nesca = "";
     golder_rod = "";
     sea_green = "";
@@ -154,21 +169,26 @@ nesca_prints::green_html_on(void){std::cout << green_html;}
 void 
 nesca_prints::red_html_on(void){std::cout << red_html;}
 
+void
+nesca_prints::custom_color_on(const std::string& html_color){
+	if (colors == true){std::cout << html_to_ansi_color(html_color);}
+}
+
 int 
 nesca_prints::processing_color_scheme(const std::map<std::string, std::string>& config_values){
 	for (const auto& kvp : config_values) {
-        if (kvp.first == "color1") {
-            gray_nesca = "\033" + kvp.second;
-        } else if (kvp.first == "color2") {
-            golder_rod = "\033" + kvp.second;
-        } else if (kvp.first == "color3") {
-            sea_green = "\033" + kvp.second;
-        } else if (kvp.first == "color4") {
-            green_html = "\033" + kvp.second;
-        } else if (kvp.first == "color5") {
-            red_html = "\033" + kvp.second;
-        } else if (kvp.first == "color6") {
-            yellow_html = "\033" + kvp.second;
+        if (kvp.first == "auth") {
+			gray_nesca = html_to_ansi_color(kvp.second);
+        } else if (kvp.first == "title") {
+			golder_rod = html_to_ansi_color(kvp.second);
+        } else if (kvp.first == "link") {
+			sea_green = html_to_ansi_color(kvp.second);
+        } else if (kvp.first == "ok") {
+			green_html = html_to_ansi_color(kvp.second);
+        } else if (kvp.first == "error") {
+			red_html = html_to_ansi_color(kvp.second);
+        } else if (kvp.first == "debug") {
+			yellow_html = html_to_ansi_color(kvp.second);
         }
     }
     return 0;

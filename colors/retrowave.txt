@@ -1,20 +1,6 @@
-// only ansi colors
-// no ESC
-
-// for [06:33:30] aka time
-color1=[38;2;145;108;143m
-
-// for "COLORED_TEXT" aka http title
-color2=[35m
-
-// for 192.1.1.1:80 aka targets
-color3=[38;2;192;74;255;4m
-
-// for [OK] aka checking files
-color4=[38;2;255;143;255m
-
-// for errors and warings
-color5=[38;2;255;71;165m
-
-// for log, verbose, redirect and bruteforce info
-color6=[38;2;143;100;255m
+auth=#f6019d
+title=#ff53fd
+link=#2de2e6
+ok=#2de2e6
+error=#ff53fd
+debug=#ff57a1
