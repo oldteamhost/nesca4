@@ -235,6 +235,7 @@ int main(int argc, char** argv){
         	}
     	}
 		for (auto& future : futures_dns){future.wait();}
+		futures_dns.clear();
 	}
 
 	/*Расчёт количеста потоков для сканирования.*/
@@ -1527,8 +1528,11 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms){
 	   /*Если функция не вернула PORT_OPEN,
 	    * Это означает что функция успешно выполнилась.*/
 	   if (result != PORT_OPEN){
+		  ls.lock();
 		  /*Значит была ошибка.*/
 		  argp.error_target[ip].push_back(port);
+		  ls.unlock();
+
 		  argp.error_fuck++;
 		  /*Переход к следующему порту.*/
 		  continue;
@@ -1546,10 +1550,19 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms){
 		  ls.lock();
 		  free(buffer);
 		  ls.unlock();
-		  /*Значит порт open|filtered.*/
-		  if (argp.type != SYN_SCAN && argp.type != ACK_SCAN && argp.type != WINDOW_SCAN){argp.open_or_filtered_target[ip].push_back(port);}
-		  /*Значит порт filtered.*/
-		  else{argp.filtered_target[ip].push_back(port);}
+
+		  if (argp.type != SYN_SCAN && argp.type != ACK_SCAN && argp.type != WINDOW_SCAN){
+		  	  ls.lock();
+		      /*Значит порт open|filtered.*/
+			  argp.open_or_filtered_target[ip].push_back(port);
+		  	  ls.unlock();
+		  }
+		  else{
+		  	  ls.lock();
+		  	  /*Значит порт filtered.*/
+			  argp.filtered_target[ip].push_back(port);
+		  	  ls.unlock();
+		  }
 		  continue;
 	   }
 

@@ -46,7 +46,7 @@
 #include "../ncsock/include/icmpproto.h"
 
 /*Угадайте?*/
-#define VERSION "20230720"
+#define VERSION "20230721"
 
 void 
 help_menu(void);
