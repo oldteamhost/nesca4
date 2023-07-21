@@ -220,16 +220,14 @@ int main(int argc, char** argv){
     	int error_count = argp.result.size() - result_main.size();
     	// std::cout << np.main_nesca_out("NESCA4", "FINISH ping", 5, "success", "errors", std::to_string(result_main.size()), std::to_string(error_count)) << std::endl;
 	}
+	if (argp.ping_off){result_main = argp.result;}
 	auto end_time_ping = std::chrono::high_resolution_clock::now();
 	auto duration_ping = std::chrono::duration_cast<std::chrono::microseconds>(end_time_ping - start_time_ping);
 	argp.ping_duration = duration_ping.count() / 1000000.0;
 
 	/*Расчёт количеста потоков для DNS resolv.*/
-	if (argp.ping_off){result_main = argp.result;}
-	if (!argp.custom_threads_resolv) {
-    	argp._threads = calc_threads(argp.speed_type, result_main.size());
-    	argp.dns_threads = argp._threads;
-	}
+	if (!argp.custom_threads_resolv){argp.dns_threads = calc_threads(argp.speed_type, result_main.size());}
+	if (argp.my_life_my_rulez){argp.dns_threads = result_main.size();}
 
 	auto start_time_dns = std::chrono::high_resolution_clock::now();
 	if (!argp.no_get_dns){
@@ -273,7 +271,6 @@ int main(int argc, char** argv){
 		if (!argp.custom_g_max){argp.group_size_max = 300;}
 		if (!argp.custom_g_rate){argp.group_rate = 5;}
 	}
-
 	/*Потоки для сканирования портов.*/
 	argp._threads = argp.group_size_max;
 
