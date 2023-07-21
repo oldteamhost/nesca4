@@ -12,15 +12,15 @@
 std::string
 dns_utils::get_dns_by_ip(const char* ip, int port){
 	struct in_addr addr;
-	if (ip == nullptr){return "n/a";}
     if (inet_pton(AF_INET, ip, &addr) != 1){return "n/a";}
     int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == EOF){return "n/a";}
+    if (sock == -1){return "n/a";}
 
-	struct timeval timeout;
-	timeout.tv_sec = 1;
-	timeout.tv_usec = 0;
-	setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+    struct timeval timeout;
+	int timeout_ms = 600;
+	timeout.tv_sec = timeout_ms / 1000;
+    timeout.tv_usec = (timeout_ms % 1000) * 1000;
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
     struct sockaddr_in sa;
     memset(&sa, 0, sizeof(sa));
@@ -30,10 +30,7 @@ dns_utils::get_dns_by_ip(const char* ip, int port){
 
     char host[NI_MAXHOST];
     int res = getnameinfo((struct sockaddr*)&sa, sizeof(sa), host, sizeof(host), NULL, 0, NI_NAMEREQD);
-    if (res != 0) {
-        close(sock);
-        return "n/a";
-    }
+    if (res != 0){close(sock);return "n/a";}
 
     close(sock);
     return std::string(host);

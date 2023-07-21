@@ -105,6 +105,7 @@ checking_finds::set_target_at_title(const std::string& title){
 	if (contains_word("error 404 (not found)!!1", title)){return GOOGLE_404;}
 	if (contains_word("ngnix", title)){return NGNIX;}
 	if (contains_word("302 found", title)){return RANDOM;}
+	if (contains_word("axis", title)){return CAMERA_AXIS_Q6055_E;}
 	if (contains_word("301 moved permanently", title)){return RANDOM;}
 
 	return "fuck";
@@ -117,7 +118,8 @@ checking_finds::than_bruteforce(const std::string type){
 		type == CAMERA_BB_SC384 || type == CAMERA_VB_M40 ||
 		type == CAMERA_PANASONIC || type == CAMERA_UA ||
 		type == CAMERA_SONY || type == CAMERA_LG_SMART ||
-		type == CAMERA_EAGLE_EYE || type == CAMERA_QLIK){
+		type == CAMERA_EAGLE_EYE || type == CAMERA_QLIK
+		|| type == CAMERA_AXIS_Q6055_E){
 		return HTTP_BASIC_AUTH_BRUTE;
 	} 
 	return -1;

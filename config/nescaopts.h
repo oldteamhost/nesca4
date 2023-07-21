@@ -1,6 +1,6 @@
 #include <iostream>
 #include <vector>
-#include <map>
+#include <unordered_map>
 
 class arguments_program{
 public:
@@ -16,9 +16,13 @@ public:
 	   const char* source_ip;
 	   int type = 1;
 	   int speed_type = 3;
-	   bool custom_threads_scan;
-	   bool custom_group_max;
-	   int group_size = 20;
+
+	   bool custom_g_rate;
+	   bool custom_g_max;
+	   bool custom_g_min;
+	   int group_rate = 20;
+	   int group_size = 5;
+	   int group_size_max = 1024;
 
 	   bool custom_source_port;
 	   bool custom_ttl;
@@ -38,8 +42,10 @@ public:
        int timeout_ms = 0;
    	   bool custom_recv_timeout_ms;
        int recv_timeout_ms;
+	   bool custom_log_set;
        int log_set = 20;
-       int _threads = 50;
+       int _threads;
+       int _threads_dns = 50;
 
        std::vector<int> ports = {80,443};
 	   bool no_proc;
@@ -102,23 +108,26 @@ public:
 	   int ack_dest_port = 80;
 	   int syn_dest_port = 80;
 
-	   std::map<std::string,double> rtts;
+	   std::unordered_map<std::string,double> rtts;
 
 	   /*Don`t touch*/
-       int fuck_yeah = 0;
 	   int error_fuck = 0;
        bool print_help_menu;
        int threads_temp;
        std::string ports_temp;
+	   double ping_duration = 0.0;
+	   double dns_duration = 0.0;
+	   double scan_duration = 0.0;
+	   double proc_duration = 0.0;
 
-	   std::map<std::string, std::vector<int>> success_target;
-	   std::map<std::string, std::vector<int>> error_target;
-	   std::map<std::string, std::vector<int>> filtered_target;
-	   std::map<std::string, std::vector<int>> open_or_filtered_target;
-	   std::map<std::string, std::vector<int>> no_filtered_target;
-	   std::map<std::string, std::vector<int>> closed_target;
+	   std::unordered_map<std::string, std::vector<int>> success_target;
+	   std::unordered_map<std::string, std::vector<int>> error_target;
+	   std::unordered_map<std::string, std::vector<int>> filtered_target;
+	   std::unordered_map<std::string, std::vector<int>> open_or_filtered_target;
+	   std::unordered_map<std::string, std::vector<int>> no_filtered_target;
+	   std::unordered_map<std::string, std::vector<int>> closed_target;
 
-	   std::map<std::string, std::string> dns_completed;
+	   std::unordered_map<std::string, std::string> dns_completed;
        bool thread_on_port;
 	   bool info_version;
 

@@ -172,7 +172,6 @@ option long_options[] = {
     {"log-set", required_argument, 0, 24},
     {"packet-trace", no_argument, 0, 96},
     {"no-resolv", no_argument, 0, 59},
-	/*60*/
     {"help", no_argument, 0, 'h'},
     {"version", no_argument, 0, 'v'},
     {"ports", no_argument, 0, 'p'},
@@ -187,12 +186,15 @@ option long_options[] = {
     {"PM", no_argument, 0, 87},
     {"source-port", required_argument, 0, 36},
     {"ttl", required_argument, 0, 37},
+
+	/*78*/
     {"max-group", required_argument, 0, 38},
-    {"ma", required_argument, 0, 39},
+    {"min-group", required_argument, 0, 60},
+    {"rate-group", required_argument, 0, 61},
+
     {"max-ping", no_argument, 0, 88},
     {"source-ip", required_argument, 0, 34},
     {"ack", no_argument, 0, 89},
-    {"mg", required_argument, 0, 78},
     {"window", no_argument, 0, 94},
     {"maimon", no_argument, 0, 97},
     {"resol-delay", required_argument, 0, 40},
