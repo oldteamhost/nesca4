@@ -1,5 +1,4 @@
 ![alt text](https://i.imgur.com/YUaJEut.png)
-![alt text](https://i.imgur.com/CIKsOMi.png)
 
 ## About
 Многопоточный сканер портов, с точностью nmap-а, брутфорсом самых популярных протоколов и сканированием DNS.
