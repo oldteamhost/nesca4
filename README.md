@@ -18,7 +18,7 @@
 ```
     sudo apt-get install libcurl4-openssl-dev
     sudo apt install g++ make git cmake libssh-dev
-    git clone https://github.com/oldteamhost/nesca4
+    git clone https://github.com/oldteamhost/nesca-4
     cd nesca4
     cmake .
     make -j12
@@ -26,7 +26,7 @@
 **Arch 2023:**  
 ```
     sudo pacman -S curl cmake
-    git clone https://github.com/oldteamhost/nesca4
+    git clone https://github.com/oldteamhost/nesca-4
     cd nesca4
     cmake .
     make -j12
