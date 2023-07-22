@@ -18,7 +18,6 @@
 #include "../include/other.h"
 #include "../include/files.h"
 
-
 enum log_level{
 	OK,
     INFO,
@@ -40,10 +39,10 @@ struct log_enty{
 class nesca_prints{
 private:
 	/*Дефолтные цвета для лога.*/ 
-    std::string gray_nesca = "\033[38;2;110;110;110m";
+    std::string gray_nesca = "\033[38;2;107;107;107m";
     std::string golder_rod = "\033[38;2;218;165;32m";
-    std::string sea_green = "\033[38;2;60;179;113;4m";
-    std::string green_html = "\033[38;2;0;225;0m";
+    std::string sea_green = "\033[38;2;60;179;96;4m";
+    std::string green_html = "\033[38;2;127;255;0m";
     std::string red_html = "\033[38;2;240;50;55m";
     std::string yellow_html = "\033[38;2;255;255;0m";
     std::string reset_color = "\033[0m";

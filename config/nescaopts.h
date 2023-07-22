@@ -6,6 +6,7 @@ class arguments_program{
 public:
 	   /*Other*/
 	   std::string negatives_path = "resources/negatives.txt";
+	   bool pro_mode;
 
 	   /*Save*/
        bool txt;

@@ -46,7 +46,7 @@
 #include "../ncsock/include/icmpproto.h"
 
 /*Угадайте?*/
-#define VERSION "20230721"
+#define VERSION "20230722"
 
 void 
 help_menu(void);
@@ -186,6 +186,7 @@ option long_options[] = {
     {"PM", no_argument, 0, 87},
     {"source-port", required_argument, 0, 36},
     {"ttl", required_argument, 0, 37},
+    {"pro-mode", no_argument, 0, 78},
 
 	/*78*/
     {"max-group", required_argument, 0, 38},

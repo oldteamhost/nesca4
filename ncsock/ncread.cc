@@ -9,6 +9,8 @@
 #include <netinet/in.h>
 
 #ifdef NESCA
+	#include <mutex>
+	std::mutex packet_trace1;
 	#include "../include/nescalog.h"
 	nesca_prints np3;
 	int
@@ -113,7 +115,9 @@
 		  	unsigned short id = ntohs(iph->id);
 		  	unsigned int seq = ntohl(tcph->seq);
 		  	unsigned int iplen = ntohs(iph->tot_len);
+			packet_trace1.lock();
 		  	np3.nlog_packet_trace("RCVD", "TCP", source_ip, dest_ip, dest_port, source_port, "", iph->ttl, id, tcph->window, seq, iplen);
+			packet_trace1.unlock();
 		  }
 #endif
 		  /*Если пришёл правильный пакет.

@@ -27,6 +27,7 @@
 #include "include/generation.h"
 
 nesca_prints np2;
+std::mutex packet_trace;
 
 int 
 nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_ms){
@@ -93,8 +94,10 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
 	if (ncot->packet_trace == true){
 		std::string source_ip = ncot->source_ip;
 		std::string dest_ip = ip;
+		packet_trace.lock();
 		np2.nlog_packet_trace("SENT", "TCP", source_ip, dest_ip, ncot->source_port, port, "", iph_send->ttl, iph_send->id,
 				WINDOWS_SIZE, ncot->seq, packet_length);
+		packet_trace.unlock();
 	}
 
     close(sock);
