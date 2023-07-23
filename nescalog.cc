@@ -16,7 +16,7 @@ html_output hou;
 
 std::string
 nesca_prints::html_to_ansi_color(const std::string& html_color){
-	if (html_color.size() != 7 || html_color[0] != '#'){return "";}
+	if (html_color.size() != 7 || html_color[0] != '#') {return "";}
     std::istringstream stream(html_color.substr(1));
 
     /*Преобразуем значения к диапазону [0, 255]*/
@@ -29,13 +29,16 @@ nesca_prints::html_to_ansi_color(const std::string& html_color){
 }
 
 std::string 
-nesca_prints::main_nesca_out(std::string opt, std::string result, int mode, std::string opt1, std::string opt2,
-                                        std::string result1, std::string result2, std::string rtt, std::string type, std::string protocol){
+nesca_prints::main_nesca_out(const std::string& opt, const std::string& result, const int mode, const std::string& opt1, const std::string& opt2,
+                                        const std::string& result1, const std::string& result2, const std::string& rtt,
+										std::string type, std::string protocol){
 	std::string temp, temp_file;
-	char dots[3] = {':', ':', ':'};
-    if (opt.empty()){dots[0] = ' '; }
-    if (opt1.empty()){dots[1] = ' ';}
-    if (opt2.empty()){dots[2] = ' ';}
+	char dots[3] = 
+	{':', ':', ':'};
+
+    if (opt.empty())  {dots[0] = ' '; }
+    if (opt1.empty()) {dots[1] = ' ';}
+    if (opt2.empty()) {dots[2] = ' ';}
 
     if (mode == 0) {
         temp = green_html + print_get_time(get_time()) + "[" + opt + "]" + dots[0] + result + reset_color;
@@ -58,7 +61,7 @@ nesca_prints::main_nesca_out(std::string opt, std::string result, int mode, std:
         temp_file = "[>][" + opt + "]" + dots[0] +
             result + " " + opt1 + dots[1] + " " + result1 + " " + opt2 + dots[2] + " " + result2;
 
-		if (html_save){hou.html_add_result(html_file_path,get_time(), result, result, "RTT", rtt+"ms", opt2, result2, opt1, result1, "SERVICE", protocol);}
+		if (html_save) {hou.html_add_result(html_file_path,get_time(), result, result, "RTT", rtt+"ms", opt2, result2, opt1, result1, "SERVICE", protocol);}
     }
     else if (mode == 4) {
         temp = gray_nesca + print_get_time(get_time()) + "[" + opt + "]" + dots[0] + reset_color +
@@ -85,7 +88,7 @@ nesca_prints::main_nesca_out(std::string opt, std::string result, int mode, std:
         temp_file = "-> " + result + " " + opt + " " + result1;
 
     }
-    if (save_file){write_line(file_path_save, temp_file + "\n");}
+    if (save_file) {write_line(file_path_save, temp_file + "\n");}
 
 	return temp;
 }
@@ -96,7 +99,7 @@ nesca_prints::nlog_packet_trace(std::string action, std::string protocol, std::s
 				int seq, int iplen){
 
 	/*Ужас но подругому не сделать.*/
-	std::string temp = green_html + "-> " + reset_color +
+	const std::string temp = green_html + "-> " + reset_color +
             green_html + "  " + action + reset_color + green_html + "  " + protocol + "  " + reset_color +
             green_html + source_ip + ":" + std::to_string(source_port) + " > " + dest_ip + ":" +
 			std::to_string(dest_port) + reset_color + golder_rod + message + reset_color +
@@ -106,7 +109,7 @@ nesca_prints::nlog_packet_trace(std::string action, std::string protocol, std::s
 
 
     if (save_file){
-		std::string temp_file = "-> " + action + "  " + protocol + "  " + source_ip + ":" + std::to_string(source_port) + " > " + dest_ip + ":" +
+		const std::string temp_file = "-> " + action + "  " + protocol + "  " + source_ip + ":" + std::to_string(source_port) + " > " + dest_ip + ":" +
 				std::to_string(dest_port) + message + "  TTL  " + std::to_string(ttl) + "  ID  " + std::to_string(id) + "  WINDOW  " +
 				std::to_string(win) +"  IPLEN  " + std::to_string(iplen) + "  SEQ  " + std::to_string(seq);
 
@@ -130,7 +133,7 @@ nesca_prints::disable_colors(void){
 
 std::string 
 nesca_prints::print_get_time(const char* time){
-    std::string temp = "[" + std::string(time) + "]";
+    const std::string temp = "[" + std::string(time) + "]";
     return temp;
 }
 
@@ -153,29 +156,29 @@ nesca_prints::import_color_scheme(const std::string& file_name, std::map<std::st
 }
 
 void
-nesca_prints::golder_rod_on(void){std::cout << golder_rod;}
+nesca_prints::golder_rod_on(void) {std::cout << golder_rod;}
 
 void 
-nesca_prints::sea_green_on(void){std::cout << sea_green;}
+nesca_prints::sea_green_on(void) {std::cout << sea_green;}
 
 void 
-nesca_prints::reset_colors(void){std::cout << reset_color;}
+nesca_prints::reset_colors(void) {std::cout << reset_color;}
 
 void
-nesca_prints::gray_nesca_on(void){std::cout << gray_nesca;}
+nesca_prints::gray_nesca_on(void) {std::cout << gray_nesca;}
 
 void
-nesca_prints::yellow_html_on(void){std::cout << yellow_html;}
+nesca_prints::yellow_html_on(void) {std::cout << yellow_html;}
 
 void 
-nesca_prints::green_html_on(void){std::cout << green_html;}
+nesca_prints::green_html_on(void) {std::cout << green_html;}
 
 void 
-nesca_prints::red_html_on(void){std::cout << red_html;}
+nesca_prints::red_html_on(void) {std::cout << red_html;}
 
 void
 nesca_prints::custom_color_on(const std::string& html_color){
-	if (colors == true){std::cout << html_to_ansi_color(html_color);}
+	if (colors == true) {std::cout << html_to_ansi_color(html_color);}
 }
 
 int 
@@ -183,7 +186,7 @@ nesca_prints::processing_color_scheme(const std::map<std::string, std::string>& 
 	for (const auto& kvp : config_values) {
         if (kvp.first == "auth") {
 			gray_nesca = html_to_ansi_color(kvp.second);
-        } else if (kvp.first == "title") {
+        }else if (kvp.first == "title") {
 			golder_rod = html_to_ansi_color(kvp.second);
         } else if (kvp.first == "link") {
 			sea_green = html_to_ansi_color(kvp.second);
@@ -202,25 +205,27 @@ void
 nesca_prints::nlog_trivial(const std::string& message){
     std::string log = print_get_time(get_time()) + "[OK]:" + message;
     std::cout << green_html << log << reset_color;
-    if (save_file)write_line(file_path_save, log);
+
+    if (save_file) {write_line(file_path_save, log);}
 }
 
 void 
 nesca_prints::nlog_error(const std::string& message){
-    std::string log = print_get_time(get_time()) + "[ERROR]:" + message;
+    const std::string log = print_get_time(get_time()) + "[ERROR]:" + message;
     std::cout << red_html << log << reset_color;
-    if (save_file)write_line(file_path_save, log);
+
+    if (save_file) {write_line(file_path_save, log);}
 }
 
 void
 nesca_prints::nlog_custom(const std::string& auth, std::string message, int color){
-    std::string log = print_get_time(get_time()) + "[" + auth + "]:" + message;
-
-    if (color == 0){std::cout << green_html;}
-    else if (color == 1){std::cout << yellow_html;}
-    else if (color == 2){std::cout << red_html;}
-    std::cout << log << reset_color;
-
+    const std::string log = print_get_time(get_time()) + "[" + auth + "]:" + message;
     if (save_file)write_line(file_path_save, log);
+
+    if      (color == 0) {std::cout << green_html;}
+    else if (color == 1) {std::cout << yellow_html;}
+    else if (color == 2) {std::cout << red_html;}
+
+    std::cout << log << reset_color;
 }
 

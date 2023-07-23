@@ -133,7 +133,7 @@ service_probes::http_probe(const std::string& ip, const int port){
     sockaddr_in server_address{};
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(port);
-    if (inet_pton(AF_INET, ip.c_str(), &(server_address.sin_addr)) <= 0){close(socket_id);return false;}
+    if (inet_pton(AF_INET, ip.c_str(), &(server_address.sin_addr)) <= 0) {close(socket_id);return false;}
     if (connect(socket_id, reinterpret_cast<sockaddr*>(&server_address), sizeof(server_address)) < 0) {close(socket_id);return false;}
 
     const std::string http_request = "GET / HTTP/1.1\r\nHost: " + ip + "\r\nConnection: close\r\n\r\n";

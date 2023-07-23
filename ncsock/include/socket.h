@@ -23,9 +23,6 @@
 extern "C" {
 #endif
 
-#define ERROR -1
-#define SUCCESS 0
-
 /*Set flag timeout on socket, in ms.*/
 int 
 set_socket_timeout(int sock, int timeout_ms, int on_send, int on_recv);

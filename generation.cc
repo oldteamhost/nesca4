@@ -17,7 +17,7 @@ generate_ipv6(int num_octets){
     std::stringstream ss;
     for (int i = 0; i < num_octets; i++) {
         ss << std::hex << distrib(gen);
-        if (i < num_octets - 1) ss << ":";
+        if (i < num_octets - 1) {ss << ":";}
     }
     std::string ip_str = ss.str();
     std::strcpy(ip, ip_str.c_str());
@@ -34,7 +34,7 @@ generate_ipv4(void){
     std::stringstream ss;
     for (int i = 0; i < 4; i++) {
         ss << distrib(gen);
-        if (i < 3) ss << ".";
+        if (i < 3) {ss << ".";}
     }
     std::string ip_str = ss.str();
     std::strcpy(ip, ip_str.c_str());
@@ -47,7 +47,7 @@ generate_random_str(int len, std::string dictionary){
     std::random_device rd;
     std::mt19937 engine(rd());
     std::uniform_int_distribution<int> dist(0, dictionary.length() - 1);
-    for (int i = 0; i < len; i++){result += dictionary[dist(engine)];}
+    for (int i = 0; i < len; i++) {result += dictionary[dist(engine)];}
     return result;
 }
 

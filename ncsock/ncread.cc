@@ -6,12 +6,12 @@
 */
 
 #include "include/ncread.h"
-#include <netinet/in.h>
 
 #ifdef NESCA
 	#include <mutex>
-	std::mutex packet_trace1;
 	#include "../include/nescalog.h"
+
+	std::mutex packet_trace1;
 	nesca_prints np3;
 	int
 	ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool debug,
@@ -29,7 +29,7 @@
 
      /*Создание сокета.*/
     int sock = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
-    if (sock == -1){return SOCKET_ERROR;}
+    if (sock == -1) {return SOCKET_ERROR;}
 
     /*Устанока таймаута на recvfrom.*/
     struct pollfd poll_fds[1];
@@ -46,13 +46,19 @@
 	   return POLL_TIMEOUT_EXITED;
     }
 
+#ifdef NESCA
 	/*Ещё один таймаут, иногда poll не работает просто.*/
+	int result = set_socket_timeout(sock, recv_timeout_ms, 1, 1);
+
+#else
 	struct timeval timeout;
 	timeout.tv_sec = recv_timeout_ms / 1000;
 	timeout.tv_usec = (recv_timeout_ms % 1000) * 1000;
 	int result = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+#endif
+
 	if (result < 0) {
-	   /*Вышел таймаут на recvfrom.*/
+	   /*Вышел таймаут.*/
     	close(sock);
     	return -1;
 	}
@@ -87,7 +93,7 @@
 	   /*Сравнение айпи сходиться ли он с тем на который мы отпаравляли.
 	    * Это нужно для отброса других пакетов.*/
 	   if (source.sin_addr.s_addr != dest.s_addr){
-		  if (debug){std::cout << "Got the wrong package.\n";}
+		  if (debug) {std::cout << "Got the wrong package.\n";}
 
 		  /*Тут может сработать таймаут на бесокнечный цикл.*/
 		  auto current_time = std::chrono::steady_clock::now();

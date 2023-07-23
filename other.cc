@@ -28,11 +28,11 @@ std::string get_current_date() {
     std::time_t current_time = std::time(nullptr);
     std::tm* local_time = std::localtime(&current_time);
     
-    int year = local_time->tm_year + 1900;
-    int month = local_time->tm_mon + 1;
-    int day = local_time->tm_mday;
+    const int year = local_time->tm_year + 1900;
+    const int month = local_time->tm_mon + 1;
+    const int day = local_time->tm_mday;
     
-    std::string formatted_date = std::to_string(year) + "-" +
+    const std::string formatted_date = std::to_string(year) + "-" +
                                 (month < 10 ? "0" : "") + std::to_string(month) + "-" +
                                 (day < 10 ? "0" : "") + std::to_string(day);
     
@@ -42,9 +42,7 @@ std::string get_current_date() {
 bool
 check_ansi_support(void){
     const char* envValue = std::getenv("TERM");
-    if (envValue == nullptr){
-        return false;
-    }
+    if (envValue == nullptr) {return false;}
 
     return std::string(envValue).find("xterm") != std::string::npos;
 }
@@ -64,9 +62,7 @@ write_ports(std::string mode){
         return std::tolower(c);
     });
     if (mode == "all"){
-        for (int i = 0; i < 65536; i++) {
-            temp.push_back(i);
-        }
+        for (int i = 0; i < 65536; i++) {temp.push_back(i);}
         return temp;
     }
     else if (mode == "nesca" || mode == "nesca3"){
@@ -101,6 +97,7 @@ write_ports(std::string mode){
         temp = {80,81,8080,8081,8888,8008,21,22,8000,37777};
         return temp;
     }
+
     return {-1};
 }
 
@@ -127,12 +124,9 @@ parse_range(const std::string& range_string){
         }
         ++end;
     }
-    if (!found_dash) {
-        return result;
-    }
-    for (int i = start; i <= end; ++i) {
-        result.push_back(i);
-    }
+    if (!found_dash) {return result;}
+    for (int i = start; i <= end; ++i) {result.push_back(i);}
+
     return result;
 }
 
@@ -150,7 +144,7 @@ dns_or_ip(std::string &node){
 
 int
 write_temp(const std::string& data){
-	std::vector<std::string> temp = write_file("resources/data");
+	const std::vector<std::string> temp = write_file("resources/data");
 	for (auto& str : temp) {
         if (str == data) {return -1;}
     }
@@ -158,8 +152,8 @@ write_temp(const std::string& data){
 		std::filesystem::path file_path("resources/data");
         std::filesystem::remove(file_path);
 	}
-	int write = write_line("resources/data", data + "\n");
-	if (write != 0){return -1;}
+	const int write = write_line("resources/data", data + "\n");
+	if (write != 0) {return -1;}
 
 	return 0;
 
@@ -169,18 +163,15 @@ std::string
 parse_word(const std::vector<std::string>& options,
 		   const std::string& search_word){
 	for (const std::string& option : options) {
-		if (option == search_word) {
-            return option;
-        }
+		if (option == search_word) {return option;}
     }
     return "failed";
 }
 
 std::string
-to_lower_case(const std::string& str) {
-    std::string result(str);
-    std::transform(result.begin(), result.end(), result.begin(), [](unsigned char c){return std::tolower(c);});
-    return result;
+to_lower_case(std::string str){
+    std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c) {return std::tolower(c);});
+    return str;
 }
 
 size_t 

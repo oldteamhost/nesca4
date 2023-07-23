@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <math.h>
 #include <string>
+#include <vector>
 
 struct nesca_scan_opts ncopts;
 const char* short_options = "hl:vd:T:p:aS:";
@@ -69,8 +70,8 @@ int main(int argc, char** argv){
 
 	/*Начало DNS сканирования.*/
 	if (argp.dns_scan) {
-    	argp.timeout_ms = 100;
     	std::mutex mtx;
+    	argp.timeout_ms = 100;
     	std::cout << np.main_nesca_out("NESCA4", "Starting " + std::to_string(argp._threads_dns) + " threads...", 5, "on", "", "DNS", "", "") << std::endl << std::endl;
     	thread_pool dns_pool(argp._threads_dns);
 
@@ -150,8 +151,12 @@ int main(int argc, char** argv){
         else {
 			argp.ip_scan = true;
             argp.dns = split_string_string(argv[optind], ',');        
-            if (dns_or_ip(argp.dns[0])){argp.result = convert_dns_to_ip(argp.dns);}
-            else {argp.result = split_string_string(argv[optind], ',');}
+            if (dns_or_ip(argp.dns[0])){
+				argp.result = convert_dns_to_ip(argp.dns);
+			}
+            else {
+				argp.result = split_string_string(argv[optind], ',');
+			}
         }
     }
     if (argp.random_ip){
@@ -406,8 +411,18 @@ int main(int argc, char** argv){
 				}
 				else {std::cout << std::endl;}
 				standart_mode_fix = false;
+
+				std::string result;
 		  		std::cout << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", argp.dns_completed[ip], formatted_time+"ms","") << std::endl;
 	   			print_results(ip);
+
+				std::vector<std::string> all_ips = dus.get_all_ips_by_dns(argp.dns_completed[ip].c_str());
+				all_ips.erase(std::remove(all_ips.begin(), all_ips.end(), ip), all_ips.end());
+    			for (size_t i = 0; i < all_ips.size(); ++i) {
+        			result += all_ips[i];
+        			if (i != all_ips.size() - 1){result += ", ";}
+    			}
+				if (result.size() > 1){std::cout << np.main_nesca_out("OTHER", result, 5, "", "", "", "","") << std::endl;}
 			}
         }
 		/*Успешные цели.*/
@@ -530,12 +545,10 @@ int errors_files = 0;
 
 void check_files(const char* path, const char* path1){
     if (!check_file(path)){
-		std::cout << std::endl;
-        np.nlog_error(std::string(path) + " (" + std::to_string(get_count_lines(path)) + ") entries");
+        np.nlog_error(std::string(path) + " (" + std::to_string(get_count_lines(path)) + ") entries\n");
 		errors_files++;
     }else if (!check_file(path1)){
-		std::cout << std::endl;
-		np.nlog_error(std::string(path1) + " (" + std::to_string(get_count_lines(path1)) + ") entries");
+		np.nlog_error(std::string(path1) + " (" + std::to_string(get_count_lines(path1)) + ") entries\n");
 		errors_files++;
     }
 }
@@ -577,6 +590,7 @@ checking_default_files(void){
     check_files(argp.path_rtsp_login.c_str(),argp.path_rtsp_pass.c_str());
     check_files(argp.path_smtp_login.c_str(),argp.path_smtp_pass.c_str());
     check_files(argp.path_hikvision_login.c_str(),argp.path_hikvision_pass.c_str());
+    check_files(argp.path_rvi_login.c_str(),argp.path_rvi_pass.c_str());
 
 	/*Ну чё там.*/
     if (errors_files == 0){
@@ -584,7 +598,7 @@ checking_default_files(void){
 		   std::cout << np.main_nesca_out("NESCA4", "BRUTEFORCE_DATA", 5, "status", "", "OK","","") << std::endl;
 	   }
 	}
-    else {std::cout << np.main_nesca_out("NESCA4", "BRUTEFORCE_DATA", 5, "status", "ERRORS", "FAILED", std::to_string(errors_files),"") << std::endl;}
+    else {std::cout << std::endl << np.main_nesca_out("NESCA4", "BRUTEFORCE_DATA", 5, "status", "ERRORS", "FAILED", std::to_string(errors_files),"") << std::endl;}
 }
 
 void
@@ -808,8 +822,8 @@ void rtsp_strategy::handle(const std::string& ip, const std::string& result, con
 void http_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
 		const std::string& protocol, int port, arguments_program& argp, nesca_prints& np){
 	/*Получение заголовков и кода страницы.*/
-    std::string html = to_lower_case(send_http_request(ip, port));
     std::string redirect;
+    std::string html = to_lower_case(send_http_request(ip, port));
     std::string default_result = "http://" + ip + ":" + std::to_string(port) + "/";
 
 	/*Получение перенаправления.*/
@@ -817,7 +831,7 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
 
 	/*Получение заголовка.*/
     std::string http_title_result = get_http_title(html);
-   	if (http_title_result == HTTPTITLE_ERROR){http_title_result = get_http_title_pro(ip);}
+   	if (http_title_result == HTTPTITLE_ERROR || redirect.size() > 1){http_title_result = get_http_title_pro(ip);}
 
 	/*Сравнение списка negatives*/
 	for (const auto& n : nn.nesca_negatives){
@@ -890,7 +904,7 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
 			np.yellow_html_on();
 			std::cout << redirect + "\n";
 			np.reset_colors();
-			if (np.save_file){write_line(np.file_path_save, "[^][REDIRT]:" + redirect + "\n");}
+			if (np.save_file){write_line(np.file_path_save, "[^][REDIRT]:" + redirect);}
         }
     }
 
@@ -949,7 +963,8 @@ processing_tcp_scan_ports(std::string ip, int port, int result){
             else if (port == 443){
 			 	print_port_state(PORT_OPEN, port, "HTTPS");
 				ports_strategy_ = std::make_unique<https_strategy>();
-            }else if (port == 25){
+            }
+			else if (port == 25){
 			 	print_port_state(PORT_OPEN, port, "SMTP");
 				ports_strategy_ = std::make_unique<smtp_strategy>();
 		  	}
@@ -1149,27 +1164,36 @@ parse_args(int argc, char** argv){
                std::transform(what[0].begin(), what[0].end(), what[0].begin(), [](unsigned char c) {
                     return std::tolower(c);
                });
-               const char* what_convert = what[1].c_str();
-               if (what[0] == "ftp"){
+               const char* what_convert = what[0].c_str();
+               if (what[1] == "ftp"){
                     argp.path_ftp_login = what_convert;
                }
-               else if (what[0] == "sftp"){
+               else if (what[1] == "sftp"){
                    argp.path_sftp_login = what_convert;
                }
-               else if (what[0] == "rtsp"){
+               else if (what[1] == "rtsp"){
                    argp.path_rtsp_login = what_convert;
                }
-               else if (what[0] == "http"){
+               else if (what[1] == "http"){
                    argp.path_http_login = what_convert;
                }
-               else if (what[0] == "smtp"){
-			    argp.path_smtp_login = what_convert;
+               else if (what[1] == "smtp"){
+			       argp.path_smtp_login = what_convert;
                }
-               else if (what[0] == "hikvision"){
+               else if (what[1] == "hikvision"){
                    argp.path_hikvision_login = what_convert;
                }
-               else if (what[0] == "rvi"){
+               else if (what[1] == "rvi"){
                    argp.path_rvi_login = what_convert;
+               }
+               else if (what[1] == "all"){
+                   argp.path_rvi_login = what_convert;
+                   argp.path_sftp_login = what_convert;
+                   argp.path_ftp_login = what_convert;
+                   argp.path_http_login = what_convert;
+                   argp.path_rtsp_login = what_convert;
+			       argp.path_smtp_login = what_convert;
+                   argp.path_hikvision_login = what_convert;
                }
                else {
                    break;
@@ -1183,27 +1207,36 @@ parse_args(int argc, char** argv){
                std::transform(what[0].begin(), what[0].end(), what[0].begin(), [](unsigned char c) {
                     return std::tolower(c);
                });
-               const char* what_convert = what[1].c_str();
-               if (what[0] == "ftp"){
+               const char* what_convert = what[0].c_str();
+               if (what[1] == "ftp"){
                     argp.path_ftp_pass = what_convert;
                }
-               else if (what[0] == "sftp"){
+               else if (what[1] == "sftp"){
                    argp.path_sftp_pass = what_convert;
                }
-               else if (what[0] == "rtsp"){
+               else if (what[1] == "rtsp"){
                    argp.path_rtsp_pass = what_convert;
                }
-               else if (what[0] == "http"){
+               else if (what[1] == "http"){
                    argp.path_http_pass = what_convert;
                }
-               else if (what[0] == "smtp"){
-			    argp.path_smtp_pass = what_convert;
+               else if (what[1] == "smtp"){
+			       argp.path_smtp_pass = what_convert;
                }
-               else if (what[0] == "hikvision"){
+               else if (what[1] == "hikvision"){
                    argp.path_hikvision_pass = what_convert;
                }
-               else if (what[0] == "rvi"){
+               else if (what[1] == "rvi"){
                    argp.path_rvi_pass = what_convert;
+               }
+               else if (what[1] == "all"){
+                   argp.path_sftp_pass = what_convert;
+                   argp.path_rvi_pass = what_convert;
+                   argp.path_ftp_pass = what_convert;
+			       argp.path_smtp_pass = what_convert;
+                   argp.path_rtsp_pass = what_convert;
+                   argp.path_http_pass = what_convert;
+                   argp.path_hikvision_pass = what_convert;
                }
                else {
                    break;
@@ -1590,20 +1623,20 @@ parse_args(int argc, char** argv){
 }
 void
 init_bruteforce(void){
-    argp.ftp_logins = write_file(argp.path_ftp_login);
-    argp.ftp_passwords = write_file(argp.path_ftp_pass);
-    argp.sftp_logins = write_file(argp.path_sftp_login);
-    argp.sftp_passwords = write_file(argp.path_sftp_pass);
-    argp.rtsp_logins = write_file(argp.path_rtsp_login);
-    argp.rtsp_passwords = write_file(argp.path_rtsp_pass);
-    argp.http_logins = write_file(argp.path_http_login);
-    argp.http_passwords = write_file(argp.path_http_pass);
-    argp.hikvision_logins = write_file(argp.path_hikvision_login);
+    argp.ftp_logins          = write_file(argp.path_ftp_login);
+    argp.ftp_passwords       = write_file(argp.path_ftp_pass);
+    argp.sftp_logins         = write_file(argp.path_sftp_login);
+    argp.sftp_passwords      = write_file(argp.path_sftp_pass);
+    argp.rtsp_logins         = write_file(argp.path_rtsp_login);
+    argp.rtsp_passwords      = write_file(argp.path_rtsp_pass);
+    argp.http_logins         = write_file(argp.path_http_login);
+    argp.http_passwords      = write_file(argp.path_http_pass);
+    argp.hikvision_logins    = write_file(argp.path_hikvision_login);
     argp.hikvision_passwords = write_file(argp.path_hikvision_pass);
-    argp.smtp_logins = write_file(argp.path_smtp_login);
-    argp.smtp_passwords = write_file(argp.path_smtp_pass);
-    argp.rvi_logins = write_file(argp.path_rvi_login);
-    argp.rvi_passwords = write_file(argp.path_rvi_pass);
+    argp.smtp_logins         = write_file(argp.path_smtp_login);
+    argp.smtp_passwords      = write_file(argp.path_smtp_pass);
+    argp.rvi_logins          = write_file(argp.path_rvi_login);
+    argp.rvi_passwords       = write_file(argp.path_rvi_pass);
 }
 
 std::string 

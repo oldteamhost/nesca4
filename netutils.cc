@@ -8,19 +8,18 @@
 #include "include/netutils.h"
 #include <sys/socket.h>
 #include <unistd.h>
+#include "ncsock/include/socket.h"
 
 std::string
 dns_utils::get_dns_by_ip(const char* ip, int port){
 	struct in_addr addr;
-    if (inet_pton(AF_INET, ip, &addr) != 1){return "n/a";}
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == -1){return "n/a";}
+    if (inet_pton(AF_INET, ip, &addr) != 1) {return "n/a";}
 
-    struct timeval timeout;
-	int timeout_ms = 600;
-	timeout.tv_sec = timeout_ms / 1000;
-    timeout.tv_usec = (timeout_ms % 1000) * 1000;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock == -1) {return "n/a";}
+
+	const int timeout_ms = 600;
+	set_socket_timeout(sock, 600, 1, 1);
 
     struct sockaddr_in sa;
     memset(&sa, 0, sizeof(sa));
@@ -39,14 +38,15 @@ dns_utils::get_dns_by_ip(const char* ip, int port){
 const char* 
 dns_utils::get_ip_by_dns(const char* dns){
     int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == EOF){return "n/a";}
+    if (sock == EOF) {return "n/a";}
 
     struct addrinfo hints, *res;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     int status = getaddrinfo(dns, NULL, &hints, &res);
-    if (status != 0){close(sock);return "n/a";}
+
+    if (status != 0) {close(sock);return "n/a";}
 
     struct sockaddr_in *addr = (struct sockaddr_in *)res->ai_addr;
     const char* ip = inet_ntoa(addr->sin_addr);
@@ -58,17 +58,13 @@ dns_utils::get_ip_by_dns(const char* dns){
 
 std::vector<std::string>
 dns_utils::get_all_ips_by_dns(const char* dns){
-    std::vector<std::string> ip_addresses;
+	std::vector<std::string> ip_addresses;
     struct addrinfo* result;
 
     int status = getaddrinfo(dns, nullptr, nullptr, &result);
-    if (status != 0) {
-        std::cerr << "getaddrinfo error: " << gai_strerror(status) << std::endl;
-        return ip_addresses;
-    }
+    if (status != 0) {return ip_addresses;}
 
     struct addrinfo* current = result;
-
     while (current != nullptr) {
         char ip_address[INET6_ADDRSTRLEN];
         void* addr;
@@ -87,11 +83,10 @@ dns_utils::get_all_ips_by_dns(const char* dns){
         if (std::find(ip_addresses.begin(), ip_addresses.end(), ip_str) == ip_addresses.end()) {
             ip_addresses.push_back(ip_str);
         }
-
         current = current->ai_next;
     }
-    freeaddrinfo(result);
 
+    freeaddrinfo(result);
     return ip_addresses;
 }
 
@@ -102,23 +97,23 @@ ip_utils::get_local_ip(){
     socklen_t namelen;
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == EOF){return "-1";}
+    if (sock == EOF) {return "-1";}
 
     const char *kGoogleDnsIp = "8.8.8.8";
-    int dns_port = 53;
+    const int dns_port             = 53;
 
     memset(&serv, 0, sizeof(serv));
     serv.sin_family = AF_INET;
     serv.sin_addr.s_addr = inet_addr(kGoogleDnsIp);
     serv.sin_port = htons(dns_port);
 
-    int err = connect(sock, (const struct sockaddr*)&serv, sizeof(serv));
-    if (err < 0){close(sock);return "-1";}
+    const int err = connect(sock,(const struct sockaddr*)&serv, sizeof(serv));
+    if (err < 0) {close(sock);return "-1";}
 
     struct sockaddr_in name;
     namelen = sizeof(name);
     memset(&name, 0, sizeof(name));
-    if (getsockname(sock, (struct sockaddr*)&name, &namelen)){close(sock);return "-1";}
+    if (getsockname(sock,(struct sockaddr*)&name, &namelen)){close(sock);return "-1";}
 
     const char *p = inet_ntop(AF_INET, &name.sin_addr, buffer, sizeof(buffer));
     close(sock);

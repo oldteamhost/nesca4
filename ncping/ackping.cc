@@ -31,6 +31,7 @@ tcp_ack_ping(const char* ip, const char* source_ip, int dest_port, int source_po
 	struct timespec start_time;
     clock_gettime(CLOCK_MONOTONIC, &start_time);
 	int read = ncread(ip, timeout_ms, &buffer, 0, dest_port, source_port);
+
 	/*Не дождалась пакета.*/
 	if (read != SUCCESS_READ){
 		fuck_ack.lock();
@@ -44,7 +45,7 @@ tcp_ack_ping(const char* ip, const char* source_ip, int dest_port, int source_po
 	/*Ответ получен, теперь проверяем его.*/
     struct iphdr *iph = (struct iphdr*)buffer;
     unsigned short iphdrlen = (iph->ihl) * 4;
-    if (iph->protocol != 6){return PORT_ERROR;}
+    if (iph->protocol != 6) {return PORT_ERROR;}
     struct tcphdr *tcph = (struct tcphdr*)((char*)buffer + iphdrlen);
 
 	/*Если ответило флагом RST значит спалился.*/

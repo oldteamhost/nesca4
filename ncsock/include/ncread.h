@@ -37,6 +37,8 @@
 #define IP_HEADER_LEN_ERROR		 -7
 
 #ifdef NESCA
+	#include "socket.h"
+	#include "../../include/nescalog.h"
 	int
 	ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool debug,
 		  int dest_port = 0, int source_port = 0, bool packet_trace = false);

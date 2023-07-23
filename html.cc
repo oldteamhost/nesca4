@@ -11,14 +11,14 @@
 
 int 
 html_output::html_main_init(const std::string& filepath){
-	int write = write_line(filepath, style_nesca3);
-	if (write != 0){return -1;}
+	const int write = write_line(filepath, style_nesca3);
+	if (write != 0) {return -1;}
 	return 0;
 }
 
 int 
 html_output::html_pre_init(const std::string& filepath){
-	std::string data_html = R"(
+	const std::string data_html = R"(
 	<br><br>
 	<hr>
       <center>
@@ -29,8 +29,9 @@ html_output::html_pre_init(const std::string& filepath){
 	<hr>
 	<br><br>
 	)";
-	int write = write_line(filepath, data_html);
-	if (write != 0){return -1;}
+
+	const int write = write_line(filepath, data_html);
+	if (write != 0) {return -1;}
 	return 0;
 }
 
@@ -39,13 +40,15 @@ html_output::html_add_result(const std::string& filepath, const std::string& tim
 		const std::string& opt, const std::string& res, const std::string& opt1, const std::string& res1,
 		const std::string& opt2, const std::string& res2, const std::string& opt3, const std::string& res3){
 
-	char dots[4] = {':', ':', ':', ':'};
-	if (res.empty()){dots[0] = ' ';}
-	if (res1.empty()){dots[1] = ' ';}
-	if (res2.empty()){dots[2] = ' ';}
-	if (res2.empty()){dots[3] = ' ';}
+	char dots[4] = 
+	{':', ':', ':', ':'};
 
-	std::string data_html = R"(
+	if (res.empty())  {dots[0] = ' ';}
+	if (res1.empty()) {dots[1] = ' ';}
+	if (res2.empty()) {dots[2] = ' ';}
+	if (res2.empty()) {dots[3] = ' ';}
+
+	const std::string data_html = R"(
 	<div id="ipd" style="color:#707070;text-decoration: none;">
 	[)" + time + R"(] 
 	<span id="hostSpan"><a href=")" + href + R"(" target="_blank">
@@ -56,7 +59,7 @@ html_output::html_add_result(const std::string& filepath, const std::string& tim
 	+ opt2 + dots[3] + R"( <font color=GoldenRod>)" + res2 + R"(</font>
 	</div>)";
 
-	int write = write_line(filepath, data_html);
-	if (write != 0){return -1;}
+	const int write = write_line(filepath, data_html);
+	if (write != 0) {return -1;}
 	return 0;
 }

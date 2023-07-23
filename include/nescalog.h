@@ -64,8 +64,9 @@ private:
 
 
 		std::string /*Главный лог.*/
-		main_nesca_out(std::string opt, std::string result, int mode, std::string opt1, std::string opt2,
-                        std::string result1, std::string result2, std::string rtt, std::string type = "n/a", std::string protocol = "n/a");
+        main_nesca_out(const std::string& opt, const std::string& result, const int mode, const std::string& opt1, const std::string& opt2,
+                                        const std::string& result1, const std::string& result2, const std::string& rtt,
+										std::string type = "n/", std::string protocol = "a");
 
 		/*Другие логи.*/
         void

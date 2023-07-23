@@ -129,6 +129,8 @@ public:
 	   std::unordered_map<std::string, std::vector<int>> closed_target;
 
 	   std::unordered_map<std::string, std::string> dns_completed;
+	   std::unordered_map<std::string, std::string> http_requests;
+
        bool thread_on_port;
 	   bool info_version;
 

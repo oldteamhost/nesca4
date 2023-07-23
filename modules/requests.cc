@@ -26,7 +26,7 @@ send_http_request(const std::string& node, int port) {
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2L);
         CURLcode res = curl_easy_perform(curl);
-        if (res != CURLE_OK){return "";}
+        if (res != CURLE_OK) {return "";}
 
         curl_easy_cleanup(curl);
         curl_global_cleanup();

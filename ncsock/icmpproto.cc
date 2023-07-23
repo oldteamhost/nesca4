@@ -24,6 +24,7 @@
 #include <mutex>
 #include <unistd.h>
 #include "include/icmpproto.h"
+#include "include/socket.h"
 
 std::mutex fuck_icmp;
 
@@ -67,7 +68,7 @@ send_icmp_packet(struct sockaddr_in* addr, int type,
 	strncpy(icmp.magic, MAGIC, MAGIC_LEN);
 	icmp.checksum = htons(calculate_checksum((unsigned char*)&icmp, sizeof(icmp)));
 
-	int bytes = sendto(fd, &icmp, sizeof(icmp), 0,(struct sockaddr*)addr, sizeof(*addr));
+	const int bytes = sendto(fd, &icmp, sizeof(icmp), 0,(struct sockaddr*)addr, sizeof(*addr));
     if (bytes == EOF) {
 		close(fd);
         return -1;
@@ -87,14 +88,9 @@ recv_icmp_packet(const char* dest_ip, int timeout_ms, int type,
     struct sockaddr_in peer_addr;
 	memset(&peer_addr, 0, sizeof(peer_addr));
 
-	/*Установка таймаута на сокет.
-	 * Для RAW IMCP протокола это работает, я из-за этого потратил 2 недели :(*/
-	struct timeval timeout;
-	timeout.tv_sec = timeout_ms / 1000;
-	timeout.tv_usec = (timeout_ms % 1000) * 1000;
-	int result = setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+	/*Установка таймаута на сокет*/
+	int result = set_socket_timeout(fd, timeout_ms, 1, 1);
 	if (result < 0) {
-    	close(fd);
     	return -1;
 	}
 

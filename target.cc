@@ -77,8 +77,7 @@ split_string_int(const std::string& str, char delimiter){
     std::vector<int> result;
     std::stringstream ss(str);
     std::string token;
-    while (std::getline(ss, token, delimiter))
-    {
+    while (std::getline(ss, token, delimiter)){
         result.push_back(std::stoi(token));
     }
     return result;
@@ -89,8 +88,7 @@ split_string_string(const std::string& str, char delimiter){
     std::vector<std::string> result;
     size_t pos = 0, found;
     std::string token;
-    while ((found = str.find_first_of(delimiter, pos)) != std::string::npos)
-    {
+    while ((found = str.find_first_of(delimiter, pos)) != std::string::npos){
         token = str.substr(pos, found - pos);
         result.push_back(token);
         pos = found + 1;
@@ -110,9 +108,7 @@ convert_dns_to_ip(const std::vector<std::string>& dns_vector){
         hints.ai_socktype = SOCK_STREAM;
 
         int status = getaddrinfo(dns.c_str(), NULL, &hints, &res);
-        if (status != 0) {
-            continue;
-        }
+        if (status != 0) {continue;}
 
         struct sockaddr_in* addr = (struct sockaddr_in*) res->ai_addr;
         char ip_str[INET_ADDRSTRLEN];
@@ -120,5 +116,6 @@ convert_dns_to_ip(const std::vector<std::string>& dns_vector){
         ip_vector.push_back(ip_str);
         freeaddrinfo(res);
     }
+
     return ip_vector;
 }

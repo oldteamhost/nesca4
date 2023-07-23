@@ -46,24 +46,24 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
     /*Создание raw сокета, для более глубокой работы
     с сокетом.*/
     int sock = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
-    if (sock < 0){return PORT_ERROR;}
+    if (sock < 0) {return PORT_ERROR;}
 
     /*Сообщаем ядру, что не нужно генерировать IP заголовок
 	* потому что мы сами его сделали.*/
-    int set_hdrincl = set_socket_hdrincl(sock);
-    if (set_hdrincl == EOF){close(sock);return PORT_ERROR;}
+    const int set_hdrincl = set_socket_hdrincl(sock);
+    if (set_hdrincl == EOF) {close(sock);return PORT_ERROR;}
 
     /*Заполнение TCP заголовка.*/
     fill_tcp_header(tcph_send, ncot->source_port, port, ncot->seq, 0, WINDOWS_SIZE, 0,
 		  5, 0, ncot->tcpf);
 
-	uint16_t packet_length = sizeof(struct iphdr) + sizeof(struct tcphdr);
+	const uint16_t packet_length = sizeof(struct iphdr) + sizeof(struct tcphdr);
 
     fill_ip_header(iph_send, ncot->source_ip, ip, packet_length,
 		        IPPROTO_TCP, generate_ident(), IP_DF, ncot->ttl, 5, 4, 0);
 
 	/*Расчёт контрольной суммы для IP заголовка.*/
-    uint16_t check_sum_ip = checksum_16bit((unsigned short *)datagram, iph_send->tot_len >> 1); 
+    const uint16_t check_sum_ip = checksum_16bit((unsigned short *)datagram, iph_send->tot_len >> 1); 
     iph_send->check = check_sum_ip;
 
     dest.sin_family = AF_INET;
@@ -80,11 +80,11 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
 
     /*Заполнение контрольной суммы пакета для
     tcp заголовка, на основе псевдо.*/
-    uint16_t check_sum_tcp = checksum_16bit((unsigned short*)&psh, sizeof(struct pseudo_header));
+    const uint16_t check_sum_tcp = checksum_16bit((unsigned short*)&psh, sizeof(struct pseudo_header));
     tcph_send->check = check_sum_tcp;
 
     /*Отправка TCP пакета.*/
-    ssize_t send = sendto(sock, datagram, packet_length, 0,
+    const ssize_t send = sendto(sock, datagram, packet_length, 0,
 		  (struct sockaddr*)&dest, sizeof(dest));
     if (send == EOF){
 	   close(sock);
@@ -114,20 +114,22 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
 
 int
 get_port_status(unsigned char* buffer, int scan_type){
-    struct iphdr *iph = (struct iphdr*)buffer;
-    uint16_t iphdrlen = (iph->ihl) * 4;
+    const struct iphdr *iph = (struct iphdr*)buffer;
+    const uint16_t iphdrlen = (iph->ihl) * 4;
 
     /*Если пакет именно TCP.*/
-    if (iph->protocol != 6){return PORT_ERROR;}
-    struct tcphdr *tcph = (struct tcphdr*)((char*)buffer + iphdrlen);
+    if (iph->protocol != 6) {return PORT_ERROR;}
+
+    const struct tcphdr *tcph =
+		(struct tcphdr*)((char*)buffer + iphdrlen);
 
 	if (scan_type == MAIMON_SCAN){
-		if (tcph->th_flags == 0x04){return PORT_CLOSED;}
+		if (tcph->th_flags == 0x04) {return PORT_CLOSED;}
 		else {return PORT_OPEN_OR_FILTER;}
 	}
 	if (scan_type == WINDOW_SCAN){
 		if (tcph->th_flags == 0x04){
-			if (tcph->window > 0){return PORT_OPEN;}
+			if (tcph->window > 0) {return PORT_OPEN;}
 			else {return PORT_CLOSED;}
 		}
 		else {return PORT_FILTER;}
@@ -135,13 +137,13 @@ get_port_status(unsigned char* buffer, int scan_type){
     if (scan_type == FIN_SCAN || scan_type == XMAS_SCAN
 			|| scan_type == NULL_SCAN){
 	   switch (tcph->th_flags) {
-		  case 0x04:{return PORT_CLOSED;}
+		  case 0x04: {return PORT_CLOSED;}
 		  default:
 	   		return PORT_OPEN;
 	   }
     }else if (scan_type == ACK_SCAN){
 	   switch (tcph->th_flags) {
-		  case 0x04:{return PORT_NO_FILTER;}
+		  case 0x04: {return PORT_NO_FILTER;}
 		  default:
 	   		return PORT_FILTER;
 	   }

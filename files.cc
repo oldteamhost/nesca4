@@ -9,8 +9,8 @@
 
 int 
 get_count_lines(const char* path){
-    std::ifstream file(path);
     int count = 0;
+    std::ifstream file(path);
     std::string line;
     while (std::getline(file, line)){++count;}
     return count;
@@ -24,10 +24,11 @@ check_file(const char* path){
 
 std::vector<std::string>
 write_file(const std::string& filename){
+    std::vector<std::string> lines;
     std::string line;
+
     std::ifstream file(filename);
 	if (file.fail()){return {"-1"};}
-    std::vector<std::string> lines;
     while (std::getline(file, line))
     {lines.push_back(line);}
     return lines;
@@ -48,11 +49,12 @@ write_line(std::string path, std::string line){
 int
 delete_line_from_file(const std::string& filename,
 		const std::string& line_to_delete){
+	std::vector<std::string> lines;
+    std::string line;
+
 	std::ifstream input_file(filename);
     if (!input_file){return -1;}
 
-	std::vector<std::string> lines;
-    std::string line;
     while (std::getline(input_file, line))
     {lines.push_back(line);}
 

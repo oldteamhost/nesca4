@@ -7,6 +7,7 @@
 
 #include "include/bruteforce.h"
 #include "ncsock/include/ncread.h"
+#include <curl/easy.h>
 #include <unistd.h>
 
 brute_ftp_data bfd;
@@ -44,22 +45,22 @@ brute_smtp(const std::string& ip, int port, const std::string& login, const std:
     if (brute_log) {np1.nlog_custom("SMTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == EOF){return "";}
+    if (sock == EOF) {return "";}
 
     sockaddr_in server_address{};
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(port);
 
-    if (inet_pton(AF_INET, ip.c_str(), &(server_address.sin_addr)) <= 0){close(sock);return "";}
+    if (inet_pton(AF_INET, ip.c_str(), &(server_address.sin_addr)) <= 0)                         {close(sock);return "";}
     if (connect(sock, reinterpret_cast<sockaddr*>(&server_address), sizeof(server_address)) < 0) {close(sock);return "";}
 
     char buffer[1024];
     memset(buffer, 0, 1024);
-    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0){close(sock);return "";}
+    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0) {close(sock);return "";}
     if (verbose) {std::cout << buffer;}
 
     std::string helo_command = "HELO localhost\r\n";
-    if (send(sock, helo_command.c_str(), helo_command.length(), 0) < 0){close(sock);return "";}
+    if (send(sock, helo_command.c_str(), helo_command.length(), 0) < 0) {close(sock);return "";}
 
     memset(buffer, 0, 1024);
     if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0) {close(sock);return "";}
@@ -69,24 +70,24 @@ brute_smtp(const std::string& ip, int port, const std::string& login, const std:
     if (send(sock, auth_command.c_str(), auth_command.length(), 0) < 0) {close(sock);return "";}
 
     memset(buffer, 0, 1024);
-    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0){close(sock);return "";}
+    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0) {close(sock);return "";}
     if (verbose) {std::cout << buffer;}
 
     std::string encoded_login = base64_encode(login);
-    if (send(sock, encoded_login.c_str(), encoded_login.length(), 0) < 0){close(sock);return "";}
-    if (send(sock, "\r\n", 2, 0) < 0){close(sock);return "";}
+    if (send(sock, encoded_login.c_str(), encoded_login.length(), 0) < 0) {close(sock);return "";}
+    if (send(sock, "\r\n", 2, 0) < 0) {close(sock);return "";}
 
     memset(buffer, 0, 1024);
-    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0){close(sock);return "";}
-    if (verbose){std::cout << buffer;}
+    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0) {close(sock);return "";}
+    if (verbose) {std::cout << buffer;}
 
     std::string encoded_password = base64_encode(pass);
-    if (send(sock, encoded_password.c_str(), encoded_password.length(), 0) < 0){close(sock);return "";}
+    if (send(sock, encoded_password.c_str(), encoded_password.length(), 0) < 0) {close(sock);return "";}
 
-    if (send(sock, "\r\n", 2, 0) < 0){close(sock);return "";}
+    if (send(sock, "\r\n", 2, 0) < 0) {close(sock);return "";}
 
     memset(buffer, 0, 1024);
-    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0){close(sock);return "";}
+    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0) {close(sock);return "";}
     if (verbose) {std::cout << buffer;}
 
     if (std::string(buffer).find("235") != std::string::npos) {
@@ -129,9 +130,7 @@ brute_ftp(const std::string ip, int port, const std::string login, const std::st
     if (brute_log){np1.nlog_custom("FTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == EOF){
-	   return "";
-    }
+    if (sock == EOF) {return "";}
 
     sockaddr_in server_address{};
     server_address.sin_family = AF_INET;
@@ -154,12 +153,12 @@ brute_ftp(const std::string ip, int port, const std::string login, const std::st
     if (verbose){std::cout << buffer;}
 
     std::string password_command = "PASS " + pass + "\r\n";
-    if (send(sock, password_command.c_str(), password_command.length(), 0) < 0){close(sock);return "";}
+    if (send(sock, password_command.c_str(), password_command.length(), 0) < 0) {close(sock);return "";}
 
     memset(buffer, 0, 1024);
-    if (ncread_recv(sock, buffer, 1024- 1, timeout_ms) < 0){close(sock);return "";}
+    if (ncread_recv(sock, buffer, 1024- 1, timeout_ms) < 0) {close(sock);return "";}
 
-    if (verbose){std::cout << buffer;}
+    if (verbose) {std::cout << buffer;}
 
     if (std::string(buffer).find("230") != std::string::npos) {
         close(sock);
@@ -190,9 +189,9 @@ threads_brute_ftp(const std::string ip, int port, const std::vector<std::string>
             }));
         }
     }
-	for (auto& future : futures){future.wait();}
+	for (auto& future : futures) {future.wait();}
 
-    if (!results.empty()) {return results[0];} else{return "";}
+    if (!results.empty()) {return results[0];} else {return "";}
     return "";
 }
 
@@ -203,7 +202,7 @@ brute_ssh(const std::string& ip, int port, const std::string login, const std::s
     ssh_session sshSession = ssh_new();
     if (sshSession == nullptr){return "";}
 
-	int timeout = 2;
+	const int timeout = 2;
 	ssh_options_set(sshSession, SSH_OPTIONS_TIMEOUT, &timeout);
     ssh_options_set(sshSession, SSH_OPTIONS_HOST, ip.c_str());
     ssh_options_set(sshSession, SSH_OPTIONS_PORT, &port);
@@ -211,14 +210,14 @@ brute_ssh(const std::string& ip, int port, const std::string login, const std::s
 
     int connectionStatus = ssh_connect(sshSession);
     if (connectionStatus != SSH_OK) {
-	   if (verbose){std::cerr << "Не удалось установить соединение SSH: " << ssh_get_error(sshSession) << std::endl;}
+	   if (verbose) {std::cerr << "Не удалось установить соединение SSH: " << ssh_get_error(sshSession) << std::endl;}
         ssh_free(sshSession);
         return "";
     }
 
     int authenticationStatus = ssh_userauth_password(sshSession, nullptr, pass.c_str());
     if (authenticationStatus != SSH_AUTH_SUCCESS) {
-	   if (verbose){std::cerr << "Не удалось авторизоваться: " << ssh_get_error(sshSession) << std::endl;}
+	   if (verbose) {std::cerr << "Не удалось авторизоваться: " << ssh_get_error(sshSession) << std::endl;}
         ssh_disconnect(sshSession);
         ssh_free(sshSession);
         return "";
@@ -248,7 +247,7 @@ threads_brute_ssh(const std::string ip, int port, const std::vector<std::string>
             }));
         }
     }
-	for (auto& future : futures){future.wait();}
+	for (auto& future : futures) {future.wait();}
 
     if (!results.empty()) {return results[0];} else{return "";}
     return "";
@@ -277,7 +276,7 @@ brute_rtsp(const std::string ip, const std::string login, const std::string pass
         std::string url = "rtsp://" + ip;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
-        if (brute_log){np1.nlog_custom("RTSP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
+        if (brute_log) {np1.nlog_custom("RTSP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
         curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
         curl_easy_setopt(curl, CURLOPT_PASSWORD, pass.c_str());
 
@@ -311,9 +310,9 @@ threads_brute_rtsp(const std::string ip, const std::vector<std::string> logins, 
             }));
         }
     }
-	for (auto& future : futures){future.wait();}
-
+	for (auto& future : futures) {future.wait();}
     if (!results.empty()) {return results[0];} else{return "";}
+
     return "";
 }
 
@@ -323,14 +322,12 @@ brute_http(const std::string ip, const std::string login, const std::string pass
     CURLcode res;
     long http_code;
     std::string content_type;
-
     curl = curl_easy_init();
 
     if (curl) {
         curl_easy_setopt(curl, CURLOPT_URL, ip.c_str());
 
-        if (verbose){curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);}
-
+        if (verbose) {curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);}
         curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
         curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
         curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
@@ -339,18 +336,18 @@ brute_http(const std::string ip, const std::string login, const std::string pass
         curl_easy_setopt(curl, CURLOPT_PASSWORD, pass.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
 
-        if (brute_log){np1.nlog_custom("HTTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
+        if (brute_log) {np1.nlog_custom("HTTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
 
         curl_easy_setopt(curl, CURLOPT_FAILONERROR, true);
         res = curl_easy_perform(curl);
 
-        if (res != CURLE_OK){return "";}
+        if (res != CURLE_OK) {curl_easy_cleanup(curl);return "";}
 
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
-        if (http_code < 200 || http_code >= 300){return "";}
+        if (http_code < 200 || http_code >= 300) {curl_easy_cleanup(curl);return "";}
 
         curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &content_type);
-        if (content_type.find("error") != std::string::npos){return "";}
+        if (content_type.find("error") != std::string::npos) {curl_easy_cleanup(curl);return "";}
 
         std::string result = login + ":" + pass + "@";
         return result;
@@ -375,24 +372,24 @@ threads_brute_http(const std::string ip, const std::vector<std::string> logins, 
             }));
         }
     }
-	for (auto& future : futures){future.wait();}
+	for (auto& future : futures) {future.wait();}
+    if (!results.empty()) {return results[0];} else {return "";}
 
-    if (!results.empty()){return results[0];}else {return "";}
     return "";
 }
 
 
 std::string 
-brute_ftp_data::get_success_login(void){return this->success_login;}
+brute_ftp_data::get_success_login(void) {return this->success_login;}
 
 std::string 
-brute_ftp_data::get_success_pass(void){return this->success_pass;}
+brute_ftp_data::get_success_pass(void) {return this->success_pass;}
 
 void 
-brute_ftp_data::set_success_login(std::string success_login){this->success_login = success_login;}
+brute_ftp_data::set_success_login(std::string success_login) {this->success_login = success_login;}
 
 void 
-brute_ftp_data::set_success_pass(std::string success_pass){this->success_pass = success_pass;}
+brute_ftp_data::set_success_pass(std::string success_pass)   {this->success_pass = success_pass;}
 
 std::string 
 brute_hikvision(const std::string ip, const std::string login, const std::string pass, int brute_log){
@@ -404,8 +401,10 @@ brute_hikvision(const std::string ip, const std::string login, const std::string
 
   NET_DVR_USER_LOGIN_INFO loginInfo = {0};
   loginInfo.bUseAsynLogin = false;
+
   strcpy(loginInfo.sDeviceAddress, ip.c_str());
   loginInfo.wPort = 8000;
+
   strcpy(loginInfo.sUserName, login.c_str());
   strcpy(loginInfo.sPassword, pass.c_str());
 
@@ -445,9 +444,9 @@ threads_brute_hikvision(const std::string ip, const std::vector<std::string> log
             }));
         }
     }
-	for (auto& future : futures){future.wait();}
-
+	for (auto& future : futures) {future.wait();}
     if (!results.empty()) {return results[0];} else{return "";}
+
     return "";
 }
 
@@ -472,14 +471,12 @@ brute_rvi(const std::string ip, int port, const std::string login, const std::st
 
 	if (inet_pton(AF_INET, ip.c_str(), &(sa.sin_addr)) != 1) {
         hostent* host = gethostbyname(ip.c_str());
-        if (host == nullptr) {
-            return "-1";
-        }
+        if (host == nullptr) {return "-1";}
         sa.sin_addr.s_addr = reinterpret_cast<in_addr*>(host->h_addr_list[0])->s_addr;
     }
 
 	int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (sock == EOF){return "-1";}
+    if (sock == EOF) {return "-1";}
 
 	if (connect(sock, reinterpret_cast<sockaddr*>(&sa), sizeof(sa)) == EOF) {
         close(sock);
@@ -494,12 +491,12 @@ brute_rvi(const std::string ip, int port, const std::string login, const std::st
 
   	if (brute_log){np1.nlog_custom("RVI", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
 
-	int s = send(sock, new_login_packet, sizeof(new_login_packet), 0);
-    if (s < 0){close(sock);return "-1";}
+	const int s = send(sock, new_login_packet, sizeof(new_login_packet), 0);
+    if (s < 0) {close(sock);return "-1";}
 
     char buff[100] = {0};
 	int r = ncread_recv(sock, buff, sizeof(buff), 2000);
-	if (r < 0){close(sock);return "-1";}
+	if (r < 0) {close(sock);return "-1";}
 
     close(sock);
 
@@ -528,8 +525,8 @@ threads_brute_rvi(const std::string ip, const int port, const std::vector<std::s
             }));
         }
     }
-	for (auto& future : futures){future.wait();}
+	for (auto& future : futures) {future.wait();}
+    if (!results.empty()) {return results[0];} else {return "";}
 
-    if (!results.empty()) {return results[0];} else{return "";}
     return "";
 }

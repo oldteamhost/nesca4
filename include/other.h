@@ -56,7 +56,7 @@ bool
 dns_or_ip(std::string &node);
 
 std::string
-to_lower_case(const std::string& str);
+to_lower_case(std::string str);
 
 size_t 
 find_char(const std::string& str, char ch);

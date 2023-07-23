@@ -7,6 +7,9 @@
 
 #include "include/socket.h"
 
+#define ERROR  -1
+#define SUCCESS 0
+
 int 
 set_socket_timeout(int sock, int timeout_ms, int on_send, int on_recv){
     struct timeval timeout;
