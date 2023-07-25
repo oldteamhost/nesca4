@@ -15,48 +15,24 @@
 extern "C" {
 #endif
 
-/*Что бы биты гнать.*/
-#define __LITTLE_ENDIAN 1234
-#define __BIG_ENDIAN 4321
-#define __BYTE_ORDER __LITTLE_ENDIAN
-
-/*Для фрагментации пакета.*/
 #define	IP_RF      0x8000			/*Reserved fragment flag*/
 #define	IP_DF      0x4000			/*Dont fragment flag*/
 #define	IP_MF      0x2000			/*More fragments flag*/
 #define	IP_OFFMASK 0x1fff		    /*Mask for fragmenting bits*/
 
-/*IP заголовок который подходит для IPv4 и IPv6.
- * Взят из netinet/ip.h.*/
-struct ip_proto{
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-    unsigned int ip_hl:4;		    /*Header length*/
-    unsigned int ip_v:4;		    /*Version*/
-#endif
-#if __BYTE_ORDER == __BIG_ENDIAN
-    unsigned int ip_v:4;		    /*Version*/
-    unsigned int ip_hl:4;		    /*Header length*/
-#endif
-    uint8_t ip_tos;			        /*Type of service*/
-    unsigned short ip_len;		    /*Total length*/
-    unsigned short ip_id;		    /*Identification*/
-    unsigned short ip_off;		    /*Fragment offset field*/
-    uint8_t ip_ttl;			        /*Time to live*/
-    uint8_t ip_p;			        /*Protocol*/
-    unsigned short ip_sum;		    /*Checksum*/
-    struct in_addr ip_src, ip_dst;	/*Source and dest address*/
+struct ip6_header{
+	uint32_t version_traffic;
+	uint16_t len;      /*Payload length*/
+	uint8_t next_hdr;  /*Next header*/
+	uint8_t hop_limit; /*TTL*/
+	uint8_t saddr[16]; /*Source IP*/
+	uint8_t daddr[16]; /*Dest IP*/
 };
 
-/*IP заголовок который подходит для IPv4.
- * Взят из netinet/ip.h.*/
+/*IP заголовок для IPv4.*/
 struct ip_header{
-#if __BYTE_ORDER == __LITTLE_ENDIAN
     unsigned int ihl:4;
     unsigned int version:4;
-#elif __BYTE_ORDER == __BIG_ENDIAN
-    unsigned int version:4;
-    unsigned int ihl:4;
-#endif
     uint8_t tos;
     uint16_t tot_len;
     uint16_t id;
@@ -68,8 +44,6 @@ struct ip_header{
     uint32_t daddr;
 };
 
-typedef	uint32_t tcp_seq;
-
 #define TH_FIN	0x01
 #define TH_SYN	0x02
 #define TH_RST	0x04
@@ -77,62 +51,42 @@ typedef	uint32_t tcp_seq;
 #define TH_ACK	0x10
 #define TH_URG	0x20
 
-/*TCP заголовок.
- * Взят из netinet/tcp.h.*/
-struct tcp_header 
-{
-__extension__ union {
-    struct
-	{
-	uint16_t th_sport;	/*Source port */
-	uint16_t th_dport;	/*Destination port */
-	tcp_seq th_seq;		/*Sequence number */
-	tcp_seq th_ack;		/*Acknowledgement number */
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-	uint8_t th_x2:4;	/*(unused) */
-	uint8_t th_off:4;	/*Data offset */
-#endif
-# if __BYTE_ORDER == __BIG_ENDIAN
-	uint8_t th_off:4;	/*Data offset */
-	uint8_t th_x2:4;	/*(unused) */
-#endif
-	uint8_t th_flags;
-	uint16_t th_win;	/*Window */
-	uint16_t th_sum;	/*Checksum */
-	uint16_t th_urp;	/*Urgent pointer */
-    };
-    struct
-	{
-	uint16_t source;
-	uint16_t dest;
-	uint32_t seq;
-	uint32_t ack_seq;
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-	uint16_t res1:4;
-	uint16_t doff:4;
-	uint16_t fin:1;
-	uint16_t syn:1;
-	uint16_t rst:1;
-	uint16_t psh:1;
-	uint16_t ack:1;
-	uint16_t urg:1;
-	uint16_t res2:2;
-#elif __BYTE_ORDER == __BIG_ENDIAN
-	uint16_t doff:4;
-	uint16_t res1:4;
-	uint16_t res2:2;
-	uint16_t urg:1;
-	uint16_t ack:1;
-	uint16_t psh:1;
-	uint16_t rst:1;
-	uint16_t syn:1;
-	uint16_t fin:1;
-#endif
-	uint16_t window;
-	uint16_t check;
-	uint16_t urg_ptr;
-      };
-    };
+typedef	uint32_t tcp_seq;
+
+/*TCP заголовок.*/
+struct tcp_header {
+	union {
+    	struct{
+			uint16_t th_sport;	/*Source port */
+			uint16_t th_dport;	/*Destination port */
+			tcp_seq th_seq;		/*Sequence number */
+			tcp_seq th_ack;		/*Acknowledgement number */
+			uint8_t th_off:4;	/*Data offset */
+			uint8_t th_x2:4;	/*(unused) */
+			uint8_t th_flags;
+			uint16_t th_win;	/*Window */
+			uint16_t th_sum;	/*Checksum */
+			uint16_t th_urp;	/*Urgent pointer */
+    	};
+    	struct{
+			uint16_t source;
+			uint16_t dest;
+			uint32_t seq;
+			uint32_t ack_seq;
+			uint16_t res1:4;
+			uint16_t doff:4;
+			uint16_t fin:1;
+			uint16_t syn:1;
+			uint16_t rst:1;
+			uint16_t psh:1;
+			uint16_t ack:1;
+			uint16_t urg:1;
+			uint16_t res2:2;
+			uint16_t window;
+			uint16_t check;
+			uint16_t urg_ptr;
+    	};
+	};
 };
 
 /*TCP флаги.*/
