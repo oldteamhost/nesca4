@@ -1002,115 +1002,116 @@ help_menu(void){
     np.reset_colors();
 
     np.sea_green_on();
-    std::cout << "\narguments target:" << std::endl;
+    std::cout << "\nTARGET:" << std::endl;
     np.reset_colors();
-    std::cout << "  -import-ip <path>        Set ip on target from file.\n";
-    std::cout << "  -import-cidr <path>      Set cidr on target from file.\n";
-    std::cout << "  -import-range <path>     Set range on target from file.\n";
-    std::cout << "  -random-ip <count>       Set random ip target.\n";
+    std::cout << "  -import-ip <path>: Set ip on target from file.\n";
+    std::cout << "  -import-cidr <path>: Set cidr on target from file.\n";
+    std::cout << "  -import-range <path>: Set range on target from file.\n";
+    std::cout << "  -random-ip <count>: Set random ip target.\n";
 
     np.sea_green_on();
-    std::cout << "\narguments speed:" << std::endl;
+    std::cout << "SPEED:" << std::endl;
     np.reset_colors();
-    std::cout << "  -speed, -S <1-5>         Edit preset speed.\n";
-    std::cout << "  -my-life-my-rulez        Using very MAX speed settings.\n";
+    std::cout << "  -speed, -S <1-5>: Edit preset speed.\n";
+    std::cout << "  -my-life-my-rulez: Using very MAX speed settings.\n";
 
     np.sea_green_on();
-    std::cout << "\narguments port scan methods:" << std::endl;
+    std::cout << "PORT SCAN METHODS:" << std::endl;
     np.reset_colors();
-    std::cout << "  -fin, -xmas, -null       Use one of these scanning methods.\n";
-    std::cout << "  -ack, -windows -maimon   Use ack or window or maimon scan method.\n";
+    std::cout << "  -fin, -xmas, -null: Use one of these scanning methods.\n";
+    std::cout << "  -ack, -windows -maimon: Use ack or window or maimon scan method.\n";
 
     np.sea_green_on();
-    std::cout << "\narguments saving to file:" << std::endl;
+    std::cout << "SAVING TO FILE:" << std::endl;
     np.reset_colors();
-    std::cout << "  -html, -l <path>         Classic nesca save, write on html page.\n";
-    std::cout << "  -txt <path>              Save result to text document.\n";
+    std::cout << "  -html, -l <path>: Classic nesca save, write on html page.\n";
+    std::cout << "  -txt <path>: Save result to text document.\n";
 
     np.sea_green_on();
-    std::cout << "\narguments port scan:" << std::endl;
+    std::cout << "PORT SCAN:" << std::endl;
     np.reset_colors();
-    std::cout << "  -delay, -d <ms>          Set delay for scan.\n";
-    std::cout << "  -ports, -p <1,2,3>       Set ports on scan.\n";
-    std::cout << "  -packet-trace            Display packet_trace on port scan.\n";
+    std::cout << "  -delay, -d <ms>: Set delay for scan.\n";
+    std::cout << "  -ports, -p <1,2,3>: Set ports on scan.\n";
+    std::cout << "  -packet-trace: Display packet_trace on port scan.\n";
 
     np.sea_green_on();
-    std::cout << "\narguments port scan speed:" << std::endl;
+    std::cout << "PORT SCAN SPEED:" << std::endl;
     np.reset_colors();
-    std::cout << "  -max-group <count>       Edit max size group & threads for port scan.\n";
-    std::cout << "  -min-group <count>       Edit min size group & threads for port scan.\n";
-    std::cout << "  -rate-group <count       Edit the value by which the group is incremented.\n";
-    std::cout << "  -scan-timeout <ms>       Edit timeout for getting packet on port.\n";
+    std::cout << "  -max-group <count>: Edit max size group & threads for port scan.\n";
+    std::cout << "  -min-group <count>: Edit min size group & threads for port scan.\n";
+    std::cout << "  -rate-group <count: Edit the value by which the group is incremented.\n";
+    std::cout << "  -scan-timeout <ms>: Edit timeout for getting packet on port.\n";
 
     np.sea_green_on();
-    std::cout << "\narguments dns resolution:" << std::endl;
+    std::cout << "DNS RESOLUTION:" << std::endl;
     np.reset_colors();
-    std::cout << "  -TD <count>              Set max threads for dns-resolution.\n";
-    std::cout << "  -resol-port <port>       Edit source port for dns-resolution.\n";
-    std::cout << "  -resol-delay <ms>        Set delay for dns-resolution.\n";
-    std::cout << "  -no-resolv               Skip dns-resolution.\n";
+    std::cout << "  -TD <count>: Set max threads for dns-resolution.\n";
+    std::cout << "  -resol-port <port>: Edit source port for dns-resolution.\n";
+    std::cout << "  -resol-delay <ms>: Set delay for dns-resolution.\n";
+    std::cout << "  -no-resolv: Skip dns-resolution.\n";
 
     np.sea_green_on();
-    std::cout << "\narguments ping scan:" << std::endl;
+    std::cout << "PING SCAN:" << std::endl;
     np.reset_colors();
-    std::cout << "  -PS, -PA <port>          On TCP ping SYN|ACK and edit dest port.\n";
-    std::cout << "  -PE, -PI, -PM            On ICMP ping ECHO|INFO|TIMESTAMP\n";
-    std::cout << "  -max-ping                Using all ping methods ICMP and TCP.\n";
-    std::cout << "  -no-ping                 Off ping scan.\n";
+    std::cout << "  -PS, -PA <port>: On TCP ping SYN|ACK and edit dest port.\n";
+    std::cout << "  -PE, -PI, -PM: On ICMP ping ECHO|INFO|TIMESTAMP\n";
+    std::cout << "  -max-ping: Using all ping methods ICMP and TCP.\n";
+    std::cout << "  -no-ping: Off ping scan.\n";
 
     np.sea_green_on();
-    std::cout << "\narguments ping speed:" << std::endl;
+    std::cout << "PING SPEED:" << std::endl;
     np.reset_colors();
-    std::cout << "  -TP <count>              Set max threads for ping.\n";
-    std::cout << "  -ping-timeout <ms>       Set recv timeout for ping.\n";
+    std::cout << "  -TP <count>: Set max threads for ping.\n";
+    std::cout << "  -ping-timeout <ms>: Set recv timeout for ping.\n";
 
     np.sea_green_on();
-    std::cout << "\narguments bruteforce:" << std::endl;
+    std::cout << "BRUTEFORCE:" << std::endl;
     np.reset_colors();
-    std::cout << "  -brute-login <ss,path>   Set path for <ss> logins.\n";
-    std::cout << "  -brute-pass <ss,path>    Set path for <ss> passwords.\n";
-    std::cout << "  -brute-timeout <ms>      Edit brute timout.\n";
-    std::cout << "  -brute-only <ss,2>       Display only success <ss> bruteforce.\n";
-    std::cout << "  -no-brute <ss,2>         Disable <ss> bruteforce.\n";
+    std::cout << "  -brute-login <ss,path>: Set path for <ss> logins.\n";
+    std::cout << "  -brute-pass <ss,path>: Set path for <ss> passwords.\n";
+    std::cout << "  -brute-timeout <ms>: Edit brute timout.\n";
+    std::cout << "  -brute-only <ss,2>: Display only success <ss> bruteforce.\n";
+    std::cout << "  -no-brute <ss,2>: Disable <ss> bruteforce.\n";
 
     np.sea_green_on();
-    std::cout << "\narguments other bruteforce:" << std::endl;
+    std::cout << "OTHER BRUTEFORCE:" << std::endl;
     np.reset_colors();
-    std::cout << "  -brute-verbose <ss,2>    Display bruteforce <ss> all info.\n";
-    std::cout << "  -brute-log <ss,2>        Display bruteforce <ss> info.\n";
-    std::cout << "  -sftp-brute-known-hosts  Reading known_host for connection.\n";
+    std::cout << "  -brute-verbose <ss,2>: Display bruteforce <ss> all info.\n";
+    std::cout << "  -brute-log <ss,2>: Display bruteforce <ss> info.\n";
+    std::cout << "  -sftp-brute-known-hosts: Reading known_host for connection.\n";
 
     np.sea_green_on();
-    std::cout << "\narguments dns scan:" << std::endl;
+    std::cout << "ARGUMENTS DNS SCAN:" << std::endl;
     np.reset_colors();
-    std::cout << "  -dns-scan <.dns>         On dns-scan and set domain 1 level.\n";
-    std::cout << "  -T, -threads <count>     Edit threads count.\n";
-    std::cout << "  -dns-length <count>      Edit length generating domain.\n";
-    std::cout << "  -dns-dict <dict>         Edit dictionary for generation.\n";
+    std::cout << "  -dns-scan <.dns>: On dns-scan and set domain 1 level.\n";
+    std::cout << "  -T, -threads <count>: Edit threads count.\n";
+    std::cout << "  -dns-length <count>: Edit length generating domain.\n";
+    std::cout << "  -dns-dict <dict>: Edit dictionary for generation.\n";
 
     np.sea_green_on();
-    std::cout << "\narguments output:" << std::endl;
+    std::cout << "ARGUMENTS OUTPUT:" << std::endl;
     np.reset_colors();
-    std::cout << "  -pro                     On pro mode, display more info.\n";
-    std::cout << "  -db, -debug              On debug mode, save and display not even working hosts.\n";
-    std::cout << "  -er, -error              On display errors.\n";
-    std::cout << "  -no-proc                 Only scan.\n";
-    std::cout << "  -no-get-path             Disable getting paths.\n";
-    std::cout << "  -log-set <count>         Change change the value of ips after which, will be displayed information about how much is left.\n";
-    std::cout << "  -http-response           Display HTTP response.\n";
-    np.sea_green_on();
-    std::cout << "\narguments colors:" << std::endl;
-    np.reset_colors();
-    std::cout << "  -no-color                Disable colors.\n";
-    std::cout << "  -import-color <path>     Import color scheme from file.\n";
+    std::cout << "  -pro: On pro mode, display more info.\n";
+    std::cout << "  -db, -debug: On debug mode, save and display not even working hosts.\n";
+    std::cout << "  -er, -error: On display errors.\n";
+    std::cout << "  -no-proc: Only scan.\n";
+    std::cout << "  -no-get-path: Disable getting paths.\n";
+    std::cout << "  -log-set <count>: Change change the value of ips after which, will be displayed information about how much is left.\n";
+    std::cout << "  -http-response: Display HTTP response.\n";
 
     np.sea_green_on();
-    std::cout << "\narguments other:" << std::endl;
+    std::cout << "ARGUMENTS COLORS:" << std::endl;
     np.reset_colors();
-    std::cout << "  -negatives <path>        Set custom path for negatives.\n";
-    std::cout << "  -source-ip <ip>          Set custom source_ip.\n";
-    std::cout << "  -source-port <port>      Set custom source_port.\n";
-    std::cout << "  -ttl <count>             Set custom ip_header_ttl.\n";
+    std::cout << "  -no-color: Disable colors.\n";
+    std::cout << "  -import-color <path>: Import color scheme from file.\n";
+
+    np.sea_green_on();
+    std::cout << "ARGUMENTS OTHER:" << std::endl;
+    np.reset_colors();
+    std::cout << "  -negatives <path>: Set custom path for negatives.\n";
+    std::cout << "  -source-ip <ip>: Set custom source_ip.\n";
+    std::cout << "  -source-port <port>: Set custom source_port.\n";
+    std::cout << "  -ttl <count>: Set custom ip_header_ttl.\n";
 }
 
 void 
