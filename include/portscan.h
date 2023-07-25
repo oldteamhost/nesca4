@@ -78,9 +78,12 @@ int /*Главная функция в сканирование, она отпр
 nesca_scan(struct nesca_scan_opts *ncot ,const char* ip, int port, int timeout_ms);
 
 struct tcp_flags /*Функция для установки TCP флагов.*/
-set_flags(int scan_type);
+set_flags(uint8_t scan_type);
+
+std::string
+get_type(uint8_t type);
 
 int /*Определение статуса порта.*/
-get_port_status(unsigned char* buffer, int scan_type);
+get_port_status(unsigned char* buffer, uint8_t scan_type);
 
 #endif

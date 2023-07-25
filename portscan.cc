@@ -6,6 +6,7 @@
 */
 
 #include "include/portscan.h"
+#include <cstdint>
 
 nesca_prints np2;
 std::mutex packet_trace;
@@ -94,7 +95,7 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
 */
 
 int
-get_port_status(unsigned char* buffer, int scan_type){
+get_port_status(unsigned char* buffer, uint8_t scan_type){
     const struct ip_header *iph = (struct ip_header*)buffer;
     const uint16_t iphdrlen = (iph->ihl) * 4;
 
@@ -160,8 +161,36 @@ get_port_status(unsigned char* buffer, int scan_type){
     }
 }
 
+std::string
+get_type(uint8_t type){
+	switch (type) {
+	case SYN_SCAN:
+		return "SYN_SCAN";
+		break;
+	case ACK_SCAN:
+		return "ACK_SCAN";
+		break;
+	case XMAS_SCAN:
+		return "XMAS_SCAN";
+		break;
+	case FIN_SCAN:
+		return "FIN_SCAN";
+		break;
+	case WINDOW_SCAN:
+		return "WINDOW_SCAN";
+		break;
+	case NULL_SCAN:
+		return "NULL_SCAN";
+		break;
+	case MAIMON_SCAN:
+		return "MAIMON_SCAN";
+		break;
+	}
+	return "-1";
+}
+
 struct tcp_flags
-set_flags(int scan_type){
+set_flags(uint8_t scan_type){
 	tcp_flags tpf;
 	tpf.rst = 0;
     tpf.ack = 0;

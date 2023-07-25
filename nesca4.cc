@@ -6,6 +6,7 @@
 */
 
 #include "include/nesca4.h"
+#include "include/portscan.h"
 
 struct nesca_scan_opts ncopts;
 const char* short_options = "hl:vd:T:p:aS:";
@@ -25,23 +26,11 @@ arguments_program argp;
 
 int main(int argc, char** argv){
     run = argv[0];
-    if (argc <= 1){help_menu();return 1;}
+    if (argc <= 1) {help_menu();return 1;}
 
-	np.golder_rod_on();
-	std::cout << "-> Running NESCA [v" + std::string(VERSION) + "] # " +
-		std::string(get_time()) + " at " + get_current_date() << std::endl; 
-	np.reset_colors();
-
-	/*Получение IP компютера.*/
 	argp.source_ip = _iu.get_local_ip();
-
-	/*Парсинг аргументов.*/
     parse_args(argc, argv);
-
-	/*Другие операции.*/
     pre_check();
-
-	/*Проверка дефолтных файлов. Не ожидали?*/
     checking_default_files();
 
 	/*Установка методов пинга.*/
@@ -132,29 +121,25 @@ int main(int argc, char** argv){
 		size_t cidr_pos = find_char(target_arg, '/');
     	size_t range_pos = find_char(target_arg, '-');
 
+        temp_ips = split_string_string(argv[optind], ',');
         if (cidr_pos != std::string::npos){
 			argp.ip_cidr_scan = true;
-            temp_ips = split_string_string(argv[optind], ',');
 			argp.result = cidr_to_ips(temp_ips);
         }
         else if (range_pos != std::string::npos){
 			argp.ip_range_scan = true;
-            temp_ips = split_string_string(argv[optind], ',');
 			argp.result = range_to_ips(temp_ips);
         }
         else {
 			argp.ip_scan = true;
-            argp.dns = split_string_string(argv[optind], ',');        
-            if (dns_or_ip(argp.dns[0])){
-				argp.result = convert_dns_to_ip(argp.dns);
-			}
-            else {
-				argp.result = split_string_string(argv[optind], ',');
-			}
+            argp.dns = temp_ips;
+            if (dns_or_ip(argp.dns[0])) {argp.result = convert_dns_to_ip(argp.dns);}
+            else {argp.result = temp_ips;}
         }
     }
+
     if (argp.random_ip){
-        for (int i = 0; i < argp.random_ip_count; i++){
+        for (int i = 1; i <= argp.random_ip_count; i++){
             std::string random_temp = generate_ipv4();
             argp.result.push_back(random_temp);
         }
@@ -176,7 +161,6 @@ int main(int argc, char** argv){
 	}
 
 	if (!argp.syn_ping && !argp.ack_ping && !argp.echo_ping && !argp.info_ping && !argp.timestamp_ping){argp.ack_ping = true;argp.echo_ping = true;}
-
 	auto start_time_ping = std::chrono::high_resolution_clock::now();
 
     /*Пинг сканирования*/
@@ -280,38 +264,13 @@ int main(int argc, char** argv){
 		if (!argp.custom_g_max){argp.group_size_max = 300;}
 		if (!argp.custom_g_rate){argp.group_rate = 5;}
 	}
+
 	/*Потоки для сканирования портов.*/
 	argp._threads = argp.group_size_max;
 	
 	if (argp.pro_mode){
-		if(argp.type == ACK_SCAN){
-			std::cout << np.main_nesca_out("NESCA4", "START_ACK_SCAN", 5, "targets", "threads",
-					std::to_string(result_main.size()),std::to_string(argp._threads),"") << std::endl;
-		}
-		else if(argp.type == SYN_SCAN){
-			std::cout << np.main_nesca_out("NESCA4", "START_SYN_SCAN", 5, "targets", "threads",
-					std::to_string(result_main.size()),std::to_string(argp._threads),"") << std::endl;
-		}
-		else if(argp.type == FIN_SCAN){
-			std::cout << np.main_nesca_out("NESCA4", "START_FIN_SCAN", 5, "targets", "threads",
-					std::to_string(result_main.size()),std::to_string(argp._threads),"") << std::endl;
-		}
-		else if(argp.type == XMAS_SCAN){
-			std::cout << np.main_nesca_out("NESCA4", "START_XMAS_SCAN", 5, "targets", "threads",
-					std::to_string(result_main.size()),std::to_string(argp._threads),"") << std::endl;
-		}
-		else if(argp.type == NULL_SCAN){
-			std::cout << np.main_nesca_out("NESCA4", "START_NULL_SCAN", 5, "targets", "threads",
-					std::to_string(result_main.size()),std::to_string(argp._threads),"") << std::endl;
-		}
-		else if(argp.type == MAIMON_SCAN){
-			std::cout << np.main_nesca_out("NESCA4", "START_MAIMON_SCAN", 5, "targets", "threads",
-					std::to_string(result_main.size()),std::to_string(argp._threads),"") << std::endl;
-		}
-		else if(argp.type == WINDOW_SCAN){
-			std::cout << np.main_nesca_out("NESCA4", "START_WINDOW_SCAN", 5, "targets", "threads",
-					std::to_string(result_main.size()),std::to_string(argp._threads),"") << std::endl;
-		}
+		std::cout << np.main_nesca_out("NESCA4", get_type(argp.type), 5, "targets", "threads",
+				std::to_string(result_main.size()),std::to_string(argp._threads),"") << std::endl;
 	}
 
     ncopts.source_ip = argp.source_ip;
@@ -362,7 +321,7 @@ int main(int argc, char** argv){
 
         	}
         	/*Добавление задачи сканирования портов в пул потоков*/
-        	auto fut = pool.enqueue(scan_port, ip.c_str(), argp.ports, argp.timeout_ms);
+        	auto fut = pool.enqueue(scan_ports, ip.c_str(), argp.ports, argp.timeout_ms);
         	futures.push_back(std::move(fut));
 
         	if (futures.size() >= argp._threads) {
@@ -409,14 +368,6 @@ int main(int argc, char** argv){
 				std::string result;
 		  		std::cout << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", argp.dns_completed[ip], formatted_time+"ms","") << std::endl;
 	   			print_results(ip);
-
-				std::vector<std::string> all_ips = dus.get_all_ips_by_dns(argp.dns_completed[ip].c_str());
-				all_ips.erase(std::remove(all_ips.begin(), all_ips.end(), ip), all_ips.end());
-    			for (size_t i = 0; i < all_ips.size(); ++i) {
-        			result += all_ips[i];
-        			if (i != all_ips.size() - 1){result += ", ";}
-    			}
-				if (result.size() > 1){std::cout << np.main_nesca_out("OTHER", result, 5, "", "", "", "","") << std::endl;}
 			}
         }
 		/*Успешные цели.*/
@@ -825,7 +776,7 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
 
 	/*Получение заголовка.*/
     std::string http_title_result = get_http_title(html);
-   	if (http_title_result == HTTPTITLE_ERROR || redirect.size() > 1){http_title_result = get_http_title_pro(ip);}
+   	if (cfs.contains_word("301", http_title_result)){http_title_result = get_http_title_pro(ip);}
 
 	/*Сравнение списка negatives*/
 	for (const auto& n : nn.nesca_negatives){
@@ -1645,7 +1596,7 @@ format_percentage(double procents){
 /*Функция через которую происходит само сканирование
  * портов. Стабильно.*/
 int
-scan_port(const char* ip, std::vector<int>ports, const int timeout_ms){
+scan_ports(const char* ip, std::vector<int>ports, const int timeout_ms){
 	/*Установка порты с которого будут идти пакеты на этот IP.*/
 	int source_port;
 	if (!argp.custom_source_port){source_port = generate_port();}
@@ -1723,11 +1674,7 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms){
 	   /*В другом случае идёт обработка пакета.
 	    * И только на этом этапе мы получаем статус порта.*/
 	   int port_status = -1;
-	   if (argp.type == SYN_SCAN){port_status = get_port_status(buffer, SYN_SCAN);}
-	   else if (argp.type == ACK_SCAN){port_status = get_port_status(buffer, ACK_SCAN);}
-	   else if (argp.type == WINDOW_SCAN){port_status = get_port_status(buffer, WINDOW_SCAN);}
-	   else if (argp.type == MAIMON_SCAN){port_status = get_port_status(buffer, MAIMON_SCAN);}
-	   else {port_status = get_port_status(buffer, FIN_SCAN);}
+	   port_status = get_port_status(buffer, argp.type);
 
 	   if (port_status == PORT_CLOSED && argp.debug){argp.closed_target[ip].push_back(port);}
 	   else if (port_status == PORT_OPEN){argp.success_target[ip].push_back(port);}
@@ -1737,7 +1684,6 @@ scan_port(const char* ip, std::vector<int>ports, const int timeout_ms){
 	   ls.lock();
 	   free(buffer);
 	   ls.unlock();
-
     }
 
     return 0;
@@ -1756,31 +1702,17 @@ void
 pre_check(void){
     if (check_ansi_support() != true){
         std::cout << "You terminal don`t support ansi colors!\n";
-        std::cout << "Colors disable!\n";
+        std::cout << "Colors disable!\n\n";
         np.disable_colors();
     }
-    if (argp.info_version){
-	   logo();
-	   np.gray_nesca_on();
-	   std::cout << np.print_get_time(get_time());
-	   std::cout << "[VERSION]:";
-	   np.green_html_on();
-	   std::cout << VERSION << std::endl;
-	   np.gray_nesca_on();
-	   std::cout << np.print_get_time(get_time());
-	   std::cout << "[INFO]:";
-	   np.sea_green_on();
-	   std::cout << "https://github.com/oldteamhost/nesca4" << std::endl;
-	   np.reset_colors();
-	   np.gray_nesca_on();
-	   std::cout << np.print_get_time(get_time());
-	   std::cout << "[NB]:";
-	   np.golder_rod_on();
-	   std::cout << "Don`t read \"do_not_read.txt\"" << std::endl;
-	   np.reset_colors();
-	   std::cout << std::endl;
-	   exit(0);
-    }
+
+	np.golder_rod_on();
+	std::cout << "-> Running NESCA [v" + std::string(VERSION) + "] # " +
+		std::string(get_time()) + " at " + get_current_date() << std::endl; 
+	np.reset_colors();
+
+    if (argp.info_version) {version_menu();}
+
 	if (np.html_save){
 		std::vector<std::string> temp = write_file("resources/data");
 		auto it = std::find(temp.begin(), temp.end(), np.html_file_path);
@@ -1833,4 +1765,28 @@ pre_check(void){
 
     if (argp.print_help_menu){help_menu();exit(0);}
     if (!check_root_perms()){np.nlog_error("RAW socket only sudo run!\n");exit(1);}
+}
+
+void
+version_menu(void){
+	logo();
+	np.gray_nesca_on();
+	std::cout << np.print_get_time(get_time());
+	std::cout << "[VERSION]:";
+	np.green_html_on();
+	std::cout << VERSION << std::endl;
+	np.gray_nesca_on();
+	std::cout << np.print_get_time(get_time());
+	std::cout << "[INFO]:";
+	np.sea_green_on();
+	std::cout << "https://github.com/oldteamhost/nesca4" << std::endl;
+	np.reset_colors();
+	np.gray_nesca_on();
+	std::cout << np.print_get_time(get_time());
+	std::cout << "[NB]:";
+	np.golder_rod_on();
+	std::cout << "Don`t read \"do_not_read.txt\"" << std::endl;
+	np.reset_colors();
+	std::cout << std::endl;
+	exit(0);
 }

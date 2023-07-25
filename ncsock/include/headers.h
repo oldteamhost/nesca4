@@ -20,15 +20,6 @@ extern "C" {
 #define	IP_MF      0x2000			/*More fragments flag*/
 #define	IP_OFFMASK 0x1fff		    /*Mask for fragmenting bits*/
 
-struct ip6_header{
-	uint32_t version_traffic;
-	uint16_t len;      /*Payload length*/
-	uint8_t next_hdr;  /*Next header*/
-	uint8_t hop_limit; /*TTL*/
-	uint8_t saddr[16]; /*Source IP*/
-	uint8_t daddr[16]; /*Dest IP*/
-};
-
 /*IP заголовок для IPv4.*/
 struct ip_header{
     unsigned int ihl:4;

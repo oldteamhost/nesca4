@@ -32,6 +32,7 @@
     int sock = fd(AF_INET, SOCK_RAW, IPPROTO_TCP);
     if (sock == -1) {return SOCKET_ERROR;}
 
+#ifdef NESCA
     /*Устанока таймаута на recvfrom.*/
 	int time_out = set_socket_timeout_pro(sock, recv_timeout_ms);
 	if (time_out == -1){
@@ -39,7 +40,6 @@
 		return -1;
 	}
 
-#ifdef NESCA
 	/*Ещё один таймаут, иногда poll не работает просто.*/
 	int result = set_socket_timeout(sock, recv_timeout_ms, 1, 1);
 

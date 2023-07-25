@@ -48,32 +48,23 @@
 /*Угадайте?*/
 #define VERSION "20230724"
 
-void 
-help_menu(void);
-void
-init_bruteforce(void);
-void 
-processing_tcp_scan_ports(std::string ip, int port, int result);
-std::string 
-format_percentage(double procents);
-void 
-check_files(const char* path, const char* path1);
+void help_menu(void);
+void version_menu(void);
+void init_bruteforce(void);
+void processing_tcp_scan_ports(std::string ip, int port, int result);
+std::string format_percentage(double procents);
+void check_files(const char* path, const char* path1);
+
 int
-scan_port(const char* ip, std::vector<int>ports, const int timeout_ms);
-void 
-checking_default_files(void);
-bool
-process_ping(std::string ip);
-void 
-parse_args(int argc, char** argv);
-void
-pre_check(void);
-void
-print_results(std::string ip);
-void
-get_dns_thread(std::string ip);
-int
-traceroute(std::string ip, int jumps);
+scan_ports(const char* ip, std::vector<int>ports, const int timeout_ms);
+
+void checking_default_files(void);
+bool process_ping(std::string ip);
+void parse_args(int argc, char** argv);
+void pre_check(void);
+void print_results(std::string ip);
+void get_dns_thread(std::string ip);
+int traceroute(std::string ip, int jumps);
 
 /*Для обработки портов класс на паттерне Strategy Pattern.*/
 class ports_strategy{
