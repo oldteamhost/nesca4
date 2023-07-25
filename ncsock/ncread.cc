@@ -6,6 +6,7 @@
 */
 
 #include "include/ncread.h"
+#include "include/socket.h"
 
 #ifdef NESCA
 	#include <mutex>
@@ -32,19 +33,11 @@
     if (sock == -1) {return SOCKET_ERROR;}
 
     /*Устанока таймаута на recvfrom.*/
-    struct pollfd poll_fds[1];
-    poll_fds[0].fd = sock;
-    poll_fds[0].events = POLLIN;
-    int poll_result = poll(poll_fds, 1, recv_timeout_ms);
-    if (poll_result == -1) {
-	   /*Poll не смогла чё-то сделать.*/
-	   fuck_fd(sock);
-	   return POLL_ERROR;
-    }else if (poll_result == 0) {
-	   /*Вышел таймаут на recvfrom.*/
-	   fuck_fd(sock);
-	   return POLL_TIMEOUT_EXITED;
-    }
+	int time_out = set_socket_timeout_pro(sock, recv_timeout_ms);
+	if (time_out == -1){
+		fuck_fd(sock);
+		return -1;
+	}
 
 #ifdef NESCA
 	/*Ещё один таймаут, иногда poll не работает просто.*/
@@ -140,21 +133,9 @@
 
 int
 ncread_recv(int sockfd, void* buf, size_t len, int timeout_ms){
-	struct pollfd fds[1];
-    fds[0].fd = sockfd;
-    fds[0].events = POLLIN;
+	int timeout = set_socket_timeout_pro(sockfd, timeout_ms);
+	if (timeout == -1) {return -1;}
 
-    int ready = poll(fds, 1, timeout_ms);
-    if (ready == -1) {
-        return POLL_ERROR;
-    } else if (ready == 0) {
-        return POLL_TIMEOUT_EXITED;
-    } else {
-        int bytes_received = recv(sockfd, buf, len, 0);
-        if (bytes_received == -1) {
-            return READ_ERROR;
-        } else {
-            return bytes_received;
-        }
-    }
+    int bytes_received = recv(sockfd, buf, len, 0);
+    if (bytes_received == -1) {return READ_ERROR;} else {return bytes_received;}
 }

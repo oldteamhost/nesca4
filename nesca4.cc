@@ -1833,35 +1833,3 @@ pre_check(void){
     if (argp.print_help_menu){help_menu();exit(0);}
     if (!check_root_perms()){np.nlog_error("RAW socket only sudo run!\n");exit(1);}
 }
-
-/*Пока говно.*/
-#include <netinet/ip_icmp.h>
-int
-traceroute(std::string ip, int jumps){
-	std::cout << std::endl;
-	int ttl = 1;
-	int seq = 0;
-	int timeout_ms = 500;
-
-	auto it = argp.rtts.find(ip);
-	if (it != argp.rtts.end()) {timeout_ms = argp.rtts[ip] * 5;}
-
-	while (ttl <= jumps) {
-		for (int i = 1; i <= 3; i++){
-	    	auto it = argp.rtts.find(ip);
-	    	if (it != argp.rtts.end()) {timeout_ms = argp.rtts[ip] * 2;}
-	
-        	double icmp_casual = icmp_ping(ip.c_str(), timeout_ms, 8, 0, seq, ttl);
-    		if (icmp_casual != EOF){
-				std::cout << np.main_nesca_out("TRACEROUTE", ip, 3, "TTL", "", std::to_string(ttl), "", "") << std::endl;
-				break;
-    		}
-			std::cout << np.main_nesca_out("TRACEROUTE", "not info", 4, "TTL", "", std::to_string(ttl), "", "") << std::endl;
-		}
-		ttl++;
-		seq++;
-	}
-	std::cout << std::endl;
-	return 0;
-}
-

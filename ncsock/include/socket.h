@@ -17,6 +17,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdbool.h>
+#include <poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -34,6 +35,9 @@ int clean_winsock(void);
 
 int /*Set flag timeout on socket, in ms.*/
 set_socket_timeout(int sock, int timeout_ms, int on_send, int on_recv);
+
+int
+set_socket_timeout_pro(int sock, int timeout_ms);
 
 int /*Set flag address reuse on socket.*/
 set_socket_reuseaddr(int sock);

@@ -103,3 +103,20 @@ set_socket_hdrincl(int sock){
 
     return SUCCESS;
 }
+
+int
+set_socket_timeout_pro(int sock, int timeout_ms){
+    struct pollfd poll_fds[1];
+    poll_fds[0].fd = sock;
+    poll_fds[0].events = POLLIN;
+    int poll_result = poll(poll_fds, 1, timeout_ms);
+    if (poll_result == -1) {
+	   /*Poll не смогла чё-то сделать.*/
+	   fuck_fd(sock);
+	   return -1;
+    }else if (poll_result == 0) {
+	   /*Вышел таймаут на recvfrom.*/
+	   fuck_fd(sock);
+	   return -1;
+    }
+}
