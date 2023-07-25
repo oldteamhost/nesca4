@@ -4,7 +4,7 @@
 Многопоточный сканер портов, с точностью nmap-а, брутфорсом самых популярных протоколов и сканированием DNS.
 Был сделан с вдохновением от ![nesca3](https://github.com/pantyusha/nesca) & ![nmap](https://github.com/nmap/nmap).  
 
-Может сканировать методами: `SYN` `FIN` `XMAS` `FIN` `NULL` `WINDOW` `ACK` `MAIMON`.  
+Может сканировать методами: `SYN` `FIN` `XMAS` `NULL` `WINDOW` `ACK` `MAIMON`.  
 Может выполнять пинг методами: `SYN` `ACK` `ICMPECHO` `ICMPINFO` `ICMPTIMESTAMP`.  
 Может брутфорсить: `RVI` `HIKVISION` `BASICAUTH` `FTP` `SSH` `SMTP` `RTSP`.
 
