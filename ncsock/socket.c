@@ -6,9 +6,24 @@
 */
 
 #include "include/socket.h"
+#include <sys/socket.h>
+#include <unistd.h>
 
 #define ERROR  -1
 #define SUCCESS 0
+
+int fd(int domain, int type, int protocol){
+	int fd = socket(domain, type, protocol);
+	if (fd == -1){
+		return -1;
+	}
+	return fd;
+}
+
+int fuck_fd(int fd){
+	close(fd);
+	return 0;
+}
 
 int 
 set_socket_timeout(int sock, int timeout_ms, int on_send, int on_recv){

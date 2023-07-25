@@ -28,8 +28,7 @@ tcp_ack_ping(const char* ip, const char* source_ip, int dest_port, int source_po
 	fuck_ack.unlock();
 
 	/*Ожидание пакета, и запуск таймера на время ответа.*/
-	struct timespec start_time;
-    clock_gettime(CLOCK_MONOTONIC, &start_time);
+	std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
 	int read = ncread(ip, timeout_ms, &buffer, 0, dest_port, source_port);
 
 	/*Не дождалась пакета.*/
@@ -39,8 +38,7 @@ tcp_ack_ping(const char* ip, const char* source_ip, int dest_port, int source_po
 		fuck_ack.unlock();
 		return -1;
 	}
-	struct timespec end_time;
-    clock_gettime(CLOCK_MONOTONIC, &end_time);
+	std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
 
 	/*Ответ получен, теперь проверяем его.*/
     struct iphdr *iph = (struct iphdr*)buffer;
@@ -50,8 +48,8 @@ tcp_ack_ping(const char* ip, const char* source_ip, int dest_port, int source_po
 
 	/*Если ответило флагом RST значит спалился.*/
 	if (tcph->th_flags == 0x04){
-		response_time = (end_time.tv_sec - start_time.tv_sec) * 1000.0; 
-    	response_time += (end_time.tv_nsec - start_time.tv_nsec) / 1000000.0;
+		std::chrono::duration<double, std::milli> elapsed_ms = end_time - start_time;
+		response_time = elapsed_ms.count();
 	}
 
 	fuck_ack.lock();

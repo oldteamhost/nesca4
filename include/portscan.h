@@ -12,7 +12,6 @@
 #include <cstdint>
 #include <cstring>
 #include <arpa/inet.h>
-#include <netinet/tcp.h>
 #include <string>
 #include <random>
 #include <netdb.h>
@@ -22,9 +21,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
-#include <netinet/ip.h>
 #include <mutex>
-#include <netinet/in.h>
 #include <vector>
 
 #include "../include/nescalog.h"
@@ -58,7 +55,7 @@ struct pseudo_header{
    uint8_t placeholder;
    uint8_t protocol;
    uint16_t tcp_length;
-   struct tcphdr tcp;
+   struct tcp_header tcp;
 };
 
 /*Опции для nesca_scan.

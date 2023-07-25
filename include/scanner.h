@@ -84,20 +84,6 @@
 
 #define HTTP_BASIC_AUTH_BRUTE  999
 
-/*Нужен для точной установки сервиса порта.
- * Дело в том что, когда после сканирования показывается сервис на порту,
- * это лишь общепринятые данные. И какой нибудь FTP спокойно может быть и на 4333 порту.
- *
- * Именно для этого и нужен этот, класс, что-бы точно убеждатся что там стоит именно тот свервис.*/
-class service_probes{
-	int
-	http_probe(const std::string& ip, const int port);
-	int
-	ftp_probe(const std::string& ip, const int port);
-	int
-	smtp_probe(const std::string& ip, const int port);
-};
-
 /*Получение характеристики.*/
 class checking_finds{
 public:

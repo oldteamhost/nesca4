@@ -5,13 +5,7 @@
  * - Сделано от души 2023.
 */
 
-#include <arpa/inet.h>
-#include <asm-generic/errno-base.h>
-#include <asm-generic/errno.h>
-#include <errno.h>
 #include <iostream>
-#include <netinet/in.h>
-#include <netinet/ip_icmp.h>
 #include <poll.h>
 #include <stdint.h>
 #include <signal.h>
@@ -25,30 +19,7 @@
 #include <unistd.h>
 #include "include/icmpproto.h"
 #include "include/socket.h"
-
-std::mutex fuck_icmp;
-
-uint16_t calculate_checksum(unsigned char* buffer, int bytes){
-    uint32_t checksum = 0;
-    unsigned char* end = buffer + bytes;
-
-    if (bytes % 2 == 1){end = buffer + bytes - 1;checksum += (*end) << 8;}
-
-    while (buffer < end) {
-        checksum += buffer[0] << 8;
-        checksum += buffer[1];
-        buffer += 2;
-    }
-
-    uint32_t carray = checksum >> 16;
-    while (carray) {
-        checksum = (checksum & 0xffff) + carray;
-        carray = checksum >> 16;
-    }
-
-    checksum = ~checksum;
-    return checksum & 0xffff;
-}
+#include "include/headers.h"
 
 int 
 send_icmp_packet(struct sockaddr_in* addr, int type,
@@ -59,14 +30,9 @@ send_icmp_packet(struct sockaddr_in* addr, int type,
 
 	struct icmp4_header icmp;
 	memset(&icmp, 0, sizeof(icmp));
-
-	icmp.type = type;
-    icmp.code = code;
-    icmp.ident = htons(ident);
-    icmp.seq = htons(seq);
-	icmp.checksum = 0;
+	fill_icmp_header(&icmp, type, code, 0, ident, seq);
 	strncpy(icmp.magic, MAGIC, MAGIC_LEN);
-	icmp.checksum = htons(calculate_checksum((unsigned char*)&icmp, sizeof(icmp)));
+	icmp.checksum = htons(checksum_16bit_icmp((unsigned char*)&icmp, sizeof(icmp)));
 
 	const int bytes = sendto(fd, &icmp, sizeof(icmp), 0,(struct sockaddr*)addr, sizeof(*addr));
     if (bytes == EOF) {
@@ -109,7 +75,7 @@ recv_icmp_packet(const char* dest_ip, int timeout_ms, int type,
         	return -1;
     	}
 		/*Получение IP заголовка.*/
-		struct iphdr *iph = (struct iphdr*)buffer;
+		struct ip_header *iph = (struct ip_header*)buffer;
 
 		/*Поулучение из него IP отправителя.*/
 	   	struct sockaddr_in source;

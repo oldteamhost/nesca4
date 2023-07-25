@@ -13,19 +13,40 @@ uint16_t checksum_16bit(const uint16_t* data, int length) {
         sum += *data++;
         length -= 2;
     }
-    if (length == 1){
-        sum += *((uint8_t*)data);
-    }
+    if (length == 1) {sum += *((uint8_t*)data);}
 
     sum = (sum >> 16) + (sum & 0xFFFF);
     sum += (sum >> 16);
     return (uint16_t)~sum;
 }
 
-void fill_ip_header(struct iphdr* ip_header, const char* source_ip, const char* dest_ip, uint16_t packet_length,
+uint16_t
+checksum_16bit_icmp(unsigned char* buffer, int bytes){
+    uint32_t checksum = 0;
+    unsigned char* end = buffer + bytes;
+
+    if (bytes % 2 == 1){end = buffer + bytes - 1;checksum += (*end) << 8;}
+
+    while (buffer < end) {
+        checksum += buffer[0] << 8;
+        checksum += buffer[1];
+        buffer += 2;
+    }
+
+    uint32_t carray = checksum >> 16;
+    while (carray) {
+        checksum = (checksum & 0xffff) + carray;
+        carray = checksum >> 16;
+    }
+
+    checksum = ~checksum;
+    return checksum & 0xffff;
+}
+
+void fill_ip_header(struct ip_header* ip_header, const char* source_ip, const char* dest_ip, uint16_t packet_length,
                     uint8_t protocol, uint16_t identification, uint16_t flags_fragoffset, uint8_t ttl,
                     uint8_t ihl, uint8_t version, uint8_t tos){
-    memset(ip_header, 0, sizeof(struct iphdr));
+    memset(ip_header, 0, sizeof(struct ip_header));
     ip_header->saddr = inet_addr(source_ip);
     ip_header->daddr = inet_addr(dest_ip);
     ip_header->tot_len = htons(packet_length);
@@ -39,9 +60,9 @@ void fill_ip_header(struct iphdr* ip_header, const char* source_ip, const char* 
     ip_header->check = 0;
 }
 
-void fill_tcp_header(struct tcphdr* tcp_header, uint16_t source_port, uint16_t dest_port, uint32_t seq_num, uint32_t ack_num,
+void fill_tcp_header(struct tcp_header* tcp_header, uint16_t source_port, uint16_t dest_port, uint32_t seq_num, uint32_t ack_num,
                      uint16_t window_size, uint16_t urgent_ptr, uint8_t doff, uint8_t res1, struct tcp_flags flags){
-    memset(tcp_header, 0, sizeof(struct tcphdr));
+    memset(tcp_header, 0, sizeof(struct tcp_header));
     tcp_header->source = htons(source_port);
     tcp_header->dest = htons(dest_port);
     tcp_header->seq = htonl(seq_num);
@@ -59,13 +80,12 @@ void fill_tcp_header(struct tcphdr* tcp_header, uint16_t source_port, uint16_t d
     tcp_header->check = 0;
 }
 
-void fill_icmp_header(struct icmp* icmp_header, uint8_t type, uint8_t code,
-                      uint16_t identifier, uint16_t sequence){
-    memset(icmp_header, 0, sizeof(struct icmphdr));
-    icmp_header->icmp_type = type;
-    icmp_header->icmp_code = code;
-    icmp_header->icmp_id = htons(identifier);
-    icmp_header->icmp_seq = sequence; 
-    icmp_header->icmp_cksum = 0;
+void
+fill_icmp_header(struct icmp4_header* icmp4_header, uint8_t type, uint8_t code, uint16_t checksum,
+		uint16_t ident, uint16_t seq){
+	icmp4_header->checksum = checksum;
+	icmp4_header->ident = htons(ident);
+	icmp4_header->code = code;
+	icmp4_header->type = type;
+	icmp4_header->seq = htons(seq);
 }
-

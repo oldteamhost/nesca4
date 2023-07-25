@@ -23,28 +23,30 @@
 extern "C" {
 #endif
 
-/*Set flag timeout on socket, in ms.*/
-int 
+int fd(int domain, int type, int protocol);
+int fuck_fd(int fd);
+
+/*
+int init_winsock(void);
+int clean_winsock(void);
+*/
+
+int /*Set flag timeout on socket, in ms.*/
 set_socket_timeout(int sock, int timeout_ms, int on_send, int on_recv);
 
-/*Set flag address reuse on socket.*/
-int 
+int /*Set flag address reuse on socket.*/
 set_socket_reuseaddr(int sock);
 
-/*Set non_block flag on socket.*/
-int 
+int /*Set non_block flag on socket.*/
 set_socket_nonblocking(int sock);
 
-/*Set send buffer size, on socket.*/
-int 
+int /*Set send buffer size, on socket.*/
 set_socket_send_buffer_size(int sock, int buffer_size);
 
-/*Set recv buffer size, on socket.*/
-int 
+int /*Set recv buffer size, on socket.*/
 set_socket_receive_buffer_size(int sock, int buffer_size);
 
-/*Send kernel custom ip header*/
-int 
+int /*Send kernel custom ip header*/
 set_socket_hdrincl(int sock);
 
 #ifdef __cplusplus

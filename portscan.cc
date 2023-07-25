@@ -8,10 +8,6 @@
 #include <arpa/inet.h>
 #include <cstdio>
 #include <ctime>
-#include <libssh/libssh.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
 #include <string>
 #include <sys/types.h>
 #include <thread>
@@ -37,8 +33,8 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
     struct sockaddr_in dest;
     struct pseudo_header psh;
 
-    struct iphdr *iph_send = (struct iphdr*)datagram;
-    struct tcphdr *tcph_send = (struct tcphdr*)(datagram + sizeof (struct iphdr));
+    struct ip_header *iph_send = (struct ip_header*)datagram;
+    struct tcp_header *tcph_send = (struct tcp_header*)(datagram + sizeof(struct ip_header));
 
 	/*Задержка по стандартку 0.*/
     std::this_thread::sleep_for(std::chrono::milliseconds(timeout_ms));
@@ -57,7 +53,7 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
     fill_tcp_header(tcph_send, ncot->source_port, port, ncot->seq, 0, WINDOWS_SIZE, 0,
 		  5, 0, ncot->tcpf);
 
-	const uint16_t packet_length = sizeof(struct iphdr) + sizeof(struct tcphdr);
+	const uint16_t packet_length = sizeof(struct ip_header) + sizeof(struct tcp_header);
 
     fill_ip_header(iph_send, ncot->source_ip, ip, packet_length,
 		        IPPROTO_TCP, generate_ident(), IP_DF, ncot->ttl, 5, 4, 0);
@@ -75,8 +71,8 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
     psh.dest_address = dest.sin_addr.s_addr; 
     psh.placeholder = 0;
     psh.protocol = iph_send->protocol;
-    psh.tcp_length = htons(sizeof(struct tcphdr));
-    memcpy(&psh.tcp, tcph_send, sizeof(struct tcphdr));
+    psh.tcp_length = htons(sizeof(struct tcp_header));
+    memcpy(&psh.tcp, tcph_send, sizeof(struct tcp_header));
 
     /*Заполнение контрольной суммы пакета для
     tcp заголовка, на основе псевдо.*/
@@ -114,14 +110,14 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
 
 int
 get_port_status(unsigned char* buffer, int scan_type){
-    const struct iphdr *iph = (struct iphdr*)buffer;
+    const struct ip_header *iph = (struct ip_header*)buffer;
     const uint16_t iphdrlen = (iph->ihl) * 4;
 
     /*Если пакет именно TCP.*/
     if (iph->protocol != 6) {return PORT_ERROR;}
 
-    const struct tcphdr *tcph =
-		(struct tcphdr*)((char*)buffer + iphdrlen);
+    const struct tcp_header *tcph =
+		(struct tcp_header*)((char*)buffer + iphdrlen);
 
 	if (scan_type == MAIMON_SCAN){
 		if (tcph->th_flags == 0x04) {return PORT_CLOSED;}

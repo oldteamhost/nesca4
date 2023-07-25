@@ -9,7 +9,6 @@
 #include "include/other.h"
 #include "include/html.h"
 #include <string>
-#include <unistd.h>
 #include <vector>
 
 html_output hou;

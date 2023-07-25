@@ -11,20 +11,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <sys/time.h>
-
-#include <sys/param.h>
 #include <sys/socket.h>
-#include <sys/file.h>
-
-#include <netinet/in_systm.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
 #include <sys/time.h>
-#include <netinet/ip_icmp.h>
-#include <netdb.h>
-#include <thread>
 #include <unistd.h>
+
+#include <chrono>
 
 #include "include/icmpping.h"
 #include "../ncsock/include/icmpproto.h"
@@ -43,17 +34,13 @@ icmp_ping(const char* dest_ip, int timeout_ms, int type, int code, int seq, int 
 	int ret = send_icmp_packet(&addr, type, code, ident, seq, ttl);
 	if (ret == EOF) {return -1;}
 
-	struct timespec start_time;
-    clock_gettime(CLOCK_MONOTONIC, &start_time);
-
+	std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
 	ret = recv_icmp_packet(dest_ip, timeout_ms, type, code, ident);
 	if (ret == EOF) {return -1;}
+	std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
 
-	struct timespec end_time;
-    clock_gettime(CLOCK_MONOTONIC, &end_time);
-
-	response_time = (end_time.tv_sec - start_time.tv_sec) * 1000.0; 
-    response_time += (end_time.tv_nsec - start_time.tv_nsec) / 1000000.0;
+	std::chrono::duration<double, std::milli> elapsed_ms = end_time - start_time;
+	response_time = elapsed_ms.count();
 
 	/* Источник - https://nmap.org/man/ru/man-host-discovery.html*/
     /* Источник - https://gist.github.com/bugparty/ccba5744ba8f1cece5e0*/

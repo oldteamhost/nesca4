@@ -11,6 +11,10 @@
 #include <vector>
 #include <filesystem>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 const char*
 get_time(){
     time_t rawtime;
@@ -47,13 +51,19 @@ check_ansi_support(void){
     return std::string(envValue).find("xterm") != std::string::npos;
 }
 
-void
-delay_ms(int milliseconds){
-    struct timespec ts;
-    ts.tv_sec = milliseconds / 1000;
-    ts.tv_nsec = (milliseconds % 1000) * 1000000;
-    nanosleep(&ts, NULL);
+#ifdef _WIN32
+void delay_ms(int milliseconds) {
+	Sleep(milliseconds);
 }
+#else
+void delay_ms(int milliseconds) {
+	struct timespec ts;
+	ts.tv_sec = milliseconds / 1000;
+	ts.tv_nsec = (milliseconds % 1000) * 1000000;
+	nanosleep(&ts, NULL);
+}
+#endif
+
 
 std::vector<int>
 write_ports(std::string mode){
@@ -130,11 +140,24 @@ parse_range(const std::string& range_string){
     return result;
 }
 
-bool 
-check_root_perms(){
-    return geteuid() == 0;
-    return false;
+#ifdef _WIN32
+bool check_root_perms() {
+	BOOL is_admin = FALSE;
+	SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+	PSID AdminGroup;
+	if (AllocateAndInitializeSid(&NtAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &AdminGroup)){
+    	if (!CheckTokenMembership(NULL, AdminGroup, &is_admin))
+        	is_admin = FALSE;
+    	FreeSid(AdminGroup);
+	}
+	return (is_admin != 0);
 }
+#else
+bool check_root_perms() {
+	return (geteuid() == 0);
+}
+#endif
+
 
 bool 
 dns_or_ip(std::string &node){

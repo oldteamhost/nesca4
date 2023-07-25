@@ -2,28 +2,55 @@
 #include <vector>
 #include <unordered_map>
 
+#define SPEED_TYPE_DEFAULT 4
+#define SCAN_PORTS_TYPE_DEFAULT 1
+#define DEFAULT_PORTS {80,443}
+#define GROUP_RATE_DEFAULT 20
+#define GROUP_MIN_SIZE_DEFAULT 5
+#define GROUP_MAX_SIZE_DEFAULT 1024
+#define SYN_PING_DEFAULT_DEST_PORT 80
+#define ACK_PING_DEFAULT_DEST_PORT 80
+#define PING_LOG_DEFAULT 20
+#define DNS_RESOLV_SOURCE_PORT_DEFUALT 4555
+#define DNS_SCAN_THREADS_DEFAULT 50
+#define DNS_SCAN_SIZE_DNS_DEFAULT 5
+#define NEGATIVES_PATH_DEFAULT "resources/negatives.txt"
+#define DNS_SCAN_DICTIONARY_DEFAULT "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+#define PATH_FTP_LOGIN_DEFAULT "passwd/ftp_logins.txt"
+#define PATH_FTP_PASS_DEFAULT "passwd/ftp_passwords.txt"
+#define PATH_SFTP_LOGIN_DEFAULT "passwd/sftp_logins.txt"
+#define PATH_SFTP_PASS_DEFAULT "passwd/sftp_passwords.txt"
+#define PATH_RTSP_LOGIN_DEFAULT "passwd/rtsp_logins.txt"
+#define PATH_RTSP_PASS_DEFAULT "passwd/rtsp_passwords.txt"
+#define PATH_HTTP_LOGIN_DEFAULT "passwd/http_logins.txt"
+#define PATH_HTTP_PASS_DEFAULT "passwd/http_passwords.txt"
+#define PATH_HIKVISION_LOGIN_DEFAULT "passwd/hikvision_logins.txt"
+#define PATH_HIKVISION_PASS_DEFAULT "passwd/hikvision_passwords.txt"
+#define PATH_SMTP_LOGIN_DEFAULT "passwd/smtp_logins.txt"
+#define PATH_SMTP_PASS_DEFAULT "passwd/smtp_passwords.txt"
+#define PATH_RVI_LOGIN_DEFAULT "passwd/rvi_logins.txt"
+#define PATH_RVI_PASS_DEFAULT "passwd/rvi_passwords.txt"
+
 class arguments_program{
 public:
-	   /*Other*/
-	   std::string negatives_path = "resources/negatives.txt";
+	   std::string negatives_path = NEGATIVES_PATH_DEFAULT;
 	   bool pro_mode;
 
-	   /*Save*/
        bool txt;
        std::string txt_save;
 
-	   /*Scan options*/
 	   bool no_scan;
 	   const char* source_ip;
-	   int type = 1;
-	   int speed_type = 3;
+	   int type = SCAN_PORTS_TYPE_DEFAULT;
+	   int speed_type = SPEED_TYPE_DEFAULT;
 
 	   bool custom_g_rate;
 	   bool custom_g_max;
 	   bool custom_g_min;
-	   int group_rate = 20;
-	   int group_size = 5;
-	   int group_size_max = 1024;
+	   int group_rate = GROUP_RATE_DEFAULT;
+	   int group_size = GROUP_MIN_SIZE_DEFAULT;
+	   int group_size_max = GROUP_MAX_SIZE_DEFAULT;
 
 	   bool custom_source_port;
 	   bool custom_ttl;
@@ -40,15 +67,15 @@ public:
 	   bool packet_trace;
 
        bool timeout;
-       int timeout_ms = 0;
+       int timeout_ms;
    	   bool custom_recv_timeout_ms;
        int recv_timeout_ms;
 	   bool custom_log_set;
-       int log_set = 20;
+       int log_set;
        int _threads;
-       int _threads_dns = 50;
+       int _threads_dns = DNS_SCAN_THREADS_DEFAULT;
 
-       std::vector<int> ports = {80,443};
+       std::vector<int> ports = DEFAULT_PORTS;
 	   bool no_proc;
 
        bool debug;
@@ -62,20 +89,18 @@ public:
 
        bool get_response;
 
-	   /*DNS scan options*/
        bool dns_scan;
        std::string domain_1level;
-       std::string dns_dictionary = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	   int dns_scan_domain_count = 5;
+       std::string dns_dictionary = DNS_SCAN_DICTIONARY_DEFAULT;
+	   int dns_scan_domain_count = DNS_SCAN_SIZE_DNS_DEFAULT;
 	   bool custom_threads_resolv;
 
-	   /*Scan target*/
        bool random_ip;
 	   bool no_get_dns;
        int random_ip_count;
 	   int dns_threads;
-	   int resol_source_port = 4555;
-	   int resol_delay = 0;
+	   int resol_source_port = DNS_RESOLV_SOURCE_PORT_DEFUALT;
+	   int resol_delay;
 
        bool ip_scan;
        bool ip_cidr_scan;
@@ -86,18 +111,17 @@ public:
        bool ip_range_scan_import;
 
        std::vector<std::string> result;
-       std::vector<std::string> dns; // ip_scan on
+       std::vector<std::string> dns;
 
        const char* path_range;
        const char* path_cidr;
        const char* path_ips;
 
-	   /*Ping options*/
 	   bool custom_ping;
 	   int ping_timeout;
 	   int threads_ping;
-	   int ping_log = 20;
 	   bool custom_threads;
+	   int ping_log = PING_LOG_DEFAULT;
 
 	   bool ack_ping;
 	   bool syn_ping;
@@ -106,20 +130,20 @@ public:
 	   bool timestamp_ping;
 	   bool max_ping;
 
-	   int ack_dest_port = 80;
-	   int syn_dest_port = 80;
+	   int ack_dest_port = ACK_PING_DEFAULT_DEST_PORT;
+	   int syn_dest_port = SYN_PING_DEFAULT_DEST_PORT;
 
 	   std::unordered_map<std::string,double> rtts;
 
 	   /*Don`t touch*/
-	   int error_fuck = 0;
+	   int error_fuck;
        bool print_help_menu;
        int threads_temp;
        std::string ports_temp;
-	   double ping_duration = 0.0;
-	   double dns_duration = 0.0;
-	   double scan_duration = 0.0;
-	   double proc_duration = 0.0;
+	   double ping_duration;
+	   double dns_duration;
+	   double scan_duration;
+	   double proc_duration;
 
 	   std::unordered_map<std::string, std::vector<int>> success_target;
 	   std::unordered_map<std::string, std::vector<int>> error_target;
@@ -134,7 +158,6 @@ public:
        bool thread_on_port;
 	   bool info_version;
 
-	   /*Bruteforce auth data*/
        std::vector<std::string> ftp_logins;
        std::vector<std::string> ftp_passwords;
        std::vector<std::string> rtsp_logins;
@@ -150,25 +173,22 @@ public:
        std::vector<std::string> rvi_logins;
        std::vector<std::string> rvi_passwords;
 
-	   /*Bruteforce paths*/
-       std::string path_ftp_login = "passwd/ftp_logins.txt";
-       std::string path_ftp_pass = "passwd/ftp_passwords.txt";
-       std::string path_sftp_login = "passwd/sftp_logins.txt";
-       std::string path_sftp_pass = "passwd/sftp_passwords.txt";
-       std::string path_rtsp_login = "passwd/rtsp_logins.txt";
-       std::string path_rtsp_pass = "passwd/rtsp_passwords.txt";
-       std::string path_http_login = "passwd/http_logins.txt";
-       std::string path_http_pass = "passwd/http_passwords.txt";
-       std::string path_hikvision_login = "passwd/hikvision_logins.txt";
-       std::string path_hikvision_pass = "passwd/hikvision_passwords.txt";
-       std::string path_smtp_login = "passwd/smtp_logins.txt";
-       std::string path_smtp_pass = "passwd/smtp_passwords.txt";
-       std::string path_rvi_login = "passwd/rvi_logins.txt";
-       std::string path_rvi_pass = "passwd/rvi_passwords.txt";
+	   std::string path_ftp_login = PATH_FTP_LOGIN_DEFAULT;
+	   std::string path_ftp_pass = PATH_FTP_PASS_DEFAULT;
+	   std::string path_sftp_login = PATH_SFTP_LOGIN_DEFAULT;
+	   std::string path_sftp_pass = PATH_SFTP_PASS_DEFAULT;
+	   std::string path_rtsp_login = PATH_RTSP_LOGIN_DEFAULT;
+	   std::string path_rtsp_pass = PATH_RTSP_PASS_DEFAULT;
+	   std::string path_http_login = PATH_HTTP_LOGIN_DEFAULT;
+	   std::string path_http_pass = PATH_HTTP_PASS_DEFAULT;
+	   std::string path_hikvision_login = PATH_HIKVISION_LOGIN_DEFAULT;
+	   std::string path_hikvision_pass = PATH_HIKVISION_PASS_DEFAULT;
+	   std::string path_smtp_login = PATH_SMTP_LOGIN_DEFAULT;
+	   std::string path_smtp_pass = PATH_SMTP_PASS_DEFAULT;
+	   std::string path_rvi_login = PATH_RVI_LOGIN_DEFAULT;
+	   std::string path_rvi_pass = PATH_RVI_PASS_DEFAULT;
 
-	   /*Bruteforce options*/
-       int brute_timeout_ms = 0;
-
+       int brute_timeout_ms;
        bool ftp_brute_verbose;
        bool sftp_brute_verbose;
        bool rtsp_brute_verbose;
