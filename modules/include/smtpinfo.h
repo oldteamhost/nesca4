@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include "../../ncsock/include/socket.h"
 
 #define SMTP_ERROR "N/A"
 

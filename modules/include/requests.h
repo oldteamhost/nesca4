@@ -23,6 +23,7 @@
 #include <cstdio>
 #include <unistd.h>
 #include "../../include/callbacks.h"
+#include "../../ncsock/include/socket.h"
 #include <curl/curl.h>
 
 #define HTTPREQUEST_ERROR "HTTPREQUEST: error"
