@@ -6,9 +6,6 @@
 */
 
 #include "include/bruteforce.h"
-#include "ncsock/include/ncread.h"
-#include <curl/easy.h>
-#include <unistd.h>
 
 brute_ftp_data bfd;
 nesca_prints np1;
@@ -44,61 +41,61 @@ brute_smtp(const std::string& ip, int port, const std::string& login, const std:
 	int timeout_ms = 1000;
     if (brute_log) {np1.nlog_custom("SMTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
 
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = fd(AF_INET, SOCK_STREAM, 0);
     if (sock == EOF) {return "";}
 
     sockaddr_in server_address{};
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(port);
 
-    if (inet_pton(AF_INET, ip.c_str(), &(server_address.sin_addr)) <= 0)                         {close(sock);return "";}
-    if (connect(sock, reinterpret_cast<sockaddr*>(&server_address), sizeof(server_address)) < 0) {close(sock);return "";}
+    if (inet_pton(AF_INET, ip.c_str(), &(server_address.sin_addr)) <= 0)                         {fuck_fd(sock);return "";}
+    if (connect(sock, reinterpret_cast<sockaddr*>(&server_address), sizeof(server_address)) < 0) {fuck_fd(sock);return "";}
 
     char buffer[1024];
     memset(buffer, 0, 1024);
-    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0) {close(sock);return "";}
+    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0) {fuck_fd(sock);return "";}
     if (verbose) {std::cout << buffer;}
 
     std::string helo_command = "HELO localhost\r\n";
-    if (send(sock, helo_command.c_str(), helo_command.length(), 0) < 0) {close(sock);return "";}
+    if (send(sock, helo_command.c_str(), helo_command.length(), 0) < 0) {fuck_fd(sock);return "";}
 
     memset(buffer, 0, 1024);
-    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0) {close(sock);return "";}
+    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0) {fuck_fd(sock);return "";}
     if (verbose) {std::cout << buffer;}
 
     std::string auth_command = "AUTH LOGIN\r\n";
-    if (send(sock, auth_command.c_str(), auth_command.length(), 0) < 0) {close(sock);return "";}
+    if (send(sock, auth_command.c_str(), auth_command.length(), 0) < 0) {fuck_fd(sock);return "";}
 
     memset(buffer, 0, 1024);
-    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0) {close(sock);return "";}
+    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0) {fuck_fd(sock);return "";}
     if (verbose) {std::cout << buffer;}
 
     std::string encoded_login = base64_encode(login);
-    if (send(sock, encoded_login.c_str(), encoded_login.length(), 0) < 0) {close(sock);return "";}
-    if (send(sock, "\r\n", 2, 0) < 0) {close(sock);return "";}
+    if (send(sock, encoded_login.c_str(), encoded_login.length(), 0) < 0) {fuck_fd(sock);return "";}
+    if (send(sock, "\r\n", 2, 0) < 0) {fuck_fd(sock);return "";}
 
     memset(buffer, 0, 1024);
-    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0) {close(sock);return "";}
+    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0) {fuck_fd(sock);return "";}
     if (verbose) {std::cout << buffer;}
 
     std::string encoded_password = base64_encode(pass);
-    if (send(sock, encoded_password.c_str(), encoded_password.length(), 0) < 0) {close(sock);return "";}
+    if (send(sock, encoded_password.c_str(), encoded_password.length(), 0) < 0) {fuck_fd(sock);return "";}
 
-    if (send(sock, "\r\n", 2, 0) < 0) {close(sock);return "";}
+    if (send(sock, "\r\n", 2, 0) < 0) {fuck_fd(sock);return "";}
 
     memset(buffer, 0, 1024);
-    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0) {close(sock);return "";}
+    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0) {fuck_fd(sock);return "";}
     if (verbose) {std::cout << buffer;}
 
     if (std::string(buffer).find("235") != std::string::npos) {
-        close(sock);
+        fuck_fd(sock);
         std::string result = login + ":" + pass + "@";
         bfd.set_success_pass(pass);
         bfd.set_success_login(login);
         return result;
     } 
     else {
-        close(sock);
+        fuck_fd(sock);
         return "";
     }
     return "";
@@ -129,46 +126,46 @@ brute_ftp(const std::string ip, int port, const std::string login, const std::st
 	int timeout_ms = 1000;
     if (brute_log){np1.nlog_custom("FTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
 
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = fd(AF_INET, SOCK_STREAM, 0);
     if (sock == EOF) {return "";}
 
     sockaddr_in server_address{};
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(port);
 
-    if (inet_pton(AF_INET, ip.c_str(), &(server_address.sin_addr)) <= 0) {close(sock);return "";}
+    if (inet_pton(AF_INET, ip.c_str(), &(server_address.sin_addr)) <= 0) {fuck_fd(sock);return "";}
 
-    if (connect(sock, reinterpret_cast<sockaddr*>(&server_address), sizeof(server_address)) < 0) {close(sock);return "";}
+    if (connect(sock, reinterpret_cast<sockaddr*>(&server_address), sizeof(server_address)) < 0) {fuck_fd(sock);return "";}
 
     char buffer[1024];
     memset(buffer, 0, 1024);
-    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0){close(sock);return "";}
+    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0){fuck_fd(sock);return "";}
     if (verbose){std::cout << buffer;}
 
     std::string user_command = "USER " + login + "\r\n";
-    if (send(sock, user_command.c_str(), user_command.length(), 0) < 0) {close(sock);return "";}
+    if (send(sock, user_command.c_str(), user_command.length(), 0) < 0) {fuck_fd(sock);return "";}
 
     memset(buffer, 0, 1024);
-    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0) {close(sock);return "";}
+    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0) {fuck_fd(sock);return "";}
     if (verbose){std::cout << buffer;}
 
     std::string password_command = "PASS " + pass + "\r\n";
-    if (send(sock, password_command.c_str(), password_command.length(), 0) < 0) {close(sock);return "";}
+    if (send(sock, password_command.c_str(), password_command.length(), 0) < 0) {fuck_fd(sock);return "";}
 
     memset(buffer, 0, 1024);
-    if (ncread_recv(sock, buffer, 1024- 1, timeout_ms) < 0) {close(sock);return "";}
+    if (ncread_recv(sock, buffer, 1024- 1, timeout_ms) < 0) {fuck_fd(sock);return "";}
 
     if (verbose) {std::cout << buffer;}
 
     if (std::string(buffer).find("230") != std::string::npos) {
-        close(sock);
+        fuck_fd(sock);
 	    std::string result = login + ":" + pass + "@";
 	    bfd.set_success_pass(pass);
 	    bfd.set_success_login(login);
         return result;
     } 
     else {
-        close(sock);
+        fuck_fd(sock);
         return "";
     }
     return "";
@@ -475,11 +472,11 @@ brute_rvi(const std::string ip, int port, const std::string login, const std::st
         sa.sin_addr.s_addr = reinterpret_cast<in_addr*>(host->h_addr_list[0])->s_addr;
     }
 
-	int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	int sock = fd(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock == EOF) {return "-1";}
 
 	if (connect(sock, reinterpret_cast<sockaddr*>(&sa), sizeof(sa)) == EOF) {
-        close(sock);
+        fuck_fd(sock);
         return "-1";
     }
 
@@ -492,13 +489,13 @@ brute_rvi(const std::string ip, int port, const std::string login, const std::st
   	if (brute_log){np1.nlog_custom("RVI", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
 
 	const int s = send(sock, new_login_packet, sizeof(new_login_packet), 0);
-    if (s < 0) {close(sock);return "-1";}
+    if (s < 0) {fuck_fd(sock);return "-1";}
 
     char buff[100] = {0};
 	int r = ncread_recv(sock, buff, sizeof(buff), 2000);
-	if (r < 0) {close(sock);return "-1";}
+	if (r < 0) {fuck_fd(sock);return "-1";}
 
-    close(sock);
+    fuck_fd(sock);
 
     if (buff[9] == 0x08) {
         std::string result_passwd = login + ":" + pass + "@";

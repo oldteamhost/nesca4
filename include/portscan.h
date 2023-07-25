@@ -17,6 +17,7 @@
 #include <netdb.h>
 #include <cerrno>
 #include <unistd.h>
+#include <thread>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -26,7 +27,9 @@
 
 #include "../include/nescalog.h"
 #include "../ncsock/include/headers.h"
+#include "../ncsock/include/socket.h"
 #include "../include/other.h"
+#include "../include/generation.h"
 
 #define PORT_OPEN             0
 #define PORT_CLOSED           1

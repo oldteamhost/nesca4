@@ -15,6 +15,14 @@
 #include <iostream>
 #include <unistd.h>
 #include <random>
+#include <cstdio>
+#include <vector>
+#include <filesystem>
+#include "../include/files.h"
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 #include "../include/target.h"
 

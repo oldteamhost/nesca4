@@ -6,10 +6,6 @@
 */
 
 #include "include/nescalog.h"
-#include "include/other.h"
-#include "include/html.h"
-#include <string>
-#include <vector>
 
 html_output hou;
 

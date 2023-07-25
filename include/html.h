@@ -8,6 +8,8 @@
 #ifndef HTML_H
 #define HTML_H
 #include <iostream>
+#include "../include/other.h"
+#include "../include/files.h"
 
 class html_output{
 private:

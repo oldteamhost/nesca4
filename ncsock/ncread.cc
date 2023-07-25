@@ -28,7 +28,7 @@
     unsigned char *read_buffer = *buffer;
 
      /*Создание сокета.*/
-    int sock = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
+    int sock = fd(AF_INET, SOCK_RAW, IPPROTO_TCP);
     if (sock == -1) {return SOCKET_ERROR;}
 
     /*Устанока таймаута на recvfrom.*/
@@ -38,11 +38,11 @@
     int poll_result = poll(poll_fds, 1, recv_timeout_ms);
     if (poll_result == -1) {
 	   /*Poll не смогла чё-то сделать.*/
-	   close(sock);
+	   fuck_fd(sock);
 	   return POLL_ERROR;
     }else if (poll_result == 0) {
 	   /*Вышел таймаут на recvfrom.*/
-	   close(sock);
+	   fuck_fd(sock);
 	   return POLL_TIMEOUT_EXITED;
     }
 
@@ -59,7 +59,7 @@
 
 	if (result < 0) {
 	   /*Вышел таймаут.*/
-    	close(sock);
+	    fuck_fd(sock);
     	return -1;
 	}
 
@@ -71,17 +71,17 @@
     /*Бесконечный цикл, по принятию вообще любых пакетов с системы.*/
     for (;;){
 	   /*Принимаем пакет в буфер.*/
-	   ssize_t data_size = recvfrom(sock, read_buffer, READ_BUFFER_SIZE, 0, &saddr, (socklen_t *)&saddr_size);
+	   int data_size = recvfrom(sock, read_buffer, READ_BUFFER_SIZE, 0, &saddr, (socklen_t *)&saddr_size);
 	   if (data_size == -1){
-		  close(sock);
+	      fuck_fd(sock);
 		  return READ_ERROR;
 	   }
 
 	   /*Получения IP заголовка полученного пакета.*/
-	   struct iphdr *iph = (struct iphdr*)read_buffer;
+	   struct ip_header *iph = (struct ip_header*)read_buffer;
 	   unsigned short iphdrlen = (iph->ihl) * 4;
 	   if (iphdrlen < 20){
-		  close(sock);
+	      fuck_fd(sock);
 		  return IP_HEADER_LEN_ERROR;
 	   }
 
@@ -99,7 +99,7 @@
 		  auto current_time = std::chrono::steady_clock::now();
 		  auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
 		  if (elapsed_time >= recv_timeout_ms) {
-			 close(sock);
+	      	 fuck_fd(sock);
 			 return INFINITY_TIMEOUT_EXITED;
 		  }
 
@@ -117,7 +117,7 @@
 		  	addr.s_addr = iph->daddr;
 		  	std::string dest_ip = inet_ntoa(addr);
 
-		  	struct tcphdr *tcph = (struct tcphdr*)(buffer+ iphdrlen);
+		  	struct tcp_header *tcph = (struct tcp_header*)(buffer+ iphdrlen);
 		  	unsigned short id = ntohs(iph->id);
 		  	unsigned int seq = ntohl(tcph->seq);
 		  	unsigned int iplen = ntohs(iph->tot_len);
@@ -129,16 +129,16 @@
 		  /*Если пришёл правильный пакет.
 		   * Заполняем буфер им.*/
 		  *buffer = read_buffer;
-		  close(sock);
+		  fuck_fd(sock);
 		  return SUCCESS_READ;
 	   }
     }
     /*Ну ок :)*/
-    close(sock);
+    fuck_fd(sock);
     return READ_ERROR;
 }
 
-ssize_t 
+int
 ncread_recv(int sockfd, void* buf, size_t len, int timeout_ms){
 	struct pollfd fds[1];
     fds[0].fd = sockfd;
@@ -150,7 +150,7 @@ ncread_recv(int sockfd, void* buf, size_t len, int timeout_ms){
     } else if (ready == 0) {
         return POLL_TIMEOUT_EXITED;
     } else {
-        ssize_t bytes_received = recv(sockfd, buf, len, 0);
+        int bytes_received = recv(sockfd, buf, len, 0);
         if (bytes_received == -1) {
             return READ_ERROR;
         } else {

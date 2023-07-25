@@ -6,8 +6,6 @@
 */
 
 #include "include/html.h"
-#include "include/other.h"
-#include "include/files.h"
 
 int 
 html_output::html_main_init(const std::string& filepath){

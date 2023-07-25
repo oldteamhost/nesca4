@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <unistd.h>
+#include "../ncsock/include/socket.h"
 
 class dns_utils{
 public:

@@ -15,6 +15,7 @@
 #include <fstream>
 #include <map>
 
+#include "../include/html.h"
 #include "../include/other.h"
 #include "../include/files.h"
 

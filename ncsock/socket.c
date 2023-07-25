@@ -6,8 +6,6 @@
 */
 
 #include "include/socket.h"
-#include <sys/socket.h>
-#include <unistd.h>
 
 #define ERROR  -1
 #define SUCCESS 0

@@ -6,7 +6,6 @@
 */
 
 #include "include/netutils.h"
-#include "ncsock/include/socket.h"
 
 std::string
 dns_utils::get_dns_by_ip(const char* ip, int port){

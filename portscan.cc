@@ -5,22 +5,7 @@
  * - Сделано от души 2023.
 */
 
-#include <arpa/inet.h>
-#include <cstdio>
-#include <ctime>
-#include <string>
-#include <sys/types.h>
-#include <thread>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <poll.h>
-
 #include "include/portscan.h"
-#include "ncsock/include/ncread.h"
-#include "ncsock/include/headers.h"
-#include "ncsock/include/socket.h"
-#include "ncsock/include/other.h"
-#include "include/generation.h"
 
 nesca_prints np2;
 std::mutex packet_trace;
@@ -41,7 +26,7 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
 
     /*Создание raw сокета, для более глубокой работы
     с сокетом.*/
-    int sock = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
+    int sock = fd(AF_INET, SOCK_RAW, IPPROTO_TCP);
     if (sock < 0) {return PORT_ERROR;}
 
     /*Сообщаем ядру, что не нужно генерировать IP заголовок
@@ -80,7 +65,7 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
     tcph_send->check = check_sum_tcp;
 
     /*Отправка TCP пакета.*/
-    const ssize_t send = sendto(sock, datagram, packet_length, 0,
+    const int send = sendto(sock, datagram, packet_length, 0,
 		  (struct sockaddr*)&dest, sizeof(dest));
     if (send == EOF){
 	   close(sock);

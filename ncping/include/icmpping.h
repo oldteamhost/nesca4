@@ -9,6 +9,17 @@
 #define ICMP_PING_H
 #include <stdio.h>
 #include <sys/types.h>
+#include <arpa/inet.h>
+#include <iostream>
+#include <cstdlib>
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <chrono>
+#include "../../ncsock/include/icmpproto.h"
 
 /*Классический IMCP пинг.
  * По всем многим типам.*/

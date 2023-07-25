@@ -6,10 +6,6 @@
 */
 
 #include "include/requests.h"
-#include <cstdio>
-#include <unistd.h>
-#include "../include/callbacks.h"
-#include <curl/curl.h>
 
 std::string 
 send_http_request(const std::string& node, int port) {

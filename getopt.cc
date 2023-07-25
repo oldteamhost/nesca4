@@ -1,6 +1,3 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include "include/getopt.h"
 
 /*А вы знали что код на C очень читабельный?

@@ -6,6 +6,7 @@
 */
 
 #include "include/synping.h"
+
 std::mutex fuck_syn;
 
 double
@@ -20,7 +21,8 @@ tcp_syn_ping(const char* ip, const char* source_ip, int dest_port, int source_po
 	ncops.tcpf = set_flags(SYN_SCAN);
 
 	/*Отправка.*/
-	nesca_scan(&ncops, ip, dest_port, 0);
+	int send = nesca_scan(&ncops, ip, dest_port, 0);
+	if (send == EOF){return -1;}
 
 	/*Буфер для приёма ответа.*/
 	fuck_syn.lock();
@@ -41,10 +43,10 @@ tcp_syn_ping(const char* ip, const char* source_ip, int dest_port, int source_po
 	std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
 
 	/*Ответ получен, теперь проверяем его.*/
-    struct iphdr *iph = (struct iphdr*)buffer;
+    struct ip_header *iph = (struct ip_header*)buffer;
     unsigned short iphdrlen = (iph->ihl) * 4;
     if (iph->protocol != 6) {return PORT_ERROR;}
-    struct tcphdr *tcph = (struct tcphdr*)((char*)buffer + iphdrlen);
+    struct tcp_header *tcph = (struct tcp_header*)((char*)buffer + iphdrlen);
 
 	/*Если ответило флагом RST значит спалился.*/
 	if (tcph->th_flags != 0){

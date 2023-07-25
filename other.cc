@@ -6,14 +6,6 @@
 */
 
 #include "include/other.h"
-#include "include/files.h"
-#include <cstdio>
-#include <vector>
-#include <filesystem>
-
-#ifdef _WIN32
-#include <windows.h>
-#endif
 
 const char*
 get_time(){
@@ -52,9 +44,7 @@ check_ansi_support(void){
 }
 
 #ifdef _WIN32
-void delay_ms(int milliseconds) {
-	Sleep(milliseconds);
-}
+void delay_ms(int milliseconds){Sleep(milliseconds);}
 #else
 void delay_ms(int milliseconds) {
 	struct timespec ts;
@@ -153,9 +143,7 @@ bool check_root_perms() {
 	return (is_admin != 0);
 }
 #else
-bool check_root_perms() {
-	return (geteuid() == 0);
-}
+bool check_root_perms() {return (geteuid() == 0);}
 #endif
 
 

@@ -12,15 +12,13 @@
 
 #ifndef NCREAD_H
 #define NCREAD_H
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <iostream>
 #include <cstring>
 #include <chrono>
-#include <netinet/ip.h>
 #include <poll.h>
-#include <netinet/tcp.h>
 #include <unistd.h>
+#include "../include/headers.h"
+#include "../include/socket.h"
 
 /*Если убрать этот макрос, то функция не будет привязана к другим классам.*/
 #define NESCA
@@ -47,7 +45,7 @@
 	ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool debug);
 #endif
 
-ssize_t 
+int
 ncread_recv(int sockfd, void* buf, size_t len, int timeout_ms);
 
 #endif

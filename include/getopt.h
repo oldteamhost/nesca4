@@ -1,5 +1,8 @@
 #ifndef MY_GETOPT_H_INCLUDED
 #define MY_GETOPT_H_INCLUDED
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 extern int getopt_reset(void);
 extern int optind, opterr, optopt;

@@ -14,13 +14,6 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
-#include <vector>
-#include <poll.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
 #include "../ncsock/include/ncread.h"
 
 #define CAMERA_AXIS                    "AXIS CAMERA"

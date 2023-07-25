@@ -5,20 +5,7 @@
  * - Сделано от души 2023.
 */
 
-#include <arpa/inet.h>
-#include <iostream>
-#include <cstdlib>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <unistd.h>
-
-#include <chrono>
-
 #include "include/icmpping.h"
-#include "../ncsock/include/icmpproto.h"
 
 double
 icmp_ping(const char* dest_ip, int timeout_ms, int type, int code, int seq, int ttl){

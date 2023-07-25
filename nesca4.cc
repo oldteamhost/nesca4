@@ -6,12 +6,6 @@
 */
 
 #include "include/nesca4.h"
-#include "include/other.h"
-#include "include/portscan.h"
-#include <cstdlib>
-#include <math.h>
-#include <string>
-#include <vector>
 
 struct nesca_scan_opts ncopts;
 const char* short_options = "hl:vd:T:p:aS:";

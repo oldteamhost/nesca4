@@ -20,6 +20,10 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <poll.h>
+#include <cstdio>
+#include <unistd.h>
+#include "../../include/callbacks.h"
+#include <curl/curl.h>
 
 #define HTTPREQUEST_ERROR "HTTPREQUEST: error"
 

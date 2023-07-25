@@ -7,9 +7,22 @@
 
 #ifndef ICMP_PROTO_H
 #define ICMP_PROTO_H
-
 #include <stdio.h>
 #include <stdint.h>
+#include <iostream>
+#include <poll.h>
+#include <stdint.h>
+#include <signal.h>
+#include <chrono>
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <sys/time.h>
+#include <arpa/inet.h>
+#include <mutex>
+#include <unistd.h>
+#include "socket.h"
+#include "headers.h"
 
 /*Для отправки IMCP пакета без своего IP загловка.*/
 int 
