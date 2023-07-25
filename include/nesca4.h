@@ -54,6 +54,7 @@ void init_bruteforce(void);
 void processing_tcp_scan_ports(std::string ip, int port, int result);
 std::string format_percentage(double procents);
 void check_files(const char* path, const char* path1);
+void fix_time(double time);
 
 int
 scan_ports(const char* ip, std::vector<int>ports, const int timeout_ms);

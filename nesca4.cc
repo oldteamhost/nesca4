@@ -7,13 +7,12 @@
 
 #include "include/nesca4.h"
 #include "include/portscan.h"
+#include <string>
 
 struct nesca_scan_opts ncopts;
 const char* short_options = "hl:vd:T:p:aS:";
 const char* run; /*Для help_menu()*/
-
 std::mutex ls;
-
 checking_finds cfs;
 nesca_prints np;
 brute_ftp_data bfd_;
@@ -177,7 +176,7 @@ int main(int argc, char** argv){
 
     	while (result_iter != argp.result.end()) {
         	int remaining_tasks = std::distance(result_iter, argp.result.end());
-        	int tasks_to_execute = std::min(threads_ping, remaining_tasks);
+			int tasks_to_execute = (threads_ping < remaining_tasks) ? threads_ping : remaining_tasks;
 
         	for (int i = 0; i < tasks_to_execute; ++i) {
             	std::string ip = *result_iter;
@@ -291,35 +290,37 @@ int main(int argc, char** argv){
 	bool fix_group_log = true;
 	while (group_start < size) {
 		auto start_time_scan = std::chrono::high_resolution_clock::now();
-		int group_end = std::min(group_start + static_cast<int>(argp.group_size), static_cast<int>(size));
-    	std::vector<std::string> ip_group(result_main.begin() + group_start, result_main.begin() + group_end);
+		int group_end = (group_start + static_cast<int>(argp.group_size) < static_cast<int>(size)) ?
+               group_start + static_cast<int>(argp.group_size) :
+               static_cast<int>(size);
+
+    	std::vector<std::string> 
+		ip_group(result_main.begin() + group_start, result_main.begin() + group_end);
 
         /*Сканирование текущей группы*/
         for (const auto& ip : ip_group) {
+
 			/*Подсчёт повторившихся IP.*/
             if (processed_ip.count(ip) > 0){skipped_ip++;continue;}
 
         	ip_count++;
         	processed_ip.insert(ip);
 
-			int log_set; /*Аее.*/
-			/*Вывод лога каждые argp.log_set*/
+			int log_set;
 			if (argp.custom_log_set){log_set = argp.log_set;}
 			else{log_set = argp.group_size;}
+
         	if (ip_count % log_set == 0) {
             	double procents = (static_cast<double>(ip_count) / size) * 100;
             	std::string result = format_percentage(procents);
-				if (!fix_group_log){std::cout << std::endl;}
-				fix_group_log = false;
+
 				std::cout << np.main_nesca_out("#", "Scan "+std::to_string(ip_count)+" out of "+
 						std::to_string(size) + " IPs", 6, "", "", result+"%", "", "") << std::endl;
 
 				std::cout << np.main_nesca_out("# rate", "Group "+std::to_string(argp.group_size)+" out of "+
 						std::to_string(argp.group_size_max), 6, "", "", std::to_string(argp.group_rate), "", "") << std::endl;
-
-				if (!argp.pro_mode){std::cout << std::endl;}
-
         	}
+
         	/*Добавление задачи сканирования портов в пул потоков*/
         	auto fut = pool.enqueue(scan_ports, ip.c_str(), argp.ports, argp.timeout_ms);
         	futures.push_back(std::move(fut));
@@ -330,6 +331,7 @@ int main(int argc, char** argv){
             	futures.erase(futures.begin());
         	}
     	}
+
 		if (argp.group_size < argp.group_size_max && argp.group_size > 0){argp.group_size += argp.group_rate;}
 		group_start = group_end;
 
@@ -353,23 +355,17 @@ int main(int argc, char** argv){
 			   	|| argp.debug 
 			   	|| argp.open_or_filtered_target.find(ip) != argp.open_or_filtered_target.end()
 	           	|| argp.no_filtered_target.find(ip) != argp.no_filtered_target.end()){
-		  		double time_ms = argp.rtts[ip];
-				std::ostringstream stream;
-    			stream << std::fixed << std::setprecision(2) << time_ms;
-    			std::string formatted_time = stream.str();
 
+		  		double time_ms = argp.rtts[ip];
 		  		if (np.save_file){write_line(np.file_path_save, "\n");}
-				if (!argp.pro_mode){
-					if (!standart_mode_fix){std::cout << std::endl;}
-				}
-				else {std::cout << std::endl;}
-				standart_mode_fix = false;
 
 				std::string result;
-		  		std::cout << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", argp.dns_completed[ip], formatted_time+"ms","") << std::endl;
+		  		std::cout << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", argp.dns_completed[ip], std::to_string(argp.rtts[ip])+"ms","") << std::endl;
 	   			print_results(ip);
+				std::cout << std::endl;
 			}
         }
+
 		/*Успешные цели.*/
 		count_success_ips += argp.success_target.size();
 		count_success_ips += argp.no_filtered_target.size();
@@ -390,7 +386,7 @@ int main(int argc, char** argv){
 	if (np.save_file){write_line(np.file_path_save, "\n");}
 
 	np.golder_rod_on();
-	std::cout << "\n-> NESCA finished " << count_success_ips << " up IPs (success) in "
+	std::cout << "-> NESCA finished " << count_success_ips << " up IPs (success) in "
 		<< std::fixed << std::setprecision(2) << argp.ping_duration+argp.dns_duration+argp.scan_duration+argp.proc_duration << " seconds";
 	np.reset_colors();
 
@@ -401,20 +397,115 @@ int main(int argc, char** argv){
 	}
 
     if (skipped_ip > 0){std::cout << np.main_nesca_out("NESCA4", std::to_string(skipped_ip)+" identical IPs", 5, "status", "", "OK", "","") << std::endl;}
+
 	if (argp.pro_mode){
 		np.golder_rod_on();
-		std::cout << "\n-> PING:";
-		std::cout << std::fixed << std::setprecision(2) << argp.ping_duration << "s ";
-		std::cout << "  DNS:";
-		std::cout << std::fixed << std::setprecision(2) << argp.dns_duration << "s ";
-		std::cout << "  SCAN:";
-		std::cout << std::fixed << std::setprecision(2) << argp.scan_duration << "s ";
-		std::cout << "  PROC:";
-		std::cout << std::fixed << std::setprecision(2) << argp.proc_duration << "s \n";
+		std::cout << "\n-> PING:"; fix_time(argp.ping_duration);
+		std::cout << "  DNS:";     fix_time(argp.dns_duration);
+		std::cout << "  SCAN:";    fix_time(argp.scan_duration);
+		std::cout << "  PROC:";    fix_time(argp.proc_duration);
+		std::cout << std::endl;
 	}
 
     return 0;
 }
+
+/*Функция через которую происходит само сканирование
+ * портов. Стабильно.*/
+int
+scan_ports(const char* ip, std::vector<int>ports, const int timeout_ms){
+	/*Установка порты с которого будут идти пакеты на этот IP.*/
+	int source_port;
+	if (!argp.custom_source_port){source_port = generate_port();}
+	else {source_port = argp._custom_source_port;}
+
+	/*Если не было получено RTT, по стандарту время ответа 600.*/
+    int recv_timeout_result = 600;
+
+	/*Если кастомное.*/
+    if (argp.custom_recv_timeout_ms){
+	   recv_timeout_result = argp.recv_timeout_ms;
+    }else {
+	   /*Расчёт таймаута для приёма данных*/
+	   auto it = argp.rtts.find(ip);
+	   if (it != argp.rtts.end()) {
+		  double rtt_ping = argp.rtts.at(ip);
+		  recv_timeout_result = calc_port_timeout(argp.speed_type, rtt_ping);
+	   }
+    }
+
+	/*Один рандомный порт отправки на каждый IP.
+	 * Можно и на каждый порт, но лучше менять не часто.*/
+    ncopts.source_port = source_port;
+
+	/*Рандомный SEQ на каждый IP. Не порт!*/
+    ncopts.seq = generate_seq();
+
+    for (const auto& port : ports){
+		/*Настройка TTL.*/
+		if (!argp.custom_ttl){ncopts.ttl = generate_ttl();}
+		else{ncopts.ttl = argp._custom_ttl;}
+
+	   /*Отправка пакета.*/
+	   const int result = nesca_scan(&ncopts, ip, port, timeout_ms);
+
+	   /*Если функция не вернула PORT_OPEN,
+	    * Это означает что функция успешно выполнилась.*/
+	   if (result != PORT_OPEN){
+		  ls.lock();
+		  /*Значит была ошибка.*/
+		  if (argp.print_errors){argp.error_target[ip].push_back(port); argp.error_fuck++;}
+		  ls.unlock();
+		  /*Переход к следующему порту.*/
+		  continue;
+	   }
+
+	   ls.lock(); /*Буфер для ответа.*/
+	   unsigned char *buffer = (unsigned char *)calloc(READ_BUFFER_SIZE, sizeof(unsigned char));
+	   ls.unlock();
+
+	   /*В другом случае, запускается
+	    * "Принятие пакета" или скорее его ожидание.*/
+	   int read = ncread(ip, recv_timeout_result, &buffer, argp.syn_debug, port, source_port, argp.packet_trace);
+	   /*Если функция не получила пакет.*/
+	   if (read != SUCCESS_READ){
+		  ls.lock();
+		  free(buffer);
+		  ls.unlock();
+
+		  if (argp.type != SYN_SCAN && argp.type != ACK_SCAN && argp.type != WINDOW_SCAN){
+		  	  ls.lock();
+		      /*Значит порт open|filtered.*/
+			  argp.open_or_filtered_target[ip].push_back(port);
+		  	  ls.unlock();
+		  }
+		  else{
+		  	  ls.lock();
+		  	  /*Значит порт filtered.*/
+			  if (argp.debug){argp.filtered_target[ip].push_back(port);}
+		  	  ls.unlock();
+		  }
+		  continue;
+	   }
+
+	   /*В другом случае идёт обработка пакета.
+	    * И только на этом этапе мы получаем статус порта.*/
+	   int port_status = -1;
+	   port_status = get_port_status(buffer, argp.type);
+
+	   if (port_status == PORT_CLOSED && argp.debug){argp.closed_target[ip].push_back(port);}
+	   else if (port_status == PORT_OPEN){argp.success_target[ip].push_back(port);}
+	   if (port_status == PORT_FILTER && argp.debug){argp.filtered_target[ip].push_back(port);}
+	   else if (port_status == PORT_NO_FILTER){argp.no_filtered_target[ip].push_back(port);}
+
+	   ls.lock();
+	   free(buffer);
+	   ls.unlock();
+    }
+
+    return 0;
+}
+
 
 void
 print_results(std::string ip){
@@ -434,6 +525,11 @@ print_results(std::string ip){
     process_ports(argp.closed_target, PORT_CLOSED);
     process_ports(argp.open_or_filtered_target, PORT_OPEN_OR_FILTER);
     process_ports(argp.no_filtered_target, PORT_NO_FILTER);
+}
+
+void
+fix_time(double time){
+	std::cout << std::fixed << std::setprecision(2) << time << "s";
 }
 
 bool /*Лесенка ping-ов.*/
@@ -1591,102 +1687,6 @@ format_percentage(double procents){
     oss << std::fixed << std::setprecision(1) << procents << "%";
     std::string result = oss.str();
     return result;
-}
-
-/*Функция через которую происходит само сканирование
- * портов. Стабильно.*/
-int
-scan_ports(const char* ip, std::vector<int>ports, const int timeout_ms){
-	/*Установка порты с которого будут идти пакеты на этот IP.*/
-	int source_port;
-	if (!argp.custom_source_port){source_port = generate_port();}
-	else {source_port = argp._custom_source_port;}
-
-	/*Если не было получено RTT, по стандарту время ответа 600.*/
-    int recv_timeout_result = 600;
-
-	/*Если кастомное.*/
-    if (argp.custom_recv_timeout_ms){
-	   recv_timeout_result = argp.recv_timeout_ms;
-    }else {
-	   /*Расчёт таймаута для приёма данных*/
-	   auto it = argp.rtts.find(ip);
-	   if (it != argp.rtts.end()) {
-		  double rtt_ping = argp.rtts.at(ip);
-		  recv_timeout_result = calc_port_timeout(argp.speed_type, rtt_ping);
-	   }
-    }
-
-	/*Один рандомный порт отправки на каждый IP.
-	 * Можно и на каждый порт, но лучше менять не часто.*/
-    ncopts.source_port = source_port;
-
-	/*Рандомный SEQ на каждый IP. Не порт!*/
-    ncopts.seq = generate_seq();
-
-    for (const auto& port : ports){
-		/*Настройка TTL.*/
-		if (!argp.custom_ttl){ncopts.ttl = generate_ttl();}
-		else{ncopts.ttl = argp._custom_ttl;}
-
-	   /*Отправка пакета.*/
-	   const int result = nesca_scan(&ncopts, ip, port, timeout_ms);
-
-	   /*Если функция не вернула PORT_OPEN,
-	    * Это означает что функция успешно выполнилась.*/
-	   if (result != PORT_OPEN){
-		  ls.lock();
-		  /*Значит была ошибка.*/
-		  if (argp.print_errors){argp.error_target[ip].push_back(port); argp.error_fuck++;}
-		  ls.unlock();
-		  /*Переход к следующему порту.*/
-		  continue;
-	   }
-
-	   ls.lock(); /*Буфер для ответа.*/
-	   unsigned char *buffer = (unsigned char *)calloc(READ_BUFFER_SIZE, sizeof(unsigned char));
-	   ls.unlock();
-
-	   /*В другом случае, запускается
-	    * "Принятие пакета" или скорее его ожидание.*/
-	   int read = ncread(ip, recv_timeout_result, &buffer, argp.syn_debug, port, source_port, argp.packet_trace);
-	   /*Если функция не получила пакет.*/
-	   if (read != SUCCESS_READ){
-		  ls.lock();
-		  free(buffer);
-		  ls.unlock();
-
-		  if (argp.type != SYN_SCAN && argp.type != ACK_SCAN && argp.type != WINDOW_SCAN){
-		  	  ls.lock();
-		      /*Значит порт open|filtered.*/
-			  argp.open_or_filtered_target[ip].push_back(port);
-		  	  ls.unlock();
-		  }
-		  else{
-		  	  ls.lock();
-		  	  /*Значит порт filtered.*/
-			  if (argp.debug){argp.filtered_target[ip].push_back(port);}
-		  	  ls.unlock();
-		  }
-		  continue;
-	   }
-
-	   /*В другом случае идёт обработка пакета.
-	    * И только на этом этапе мы получаем статус порта.*/
-	   int port_status = -1;
-	   port_status = get_port_status(buffer, argp.type);
-
-	   if (port_status == PORT_CLOSED && argp.debug){argp.closed_target[ip].push_back(port);}
-	   else if (port_status == PORT_OPEN){argp.success_target[ip].push_back(port);}
-	   if (port_status == PORT_FILTER && argp.debug){argp.filtered_target[ip].push_back(port);}
-	   else if (port_status == PORT_NO_FILTER){argp.no_filtered_target[ip].push_back(port);}
-
-	   ls.lock();
-	   free(buffer);
-	   ls.unlock();
-    }
-
-    return 0;
 }
 
 void /*Для DNS_RESOLV*/
