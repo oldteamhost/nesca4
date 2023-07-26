@@ -7,9 +7,11 @@
 
 #include "include/headers.h"
 
-uint16_t checksum_16bit(const uint16_t* data, int length) {
+uint16_t checksum_16bit(const uint16_t* data, int length)
+{
     uint32_t sum = 0;
-    while (length > 1) {
+    while (length > 1)
+	{
         sum += *data++;
         length -= 2;
     }
@@ -21,20 +23,23 @@ uint16_t checksum_16bit(const uint16_t* data, int length) {
 }
 
 uint16_t
-checksum_16bit_icmp(unsigned char* buffer, int bytes){
+checksum_16bit_icmp(unsigned char* buffer, int bytes)
+{
     uint32_t checksum = 0;
     unsigned char* end = buffer + bytes;
 
     if (bytes % 2 == 1){end = buffer + bytes - 1;checksum += (*end) << 8;}
 
-    while (buffer < end) {
+    while (buffer < end)
+	{
         checksum += buffer[0] << 8;
         checksum += buffer[1];
         buffer += 2;
     }
 
     uint32_t carray = checksum >> 16;
-    while (carray) {
+    while (carray)
+	{
         checksum = (checksum & 0xffff) + carray;
         carray = checksum >> 16;
     }
@@ -45,7 +50,8 @@ checksum_16bit_icmp(unsigned char* buffer, int bytes){
 
 void fill_ip_header(struct ip_header* ip_header, const char* source_ip, const char* dest_ip, uint16_t packet_length,
                     uint8_t protocol, uint16_t identification, uint16_t flags_fragoffset, uint8_t ttl,
-                    uint8_t ihl, uint8_t version, uint8_t tos){
+                    uint8_t ihl, uint8_t version, uint8_t tos)
+{
     memset(ip_header, 0, sizeof(struct ip_header));
     ip_header->saddr = inet_addr(source_ip);
     ip_header->daddr = inet_addr(dest_ip);
@@ -61,7 +67,8 @@ void fill_ip_header(struct ip_header* ip_header, const char* source_ip, const ch
 }
 
 void fill_tcp_header(struct tcp_header* tcp_header, uint16_t source_port, uint16_t dest_port, uint32_t seq_num, uint32_t ack_num,
-                     uint16_t window_size, uint16_t urgent_ptr, uint8_t doff, uint8_t res1, struct tcp_flags flags){
+                     uint16_t window_size, uint16_t urgent_ptr, uint8_t doff, uint8_t res1, struct tcp_flags flags)
+{
     memset(tcp_header, 0, sizeof(struct tcp_header));
     tcp_header->source = htons(source_port);
     tcp_header->dest = htons(dest_port);
@@ -82,7 +89,8 @@ void fill_tcp_header(struct tcp_header* tcp_header, uint16_t source_port, uint16
 
 void
 fill_icmp_header(struct icmp4_header* icmp4_header, uint8_t type, uint8_t code, uint16_t checksum,
-		uint16_t ident, uint16_t seq){
+		uint16_t ident, uint16_t seq)
+{
 	icmp4_header->checksum = checksum;
 	icmp4_header->ident = htons(ident);
 	icmp4_header->code = code;

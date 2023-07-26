@@ -9,7 +9,8 @@
 
 int 
 send_icmp_packet(struct sockaddr_in* addr, int type,
-				int code, int ident, int seq, int ttl){
+				int code, int ident, int seq, int ttl)
+{
 	int fd_ = fd(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 	if (fd_ == EOF){return -1;}
 	if (setsockopt(fd_, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) < 0){fuck_fd(fd_);return -1;}
@@ -22,7 +23,8 @@ send_icmp_packet(struct sockaddr_in* addr, int type,
 	icmp.checksum = htons(checksum_16bit_icmp((unsigned char*)&icmp, sizeof(icmp)));
 
 	const int bytes = sendto(fd_, &icmp, sizeof(icmp), 0,(struct sockaddr*)addr, sizeof(*addr));
-    if (bytes == EOF) {
+    if (bytes == EOF)
+	{
 		fuck_fd(fd_);
         return -1;
     }
@@ -32,8 +34,8 @@ send_icmp_packet(struct sockaddr_in* addr, int type,
 
 int 
 recv_icmp_packet(const char* dest_ip, int timeout_ms, int type,
-				int code, int identm){
-
+				int code, int identm)
+{
 	int fd_ = fd(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 	if (fd_ == EOF){return -1;}
 
@@ -43,18 +45,22 @@ recv_icmp_packet(const char* dest_ip, int timeout_ms, int type,
 
 	/*Установка таймаута на сокет*/
 	int result = set_socket_timeout(fd_, timeout_ms, 1, 1);
-	if (result < 0) {
+	if (result < 0)
+	{
 		fuck_fd(fd_);
     	return -1;
 	}
 
     int addr_len = sizeof(peer_addr);
     auto start_time = std::chrono::steady_clock::now();
-	for (;;){
+	for (;;)
+	{
     	int bytes = recvfrom(fd_, buffer, sizeof(buffer), 0,(struct sockaddr*)&peer_addr, (socklen_t *)&addr_len);
-		if (bytes == EOF) {
+		if (bytes == EOF)
+		{
 			/*Сработал таймаут.*/
-			if (errno == EAGAIN || errno == EWOULDBLOCK){
+			if (errno == EAGAIN || errno == EWOULDBLOCK)
+			{
 				fuck_fd(fd_);
 				return -1;
 			}
@@ -71,31 +77,40 @@ recv_icmp_packet(const char* dest_ip, int timeout_ms, int type,
 	   	source.sin_addr.s_addr = iph->saddr;
 		struct in_addr dest; dest.s_addr = inet_addr(dest_ip);
 
-		if (source.sin_addr.s_addr != dest.s_addr){
+		if (source.sin_addr.s_addr != dest.s_addr)
+		{
 		  	auto current_time = std::chrono::steady_clock::now();
 		  	auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
-		  	if (elapsed_time >= timeout_ms) {
+		  	if (elapsed_time >= timeout_ms)
+			{
 				fuck_fd(fd_);
 			 	return -1;
 		  	}
 			continue;
 		}
-		else {
+		else
+		{
 			struct icmp4_header* icmp = (struct icmp4_header*)(buffer + 20);
-			if (type == ICMP_ECHO){
-				if (icmp->type == ICMP_ECHOREPLY){
+			if (type == ICMP_ECHO)
+			{
+				if (icmp->type == ICMP_ECHOREPLY)
+				{
 					fuck_fd(fd_);
 					return 0;
 				}
 			}
-			if (type == ICMP_TIMESTAMP){
-				if (icmp->type == ICMP_TIMESTAMPREPLY){
+			if (type == ICMP_TIMESTAMP)
+			{
+				if (icmp->type == ICMP_TIMESTAMPREPLY)
+				{
 					fuck_fd(fd_);
 					return 0;
 				}
 			}
-			if (type == ICMP_INFO_REQUEST){
-				if (icmp->type == ICMP_INFO_REPLY){
+			if (type == ICMP_INFO_REQUEST)
+			{
+				if (icmp->type == ICMP_INFO_REPLY)
+				{
 					fuck_fd(fd_);
 					return 0;
 				}

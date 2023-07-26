@@ -8,7 +8,8 @@
 int optind=1, opterr=1, optopt=0;
 char *optarg=0;
 
-int getopt_reset(void){
+int getopt_reset(void)
+{
     optind = 1;
     opterr = 1;
     optopt = 0;
@@ -17,7 +18,8 @@ int getopt_reset(void){
 }
 
 static int 
-_getopt(int argc, char * argv[], const char *opts){
+_getopt(int argc, char * argv[], const char *opts)
+{
   static int charind=0;
   const char *s;
   char mode, colon_mode;
@@ -229,12 +231,14 @@ _getopt_internal(int argc, char * argv[], const char *shortopts,
 
 int 
 getopt_long(int argc, char * argv[], const char *shortopts,
-                const struct option *longopts, int *longind){
+                const struct option *longopts, int *longind)
+{
     return _getopt_internal(argc, argv, shortopts, longopts, longind, 0);
 }
 
 int 
 getopt_long_only(int argc, char * argv[], const char *shortopts,
-                const struct option *longopts, int *longind){
+                const struct option *longopts, int *longind)
+{
     return _getopt_internal(argc, argv, shortopts, longopts, longind, 1);
 }

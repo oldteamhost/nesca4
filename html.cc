@@ -8,14 +8,16 @@
 #include "include/html.h"
 
 int 
-html_output::html_main_init(const std::string& filepath){
+html_output::html_main_init(const std::string& filepath)
+{
 	const int write = write_line(filepath, style_nesca3);
 	if (write != 0) {return -1;}
 	return 0;
 }
 
 int 
-html_output::html_pre_init(const std::string& filepath){
+html_output::html_pre_init(const std::string& filepath)
+{
 	const std::string data_html = R"(
 	<br><br>
 	<hr>
@@ -32,11 +34,11 @@ html_output::html_pre_init(const std::string& filepath){
 	if (write != 0) {return -1;}
 	return 0;
 }
-
 int 
 html_output::html_add_result(const std::string& filepath, const std::string& time, const std::string& href, const std::string& text,
 		const std::string& opt, const std::string& res, const std::string& opt1, const std::string& res1,
-		const std::string& opt2, const std::string& res2, const std::string& opt3, const std::string& res3){
+		const std::string& opt2, const std::string& res2, const std::string& opt3, const std::string& res3)
+{
 
 	char dots[4] = 
 	{':', ':', ':', ':'};

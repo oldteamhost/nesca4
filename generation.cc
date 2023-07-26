@@ -8,14 +8,16 @@
 #include "include/generation.h"
 
 const char*
-generate_ipv6(int num_octets){
+generate_ipv6(int num_octets)
+{
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> distrib(0, 65535);
 
     static char ip[40];
     std::stringstream ss;
-    for (int i = 0; i < num_octets; i++) {
+    for (int i = 0; i < num_octets; i++)
+	{
         ss << std::hex << distrib(gen);
         if (i < num_octets - 1) {ss << ":";}
     }
@@ -25,14 +27,16 @@ generate_ipv6(int num_octets){
 }
 
 const char*
-generate_ipv4(void){
+generate_ipv4(void)
+{
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> distrib(0, 255);
 
     static char ip[16];
     std::stringstream ss;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++)
+	{
         ss << distrib(gen);
         if (i < 3) {ss << ".";}
     }
@@ -42,7 +46,8 @@ generate_ipv4(void){
 }
 
 std::string
-generate_random_str(int len, std::string dictionary){
+generate_random_str(int len, std::string dictionary)
+{
     std::string result;
     std::random_device rd;
     std::mt19937 engine(rd());
@@ -52,7 +57,8 @@ generate_random_str(int len, std::string dictionary){
 }
 
 unsigned int
-generate_seq(void){
+generate_seq(void)
+{
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<unsigned int> dis(0, 4294967295);
@@ -61,7 +67,8 @@ generate_seq(void){
 }
 
 unsigned int
-generate_ident(void){
+generate_ident(void)
+{
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<unsigned int> dis(0, 65535);
@@ -70,7 +77,8 @@ generate_ident(void){
 }
 
 int
-generate_port(void){
+generate_port(void)
+{
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dist(49151, 65535);
@@ -79,7 +87,8 @@ generate_port(void){
 }
 
 int
-generate_ttl(void){
+generate_ttl(void)
+{
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dist(31, 64);

@@ -12,7 +12,8 @@ nesca_prints np2;
 std::mutex packet_trace;
 
 int 
-nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_ms){
+nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_ms)
+{
     char datagram[SEND_BUFFER_SIZE];
     memset(datagram, 0, SEND_BUFFER_SIZE);
 
@@ -68,12 +69,14 @@ nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_m
     /*Отправка TCP пакета.*/
     const int send = sendto(sock, datagram, packet_length, 0,
 		  (struct sockaddr*)&dest, sizeof(dest));
-    if (send == EOF){
+    if (send == EOF)
+	{
 	   close(sock);
 	   return PORT_ERROR;
     }
 
-	if (ncot->packet_trace == true){
+	if (ncot->packet_trace == true)
+	{
 		std::string source_ip = ncot->source_ip;
 		std::string dest_ip = ip;
 		packet_trace.lock();
@@ -105,11 +108,13 @@ get_port_status(unsigned char* buffer, uint8_t scan_type){
     const struct tcp_header *tcph =
 		(struct tcp_header*)((char*)buffer + iphdrlen);
 
-	if (scan_type == MAIMON_SCAN){
+	if (scan_type == MAIMON_SCAN)
+	{
 		if (tcph->th_flags == 0x04) {return PORT_CLOSED;}
 		else {return PORT_OPEN_OR_FILTER;}
 	}
-	if (scan_type == WINDOW_SCAN){
+	if (scan_type == WINDOW_SCAN)
+	{
 		if (tcph->th_flags == 0x04){
 			if (tcph->window > 0) {return PORT_OPEN;}
 			else {return PORT_CLOSED;}
@@ -117,13 +122,15 @@ get_port_status(unsigned char* buffer, uint8_t scan_type){
 		else {return PORT_FILTER;}
 	}
     if (scan_type == FIN_SCAN || scan_type == XMAS_SCAN
-			|| scan_type == NULL_SCAN){
+			|| scan_type == NULL_SCAN)
+	{
 	   switch (tcph->th_flags) {
 		  case 0x04: {return PORT_CLOSED;}
 		  default:
 	   		return PORT_OPEN;
 	   }
-    }else if (scan_type == ACK_SCAN){
+    }else if (scan_type == ACK_SCAN)
+	{
 	   switch (tcph->th_flags) {
 		  case 0x04: {return PORT_NO_FILTER;}
 		  default:
@@ -131,21 +138,25 @@ get_port_status(unsigned char* buffer, uint8_t scan_type){
 	   }
 	}
     else {
-	   switch (tcph->th_flags) {
-		  case 0x12:{
+	   switch (tcph->th_flags) 
+	   {
+		  case 0x12:
+		  {
 			 /*SYN + ACK
 			 * Если хост ответил флагом ack и послал syn
 			 значит порт считаеться открытым.*/
 			 return PORT_OPEN;
 		  }
-		  case 0x1A:{
+		  case 0x1A:
+		  {
 			 /*SYN + ACK + PSH
 			 * Если хост ответил флагом ack и psh затем  послал syn
 			 значит порт считаеться открытым, и готовым для
 			 передачи данных*/
 			 return PORT_OPEN;
 		  }
-		  case 0x04:{
+		  case 0x04:
+		  {
 			 /*RST
 			 * Если хост послал только флаг rst
 			 aka сброс соеденения, то считаеться что порт

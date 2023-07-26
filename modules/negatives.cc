@@ -14,7 +14,8 @@ nesca_negatives::parse_config_file(const std::string& file_path){
     std::ifstream file(file_path);
     std::string line;
     
-    while (std::getline(file, line)) {
+    while (std::getline(file, line))
+	{
         /*Игнорируем пустые строки и строки-комментарии*/
         if (line.empty() || line.substr(0, 2) == "//"){continue;}
         
@@ -22,7 +23,8 @@ nesca_negatives::parse_config_file(const std::string& file_path){
         std::string value, type;
         
         /*Используем разделитель '|' для разделения значения и типа*/
-        if (std::getline(ss, value, '|') && std::getline(ss, type)) {
+        if (std::getline(ss, value, '|') && std::getline(ss, type))
+		{
             value = value.substr(value.find_first_not_of(' '));
             value = value.substr(0, value.find_last_not_of(' ') + 1);
             

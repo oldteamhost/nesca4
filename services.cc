@@ -8,14 +8,16 @@
 #include "include/services.h"
 
 std::map<int,std::string>
-services_nesca::parse_services(const std::string& filename){
+services_nesca::parse_services(const std::string& filename)
+{
     std::map<int, std::string> result;
     std::ifstream file(filename);
 
     if (!file) {return result;}
     std::string line;
 
-    while (std::getline(file, line)){
+    while (std::getline(file, line))
+	{
         std::istringstream lineIss(line);
         int key;
         std::string value;
@@ -27,7 +29,8 @@ services_nesca::parse_services(const std::string& filename){
 }
 
 std::string
-services_nesca::probe_service(int port){
+services_nesca::probe_service(int port)
+{
     const std::string service = data[port];
     if (service.empty()) {return "N/A";}
     return data[port];

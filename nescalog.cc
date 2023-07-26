@@ -10,7 +10,8 @@
 html_output hou;
 
 std::string
-nesca_prints::html_to_ansi_color(const std::string& html_color){
+nesca_prints::html_to_ansi_color(const std::string& html_color)
+{
 	if (html_color.size() != 7 || html_color[0] != '#') {return "";}
     std::istringstream stream(html_color.substr(1));
 
@@ -26,7 +27,8 @@ nesca_prints::html_to_ansi_color(const std::string& html_color){
 std::string 
 nesca_prints::main_nesca_out(const std::string& opt, const std::string& result, const int mode, const std::string& opt1, const std::string& opt2,
                                         const std::string& result1, const std::string& result2, const std::string& rtt,
-										std::string type, std::string protocol){
+										std::string type, std::string protocol)
+{
 	std::string temp, temp_file;
 	char dots[3] = 
 	{':', ':', ':'};
@@ -91,7 +93,8 @@ void
 nesca_prints::nlog_packet_trace(std::string action, std::string protocol, std::string& source_ip,
 				std::string& dest_ip, int source_port, int dest_port,
 				std::string message, int ttl, int id, int win,
-				int seq, int iplen){
+				int seq, int iplen)
+{
 
 	/*Ужас но подругому не сделать.*/
 	const std::string temp = green_html + "-> " + reset_color +
@@ -115,7 +118,8 @@ nesca_prints::nlog_packet_trace(std::string action, std::string protocol, std::s
 }
 
 void 
-nesca_prints::disable_colors(void){
+nesca_prints::disable_colors(void)
+{
 	colors = false;
     gray_nesca = "";
     golder_rod = "";
@@ -127,13 +131,15 @@ nesca_prints::disable_colors(void){
 }
 
 std::string 
-nesca_prints::print_get_time(const char* time){
+nesca_prints::print_get_time(const char* time)
+{
     const std::string temp = "[" + std::string(time) + "]";
     return temp;
 }
 
 int 
-nesca_prints::import_color_scheme(const std::string& file_name, std::map<std::string, std::string>& config_values){
+nesca_prints::import_color_scheme(const std::string& file_name, std::map<std::string, std::string>& config_values)
+{
     std::ifstream configFile(file_name);
     if (configFile.is_open()){
         std::string line;
@@ -172,13 +178,16 @@ void
 nesca_prints::red_html_on(void) {std::cout << red_html;}
 
 void
-nesca_prints::custom_color_on(const std::string& html_color){
+nesca_prints::custom_color_on(const std::string& html_color)
+{
 	if (colors == true) {std::cout << html_to_ansi_color(html_color);}
 }
 
 int 
-nesca_prints::processing_color_scheme(const std::map<std::string, std::string>& config_values){
-	for (const auto& kvp : config_values) {
+nesca_prints::processing_color_scheme(const std::map<std::string, std::string>& config_values)
+{
+	for (const auto& kvp : config_values) 
+	{
         if (kvp.first == "auth") {
 			gray_nesca = html_to_ansi_color(kvp.second);
         }else if (kvp.first == "title") {
@@ -197,7 +206,8 @@ nesca_prints::processing_color_scheme(const std::map<std::string, std::string>& 
 }
 
 void 
-nesca_prints::nlog_trivial(const std::string& message){
+nesca_prints::nlog_trivial(const std::string& message)
+{
     std::string log = print_get_time(get_time()) + "[OK]:" + message;
     std::cout << green_html << log << reset_color;
 
@@ -205,7 +215,8 @@ nesca_prints::nlog_trivial(const std::string& message){
 }
 
 void 
-nesca_prints::nlog_error(const std::string& message){
+nesca_prints::nlog_error(const std::string& message)
+{
     const std::string log = print_get_time(get_time()) + "[ERROR]:" + message;
     std::cout << red_html << log << reset_color;
 
@@ -213,7 +224,8 @@ nesca_prints::nlog_error(const std::string& message){
 }
 
 void
-nesca_prints::nlog_custom(const std::string& auth, std::string message, int color){
+nesca_prints::nlog_custom(const std::string& auth, std::string message, int color)
+{
     const std::string log = print_get_time(get_time()) + "[" + auth + "]:" + message;
     if (save_file)write_line(file_path_save, log);
 

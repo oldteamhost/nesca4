@@ -8,7 +8,8 @@
 #include "include/icmpping.h"
 
 double
-icmp_ping(const char* dest_ip, int timeout_ms, int type, int code, int seq, int ttl){
+icmp_ping(const char* dest_ip, int timeout_ms, int type, int code, int seq, int ttl)
+{
 	double response_time = -1;
 	struct sockaddr_in addr;
 	addr.sin_family = AF_INET;

@@ -7,7 +7,8 @@
 
 #include "include/smtpinfo.h"
 
-std::string smtp_get_220_response(const std::string& ip, int port, int verbose) {
+std::string smtp_get_220_response(const std::string& ip, int port, int verbose)
+{
     int sock = fd(AF_INET, SOCK_STREAM, 0);
     if (sock == EOF){return SMTP_ERROR;}
 
@@ -28,10 +29,12 @@ std::string smtp_get_220_response(const std::string& ip, int port, int verbose) 
 
     std::string response(buffer);
     size_t pos = response.find("220");
-    if (pos != std::string::npos) {
+    if (pos != std::string::npos)
+	{
         size_t end_pos = response.find("\r\n", pos);
-        if (end_pos != std::string::npos) {
-            response = response.substr(pos, end_pos - pos + 2);
+        if (end_pos != std::string::npos)
+		{
+          response = response.substr(pos, end_pos - pos + 2);
 		  response = response.substr(4);
 
 		  response.erase(std::remove(response.begin(), response.end(), '\n'), response.end());

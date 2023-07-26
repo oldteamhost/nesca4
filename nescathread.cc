@@ -7,11 +7,16 @@
 
 #include "include/nescathread.h"
 
-thread_pool::thread_pool(size_t numThreads) : stop(false) {
-    for (size_t i = 0; i < numThreads; ++i) {
-        workers.emplace_back([this] {
-            while (true) {
-                std::function<void()> task;{
+thread_pool::thread_pool(size_t numThreads) : stop(false) 
+{
+    for (size_t i = 0; i < numThreads; ++i)
+	{
+        workers.emplace_back([this] 
+		{
+            while (true)
+			{
+                std::function<void()> task;
+				{
                     std::unique_lock<std::mutex> lock(queueMutex);
                     condition.wait(lock, [this] { return stop || !tasks.empty(); });
                     if (stop && tasks.empty()) {return;}
@@ -24,7 +29,9 @@ thread_pool::thread_pool(size_t numThreads) : stop(false) {
     }
 }
 
-thread_pool::~thread_pool() {{
+thread_pool::~thread_pool() 
+{
+	{
         std::unique_lock<std::mutex> lock(queueMutex);
         stop = true;
     }

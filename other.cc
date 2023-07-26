@@ -8,7 +8,8 @@
 #include "include/other.h"
 
 const char*
-get_time(){
+get_time()
+{
     time_t rawtime;
     struct tm * timeinfo;
     static char time_str[9];
@@ -20,7 +21,8 @@ get_time(){
     return time_str;
 }
 
-std::string get_current_date() {
+std::string get_current_date()
+{
     std::time_t current_time = std::time(nullptr);
     std::tm* local_time = std::localtime(&current_time);
     
@@ -36,7 +38,8 @@ std::string get_current_date() {
 }
 
 bool
-check_ansi_support(void){
+check_ansi_support(void)
+{
     const char* envValue = std::getenv("TERM");
     if (envValue == nullptr) {return false;}
 
@@ -46,7 +49,8 @@ check_ansi_support(void){
 #ifdef _WIN32
 void delay_ms(int milliseconds){Sleep(milliseconds);}
 #else
-void delay_ms(int milliseconds) {
+void delay_ms(int milliseconds)
+{
 	struct timespec ts;
 	ts.tv_sec = milliseconds / 1000;
 	ts.tv_nsec = (milliseconds % 1000) * 1000000;
@@ -56,7 +60,8 @@ void delay_ms(int milliseconds) {
 
 
 std::vector<int>
-write_ports(std::string mode){
+write_ports(std::string mode)
+{
     std::vector<int> temp;
     std::transform(mode.begin(), mode.end(), mode.begin(), [](unsigned char c) {
         return std::tolower(c);
@@ -101,8 +106,8 @@ write_ports(std::string mode){
     return {-1};
 }
 
-void
-logo(void){
+void logo(void)
+{
     puts("d8b   db d88888b .d8888.  .o88b.  .d8b.         j88D  ");
     puts("888o  88 88'     88'  YP d8P  Y8 d8' `8b       j8~88  "); 
     puts("88V8o 88 88ooooo `8bo.   8P      88ooo88      j8' 88  ");
@@ -112,7 +117,8 @@ logo(void){
 }
 
 std::vector<int>
-parse_range(const std::string& range_string){
+parse_range(const std::string& range_string)
+{
     std::vector<int> result;
     int start = 0, end = 0;
     bool found_dash = false;
@@ -131,7 +137,8 @@ parse_range(const std::string& range_string){
 }
 
 #ifdef _WIN32
-bool check_root_perms() {
+bool check_root_perms() 
+{
 	BOOL is_admin = FALSE;
 	SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
 	PSID AdminGroup;
@@ -148,13 +155,15 @@ bool check_root_perms() {return (geteuid() == 0);}
 
 
 bool 
-dns_or_ip(std::string &node){
+dns_or_ip(std::string &node)
+{
 	struct sockaddr_in sa;
     return (inet_pton(AF_INET, node.c_str(), &(sa.sin_addr)) == 0);
 }
 
 int
-write_temp(const std::string& data){
+write_temp(const std::string& data)
+{
 	const std::vector<std::string> temp = write_file("resources/data");
 	for (auto& str : temp) {
         if (str == data) {return -1;}
@@ -167,26 +176,29 @@ write_temp(const std::string& data){
 	if (write != 0) {return -1;}
 
 	return 0;
-
 }
 
 std::string
 parse_word(const std::vector<std::string>& options,
-		   const std::string& search_word){
-	for (const std::string& option : options) {
+		   const std::string& search_word)
+{
+	for (const std::string& option : options) 
+	{
 		if (option == search_word) {return option;}
     }
     return "failed";
 }
 
 std::string
-to_lower_case(std::string str){
+to_lower_case(std::string str)
+{
     std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c) {return std::tolower(c);});
     return str;
 }
 
 size_t 
-find_char(const std::string& str, char ch){
+find_char(const std::string& str, char ch)
+{
 	return str.find(ch);
 }
 

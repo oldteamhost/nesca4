@@ -8,7 +8,8 @@
 #include "include/files.h"
 
 int 
-get_count_lines(const char* path){
+get_count_lines(const char* path)
+{
     int count = 0;
     std::ifstream file(path);
     std::string line;
@@ -17,13 +18,15 @@ get_count_lines(const char* path){
 }
 
 bool 
-check_file(const char* path){
+check_file(const char* path)
+{
     std::ifstream file(path);
     return file.good();
 }
 
 std::vector<std::string>
-write_file(const std::string& filename){
+write_file(const std::string& filename)
+{
     std::vector<std::string> lines;
     std::string line;
 
@@ -35,7 +38,8 @@ write_file(const std::string& filename){
 }
 
 int 
-write_line(std::string path, std::string line){
+write_line(std::string path, std::string line)
+{
     std::ofstream outfile;
     outfile.open(path, std::ios_base::app);
     if (!outfile.is_open()){return -1;}
@@ -48,7 +52,8 @@ write_line(std::string path, std::string line){
 
 int
 delete_line_from_file(const std::string& filename,
-		const std::string& line_to_delete){
+		const std::string& line_to_delete)
+{
 	std::vector<std::string> lines;
     std::string line;
 

@@ -7,13 +7,15 @@
 
 #include "include/title.h"
 
-size_t write_callback(char* ptr, size_t size, size_t nmemb, std::string* data) {
+size_t write_callback(char* ptr, size_t size, size_t nmemb, std::string* data) 
+{
   data->append(ptr, size * nmemb);
   return size * nmemb;
 }
 
 std::string
-get_http_title(std::string &html_content){
+get_http_title(std::string &html_content)
+{
     std::string title_tag_open = "<title>";
     std::string title_tag_close = "</title>";
 
@@ -30,7 +32,8 @@ get_http_title(std::string &html_content){
 }
 
 std::string
-get_http_title_pro(const std::string& node) {
+get_http_title_pro(const std::string& node)
+{
     CURL* curl = curl_easy_init();
     std::string title = "";
     std::string response_string;
@@ -41,15 +44,19 @@ get_http_title_pro(const std::string& node) {
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_string);
         curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, 1500L);
         CURLcode res = curl_easy_perform(curl);
-        if (res == CURLE_OK) {
+        if (res == CURLE_OK) 
+		{
             char* content_type;
             res = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &content_type);
-            if (res == CURLE_OK && content_type && strstr(content_type, "text/html")) {
+            if (res == CURLE_OK && content_type && strstr(content_type, "text/html"))
+			{
                 size_t start_pos = response_string.find("<title>");
-                if (start_pos != std::string::npos) {
+                if (start_pos != std::string::npos)
+				{
                     start_pos += 7;
                     size_t end_pos = response_string.find("</title>", start_pos);
-                    if (end_pos != std::string::npos) {
+                    if (end_pos != std::string::npos)
+					{
                         title = response_string.substr(start_pos, end_pos - start_pos);
                     }
                 }

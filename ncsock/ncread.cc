@@ -16,10 +16,12 @@
 	nesca_prints np3;
 	int
 	ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool debug,
-		  int dest_port, int source_port, bool packet_trace){
+		  int dest_port, int source_port, bool packet_trace)
+{
 #else
 	int
-	ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool debug){
+	ncread(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer, bool debug)
+	{
 #endif
 
     /*Создания структуры и передача в неё айпи получателя.*/
@@ -35,7 +37,8 @@
 #ifdef NESCA
     /*Устанока таймаута на recvfrom.*/
 	int time_out = set_socket_timeout_pro(sock, recv_timeout_ms);
-	if (time_out == -1){
+	if (time_out == -1)
+	{
 		fuck_fd(sock);
 		return -1;
 	}
@@ -50,7 +53,8 @@
 	int result = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
 #endif
 
-	if (result < 0) {
+	if (result < 0)
+	{
 	   /*Вышел таймаут.*/
 	    fuck_fd(sock);
     	return -1;
@@ -62,10 +66,12 @@
     auto start_time = std::chrono::steady_clock::now();
 
     /*Бесконечный цикл, по принятию вообще любых пакетов с системы.*/
-    for (;;){
+    for (;;)
+	{
 	   /*Принимаем пакет в буфер.*/
 	   int data_size = recvfrom(sock, read_buffer, READ_BUFFER_SIZE, 0, &saddr, (socklen_t *)&saddr_size);
-	   if (data_size == -1){
+	   if (data_size == -1)
+	   {
 	      fuck_fd(sock);
 		  return READ_ERROR;
 	   }
@@ -73,7 +79,8 @@
 	   /*Получения IP заголовка полученного пакета.*/
 	   struct ip_header *iph = (struct ip_header*)read_buffer;
 	   unsigned short iphdrlen = (iph->ihl) * 4;
-	   if (iphdrlen < 20){
+	   if (iphdrlen < 20)
+	   {
 	      fuck_fd(sock);
 		  return IP_HEADER_LEN_ERROR;
 	   }
@@ -85,13 +92,15 @@
 
 	   /*Сравнение айпи сходиться ли он с тем на который мы отпаравляли.
 	    * Это нужно для отброса других пакетов.*/
-	   if (source.sin_addr.s_addr != dest.s_addr){
+	   if (source.sin_addr.s_addr != dest.s_addr)
+	   {
 		  if (debug) {std::cout << "Got the wrong package.\n";}
 
 		  /*Тут может сработать таймаут на бесокнечный цикл.*/
 		  auto current_time = std::chrono::steady_clock::now();
 		  auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
-		  if (elapsed_time >= recv_timeout_ms) {
+		  if (elapsed_time >= recv_timeout_ms)
+		  {
 	      	 fuck_fd(sock);
 			 return INFINITY_TIMEOUT_EXITED;
 		  }
@@ -100,10 +109,11 @@
 		   * на бесокнечный цикл. Или пока не придёт тот пакет.*/
 		  continue;
 	   }
-	   else {
-
+	   else 
+	   {
 #ifdef NESCA
-		  if (packet_trace){
+		  if (packet_trace)
+		  {
 		  	struct in_addr addr;
 		  	addr.s_addr = iph->saddr;
 		  	std::string source_ip = inet_ntoa(addr);
@@ -132,7 +142,8 @@
 }
 
 int
-ncread_recv(int sockfd, void* buf, size_t len, int timeout_ms){
+ncread_recv(int sockfd, void* buf, size_t len, int timeout_ms)
+{
 	int timeout = set_socket_timeout_pro(sockfd, timeout_ms);
 	if (timeout == -1) {return -1;}
 
