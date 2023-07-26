@@ -11,10 +11,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define	IP_RF      0x8000			/*Reserved fragment flag*/
 #define	IP_DF      0x4000			/*Dont fragment flag*/
 #define	IP_MF      0x2000			/*More fragments flag*/
@@ -137,9 +133,5 @@ fill_icmp_header(struct icmp4_header* icmp4_header, uint8_t type, uint8_t code, 
 void
 fill_tcp_header(struct tcp_header* tcp_header, uint16_t source_port, uint16_t dest_port, uint32_t seq_num, uint32_t ack_num,
 	   uint16_t window_size, uint16_t urgent_ptr, uint8_t doff, uint8_t res1, struct tcp_flags flags);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

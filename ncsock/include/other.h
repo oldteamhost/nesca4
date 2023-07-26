@@ -10,16 +10,8 @@
 #include <stdio.h>
 #include <sys/time.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*Easy calc timeout on ms.*/
 struct timeval 
 calculate_timeout_in_ms(int timeout_ms);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

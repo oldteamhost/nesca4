@@ -21,10 +21,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 int fd(int domain, int type, int protocol);
 int fuck_fd(int fd);
 
@@ -53,9 +49,5 @@ set_socket_receive_buffer_size(int sock, int buffer_size);
 
 int /*Send kernel custom ip header*/
 set_socket_hdrincl(int sock);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

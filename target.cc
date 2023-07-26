@@ -7,6 +7,24 @@
 
 #include "include/target.h"
 
+/*Тут создаётся группа путём перемешения из всех IP.
+ * Именно перемешения, я думаю это лучшее что можно было сделать.*/
+void group_scan::create_group(std::vector<std::string>& ips, std::unordered_map<std::string, double> rtts)
+{
+	/*Сортировка по возрастанию времени ответа.*/
+	std::sort(ips.begin(), ips.end(), [&rtts](const std::string& a, const std::string& b){return rtts[a] < rtts[b];});
+	for (int i = 1; i <= group_size && !ips.empty(); i++)
+	{
+        current_group.push_back(std::move(ips[0]));
+        ips.erase(ips.begin());
+    }
+}
+
+void group_scan::increase_group(void)
+{
+	group_size += group_rate;
+}
+
 std::vector<std::string>
 range_to_ips(const std::vector<std::string>& ip_ranges)
 {

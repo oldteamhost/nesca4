@@ -6,7 +6,7 @@
 */
 
 #include "include/portscan.h"
-#include <cstdint>
+#include <string>
 
 nesca_prints np2;
 std::mutex packet_trace;
@@ -248,4 +248,222 @@ set_flags(uint8_t scan_type){
 	}
 
 	return tpf;
+}
+
+size_t 
+clear_data(void* buffer, size_t size, size_t nmemb, void* userp){
+	return size * nmemb;
+}
+
+int nesca3_scan::http_probe(const std::string& node, int port){
+	int status = PORT_FILTER;
+	CURL *curl;
+    CURLcode res;
+
+	curl = curl_easy_init();
+    if (!curl) {return -1;}
+	std::string url = "http://" + node;
+	curl_easy_setopt(curl, CURLOPT_URL, url.c_str()); 
+	curl_easy_setopt(curl, CURLOPT_PORT, port);
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, timeout_ms);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, clear_data);
+
+	res = curl_easy_perform(curl);
+    if (res != CURLE_OK){status = PORT_CLOSED;} else{status = PORT_OPEN;}
+
+    curl_easy_cleanup(curl);
+	return status;
+}
+
+int nesca3_scan::ftp_probe(const std::string& node, int port){
+	int status = PORT_FILTER;
+    CURL *curl;
+    CURLcode res;
+
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
+    if (!curl) {
+        curl_global_cleanup();
+        return -1;
+    }
+
+    std::string url = "ftp://" + node;
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_PORT, port);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, timeout_ms);
+    curl_easy_setopt(curl, CURLOPT_FTP_USE_EPSV, 1L);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, clear_data);
+    curl_easy_setopt(curl, CURLOPT_FTP_RESPONSE_TIMEOUT, timeout_ms / 1000);
+
+    res = curl_easy_perform(curl);
+    if (res == CURLE_OK) {
+        status = PORT_OPEN;
+    } else if (res == CURLE_COULDNT_CONNECT) {
+        status = PORT_CLOSED;
+    } else {
+        status = PORT_FILTER;
+    }
+
+    curl_easy_cleanup(curl);
+    curl_global_cleanup();
+    return status;
+}
+
+int nesca3_scan::smtp_probe(const std::string& node, int port){
+	int status = PORT_FILTER;
+    CURL *curl;
+    CURLcode res;
+
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
+    if (!curl) {
+        curl_global_cleanup();
+        return -1;
+    }
+
+    std::string url = "smtp://" + node;
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, clear_data);
+    curl_easy_setopt(curl, CURLOPT_PORT, port);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, timeout_ms);
+    curl_easy_setopt(curl, CURLOPT_MAIL_FROM, "nesca4@oldteam.com");
+
+    res = curl_easy_perform(curl);
+    if (res == CURLE_OK) {
+        long response_code;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+        if (response_code == 220) {
+            status = PORT_OPEN;
+        } else {
+            status = PORT_FILTER;
+        }
+    } else if (res == CURLE_COULDNT_CONNECT) {
+        status = PORT_CLOSED;
+    } else {
+        status = PORT_FILTER;
+    }
+
+    curl_easy_cleanup(curl);
+    curl_global_cleanup();
+
+    return status;
+}
+
+int nesca3_scan::ssh_probe(const std::string& node, int port){
+	int status = PORT_FILTER;
+    CURL *curl;
+    CURLcode res;
+
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
+    if (!curl) {
+        curl_global_cleanup();
+        return -1;
+    }
+
+    std::string url = "ssh://" + node;
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_PORT, port);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, timeout_ms);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, clear_data);
+
+    res = curl_easy_perform(curl);
+    if (res == CURLE_OK) {
+        long response_code;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+        if (response_code == 220) {
+            status = PORT_OPEN;
+        } else {
+            status = PORT_FILTER;
+        }
+    } else if (res == CURLE_COULDNT_CONNECT) {
+        status = PORT_CLOSED;
+    } else {
+        status = PORT_FILTER;
+    }
+
+    curl_easy_cleanup(curl);
+    curl_global_cleanup();
+
+    return status;
+}
+
+int nesca3_scan::https_probe(const std::string& node, int port){
+	int status = PORT_FILTER;
+    CURL *curl;
+    CURLcode res;
+
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
+
+    if (!curl) {
+        curl_global_cleanup();
+        return -1;
+    }
+
+    std::string url = "https://" + node;
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_PORT, port);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, clear_data);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, timeout_ms);
+
+    res = curl_easy_perform(curl);
+
+    if (res == CURLE_OK) {
+        long response_code;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+        if (response_code == 200) {
+            status = PORT_OPEN;
+        } else {
+            status = PORT_FILTER;
+        }
+    } else if (res == CURLE_COULDNT_CONNECT) {
+        status = PORT_CLOSED;
+    } else {
+        status = PORT_FILTER;
+    }
+
+    curl_easy_cleanup(curl);
+    curl_global_cleanup();
+
+    return status;
+}
+
+int nesca3_scan::rtsp_probe(const std::string& node, int port){
+	int status = PORT_FILTER;
+    CURL *curl;
+    CURLcode res;
+
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
+    if (!curl) {
+        curl_global_cleanup();
+        return -1;
+    }
+
+    std::string url = "rtsp://" + node;
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_PORT, port);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, timeout_ms);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, clear_data);
+
+    res = curl_easy_perform(curl);
+    if (res == CURLE_OK) {
+        long response_code;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+        if (response_code == 200) {
+            status = PORT_OPEN;
+        } else {
+            status = PORT_FILTER;
+        }
+    } else if (res == CURLE_COULDNT_CONNECT) {
+        status = PORT_CLOSED;
+    } else {
+        status = PORT_FILTER;
+    }
+
+    curl_easy_cleanup(curl);
+    curl_global_cleanup();
+
+    return status;
 }

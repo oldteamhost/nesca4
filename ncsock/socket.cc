@@ -139,4 +139,5 @@ set_socket_timeout_pro(int sock, int timeout_ms)
 	   fuck_fd(sock);
 	   return -1;
     }
+	return 0;
 }

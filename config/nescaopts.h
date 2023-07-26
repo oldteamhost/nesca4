@@ -1,13 +1,12 @@
 #include <iostream>
 #include <vector>
 #include <unordered_map>
+#include <set>
 
 #define SPEED_TYPE_DEFAULT 4
 #define SCAN_PORTS_TYPE_DEFAULT 1
 #define DEFAULT_PORTS {80,443}
-#define GROUP_RATE_DEFAULT 20
 #define GROUP_MIN_SIZE_DEFAULT 5
-#define GROUP_MAX_SIZE_DEFAULT 1024
 #define SYN_PING_DEFAULT_DEST_PORT 80
 #define ACK_PING_DEFAULT_DEST_PORT 80
 #define PING_LOG_DEFAULT 20
@@ -40,17 +39,14 @@ public:
        bool txt;
        std::string txt_save;
 
-	   bool no_scan;
 	   const char* source_ip;
 	   int type = SCAN_PORTS_TYPE_DEFAULT;
 	   int speed_type = SPEED_TYPE_DEFAULT;
+	   int count_success_ips;
 
 	   bool custom_g_rate;
 	   bool custom_g_max;
 	   bool custom_g_min;
-	   int group_rate = GROUP_RATE_DEFAULT;
-	   int group_size = GROUP_MIN_SIZE_DEFAULT;
-	   int group_size_max = GROUP_MAX_SIZE_DEFAULT;
 
 	   bool custom_source_port;
 	   bool custom_ttl;
@@ -60,6 +56,7 @@ public:
 
 	   bool fin_scan;
 	   bool null_scan;
+	   bool nesca3_scan;
 	   bool xmas_scan;
 	   bool ack_scan;
 	   bool window_scan;

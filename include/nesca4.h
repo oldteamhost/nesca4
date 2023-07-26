@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <iostream>
 #include <cstdlib>
+#include <cstdlib>
 #include <chrono>
 #include <future>
 #include <termios.h>
@@ -57,7 +58,10 @@ void check_files(const char* path, const char* path1);
 void fix_time(double time);
 
 int
-scan_ports(const char* ip, std::vector<int>ports, const int timeout_ms);
+scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms);
+
+int
+probe_scan_ports(const std::string& ip, std::vector<int> ports, const int timeout_ms);
 
 void checking_default_files(void);
 bool process_ping(std::string ip);
@@ -179,8 +183,8 @@ option long_options[] = {
     {"source-port", required_argument, 0, 36},
     {"ttl", required_argument, 0, 37},
     {"pro-mode", no_argument, 0, 78},
+    {"nesca3", no_argument, 0, 79},
 
-	/*78*/
     {"max-group", required_argument, 0, 38},
     {"min-group", required_argument, 0, 60},
     {"rate-group", required_argument, 0, 61},

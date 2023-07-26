@@ -16,6 +16,22 @@
 #include <arpa/inet.h>
 #include <bitset>
 #include <vector>
+#include <unordered_map>
+#include <algorithm>
+
+class group_scan
+{
+public:
+	int group_size;
+	int group_rate;
+	int max_group_size;
+
+	void 
+	create_group(std::vector<std::string>& ips, std::unordered_map<std::string, double> rtts);
+	void increase_group(void);
+
+	std::vector<std::string> current_group;
+};
 
 // cidr to ips
 std::vector<std::string> 
