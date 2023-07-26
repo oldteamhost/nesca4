@@ -19,7 +19,8 @@ base64_encode(const std::string& input)
     size_t input_length = input.length();
     size_t i = 0;
 
-    while (i < input_length) {
+    while (i < input_length)
+	{
         unsigned char char_array_3[3] = {0};
         unsigned char char_array_4[4] = {0};
 

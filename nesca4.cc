@@ -14,6 +14,7 @@ struct nesca_scan_opts ncopts;
 const char* short_options = "hl:vd:T:p:aS:";
 const char* run; /*Для help_menu()*/
 std::mutex ls;
+
 checking_finds cfs;
 nesca_prints np;
 brute_ftp_data bfd_;

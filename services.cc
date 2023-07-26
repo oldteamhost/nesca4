@@ -17,7 +17,7 @@ services_nesca::parse_services(const std::string& filename)
     std::string line;
 
     while (std::getline(file, line))
-	{
+    {
         std::istringstream lineIss(line);
         int key;
         std::string value;

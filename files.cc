@@ -54,10 +54,10 @@ int
 delete_line_from_file(const std::string& filename,
 		const std::string& line_to_delete)
 {
-	std::vector<std::string> lines;
+    std::vector<std::string> lines;
     std::string line;
 
-	std::ifstream input_file(filename);
+    std::ifstream input_file(filename);
     if (!input_file){return -1;}
 
     while (std::getline(input_file, line))
@@ -75,5 +75,5 @@ delete_line_from_file(const std::string& filename,
     for (const auto& updated_line : lines){output_file << updated_line << std::endl;}
 
     output_file.close();
-	return 0;
+    return 0;
 }
