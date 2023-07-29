@@ -1,16 +1,15 @@
 ![alt text](https://i.imgur.com/YUaJEut.png)
 
 ## About
-```
-Многопоточный сканер портов, с точностью nmap-а, брутфорсом самых популярных протоколов и сканированием DNS.
+**NESCA4** - Многопоточный unix сканер портов, с точностью nmap-а, обработкой nesca3, и брутфорсом самых популярных протоколов и сканированием DNS.
 Был сделан с вдохновением от ![nesca3](https://github.com/pantyusha/nesca) & ![nmap](https://github.com/nmap/nmap).  
 
 Может сканировать методами: `SYN` `FIN` `XMAS` `NULL` `WINDOW` `ACK` `MAIMON`.  
 Может выполнять пинг методами: `SYN` `ACK` `ICMPECHO` `ICMPINFO` `ICMPTIMESTAMP`.  
 Может брутфорсить: `RVI` `HIKVISION` `BASICAUTH` `FTP` `SSH` `SMTP` `RTSP`.
 
-PS: Перечислять все возможности тут я не буду. Прочитать о том что умеет nesca4 и как это разрабатывалось читайте в resources/do_not_read.txt
-```
+**PS:** Перечислять все возможности тут я не буду. Прочитать о том что умеет nesca4 и как это разрабатывалось читайте в resources/do_not_read.txt
+
 ## Installation
 **Я не заливаю код который не компилируется!
 Если не выходит, значит у вас что-то не так с системой.**
