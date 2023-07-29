@@ -11,7 +11,6 @@ link_directories(lib/platform/linux)
 
 file(GLOB SRCS *.cc)
 file(GLOB MODULE_SRCS modules/*.cc)
-file(GLOB PLUS_NCSOCK_SRCS ncsock/*.cc)
 
 file(GLOB C_NCSOCK_SRCS ncsock/*.c)
 file(GLOB PLUS_NCPING_SRCS ncping/*.cc)

@@ -13,8 +13,8 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 #include <algorithm>
-#include "../ncsock/include/ncread.h"
 
 #define CAMERA_AXIS                    "AXIS CAMERA"
 #define WEB_CAMERA_HIKVISION           "HIKVISION CAMERA"

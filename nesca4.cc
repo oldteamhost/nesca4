@@ -9,10 +9,11 @@
 #include "include/other.h"
 #include "include/portscan.h"
 #include "include/target.h"
+#include "ncsock/include/tcp.h"
 #include <string>
 #include <vector>
 
-struct nesca_scan_opts ncopts;
+struct tcp_packet_opts ncopts;
 const char* short_options = "hl:vd:T:p:aS:";
 const char* run; /*Для help_menu()*/
 std::mutex ls;
@@ -327,7 +328,6 @@ int main(int argc, char** argv)
 
 	if (!argp.nesca3_scan){
     	ncopts.source_ip = argp.source_ip;
-		ncopts.packet_trace = argp.packet_trace;
 		ncopts.tcpf = set_flags(argp.type);
 	}
 
@@ -392,7 +392,6 @@ int main(int argc, char** argv)
 
     	for (auto& fut : futures){fut.wait();} /*Ожидание оставшихся потоков.*/
     	for (auto& fut : futures) {int main_scan = fut.get();} /*Получение результата функции.*/
-		if (argp.packet_trace){std::cout << std::endl;}
     	futures.clear(); /*Очистка после потоков.*/
 
 		/*Увелечение группы.*/
@@ -508,7 +507,7 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
 		else{ncopts.ttl = argp._custom_ttl;}
 
 	   /*Отправка пакета.*/
-	   const int result = nesca_scan(&ncopts, ip.c_str(), port, timeout_ms);
+	   const int result = send_tcp_packet(&ncopts, ip.c_str(), port, timeout_ms);
 
 	   /*Если функция не вернула PORT_OPEN,
 	    * Это означает что функция успешно выполнилась.*/
@@ -523,14 +522,14 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
 	   }
 
 	   ls.lock(); /*Буфер для ответа.*/
-	   unsigned char *buffer = (unsigned char *)calloc(READ_BUFFER_SIZE, sizeof(unsigned char));
+	   unsigned char *buffer = (unsigned char *)calloc(RECV_BUFFER_SIZE, sizeof(unsigned char));
 	   ls.unlock();
 
 	   /*В другом случае, запускается
 	    * "Принятие пакета" или скорее его ожидание.*/
-	   int read = ncread(ip.c_str(), recv_timeout_result, &buffer, argp.syn_debug, port, source_port, argp.packet_trace);
+	   int read = recv_tcp_packet(ip.c_str(), recv_timeout_result, &buffer);
 	   /*Если функция не получила пакет.*/
-	   if (read != SUCCESS_READ)
+	   if (read != 0)
 	   {
 		  ls.lock();
 		  free(buffer);
@@ -1232,7 +1231,6 @@ help_menu(void)
     np.reset_colors();
     std::cout << "  -delay, -d <ms>: Set delay for scan.\n";
     std::cout << "  -ports, -p <1,2,3>: Set ports on scan.\n";
-    std::cout << "  -packet-trace: Display packet_trace on port scan.\n";
 
     np.sea_green_on();
     std::cout << "PORT SCAN SPEED:" << std::endl;
@@ -1836,9 +1834,6 @@ parse_args(int argc, char** argv)
 			break;
 	      case 95:
 			argp.no_proc = true;
-			break;
-	      case 96:
-			argp.packet_trace = true;
 			break;
 	      case 97:
 			argp.maimon_scan = true;

@@ -61,7 +61,6 @@ public:
 	   bool ack_scan;
 	   bool window_scan;
 	   bool maimon_scan;
-	   bool packet_trace;
 
        bool timeout;
        int timeout_ms;

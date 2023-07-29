@@ -20,10 +20,6 @@
 #include <filesystem>
 #include "../include/files.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
 #include "../include/target.h"
 
 const char* 

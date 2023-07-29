@@ -10,22 +10,6 @@
 #define ERROR  -1
 #define SUCCESS 0
 
-int fd(int domain, int type, int protocol)
-{
-	int fd = socket(domain, type, protocol);
-	if (fd == -1)
-	{
-		return -1;
-	}
-	return fd;
-}
-
-int fuck_fd(int fd)
-{
-	close(fd);
-	return 0;
-}
-
 int 
 set_socket_timeout(int sock, int timeout_ms, int on_send, int on_recv)
 {
@@ -35,22 +19,20 @@ set_socket_timeout(int sock, int timeout_ms, int on_send, int on_recv)
 
     if (on_send)
 	{
-	   if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout)) < 0)
+	   if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout)) == -1)
 	   {
 		  fprintf(stderr, "Failed to set receive timeout: %s\n", strerror(errno));
-		  return SUCCESS;
+		  return ERROR;
 	   }
     }
     if (on_recv)
 	{
-	   if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (const char *)&timeout, sizeof(timeout)) < 0)
+	   if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (const char *)&timeout, sizeof(timeout)) == -1)
 	   {
 		  fprintf(stderr, "Failed to set send timeout: %s\n", strerror(errno));
 		  return ERROR;
 	   }
     }
-
-    if (on_send == 0 || on_recv == 0) {return ERROR;}
 
     return SUCCESS;
 }
@@ -85,17 +67,6 @@ set_socket_nonblocking(int sock)
 }
 
 int 
-set_socket_send_buffer_size(int sock, int buffer_size)
-{
-    if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (const char *)&buffer_size, sizeof(buffer_size)) < 0)
-	{
-        fprintf(stderr, "Failed to set socket send buffer size: %s\n", strerror(errno));
-        return ERROR;
-    }
-    return SUCCESS;
-}
-
-int 
 set_socket_receive_buffer_size(int sock, int buffer_size)
 {
     if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (const char *)&buffer_size, sizeof(buffer_size)) < 0)
@@ -103,21 +74,6 @@ set_socket_receive_buffer_size(int sock, int buffer_size)
         fprintf(stderr, "Failed to set socket receive buffer size: %s\n", strerror(errno));
         return ERROR;
     }
-    return SUCCESS;
-}
-
-int 
-set_socket_hdrincl(int sock)
-{
-    int one = 1;
-    const int *val = &one;
-
-    if (setsockopt(sock, IPPROTO_IP, IP_HDRINCL, val, sizeof(one)) < 0)
-	{
-        fprintf(stderr, "Failed to set IP_HDRINCL option: %s\n", strerror(errno));
-        return ERROR;
-    }
-
     return SUCCESS;
 }
 
@@ -130,13 +86,11 @@ set_socket_timeout_pro(int sock, int timeout_ms)
     int poll_result = poll(poll_fds, 1, timeout_ms);
     if (poll_result == -1)
 	{
-	   /*Poll не смогла чё-то сделать.*/
-	   fuck_fd(sock);
+	   close(sock);
 	   return -1;
     }else if (poll_result == 0)
 	{
-	   /*Вышел таймаут на recvfrom.*/
-	   fuck_fd(sock);
+	   close(sock);
 	   return -1;
     }
 	return 0;

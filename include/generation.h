@@ -30,7 +30,4 @@ generate_port(void);
 
 int
 generate_ttl(void);
-
-unsigned int
-generate_ident(void);
 #endif

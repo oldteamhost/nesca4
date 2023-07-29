@@ -13,7 +13,7 @@ dns_utils::get_dns_by_ip(const char* ip, int port)
 	struct in_addr addr;
     if (inet_pton(AF_INET, ip, &addr) != 1) {return "n/a";}
 
-    int sock = fd(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1) {return "n/a";}
 
 	const int timeout_ms = 600;
@@ -27,16 +27,16 @@ dns_utils::get_dns_by_ip(const char* ip, int port)
 
     char host[NI_MAXHOST];
     int res = getnameinfo((struct sockaddr*)&sa, sizeof(sa), host, sizeof(host), NULL, 0, NI_NAMEREQD);
-    if (res != 0){fuck_fd(sock);return "n/a";}
+    if (res != 0){close(sock);return "n/a";}
 
-    fuck_fd(sock);
+    close(sock);
     return std::string(host);
 }
 
 const char* 
 dns_utils::get_ip_by_dns(const char* dns)
 {
-    int sock = fd(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == EOF) {return "n/a";}
 
     struct addrinfo hints, *res;
@@ -45,13 +45,13 @@ dns_utils::get_ip_by_dns(const char* dns)
     hints.ai_socktype = SOCK_STREAM;
     int status = getaddrinfo(dns, NULL, &hints, &res);
 
-    if (status != 0) {fuck_fd(sock);return "n/a";}
+    if (status != 0) {close(sock);return "n/a";}
 
     struct sockaddr_in *addr = (struct sockaddr_in *)res->ai_addr;
     const char* ip = inet_ntoa(addr->sin_addr);
 
     freeaddrinfo(res);
-    fuck_fd(sock);
+    close(sock);
     return ip;
 }
 
@@ -101,7 +101,7 @@ ip_utils::get_local_ip()
     static char buffer[100];
     socklen_t namelen;
 
-    int sock = fd(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == EOF) {return "-1";}
 
     const char *kGoogleDnsIp = "8.8.8.8";
@@ -113,14 +113,14 @@ ip_utils::get_local_ip()
     serv.sin_port = htons(dns_port);
 
     const int err = connect(sock,(const struct sockaddr*)&serv, sizeof(serv));
-    if (err < 0) {fuck_fd(sock);return "-1";}
+    if (err < 0) {close(sock);return "-1";}
 
     struct sockaddr_in name;
     namelen = sizeof(name);
     memset(&name, 0, sizeof(name));
-    if (getsockname(sock,(struct sockaddr*)&name, &namelen)){fuck_fd(sock);return "-1";}
+    if (getsockname(sock,(struct sockaddr*)&name, &namelen)){close(sock);return "-1";}
 
     const char *p = inet_ntop(AF_INET, &name.sin_addr, buffer, sizeof(buffer));
-    fuck_fd(sock);
+    close(sock);
     return p;
 }

@@ -19,7 +19,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <chrono>
-#include "../../ncsock/include/icmpproto.h"
+#include "../../ncsock/include/icmp4.h"
 
 /*Классический IMCP пинг.
  * По всем многим типам.*/

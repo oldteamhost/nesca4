@@ -12,9 +12,9 @@ icmp_ping(const char* dest_ip, int timeout_ms, int type, int code, int seq, int 
 {
 	double response_time = -1;
 	struct sockaddr_in addr;
+	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
     addr.sin_port = 0;
-	memset(&addr, 0, sizeof(addr));
 
     if (inet_aton(dest_ip, (struct in_addr*)&addr.sin_addr.s_addr) == 0){return -1;};
     int ident = getpid();
@@ -23,7 +23,7 @@ icmp_ping(const char* dest_ip, int timeout_ms, int type, int code, int seq, int 
 	if (ret == EOF) {return -1;}
 
 	std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
-	ret = recv_icmp_packet(dest_ip, timeout_ms, type, code, ident);
+	ret = recv_icmp_packet(dest_ip, timeout_ms, type, code);
 	if (ret == EOF) {return -1;}
 	std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
 

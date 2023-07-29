@@ -7,6 +7,12 @@
 
 #ifndef NCSOCK_SOCKET_H
 #define NCSOCK_SOCKET_H
+
+/*Support c++.*/
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -21,18 +27,10 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-int fd(int domain, int type, int protocol);
-int fuck_fd(int fd);
-
-/*
-int init_winsock(void);
-int clean_winsock(void);
-*/
-
 int /*Set flag timeout on socket, in ms.*/
 set_socket_timeout(int sock, int timeout_ms, int on_send, int on_recv);
 
-int
+int /*Set pool timeout.*/
 set_socket_timeout_pro(int sock, int timeout_ms);
 
 int /*Set flag address reuse on socket.*/
@@ -49,5 +47,9 @@ set_socket_receive_buffer_size(int sock, int buffer_size);
 
 int /*Send kernel custom ip header*/
 set_socket_hdrincl(int sock);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

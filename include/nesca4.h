@@ -43,8 +43,7 @@
 #include "../ncping/include/icmpping.h"
 #include "../ncping/include/ackping.h"
 #include "../ncping/include/synping.h"
-#include "../ncsock/include/ncread.h"
-#include "../ncsock/include/icmpproto.h"
+#include "../ncsock/include/icmp4.h"
 
 /*Угадайте?*/
 #define VERSION "20230724"

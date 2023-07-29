@@ -24,7 +24,6 @@
 #include "../include/callbacks.h"
 #include "../include/other.h"
 #include "../include/nescalog.h"
-#include "../ncsock/include/ncread.h"
 #include "nescathread.h"
 
 #include "../lib/HCNetSDK.h"

@@ -26,10 +26,10 @@
 #include <vector>
 
 #include "../include/nescalog.h"
-#include "../ncsock/include/headers.h"
+#include "../ncsock/include/ip4.h"
+#include "../ncsock/include/tcp.h"
 #include "../ncsock/include/socket.h"
 #include "../include/other.h"
-#include "../include/generation.h"
 #include "services.h"
 #include "services.h"
 #include <cstdint>
@@ -50,42 +50,6 @@
 #define ACK_SCAN              5
 #define WINDOW_SCAN           6
 #define MAIMON_SCAN           7
-
-#define SEND_BUFFER_SIZE      2048
-#define RECV_BUFFER_SIZE      2048
-#define WINDOWS_SIZE          1024
-
-/*Для расчёта фейковой контрольной суммы
- * CAPEC-287: TCP SYN Scan*/
-struct pseudo_header
-{
-   uint32_t source_address;
-   uint32_t dest_address;
-   uint8_t placeholder;
-   uint8_t protocol;
-   uint16_t tcp_length;
-   struct tcp_header tcp;
-};
-
-/*Опции для nesca_scan.
- * Основные опции я решил добавить в аргументы,
- * а другие долбануть в структуре, мне кажется
- * так будет лучше.*/
-struct nesca_scan_opts
-{
-    int source_port;
-    const char* source_ip;
-    unsigned int seq;
-    int ttl;
-	bool packet_trace;
-	struct tcp_flags tcpf;
-};
-
-int /*Главная функция в сканирование, она отправляет TCP пакет.*/
-nesca_scan(struct nesca_scan_opts *ncot, const char* ip, int port, int timeout_ms);
-
-struct tcp_flags /*Функция для установки TCP флагов.*/
-set_flags(uint8_t scan_type);
 
 std::string
 get_type(uint8_t type);
