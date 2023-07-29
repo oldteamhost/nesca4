@@ -1,3 +1,15 @@
+/*
+ * NESCA4
+ * by oldteam & lomaster
+ * license GPL-3.0
+ * - Сделано от души 2023.
+ * -----------------------------------------------------------
+ * icmp4.c - It contains structures, constants and functions
+ * for working with ICMP protocol. Obsolete message types and
+ * really nerdy codes have been removed from here.
+ * -----------------------------------------------------------
+*/
+
 #include "include/icmp4.h"
 #include <netinet/in.h>
 #include <stdint.h>
