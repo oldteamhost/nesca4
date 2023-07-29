@@ -7,7 +7,6 @@
 
 #ifndef GENERATION_H
 #define GENERATION_H
-
 #include <iostream>
 #include <random>
 #include <cstring>

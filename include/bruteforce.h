@@ -7,7 +7,6 @@
 
 #ifndef BRUTEFORCE_H
 #define BRUTEFORCE_H
-
 #include <iostream>
 #include <string>
 #include <vector>

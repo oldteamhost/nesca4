@@ -10,7 +10,6 @@
 
 #ifndef SCANNER_H
 #define SCANNER_H
-
 #include <iostream>
 #include <string>
 #include <vector>

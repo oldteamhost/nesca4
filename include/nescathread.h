@@ -7,7 +7,6 @@
 
 #ifndef NESCA_THREAD_H 
 #define NESCA_THREAD_H 
-
 #include <functional>
 #include <future>
 #include <queue>

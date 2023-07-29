@@ -7,7 +7,6 @@
 
 #ifndef NET_UTILS_H
 #define NET_UTILS_H
-
 #include <iostream>
 #include <vector>
 #include <cstring>

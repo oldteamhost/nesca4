@@ -7,7 +7,6 @@
 
 #ifndef SYN_SCAN_H
 #define SYN_SCAN_H
-
 #include <iostream>
 #include <cstdint>
 #include <cstring>

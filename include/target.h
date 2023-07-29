@@ -7,7 +7,6 @@
 
 #ifndef TARGET_H
 #define TARGET_H
-
 #include <iostream>
 #include <vector>
 #include <sstream>
