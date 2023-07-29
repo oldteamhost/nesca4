@@ -18,7 +18,8 @@
 #include <unistd.h>
 #include "../ncsock/include/socket.h"
 
-class dns_utils{
+class dns_utils
+{
 public:
 	std::string
     get_dns_by_ip(const char* ip, int port);
@@ -26,12 +27,6 @@ public:
     get_ip_by_dns(const char* dns);
     std::vector<std::string>
     get_all_ips_by_dns(const char* dns);
-};
-
-class ip_utils{
-public:
-    const char* 
-    get_local_ip();
 };
 
 #endif

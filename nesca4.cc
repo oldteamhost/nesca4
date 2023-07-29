@@ -6,10 +6,12 @@
 */
 
 #include "include/nesca4.h"
+#include "include/files.h"
 #include "include/other.h"
 #include "include/portscan.h"
 #include "include/target.h"
 #include "ncsock/include/tcp.h"
+#include <bits/getopt_core.h>
 #include <string>
 #include <vector>
 
@@ -23,7 +25,6 @@ nesca_prints np;
 brute_ftp_data bfd_;
 group_scan gs;
 html_output ho;
-ip_utils _iu;
 dns_utils dus;
 services_nesca sn;
 nesca_negatives nn;
@@ -35,7 +36,7 @@ int main(int argc, char** argv)
     run = argv[0];
     if (argc <= 1) {help_menu();return 1;}
 
-	argp.source_ip = _iu.get_local_ip();
+	argp.source_ip = get_local_ip();
     parse_args(argc, argv);
     pre_check();
     checking_default_files();
@@ -142,19 +143,16 @@ int main(int argc, char** argv)
         temp_ips = split_string_string(argv[optind], ',');
         if (cidr_pos != std::string::npos)
 		{
-			argp.ip_cidr_scan = true;
 			argp.result = cidr_to_ips(temp_ips);
         }
         else if (range_pos != std::string::npos)
 		{
-			argp.ip_range_scan = true;
 			argp.result = range_to_ips(temp_ips);
         }
         else 
 		{
-			argp.ip_scan = true;
-            argp.dns = temp_ips;
-            if (dns_or_ip(argp.dns[0])) {argp.result = convert_dns_to_ip(argp.dns);}
+			std::vector<std::string >dns = temp_ips;
+            if (dns_or_ip(dns[0])) {argp.result = convert_dns_to_ip(dns);}
             else {argp.result = temp_ips;}
         }
     }
@@ -194,6 +192,14 @@ int main(int argc, char** argv)
     auto newEnd = std::unique(argp.result.begin(), argp.result.end());
     int removedCount = argp.result.end() - newEnd;
     argp.result.erase(newEnd, argp.result.end());
+
+	/*Удаление не тех хостов.*/
+	 argp.result.erase(std::remove_if(argp.result.begin(), argp.result.end(),
+       [&](const std::string& element)
+	   {
+           return std::find(argp.exclude.begin(), argp.exclude.end(), element) != argp.exclude.end();
+    }),
+    argp.result.end());
 
     /*Пинг сканирования*/
 	if (!argp.ping_off) 
@@ -677,32 +683,40 @@ void
 checking_default_files(void)
 {
 	/*Чек целей из файлов.*/
-	std::vector<std::string> temp_ips;
-	if (argp.ip_cidr_scan_import && check_file(argp.path_cidr)) {
-        np.nlog_trivial(std::string(argp.path_cidr) + " (" + std::to_string(get_count_lines(argp.path_cidr)) + ") entries\n");
-        if (argp.ip_cidr_scan){np.nlog_trivial(std::string(argp.path_cidr) + " (" + std::to_string(get_count_lines(argp.path_cidr)) + ") entries\n");}
-        temp_ips = write_file(argp.path_cidr);
-		argp.result = cidr_to_ips(temp_ips);
-    }else if (argp.ip_cidr_scan_import) {
-        np.nlog_error(std::string(argp.path_cidr) + " (" + std::to_string(get_count_lines(argp.path_cidr)) + ") entries\n");
-        errors_files++;
-    }
-    if (argp.ip_range_scan_import && check_file(argp.path_range)) {
-        np.nlog_trivial(std::string(argp.path_range) + " (" + std::to_string(get_count_lines(argp.path_range)) + ") entries\n");
-        if (argp.ip_range_scan){np.nlog_trivial(std::string(argp.path_range) + " (" + std::to_string(get_count_lines(argp.path_range)) + ") entries\n");}
-        temp_ips = write_file(argp.path_range);
-		argp.result = range_to_ips(temp_ips);
-    }else if (argp.ip_range_scan_import) {
-        np.nlog_error(std::string(argp.path_range) + " (" + std::to_string(get_count_lines(argp.path_range)) + ") entries\n");
-        errors_files++;
-    }
-    if (argp.ip_scan_import && check_file(argp.path_ips)) {
-        np.nlog_trivial(std::string(argp.path_ips) + " (" + std::to_string(get_count_lines(argp.path_ips)) + ") entries\n");
-        argp.result = write_file(argp.path_ips);
-    }else if (argp.ip_scan_import) {
-        np.nlog_error(std::string(argp.path_ips) + " (" + std::to_string(get_count_lines(argp.path_ips)) + ") entries\n");
-        errors_files++;
-    }
+    if (argp.ip_scan_import)
+	{
+		if (check_file(argp.path_ips))
+		{
+        	np.nlog_trivial(std::string(argp.path_ips) + " (" + std::to_string(get_count_lines(argp.path_ips)) + ") entries\n");
+		}
+		else {
+        	np.nlog_error(std::string(argp.path_ips) + " (" + std::to_string(get_count_lines(argp.path_ips)) + ") entries\n");
+			exit(1);
+		}
+
+		std::vector<std::string> temp_ips = write_file(argp.path_ips);
+		for (const auto& t : temp_ips)
+		{
+			std::string f = t;
+			size_t cidr_pos = find_char(f, '/');
+    		size_t range_pos = find_char(f, '-');
+
+        	if (cidr_pos != std::string::npos)
+			{
+				std::vector<std::string> temp = cidr_to_ips({t});
+				for (auto& tt : temp){argp.result.push_back(tt);}
+        	}
+        	if (range_pos != std::string::npos)
+			{
+				std::vector<std::string> temp = range_to_ips({t});
+				for (auto& tt : temp){argp.result.push_back(tt);}
+			}
+
+			bool dns = dns_or_ip(f);
+			if (dns){argp.result.push_back(dus.get_ip_by_dns(f.c_str()));}
+			else{argp.result.push_back(f);}
+		}
+	}
 
 	/*Чек паролей и логин.*/
 	check_files(argp.path_ftp_login.c_str(),argp.path_ftp_pass.c_str());
@@ -1194,122 +1208,114 @@ processing_tcp_scan_ports(std::string ip, int port, int result)
 void 
 help_menu(void)
 {
-    logo();
+    puts("d8b   db d88888b .d8888.  .o88b.  .d8b.         j88D ");
+    puts("888o  88 88'     88'  YP d8P  Y8 d8' `8b       j8~88 "); 
+    puts("88V8o 88 88ooooo `8bo.   8P      88ooo88      j8' 88 ");
+    puts("88 V8o88 88~~~~~   `Y8b. 8b      88~~~88      V88888D");
+    puts("88  V888 88.     db   8D Y8b  d8 88   88          88 ");
+    puts("VP   V8P Y88888P `8888Y'  `Y88P' YP   YP          VP \n");
+	np.gray_nesca_on();
+	std::cout << "[VERSION]:";
+	np.green_html_on();
+	std::cout << VERSION << std::endl;
+	np.gray_nesca_on();
+
+	np.gray_nesca_on();
+	std::cout << "[USAGE]:";
+	np.green_html_on();
+	std::cout << run << " [target(s) 1,2,3] [flags]" << std::endl;
+	np.gray_nesca_on();
+
     np.golder_rod_on();
-    std::cout << "usage: " << run << " [target 1,2,3] [flags]\n";
+    std::cout << "\nTARGET SPECIFICATION:" << std::endl;
     np.reset_colors();
-
-    np.sea_green_on();
-    std::cout << "\nTARGET:" << std::endl;
-    np.reset_colors();
-    std::cout << "  -import-ip <path>: Set ip on target from file.\n";
-    std::cout << "  -import-cidr <path>: Set cidr on target from file.\n";
-    std::cout << "  -import-range <path>: Set range on target from file.\n";
-    std::cout << "  -random-ip <count>: Set random ip target.\n";
-
-    np.sea_green_on();
-    std::cout << "SPEED:" << std::endl;
-    np.reset_colors();
-    std::cout << "  -speed, -S <1-5>: Edit preset speed.\n";
-    std::cout << "  -my-life-my-rulez: Using very MAX speed settings.\n";
-
-    np.sea_green_on();
-    std::cout << "PORT SCAN METHODS:" << std::endl;
+    std::cout << "  -import <inputfilename>: Set target(s) from file.\n";
+    std::cout << "  -random-ip <num hosts>: Choose random target(s)\n";
+    std::cout << "  -exclude <host1[,host2][,host3],...>: Exclude host(s).\n";
+    std::cout << "  -excludefile <exclude_file>: Exclude list from file\n";
+    np.golder_rod_on();
+    std::cout << "PORT SCAN OPTIONS:" << std::endl;
     np.reset_colors();
     std::cout << "  -fin, -xmas, -null: Use one of these scanning methods.\n";
     std::cout << "  -ack, -windows -maimon: Use ack or window or maimon scan method.\n";
     std::cout << "  -nesca3: Use classic probe scan nesca3.\n";
-
-    np.sea_green_on();
-    std::cout << "SAVING TO FILE:" << std::endl;
-    np.reset_colors();
-    std::cout << "  -html, -l <path>: Classic nesca save, write on html page.\n";
-    std::cout << "  -txt <path>: Save result to text document.\n";
-
-    np.sea_green_on();
-    std::cout << "PORT SCAN:" << std::endl;
-    np.reset_colors();
+    std::cout << "  -p <port ranges>: Only scan specified port(s) \n    Ex: -p 80; -p 22,80; -p 1-65535;\n";
     std::cout << "  -delay, -d <ms>: Set delay for scan.\n";
-    std::cout << "  -ports, -p <1,2,3>: Set ports on scan.\n";
-
-    np.sea_green_on();
-    std::cout << "PORT SCAN SPEED:" << std::endl;
-    np.reset_colors();
-    std::cout << "  -max-group <count>: Edit max size group & threads for port scan.\n";
-    std::cout << "  -min-group <count>: Edit min size group & threads for port scan.\n";
-    std::cout << "  -rate-group <count: Edit the value by which the group is incremented.\n";
     std::cout << "  -scan-timeout <ms>: Edit timeout for getting packet on port.\n";
-
-    np.sea_green_on();
-    std::cout << "DNS RESOLUTION:" << std::endl;
+    np.golder_rod_on();
+    std::cout << "PING SCAN OPTIONS:" << std::endl;
     np.reset_colors();
-    std::cout << "  -TD <count>: Set max threads for dns-resolution.\n";
-    std::cout << "  -resol-port <port>: Edit source port for dns-resolution.\n";
-    std::cout << "  -resol-delay <ms>: Set delay for dns-resolution.\n";
-    std::cout << "  -no-resolv: Skip dns-resolution.\n";
-
-    np.sea_green_on();
-    std::cout << "PING SCAN:" << std::endl;
-    np.reset_colors();
+    std::cout << "  -TP <num>: Set max thread(s) for ping.\n";
+    std::cout << "  -ping-timeout <ms>: Set recv timeout for ping.\n";
     std::cout << "  -PS, -PA <port>: On TCP ping SYN|ACK and edit dest port.\n";
     std::cout << "  -PE, -PI, -PM: On ICMP ping ECHO|INFO|TIMESTAMP\n";
     std::cout << "  -max-ping: Using all ping methods ICMP and TCP.\n";
-    std::cout << "  -no-ping: Off ping scan.\n";
-
-    np.sea_green_on();
-    std::cout << "PING SPEED:" << std::endl;
+    std::cout << "  -no-ping: Skip ping scan.\n";
+    np.golder_rod_on();
+    std::cout << "HOST RESOLUTION:" << std::endl;
     np.reset_colors();
-    std::cout << "  -TP <count>: Set max threads for ping.\n";
-    std::cout << "  -ping-timeout <ms>: Set recv timeout for ping.\n";
-
-    np.sea_green_on();
-    std::cout << "BRUTEFORCE:" << std::endl;
+    std::cout << "  -TD <num>: Set max thread(s) for dns-resolution.\n";
+    std::cout << "  -resol-port <port>: Edit source port for dns-resolution.\n";
+    std::cout << "  -resol-delay <ms>: Set delay for dns-resolution.\n";
+    std::cout << "  -no-resolv: Skip dns-resolution.\n";
+    np.golder_rod_on();
+    std::cout << "BRUTEFORCE OPTIONS:" << std::endl;
     np.reset_colors();
     std::cout << "  -brute-login <ss,path>: Set path for <ss> logins.\n";
     std::cout << "  -brute-pass <ss,path>: Set path for <ss> passwords.\n";
     std::cout << "  -brute-timeout <ms>: Edit brute timout.\n";
     std::cout << "  -brute-only <ss,2>: Display only success <ss> bruteforce.\n";
     std::cout << "  -no-brute <ss,2>: Disable <ss> bruteforce.\n";
-
-    np.sea_green_on();
-    std::cout << "OTHER BRUTEFORCE:" << std::endl;
-    np.reset_colors();
     std::cout << "  -brute-verbose <ss,2>: Display bruteforce <ss> all info.\n";
     std::cout << "  -brute-log <ss,2>: Display bruteforce <ss> info.\n";
-    std::cout << "  -sftp-brute-known-hosts: Reading known_host for connection.\n";
-
-    np.sea_green_on();
-    std::cout << "ARGUMENTS DNS SCAN:" << std::endl;
+    np.golder_rod_on();
+    std::cout << "DNS SCAN OPTIONS:" << std::endl;
     np.reset_colors();
     std::cout << "  -dns-scan <.dns>: On dns-scan and set domain 1 level.\n";
-    std::cout << "  -T, -threads <count>: Edit threads count.\n";
-    std::cout << "  -dns-length <count>: Edit length generating domain.\n";
+    std::cout << "  -T, -threads <num>: Edit thread(s) count.\n";
+    std::cout << "  -dns-length <num>: Edit length generating domain.\n";
     std::cout << "  -dns-dict <dict>: Edit dictionary for generation.\n";
-
-    np.sea_green_on();
-    std::cout << "ARGUMENTS OUTPUT:" << std::endl;
-    np.reset_colors();
-    std::cout << "  -pro: On pro mode, display more info.\n";
-    std::cout << "  -db, -debug: On debug mode, save and display not even working hosts.\n";
-    std::cout << "  -er, -error: On display errors.\n";
-    std::cout << "  -no-proc: Only scan.\n";
-    std::cout << "  -no-get-path: Disable getting paths.\n";
-    std::cout << "  -log-set <count>: Change change the value of ips after which, will be displayed information about how much is left.\n";
-    std::cout << "  -http-response: Display HTTP response.\n";
-
-    np.sea_green_on();
-    std::cout << "ARGUMENTS COLORS:" << std::endl;
-    np.reset_colors();
-    std::cout << "  -no-color: Disable colors.\n";
-    std::cout << "  -import-color <path>: Import color scheme from file.\n";
-
-    np.sea_green_on();
-    std::cout << "ARGUMENTS OTHER:" << std::endl;
+    np.golder_rod_on();
+    std::cout << "OTHER OPTIONS:" << std::endl;
     np.reset_colors();
     std::cout << "  -negatives <path>: Set custom path for negatives.\n";
     std::cout << "  -source-ip <ip>: Set custom source_ip.\n";
     std::cout << "  -source-port <port>: Set custom source_port.\n";
-    std::cout << "  -ttl <count>: Set custom ip_header_ttl.\n";
+    std::cout << "  -ttl <num>: Set custom ip_header_ttl.\n";
+    np.golder_rod_on();
+    std::cout << "PORT SCAN GROUPS:" << std::endl;
+    np.reset_colors();
+    std::cout << "  -max-group <num>: Edit max size group & threads for port scan.\n";
+    std::cout << "  -min-group <num>: Edit min size group & threads for port scan.\n";
+    std::cout << "  -rate-group <num>: Edit the value by which the group is incremented.\n";
+    np.golder_rod_on();
+    std::cout << "SPEED OPTIONS:" << std::endl;
+    np.reset_colors();
+    std::cout << "  -speed, -S <1-5>: Set timing template (higher is faster).\n";
+    std::cout << "  -my-life-my-rulez: Using very MAX speed settings.\n";
+    np.golder_rod_on();
+    std::cout << "SAVE OUTPUT:" << std::endl;
+    np.reset_colors();
+    std::cout << "  -html, -l <path file>: Classic nesca save, write on html page.\n";
+    std::cout << "  -txt <path file>: Save result(s) to text document.\n";
+    np.golder_rod_on();
+    std::cout << "VERBOSE OUTPUT:" << std::endl;
+    np.reset_colors();
+    std::cout << "  -pro: On pro mode, display more info.\n";
+    std::cout << "  -db, -debug: On debug mode, save and display not even working hosts.\n";
+    std::cout << "  -er, -error: On display errors.\n";
+    np.golder_rod_on();
+    std::cout << "PRINT OUTPUT:" << std::endl;
+    np.reset_colors();
+    std::cout << "  -no-proc: Skip main processing.\n";
+    std::cout << "  -no-get-path: Disable getting paths.\n";
+    std::cout << "  -log-set <num>: Change the value of ips after which % will be output.\n";
+    std::cout << "  -http-response: Display HTTP response.\n";
+    np.golder_rod_on();
+    std::cout << "COLOR:" << std::endl;
+    np.reset_colors();
+    std::cout << "  -no-color: Disable all colors in nesca4.\n";
+    std::cout << "  -import-color <path>: Import color scheme from file.\n";
 }
 
 void 
@@ -1350,12 +1356,6 @@ parse_args(int argc, char** argv)
                     }
                 }
                 break;
-            }
-            case 3:
-            {
-               argp.ip_cidr_scan_import = true;
-               argp.path_cidr = optarg;
-               break;
             }
            case 12:
            {
@@ -1643,10 +1643,6 @@ parse_args(int argc, char** argv)
            case 48:
                argp.thread_on_port = true;
                break;
-           case 32:
-               argp.ip_range_scan_import = true;
-               argp.path_range = optarg;
-               break;
            case 5:
                 argp.random_ip = true;
                 argp.random_ip_count = atoi(optarg); 
@@ -1751,6 +1747,12 @@ parse_args(int argc, char** argv)
            case 52:
 			   argp.custom_threads_resolv = true;
 			   argp.dns_threads = atoi(optarg);
+               break;
+           case 62:
+			   argp.exclude = split_string_string(optarg, ',');
+               break;
+           case 63:
+			   argp.exclude = write_file(optarg);
                break;
            case 53:
 			   argp.my_life_my_rulez = true;

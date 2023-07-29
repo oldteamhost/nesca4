@@ -45,6 +45,7 @@ public:
 	   int count_success_ips;
 
 	   bool custom_g_rate;
+	   std::vector<std::string> exclude;
 	   bool custom_g_max;
 	   bool custom_g_min;
 
@@ -98,19 +99,8 @@ public:
 	   int resol_source_port = DNS_RESOLV_SOURCE_PORT_DEFUALT;
 	   int resol_delay;
 
-       bool ip_scan;
-       bool ip_cidr_scan;
-       bool ip_range_scan;
-
        bool ip_scan_import;
-       bool ip_cidr_scan_import;
-       bool ip_range_scan_import;
-
        std::vector<std::string> result;
-       std::vector<std::string> dns;
-
-       const char* path_range;
-       const char* path_cidr;
        const char* path_ips;
 
 	   bool custom_ping;

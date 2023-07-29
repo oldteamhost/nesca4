@@ -44,6 +44,7 @@
 #include "../ncping/include/ackping.h"
 #include "../ncping/include/synping.h"
 #include "../ncsock/include/icmp4.h"
+#include "../ncsock/include/base.h"
 
 /*Угадайте?*/
 #define VERSION "20230724"
@@ -131,9 +132,7 @@ const struct
 option long_options[] = {
     {"threads", required_argument, 0, 'T'},
     {"delay", required_argument, 0, 'd'},
-    {"import-ip", required_argument, 0, 23},
-    {"import-cidr", required_argument, 0, 3},
-    {"import-range", required_argument, 0, 32},
+    {"import", required_argument, 0, 23},
     {"random-ip", required_argument, 0, 5},
     {"brute-login", required_argument, 0, 12},
     {"brute-pass", required_argument, 0, 11},
@@ -187,6 +186,8 @@ option long_options[] = {
     {"max-group", required_argument, 0, 38},
     {"min-group", required_argument, 0, 60},
     {"rate-group", required_argument, 0, 61},
+    {"exclude", required_argument, 0, 62},
+    {"excludefile", required_argument, 0, 63},
 
     {"max-ping", no_argument, 0, 88},
     {"source-ip", required_argument, 0, 34},
