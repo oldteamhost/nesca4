@@ -18,16 +18,7 @@
 ```
     sudo apt-get install libcurl4-openssl-dev
     sudo apt install g++ make git cmake libssh-dev
-```
-    This github -
-```
     git clone https://github.com/oldteamhost/nesca4
-```
-    This release - 
-```
-    https://github.com/oldteamhost/nesca4/releases
-```
-```
     cd nesca4
     cmake .
     make -j12
