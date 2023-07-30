@@ -6,7 +6,6 @@
 */
 
 #include "include/bruteforce.h"
-
 #include "ncsock/include/socket.h"
 
 int

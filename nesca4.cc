@@ -444,7 +444,7 @@ int main(int argc, char** argv)
 	}
 
 	if (argp.pro_mode)
-	{
+    {
 		np.golder_rod_on();
 		std::cout << "\n-> PING:"; fix_time(argp.ping_duration);
 		std::cout << "  DNS:";     fix_time(argp.dns_duration);

@@ -122,7 +122,8 @@ struct tcp_packet_opts
 #define FIN_PACKET            3
 #define NULL_PACKET           4
 #define ACK_PACKET            5
-#define MAIMON_PACKET         6
+#define WINDOW_PACKET         6
+#define MAIMON_PACKET         7
 	struct tcp_flags tcpf;
 };
 

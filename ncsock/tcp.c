@@ -80,6 +80,7 @@ set_flags(uint8_t packet_preset)
         tpf.psh = 0;
         tpf.urg = 0;
         break;
+    case WINDOW_PACKET:
     case ACK_PACKET:
         tpf.syn = 0;
         tpf.fin = 0;
