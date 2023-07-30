@@ -136,25 +136,8 @@ int main(int argc, char** argv)
     if (optind < argc)
 	{
 		std::vector<std::string> temp_ips;
-		std::string target_arg(argv[optind]);
-		size_t cidr_pos = find_char(target_arg, '/');
-    	size_t range_pos = find_char(target_arg, '-');
-
         temp_ips = split_string_string(argv[optind], ',');
-        if (cidr_pos != std::string::npos)
-		{
-			argp.result = cidr_to_ips(temp_ips);
-        }
-        else if (range_pos != std::string::npos)
-		{
-			argp.result = range_to_ips(temp_ips);
-        }
-        else 
-		{
-			std::vector<std::string >dns = temp_ips;
-            if (dns_or_ip(dns[0])) {argp.result = convert_dns_to_ip(dns);}
-            else {argp.result = temp_ips;}
-        }
+		argp.result = resolv_hosts(temp_ips);
     }
 
     if (argp.random_ip)
@@ -679,6 +662,35 @@ void check_files(const char* path, const char* path1)
     }
 }
 
+std::vector<std::string>
+resolv_hosts(std::vector<std::string> hosts)
+{
+	std::vector<std::string> result;
+	for (const auto& t : hosts)
+	{
+		std::string f = t;
+		size_t cidr_pos = find_char(f, '/');
+    	size_t range_pos = find_char(f, '-');
+
+        if (cidr_pos != std::string::npos)
+		{
+			std::vector<std::string> temp = cidr_to_ips({t});
+			for (auto& tt : temp){result.push_back(tt);}
+        }
+        if (range_pos != std::string::npos)
+		{
+			std::vector<std::string> temp = range_to_ips({t});
+			for (auto& tt : temp){result.push_back(tt);}
+		}
+
+		bool dns = dns_or_ip(f);
+		if (dns){result.push_back(dus.get_ip_by_dns(f.c_str()));}
+		else{result.push_back(f);}
+	}
+
+	return result;
+}
+
 void 
 checking_default_files(void)
 {
@@ -695,27 +707,7 @@ checking_default_files(void)
 		}
 
 		std::vector<std::string> temp_ips = write_file(argp.path_ips);
-		for (const auto& t : temp_ips)
-		{
-			std::string f = t;
-			size_t cidr_pos = find_char(f, '/');
-    		size_t range_pos = find_char(f, '-');
-
-        	if (cidr_pos != std::string::npos)
-			{
-				std::vector<std::string> temp = cidr_to_ips({t});
-				for (auto& tt : temp){argp.result.push_back(tt);}
-        	}
-        	if (range_pos != std::string::npos)
-			{
-				std::vector<std::string> temp = range_to_ips({t});
-				for (auto& tt : temp){argp.result.push_back(tt);}
-			}
-
-			bool dns = dns_or_ip(f);
-			if (dns){argp.result.push_back(dus.get_ip_by_dns(f.c_str()));}
-			else{argp.result.push_back(f);}
-		}
+		argp.result = resolv_hosts(temp_ips);
 	}
 
 	/*Чек паролей и логин.*/
@@ -1749,11 +1741,17 @@ parse_args(int argc, char** argv)
 			   argp.dns_threads = atoi(optarg);
                break;
            case 62:
-			   argp.exclude = split_string_string(optarg, ',');
+			{
+			   std::vector<std::string> temp_ips = split_string_string(optarg, ',');
+			   argp.exclude = resolv_hosts(temp_ips);
                break;
+			}
            case 63:
-			   argp.exclude = write_file(optarg);
+			{
+			   std::vector<std::string> temp_ips = write_file(optarg);
+			   argp.exclude = resolv_hosts(temp_ips);
                break;
+		    }
            case 53:
 			   argp.my_life_my_rulez = true;
 			   argp.speed_type = 0;

@@ -70,6 +70,7 @@ void pre_check(void);
 void print_results(std::string ip);
 void get_dns_thread(std::string ip);
 int traceroute(std::string ip, int jumps);
+std::vector<std::string> resolv_hosts(std::vector<std::string> hosts);
 
 /*Для обработки портов класс на паттерне Strategy Pattern.*/
 class ports_strategy{
