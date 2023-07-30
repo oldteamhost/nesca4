@@ -4,5 +4,4 @@
 // TYPE: 2 (CODE & HTTP_HEADER)
 // TYPE: 3 (REDIRECT)
 
-// NEGATIVES:
 404 not found | 1

@@ -431,10 +431,13 @@ int main(int argc, char** argv)
 	}
 
 	if (np.save_file){write_line(np.file_path_save, "\n");}
+    double elapsed_result = argp.ping_duration+argp.dns_duration+argp.scan_duration+argp.proc_duration;
+	if (np.save_file){write_line(np.file_path_save,
+            "-> NESCA finished "+std::to_string(count_success_ips)+ " up IPs (success) in "+ std::to_string(elapsed_result) + " seconds");}
 
 	np.golder_rod_on();
 	std::cout << "-> NESCA finished " << count_success_ips << " up IPs (success) in "
-		<< std::fixed << std::setprecision(2) << argp.ping_duration+argp.dns_duration+argp.scan_duration+argp.proc_duration << " seconds";
+		<< std::fixed << std::setprecision(2) << elapsed_result << " seconds";
 	np.reset_colors();
 
 	if (!argp.pro_mode){
@@ -442,6 +445,7 @@ int main(int argc, char** argv)
 		std::cout << "\n-^ If you want to see the detailed execution use: -pro\n";
 		np.reset_colors();
 	}
+	if (np.save_file){write_line(np.file_path_save, "\n");}
 
 	if (argp.pro_mode)
     {
