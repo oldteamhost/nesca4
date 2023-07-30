@@ -423,6 +423,7 @@ int main(int argc, char** argv)
 		argp.success_target.clear();
 		argp.no_filtered_target.clear();
 		argp.error_target.clear();
+		gs.clean_group();
 
 		auto end_time_proc = std::chrono::high_resolution_clock::now();
 		auto duration_proc = std::chrono::duration_cast<std::chrono::microseconds>(end_time_proc - start_time_proc);
@@ -1762,7 +1763,7 @@ parse_args(int argc, char** argv)
                break;
            case 'l':
 			   np.html_save = true;
-			   np.html_file_path = std::string(optarg) + ".html";
+			   np.html_file_path = std::string(optarg);
                break;
            case 57:
 			   argp.custom_threads = true;

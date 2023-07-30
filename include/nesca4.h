@@ -47,7 +47,7 @@
 #include "../ncsock/include/base.h"
 
 /*Угадайте?*/
-#define VERSION "20230724"
+#define VERSION "20230730"
 
 void help_menu(void);
 void version_menu(void);

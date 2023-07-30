@@ -28,6 +28,7 @@ public:
 	void 
 	create_group(std::vector<std::string>& ips, std::unordered_map<std::string, double> rtts);
 	void increase_group(void);
+	void clean_group(void);
 
 	std::vector<std::string> current_group;
 };

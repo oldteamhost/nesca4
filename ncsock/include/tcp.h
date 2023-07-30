@@ -116,7 +116,6 @@ struct tcp_packet_opts
     const char* source_ip;
     unsigned int seq;
     int ttl;
-	int packet_trace;
 /*Prepackage Presets.*/
 #define SYN_PACKET            1
 #define XMAS_PACKET           2

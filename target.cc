@@ -25,6 +25,8 @@ void group_scan::increase_group(void)
 	group_size += group_rate;
 }
 
+void group_scan::clean_group(void) {current_group.clear();}
+
 std::vector<std::string>
 range_to_ips(const std::vector<std::string>& ip_ranges)
 {

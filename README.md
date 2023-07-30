@@ -18,11 +18,21 @@
 ```
     sudo apt-get install libcurl4-openssl-dev
     sudo apt install g++ make git cmake libssh-dev
+```
+    This github -
+```
     git clone https://github.com/oldteamhost/nesca4
+```
+    This release - 
+```
+    https://github.com/oldteamhost/nesca4/releases
+```
+```
     cd nesca4
     cmake .
     make -j12
 ```
+
 **Arch 2023:**  
 ```
     sudo pacman -S curl cmake
@@ -31,6 +41,12 @@
     cmake .
     make -j12
 ```
+
+## 20230730
+- Исправлен баг с повторением сканирования.
+- Увеличена скорость.
+- Улучшены аргументы, и работа с ними.
+- Улучшено help_menu.
 
 ## 20230729
 - Функции ICMP, TCP переписаны на C.
