@@ -1313,6 +1313,11 @@ help_menu(void)
     np.reset_colors();
     std::cout << "  -no-color: Disable all colors in nesca4.\n";
     std::cout << "  -import-color <path>: Import color scheme from file.\n";
+    np.golder_rod_on();
+    std::cout << "EXAMPLES:" << std::endl;
+    np.reset_colors();
+    std::cout << "  ./nesca4 google.com -p 80,443\n";
+    std::cout << "  ./nesca4 72.230.205.0/24 -p 80,8080,81 -S5\n";
 }
 
 void 
