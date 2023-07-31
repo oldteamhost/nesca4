@@ -294,3 +294,70 @@ recv_tcp_packet(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer
     close(sock);
     return -1;
 }
+
+#include <pthread.h>
+double
+tcp_ping(int type, const char* ip, const char* source_ip, int dest_port, int source_port, int timeout_ms, int ttl)
+{
+    pthread_mutex_t mutex;
+    pthread_mutex_init(&mutex, NULL);
+
+	double response_time = -1;
+	struct tcp_packet_opts ncops;
+	ncops.source_ip = source_ip;
+	ncops.seq = generate_ident()*2;
+	ncops.ttl = ttl;
+	ncops.source_port = source_port;
+	ncops.tcpf = set_flags(type);
+
+    /*Send TCP packet.*/
+	int send = send_tcp_packet(&ncops, ip, dest_port, 0);
+	if (send == EOF){return -1;}
+
+    /*Create buffer on recv TCP packet.*/
+    pthread_mutex_lock(&mutex);
+	unsigned char *buffer = (unsigned char *)calloc(RECV_BUFFER_SIZE, sizeof(unsigned char));
+    pthread_mutex_unlock(&mutex);
+
+    /*Start time for recv packet.*/
+    struct timespec start_time, end_time;
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
+
+    /*Recv TCP packet.*/
+	int read = recv_tcp_packet(ip, timeout_ms, &buffer);
+	if (read != 0)
+	{
+        pthread_mutex_lock(&mutex);
+		free(buffer);
+        pthread_mutex_unlock(&mutex);
+		return -1;
+	}
+    clock_gettime(CLOCK_MONOTONIC, &end_time);
+
+    struct ip_header *iph = (struct ip_header*)buffer;
+    unsigned short iphdrlen = (iph->ihl) * 4;
+    if (iph->protocol != 6) {return -1;}
+    struct tcp_header *tcph = (struct tcp_header*)((char*)buffer + iphdrlen);
+
+    if (type == SYN_PACKET){
+	    if (tcph->th_flags != 0)
+	    {
+            /*End time, and calc differense.*/
+            response_time = (end_time.tv_sec - start_time.tv_sec) * 1000.0 +
+                            (end_time.tv_nsec - start_time.tv_nsec) / 1000000.0;
+	    }
+    }
+    else {
+	    if (tcph->th_flags == TH_RST)
+	    {
+            /*End time, and calc differense.*/
+            response_time = (end_time.tv_sec - start_time.tv_sec) * 1000.0 +
+                            (end_time.tv_nsec - start_time.tv_nsec) / 1000000.0;
+	    }
+    }
+
+    pthread_mutex_lock(&mutex);
+	free(buffer);
+    pthread_mutex_unlock(&mutex);
+	return response_time;
+}

@@ -104,6 +104,12 @@ int
 recv_icmp_packet(const char* dest_ip, int timeout_ms, int type,
 				int code);
 
+/*An example of using the send and receive packet functions above, in the form of
+ * creating an ICMP ping using 3 methods.
+ * ICMP_ECHO, ICMP_INFO, ICMP_TIMESTAMP.*/
+double
+icmp_ping(const char* dest_ip, int timeout_ms, int type, int code, int seq, int ttl);
+
 /*Sources:
  * https://www.rfc-editor.org/rfc/rfc792
  * https://en.wikipedia.org/wiki/Internet_Control_Message_Protocol

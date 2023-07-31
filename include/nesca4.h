@@ -40,9 +40,6 @@
 #include "../modules/include/smtpinfo.h"
 
 #include "../config/nescaopts.h"
-#include "../ncping/include/icmpping.h"
-#include "../ncping/include/ackping.h"
-#include "../ncping/include/synping.h"
 #include "../ncsock/include/icmp4.h"
 #include "../ncsock/include/base.h"
 

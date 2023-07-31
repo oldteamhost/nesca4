@@ -615,7 +615,7 @@ process_ping(std::string ip)
 	/*TCP_SYN PING*/
 	if (argp.syn_ping)
 	{
-		double status_time1 = tcp_syn_ping(ip.c_str(), argp.source_ip, argp.syn_dest_port, source_port, argp.ping_timeout, ttl);
+		double status_time1 = tcp_ping(SYN_PACKET, ip.c_str(), argp.source_ip, argp.syn_dest_port, source_port, argp.ping_timeout, ttl);
 		if (status_time1 != EOF)
 		{
 			argp.rtts[ip] = status_time1;
@@ -625,7 +625,7 @@ process_ping(std::string ip)
 	/*TCP_ACK PING*/
 	if (argp.ack_ping)
 	{
-		double status_time = tcp_ack_ping(ip.c_str(), argp.source_ip, argp.ack_dest_port, source_port, argp.ping_timeout, ttl);
+		double status_time = tcp_ping(ACK_PACKET, ip.c_str(), argp.source_ip, argp.ack_dest_port, source_port, argp.ping_timeout, ttl);
 		if (status_time != EOF)
 		{
 			argp.rtts[ip] = status_time;

@@ -153,6 +153,12 @@ send_tcp_packet(struct tcp_packet_opts *tpo, const char* ip, const int port, con
 int
 recv_tcp_packet(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer);
 
+/*An example of using the send and receive packet functions above, in the form of
+ * creating an TCP ping using 2 methods:
+ * TCP SYN, TCP ACK.*/
+double
+tcp_ping(int type, const char* ip, const char* source_ip, int dest_port, int source_port, int timeout_ms, int ttl);
+
 /*Sources:
  * https://www.ietf.org/rfc/rfc793.txt
  * netinet/tcp.h

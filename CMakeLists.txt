@@ -11,12 +11,8 @@ link_directories(lib/platform/linux)
 
 file(GLOB SRCS *.cc)
 file(GLOB MODULE_SRCS modules/*.cc)
-
 file(GLOB C_NCSOCK_SRCS ncsock/*.c)
-file(GLOB PLUS_NCPING_SRCS ncping/*.cc)
 
-add_executable(nesca4 ${SRCS} ${C_NCSOCK_SRCS} ${PLUS_NCSOCK_SRCS} ${MODULE_SRCS} ${PLUS_NCPING_SRCS})
+add_executable(nesca4 ${SRCS} ${C_NCSOCK_SRCS} ${PLUS_NCSOCK_SRCS} ${MODULE_SRCS})
 target_link_libraries(nesca4 curl pthread hcnetsdk ssh)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
-
-

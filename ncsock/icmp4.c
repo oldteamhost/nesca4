@@ -251,3 +251,41 @@ recv_icmp_packet(const char* dest_ip, int timeout_ms, int type,
     close(fd);
     return -1;
 }
+
+double
+icmp_ping(const char* dest_ip, int timeout_ms, int type, int code, int seq, int ttl)
+{
+	double response_time = -1;
+	struct sockaddr_in addr;
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
+    addr.sin_port = 0;
+
+    if (inet_aton(dest_ip, (struct in_addr*)&addr.sin_addr.s_addr) == 0){return -1;};
+    int ident = getpid();
+
+    /*Send ICMP packet.*/
+	int ret = send_icmp_packet(&addr, type, code, ident, seq, ttl);
+	if (ret == EOF) {return -1;}
+
+    /*Start time for recv packet.*/
+    struct timespec start_time, end_time;
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
+
+    /*Recv ICMP_PACKET*/
+	ret = recv_icmp_packet(dest_ip, timeout_ms, type, code);
+	if (ret == EOF) {return -1;}
+
+    /*End time, and calc differense.*/
+    clock_gettime(CLOCK_MONOTONIC, &end_time);
+    response_time = (end_time.tv_sec - start_time.tv_sec) * 1000.0 +
+                    (end_time.tv_nsec - start_time.tv_nsec) / 1000000.0;
+
+	/*Source - https://nmap.org/man/ru/man-host-discovery.html*/
+    /*Source - https://gist.github.com/bugparty/ccba5744ba8f1cece5e0*/
+    /*Source - https://datatracker.ietf.org/doc/html/rfc792*/
+
+	return response_time;
+}
+
+
