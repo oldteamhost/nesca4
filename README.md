@@ -1,4 +1,4 @@
-## About
+## About & FAQ
 **NESCA4** - Многопоточный unix сканер портов, с точностью nmap-а, обработкой nesca3, и брутфорсом самых популярных протоколов и сканированием DNS.
 Был сделан с вдохновением от ![nesca3](https://github.com/pantyusha/nesca) & ![nmap](https://github.com/nmap/nmap).  
 
