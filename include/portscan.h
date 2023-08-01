@@ -56,6 +56,9 @@ get_type(uint8_t type);
 int /*Определение статуса порта.*/
 get_port_status(unsigned char* buffer, uint8_t scan_type);
 
+#include "../config/compile.h"
+
+#ifdef HAVE_CURL
 #include <curl/curl.h>
 class nesca3_scan
 {
@@ -68,5 +71,6 @@ public:
 	int rtsp_probe(const std::string& node, int port);
 	int https_probe(const std::string& node, int port);
 };
+#endif
 
 #endif

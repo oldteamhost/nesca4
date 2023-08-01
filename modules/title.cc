@@ -7,11 +7,13 @@
 
 #include "include/title.h"
 
+#ifdef HAVE_CURL
 size_t write_callback(char* ptr, size_t size, size_t nmemb, std::string* data) 
 {
   data->append(ptr, size * nmemb);
   return size * nmemb;
 }
+#endif
 
 std::string
 get_http_title(std::string &html_content)
@@ -34,6 +36,7 @@ get_http_title(std::string &html_content)
 std::string
 get_http_title_pro(const std::string& node)
 {
+#ifdef HAVE_CURL
     CURL* curl = curl_easy_init();
     std::string title = "";
     std::string response_string;
@@ -65,4 +68,7 @@ get_http_title_pro(const std::string& node)
     } 
     curl_easy_cleanup(curl);
     return title;
+#else
+    return "no_curl";
+#endif
 }

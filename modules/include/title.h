@@ -10,12 +10,12 @@
 #include <string>
 #include <iostream>
 #include <cstring>
-#include <curl/curl.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include "../../config/compile.h"
 
 #define HTTPTITLE_ERROR "N/A"
 

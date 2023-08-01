@@ -42,6 +42,7 @@
 #include "../config/nescaopts.h"
 #include "../ncsock/include/icmp4.h"
 #include "../ncsock/include/base.h"
+#include "../config/compile.h"
 
 /*Угадайте?*/
 #define VERSION "20230730"

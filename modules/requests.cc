@@ -10,6 +10,7 @@
 std::string 
 send_http_request(const std::string& node, int port)
 {
+#ifdef HAVE_CURL
 	curl_global_init(CURL_GLOBAL_DEFAULT);
     CURL* curl = curl_easy_init();
     if (curl)
@@ -32,6 +33,7 @@ send_http_request(const std::string& node, int port)
 		std::string response = headerBuffer + buffer;
         return response;
     }
+#endif
     return "";
 }
 

@@ -10,7 +10,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <libssh/libssh.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -18,14 +17,14 @@
 #include <string>
 #include <thread>
 #include <cstring>
-#include <curl/curl.h>
-
-#include "../include/callbacks.h"
 #include "../include/other.h"
 #include "../include/nescalog.h"
 #include "nescathread.h"
+#include "../config/compile.h"
 
-#include "../lib/HCNetSDK.h"
+#ifdef HAVE_CURL
+#include "../include/callbacks.h"
+#endif
 
 class brute_ftp_data{
     private:

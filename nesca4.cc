@@ -11,7 +11,6 @@
 #include "include/portscan.h"
 #include "include/target.h"
 #include "ncsock/include/tcp.h"
-#include <bits/getopt_core.h>
 #include <string>
 #include <vector>
 
@@ -29,7 +28,10 @@ dns_utils dus;
 services_nesca sn;
 nesca_negatives nn;
 arguments_program argp;
+
+#ifdef HAVE_CURL
 nesca3_scan s3n;
+#endif
 
 int main(int argc, char** argv)
 {
@@ -362,10 +364,14 @@ int main(int argc, char** argv)
         	/*Добавление задачи сканирования портов в пул потоков*/
 			if (argp.nesca3_scan)
 			{
+#ifdef HAVE_CURL
         		auto fut = pool.enqueue(probe_scan_ports, ip, argp.ports, argp.timeout_ms);
         		futures.push_back(std::move(fut));
+#else
+            np.nlog_error("CURL not found!\n");
+#endif
 			}
-			else 
+			else
 			{
         		auto fut = pool.enqueue(scan_ports, ip, argp.ports, argp.timeout_ms);
         		futures.push_back(std::move(fut));
@@ -2009,6 +2015,7 @@ version_menu(void)
 	exit(0);
 }
 
+#ifdef HAVE_CURL
 int
 probe_scan_ports(const std::string& ip, std::vector<int> ports, const int timeout_ms){
 
@@ -2053,3 +2060,4 @@ probe_scan_ports(const std::string& ip, std::vector<int> ports, const int timeou
 	}
 	return 0;
 }
+#endif

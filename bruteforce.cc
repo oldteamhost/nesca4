@@ -212,6 +212,7 @@ threads_brute_ftp(const std::string ip, int port, const std::vector<std::string>
 std::string 
 brute_ssh(const std::string& ip, int port, const std::string login, const std::string pass, int brute_log, int verbose, int known_hosts)
 {
+#ifdef HAVE_SSL
     if (brute_log) {np1.nlog_custom("SSH", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
 
     ssh_session sshSession = ssh_new();
@@ -245,6 +246,9 @@ brute_ssh(const std::string& ip, int port, const std::string login, const std::s
 
     std::string result = login + ":" + pass + "@";
     return result;
+#else
+    return "no_ssh";
+#endif
 }
 
 std::string 
@@ -272,6 +276,7 @@ threads_brute_ssh(const std::string ip, int port, const std::vector<std::string>
 std::string 
 brute_rtsp(const std::string ip, const std::string login, const std::string pass, int brute_log, int verbose)
 {
+#ifdef HAVE_CURL
     std::string result;
     curl_global_init(CURL_GLOBAL_ALL);
     CURL* curl = curl_easy_init();
@@ -310,6 +315,7 @@ brute_rtsp(const std::string ip, const std::string login, const std::string pass
         }
     }
     curl_global_cleanup();
+#endif
     return "";
 }
 std::string 
@@ -337,6 +343,7 @@ threads_brute_rtsp(const std::string ip, const std::vector<std::string> logins, 
 std::string 
 brute_http(const std::string ip, const std::string login, const std::string pass, int brute_log, int verbose)
 {
+#ifdef HAVE_CURL
     CURL *curl;
     CURLcode res;
     long http_code;
@@ -373,6 +380,7 @@ brute_http(const std::string ip, const std::string login, const std::string pass
     }
 
     curl_easy_cleanup(curl);
+#endif
     return "";
 }
 
@@ -414,6 +422,7 @@ brute_ftp_data::set_success_pass(std::string success_pass)   {this->success_pass
 std::string 
 brute_hikvision(const std::string ip, const std::string login, const std::string pass, int brute_log)
 {
+#ifdef HAVE_HIKVISION
   std::string result;
 
   /*Перенаправление лога, потому что он выводит сообщение которое нам не надо.*/
@@ -448,6 +457,9 @@ brute_hikvision(const std::string ip, const std::string login, const std::string
   NET_DVR_Cleanup();
 
   return result;
+#else
+  return "no_hikvision";
+#endif
 }
 
 std::string 

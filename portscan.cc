@@ -121,6 +121,7 @@ get_type(uint8_t type){
 	return "-1";
 }
 
+#ifdef HAVE_CURL
 size_t 
 clear_data(void* buffer, size_t size, size_t nmemb, void* userp){
 	return size * nmemb;
@@ -332,3 +333,4 @@ int nesca3_scan::rtsp_probe(const std::string& node, int port){
 
     return status;
 }
+#endif
