@@ -138,10 +138,13 @@ send_tcp_packet(struct tcp_packet_opts *tpo, const char* ip, const int port, con
 		close(sock);
         return -1;
     }
-
+#define DOFF 5
+#define RES1 0
+#define ACK_NUM 0
+#define URG_PTR 0
 	/*Fill TCP header.*/
-    fill_tcp_header(tcph_send, tpo->source_port, port, tpo->seq, 0, WINDOWS_SIZE, 0,
-		  5, 0, tpo->tcpf);
+    fill_tcp_header(tcph_send, tpo->source_port, port, tpo->seq, ACK_NUM, WINDOWS_SIZE, URG_PTR,
+		  DOFF, RES1, tpo->tcpf);
 
 	/*Calculate the packet size.*/
 	const uint16_t packet_length = sizeof(struct ip_header) + sizeof(struct tcp_header);
