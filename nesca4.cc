@@ -10,6 +10,7 @@
 #include "include/other.h"
 #include "include/portscan.h"
 #include "include/target.h"
+#include "modules/include/requests.h"
 #include "ncsock/include/tcp.h"
 #include <string>
 #include <vector>
@@ -110,7 +111,7 @@ int main(int argc, char** argv)
                     	}
                 	}
                 	else {
-                    	std::string html = send_http_request(ip, 80);
+                    	std::string html = send_http_request_no_curl(ip, "/", 80);
                     	std::lock_guard<std::mutex> lock(mtx);
                     	std::string rtt = std::to_string(argp.rtts[ip]) + "ms";
                     	std::cout << np.main_nesca_out("BA", "http://" + result, 3, "T", "RTT", get_http_title(html), rtt, rtt) << std::endl;
@@ -1003,15 +1004,17 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
 {
 	/*Получение заголовков и кода страницы.*/
     std::string redirect;
-    std::string html = to_lower_case(send_http_request(ip, port));
+    std::string html = to_lower_case(send_http_request_no_curl(ip, "/", port));
     std::string default_result = "http://" + ip + ":" + std::to_string(port) + "/";
 
 	/*Получение перенаправления.*/
     if (argp.no_get_path != true){redirect = parse_redirect(html, html, ip, true, port);}
 
+    /*Второй запрос HTTP по перенаправлению*/
+    std::string html_pro = send_http_request_no_curl(ip, redirect, port);
+
 	/*Получение заголовка.*/
-    std::string http_title_result = get_http_title(html);
-   	if (cfs.contains_word("301", http_title_result)){http_title_result = get_http_title_pro(ip);}
+    std::string http_title_result = get_http_title(html_pro);
 
 	/*Сравнение списка negatives*/
 	for (const auto& n : nn.nesca_negatives)
@@ -1824,7 +1827,6 @@ parse_args(int argc, char** argv)
 	      case 88:
 			 argp.max_ping = true;
 		     break;
-
 	      case 89:
 			 argp.ack_scan = true;
 			 argp.type = ACK_SCAN;

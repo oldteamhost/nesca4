@@ -24,12 +24,11 @@
 #include <unistd.h>
 #include "../../include/callbacks.h"
 #include "../../ncsock/include/socket.h"
-#include "../../config/compile.h"
 
 #define HTTPREQUEST_ERROR "HTTPREQUEST: error"
 
-std::string 
-send_http_request(const std::string& node, int port);
+std::string
+send_http_request_no_curl(const std::string& node, std::string path, int port);
 
 int
 get_response_code(const std::string& node, int port);

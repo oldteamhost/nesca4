@@ -7,36 +7,6 @@
 
 #include "include/requests.h"
 
-std::string 
-send_http_request(const std::string& node, int port)
-{
-#ifdef HAVE_CURL
-	curl_global_init(CURL_GLOBAL_DEFAULT);
-    CURL* curl = curl_easy_init();
-    if (curl)
-	{
-        std::string buffer;
-		std::string headerBuffer;
-        curl_easy_setopt(curl, CURLOPT_URL, node.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, http_request);
-		curl_easy_setopt(curl, CURLOPT_PORT, port);
-		curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Linux x86_64; rv:35.0) Gecko/20100101 Firefox/35.0");
-		curl_easy_setopt(curl, CURLOPT_HEADERDATA, &headerBuffer);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2L);
-        CURLcode res = curl_easy_perform(curl);
-        if (res != CURLE_OK) {return "";}
-
-        curl_easy_cleanup(curl);
-        curl_global_cleanup();
-
-		std::string response = headerBuffer + buffer;
-        return response;
-    }
-#endif
-    return "";
-}
-
 int
 get_response_code(const std::string& node, int port)
 {
@@ -87,4 +57,47 @@ get_response_code(const std::string& node, int port)
 
     close(sockfd);
     return code;
+}
+
+std::string
+send_http_request_no_curl(const std::string& node, std::string path, int port)
+{
+    char lastChar = '/';
+    if (path.back() != lastChar){path.push_back(lastChar);}
+
+    struct sockaddr_in server_addr;
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(port);
+    inet_pton(AF_INET, node.c_str(), &server_addr.sin_addr);
+
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) {
+        return "Error: Failed to create socket.";
+    }
+
+    if (connect(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+        close(sockfd);
+        return "Error: Failed to connect to host.";
+    }
+
+    std::ostringstream request;
+    request << "GET " << path << " HTTP/1.1\r\n";
+    request << "Host: " << node << "\r\n";
+    request << "Connection: close\r\n\r\n";
+
+    std::string response;
+    send(sockfd, request.str().c_str(), request.str().length(), 0);
+
+    int timeout = set_socket_timeout(sockfd, 1200, 1, 1);
+
+    char buffer[1024];
+    ssize_t bytes_received;
+    while ((bytes_received = recv(sockfd, buffer, sizeof(buffer) - 1, 0)) > 0) {
+        buffer[bytes_received] = '\0';
+        response += buffer;
+    }
+
+    close(sockfd);
+    return response;
 }
