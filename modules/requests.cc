@@ -62,9 +62,6 @@ get_response_code(const std::string& node, int port)
 std::string
 send_http_request_no_curl(const std::string& node, std::string path, int port)
 {
-    char lastChar = '/';
-    if (path.back() != lastChar){path.push_back(lastChar);}
-
     struct sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;

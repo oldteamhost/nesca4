@@ -11,6 +11,7 @@
 #include "include/portscan.h"
 #include "include/target.h"
 #include "modules/include/requests.h"
+#include "modules/include/robots.h"
 #include "ncsock/include/tcp.h"
 #include <string>
 #include <vector>
@@ -744,7 +745,7 @@ checking_default_files(void)
 
 void
 print_port_state(int status, int port, std::string service){
-	std::string result_txt = "[&][REPORT]:" + std::to_string(port) + "/tcp STATE: ";
+	std::string result_txt = "\n[&][REPORT]:" + std::to_string(port) + "/tcp STATE: ";
     np.gray_nesca_on();
     std::cout << "[&][REPORT]:";
     np.green_html_on();
@@ -1089,13 +1090,53 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
 	/*Вывод основного.*/
     std::cout << result_print << std::endl;
 
+    /*Получение /robots.txt*/
+    if (argp.robots_txt){
+	    np.gray_nesca_on();
+	    std::cout << "[^][ROBOTS]:";
+        np.reset_colors();
+        std::string robots = get_robots_txt(ip, port);
+        if (robots == "n/a"){
+            np.red_html_on();
+            std::cout << ip << " robots.txt not found!\n";
+            np.reset_colors();
+        }
+        else
+        {
+            np.green_html_on();
+            std::cout << "http://" << ip + "/robots.txt\n";
+            np.reset_colors();
+	        if(np.save_file){write_line(np.file_path_save, "[^][ROBOTS]:http://" + ip + "/robots.txt\n");}
+        }
+    }
+
+    /*Получение /sitemap.xml*/
+    if (argp.sitemap_xml){
+	    np.gray_nesca_on();
+	    std::cout << "[^][STEMAP]:";
+        np.reset_colors();
+        std::string robots = get_sitemap_xml(ip, port);
+        if (robots == "n/a"){
+            np.red_html_on();
+            std::cout << ip << " sitemap.xml not found!\n";
+            np.reset_colors();
+        }
+        else
+        {
+            np.green_html_on();
+            std::cout << "http://" << ip + "/sitemap.xml\n";
+            np.reset_colors();
+	        if(np.save_file){write_line(np.file_path_save, "[^][SITEMAP]:http://" + ip + "/sitemap.xml\n");}
+        }
+    }
+
 	/*Вывод перенаправления.*/
     if (redirect.length() != default_result.length())
 	{
         if (redirect.length() != 0)
 		{
-			np.gray_nesca_on();
-			std::cout << "[^][REDIRT]:";
+		    np.gray_nesca_on();
+		    std::cout << "[^][REDIRT]:";
 			np.yellow_html_on();
 			std::cout << redirect + "\n";
 			np.reset_colors();
@@ -1317,6 +1358,8 @@ help_menu(void)
     std::cout << "  -no-get-path: Disable getting paths.\n";
     std::cout << "  -log-set <num>: Change the value of ips after which % will be output.\n";
     std::cout << "  -http-response: Display HTTP response.\n";
+    std::cout << "  -sitemap: Get /sitemap.xml.\n";
+    std::cout << "  -robots: Get /robots.txt.\n";
     np.golder_rod_on();
     std::cout << "COLOR:" << std::endl;
     np.reset_colors();
@@ -1754,6 +1797,12 @@ parse_args(int argc, char** argv)
                break;
            case 51:
                argp.get_response = true;
+               break;
+           case 67:
+               argp.robots_txt = true;
+               break;
+           case 68:
+               argp.sitemap_xml = true;
                break;
            case 52:
 			   argp.custom_threads_resolv = true;

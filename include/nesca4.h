@@ -34,6 +34,7 @@
 
 #include "../modules/include/requests.h"
 #include "../modules/include/title.h"
+#include "../modules/include/robots.h"
 #include "../modules/include/redirect.h"
 #include "../modules/include/negatives.h"
 #include "../modules/include/ftpinfo.h"
@@ -45,7 +46,7 @@
 #include "../config/compile.h"
 
 /*Угадайте?*/
-#define VERSION "20230730"
+#define VERSION "20230804"
 
 void help_menu(void);
 void version_menu(void);
@@ -181,6 +182,8 @@ option long_options[] = {
     {"ttl", required_argument, 0, 37},
     {"pro-mode", no_argument, 0, 78},
     {"nesca3", no_argument, 0, 79},
+    {"robots", no_argument, 0, 67},
+    {"sitemap", no_argument, 0, 68},
 
     {"max-group", required_argument, 0, 38},
     {"min-group", required_argument, 0, 60},

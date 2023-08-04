@@ -58,6 +58,8 @@ public:
 	   bool fin_scan;
 	   bool null_scan;
 	   bool nesca3_scan;
+       bool robots_txt;
+       bool sitemap_xml;
 	   bool xmas_scan;
 	   bool ack_scan;
 	   bool window_scan;
