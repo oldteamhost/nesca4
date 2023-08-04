@@ -251,9 +251,6 @@ recv_tcp_packet(const char* dest_ip, int recv_timeout_ms, unsigned char **buffer
         unsigned short iphdrlen = (iph->ihl) * 4;
         if (iphdrlen < 20){close(sock);return -1;}
 
-		/*Verification of the received packet's protocol.*/
-		if (iph->protocol != IPPROTO_TCP){close(sock);return -1;}
-
 		/*Obtains the sender's IP from the RECEIVED packet.*/
         struct sockaddr_in source;
         memset(&source, 0, sizeof(source));
