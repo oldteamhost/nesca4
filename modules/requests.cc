@@ -7,58 +7,6 @@
 
 #include "include/requests.h"
 
-int
-get_response_code(const std::string& node, int port)
-{
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd == EOF){return -1;}
-
-    struct sockaddr_in server_addr{};
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(port);
-
-    if (inet_pton(AF_INET, node.c_str(), &(server_addr.sin_addr)) <= 0)
-	{
-        close(sockfd);
-        return -1;
-    }
-
-    if (connect(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0)
-	{
-        close(sockfd);
-        return -1;
-    }
-
-    std::string request = "GET / HTTP/1.1\r\nHost: " + node + "\r\nConnection: close\r\n\r\n";
-    if (send(sockfd, request.c_str(), request.length(), 0) < 0)
-	{
-        close(sockfd);
-        return -1;
-    }
-
-	set_socket_timeout_pro(sockfd, 2000);
-
-    char buffer[2020];
-    if (recv(sockfd, buffer, sizeof(buffer), 0) < 0)
-	{
-        close(sockfd);
-        return -1;
-    }
-
-    std::string response(buffer);
-    std::size_t pos = response.find("HTTP/1.1");
-    if (pos == std::string::npos)
-	{
-        close(sockfd);
-        return -1;
-    }
-
-    int code = std::stoi(response.substr(pos + 9, 3));
-
-    close(sockfd);
-    return code;
-}
-
 std::string
 send_http_request_no_curl(const std::string& node, std::string path, int port)
 {

@@ -30,7 +30,4 @@
 std::string
 send_http_request_no_curl(const std::string& node, std::string path, int port);
 
-int
-get_response_code(const std::string& node, int port);
-
 #endif
