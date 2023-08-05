@@ -83,7 +83,7 @@ int main(int argc, char** argv)
                 	std::string result = random_ + argp.domain_1level;
                 	std::string ip = dus.get_ip_by_dns(result.c_str());
 
-                	if (ip == "N/A") 
+                	if (ip == "N/A")
 					{
                     	if (argp.debug) {
                         	std::lock_guard<std::mutex> lock(mtx);
