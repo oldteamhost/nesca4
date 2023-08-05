@@ -15,7 +15,7 @@ PS: Перечислять все возможности тут я не буду
 **Debian 11:**  
 ```
 sudo apt-get install libcurl4-openssl-dev
-sudo apt install g++ make git cmake libssh-dev
+sudo apt install gcc g++ make git cmake libssh-dev
 git clone https://github.com/oldteamhost/nesca4
 cd nesca4
 cmake .
