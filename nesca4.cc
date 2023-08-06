@@ -16,11 +16,12 @@
 #include <string>
 #include <vector>
 
-struct tcp_packet_opts ncopts;
-const char* short_options = "hl:vd:T:p:aS:";
-const char* run; /*Для help_menu()*/
+const char*
+short_options = "hl:vd:T:p:aS:";
+const char* run;
 std::mutex ls;
 
+struct tcp_packet_opts ncopts;
 checking_finds cfs;
 nesca_prints np;
 brute_ftp_data bfd_;
@@ -31,14 +32,33 @@ services_nesca sn;
 nesca_negatives nn;
 arguments_program argp;
 
+class nesca_data
+{
+public:
+    std::unordered_map<std::string, std::vector<int>> success_target;
+	std::unordered_map<std::string, std::vector<int>> error_target;
+	std::unordered_map<std::string, std::vector<int>> filtered_target;
+	std::unordered_map<std::string, std::vector<int>> open_or_filtered_target;
+	std::unordered_map<std::string, std::vector<int>> no_filtered_target;
+    std::unordered_map<std::string, std::vector<int>> closed_target;
+
+	std::unordered_map<std::string, std::string> dns_completed;
+	std::unordered_map<std::string,double> rtts;
+
+}; nesca_data nd;
+
 #ifdef HAVE_CURL
-nesca3_scan s3n;
+    nesca3_scan s3n;
 #endif
 
 int main(int argc, char** argv)
 {
     run = argv[0];
-    if (argc <= 1) {help_menu();return 1;}
+    if (argc <= 1)
+    {
+        help_menu();
+        return 1;
+    }
 
 	argp.source_ip = get_local_ip();
     parse_args(argc, argv);
@@ -114,7 +134,7 @@ int main(int argc, char** argv)
                 	else {
                     	std::string html = send_http_request_no_curl(ip, "/", 80);
                     	std::lock_guard<std::mutex> lock(mtx);
-                    	std::string rtt = std::to_string(argp.rtts[ip]) + "ms";
+                    	std::string rtt = std::to_string(nd.rtts[ip]) + "ms";
                     	std::cout << np.main_nesca_out("BA", "http://" + result, 3, "T", "RTT", get_http_title(html), rtt, rtt) << std::endl;
 
                     	if (argp.get_response)
@@ -340,7 +360,7 @@ int main(int argc, char** argv)
                group_start + static_cast<int>(gs.group_size) :
                static_cast<int>(size);
 
-		gs.create_group(result_main, argp.rtts);
+		gs.create_group(result_main, nd.rtts);
 
         /*Сканирование текущей группы*/
         for (const auto& ip : gs.current_group)
@@ -403,17 +423,17 @@ int main(int argc, char** argv)
         /*Обработка результатов для текущей группы*/
         for (const auto& ip : gs.current_group)
 		{
-	   		if (argp.success_target.find(ip) != argp.success_target.end() 
+	   		if (nd.success_target.find(ip) != nd.success_target.end() 
 			   	|| argp.debug 
-			   	|| argp.open_or_filtered_target.find(ip) != argp.open_or_filtered_target.end()
-	           	|| argp.no_filtered_target.find(ip) != argp.no_filtered_target.end())
+			   	|| nd.open_or_filtered_target.find(ip) != nd.open_or_filtered_target.end()
+	           	|| nd.no_filtered_target.find(ip) != nd.no_filtered_target.end())
 			{
-		  		double time_ms = argp.rtts[ip];
+		  		double time_ms = nd.rtts[ip];
 		  		if (np.save_file){write_line(np.file_path_save, "\n");}
 
 				std::string result;
 				ls.lock();
-		  		std::cout << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", argp.dns_completed[ip], std::to_string(argp.rtts[ip])+"ms","") << std::endl;
+		  		std::cout << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", nd.dns_completed[ip], std::to_string(nd.rtts[ip])+"ms","") << std::endl;
 	   			print_results(ip);
 				ls.unlock();
 				std::cout << std::endl;
@@ -421,16 +441,16 @@ int main(int argc, char** argv)
         }
 
 		/*Успешные цели.*/
-		count_success_ips += argp.success_target.size();
-		count_success_ips += argp.no_filtered_target.size();
-		count_success_ips += argp.open_or_filtered_target.size();
+		count_success_ips += nd.success_target.size();
+		count_success_ips += nd.no_filtered_target.size();
+		count_success_ips += nd.open_or_filtered_target.size();
 
-		argp.open_or_filtered_target.clear();
-		argp.filtered_target.clear();
-		argp.closed_target.clear();
-		argp.success_target.clear();
-		argp.no_filtered_target.clear();
-		argp.error_target.clear();
+		nd.open_or_filtered_target.clear();
+		nd.filtered_target.clear();
+		nd.closed_target.clear();
+		nd.success_target.clear();
+		nd.no_filtered_target.clear();
+		nd.error_target.clear();
 		gs.clean_group();
 
 		auto end_time_proc = std::chrono::high_resolution_clock::now();
@@ -487,10 +507,10 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
     if (argp.custom_recv_timeout_ms){recv_timeout_result = argp.recv_timeout_ms;}else
 	{
 	   /*Расчёт таймаута для приёма данных*/
-	   auto it = argp.rtts.find(ip);
-	   if (it != argp.rtts.end())
+	   auto it = nd.rtts.find(ip);
+	   if (it != nd.rtts.end())
 	   {
-		  double rtt_ping = argp.rtts.at(ip);
+		  double rtt_ping = nd.rtts.at(ip);
 		  recv_timeout_result = calc_port_timeout(argp.speed_type, rtt_ping);
 	   }
     }
@@ -517,7 +537,7 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
 	   {
 		  ls.lock();
 		  /*Значит была ошибка.*/
-		  if (argp.print_errors){argp.error_target[ip].push_back(port); argp.error_fuck++;}
+		  if (argp.print_errors){nd.error_target[ip].push_back(port); argp.error_fuck++;}
 		  ls.unlock();
 		  /*Переход к следующему порту.*/
 		  continue;
@@ -541,14 +561,14 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
 		  {
 		  	  ls.lock();
 		      /*Значит порт open|filtered.*/
-			  argp.open_or_filtered_target[ip].push_back(port);
+			  nd.open_or_filtered_target[ip].push_back(port);
 		  	  ls.unlock();
 		  }
 		  else
 		  {
 		  	  ls.lock();
 		  	  /*Значит порт filtered.*/
-			  if (argp.debug){argp.filtered_target[ip].push_back(port);}
+			  if (argp.debug){nd.filtered_target[ip].push_back(port);}
 		  	  ls.unlock();
 		  }
 		  continue;
@@ -564,10 +584,10 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
 	   ls.unlock();
 
 	   ls.lock();
-	   if (port_status == PORT_CLOSED && argp.debug){argp.closed_target[ip].push_back(port);}
-	   else if (port_status == PORT_OPEN){argp.success_target[ip].push_back(port);}
-	   if (port_status == PORT_FILTER && argp.debug){argp.filtered_target[ip].push_back(port);}
-	   else if (port_status == PORT_NO_FILTER){argp.no_filtered_target[ip].push_back(port);}
+	   if (port_status == PORT_CLOSED && argp.debug){nd.closed_target[ip].push_back(port);}
+	   else if (port_status == PORT_OPEN){nd.success_target[ip].push_back(port);}
+	   if (port_status == PORT_FILTER && argp.debug){nd.filtered_target[ip].push_back(port);}
+	   else if (port_status == PORT_NO_FILTER){nd.no_filtered_target[ip].push_back(port);}
 	   ls.unlock();
     }
 
@@ -590,12 +610,12 @@ print_results(std::string ip)
     };
 
 	/*Её использование.*/
-    process_ports(argp.success_target, PORT_OPEN);
-    process_ports(argp.error_target, PORT_ERROR);
-    process_ports(argp.filtered_target, PORT_FILTER);
-    process_ports(argp.closed_target, PORT_CLOSED);
-    process_ports(argp.open_or_filtered_target, PORT_OPEN_OR_FILTER);
-    process_ports(argp.no_filtered_target, PORT_NO_FILTER);
+    process_ports(nd.success_target, PORT_OPEN);
+    process_ports(nd.error_target, PORT_ERROR);
+    process_ports(nd.filtered_target, PORT_FILTER);
+    process_ports(nd.closed_target, PORT_CLOSED);
+    process_ports(nd.open_or_filtered_target, PORT_OPEN_OR_FILTER);
+    process_ports(nd.no_filtered_target, PORT_NO_FILTER);
 }
 
 void
@@ -616,7 +636,7 @@ process_ping(std::string ip)
     	double icmp_casual = icmp_ping(ip.c_str(), argp.ping_timeout, 8, 0, 0, 64);
     	if (icmp_casual != EOF)
 		{
-	   		argp.rtts[ip] = icmp_casual;
+	   		nd.rtts[ip] = icmp_casual;
 	   		return true;
     	}
 	}
@@ -626,7 +646,7 @@ process_ping(std::string ip)
 		double status_time1 = tcp_ping(SYN_PACKET, ip.c_str(), argp.source_ip, argp.syn_dest_port, source_port, argp.ping_timeout, ttl);
 		if (status_time1 != EOF)
 		{
-			argp.rtts[ip] = status_time1;
+			nd.rtts[ip] = status_time1;
 			return true;
 		}
 	}
@@ -636,7 +656,7 @@ process_ping(std::string ip)
 		double status_time = tcp_ping(ACK_PACKET, ip.c_str(), argp.source_ip, argp.ack_dest_port, source_port, argp.ping_timeout, ttl);
 		if (status_time != EOF)
 		{
-			argp.rtts[ip] = status_time;
+			nd.rtts[ip] = status_time;
 			return true;
 		}
 	}
@@ -646,7 +666,7 @@ process_ping(std::string ip)
     	double icmp_rev = icmp_ping(ip.c_str(), argp.ping_timeout, 13, 0, 0, 64);
 		if (icmp_rev != EOF)
 		{
-			argp.rtts[ip] = icmp_rev;
+			nd.rtts[ip] = icmp_rev;
 			return true;
 		}
 	}
@@ -655,7 +675,7 @@ process_ping(std::string ip)
     	double icmp_rev1 = icmp_ping(ip.c_str(), argp.ping_timeout, 15, 0, 0, 64);
 		if (icmp_rev1 != EOF)
 		{
-			argp.rtts[ip] = icmp_rev1;
+			nd.rtts[ip] = icmp_rev1;
 			return true;
 		}
 	}
@@ -1163,7 +1183,7 @@ void else_strategy::handle(const std::string& ip, const std::string& result, con
 void 
 processing_tcp_scan_ports(std::string ip, int port, int result)
 {
-		std::stringstream stream; stream << std::fixed << std::setprecision(2) << argp.rtts[ip];
+		std::stringstream stream; stream << std::fixed << std::setprecision(2) << nd.rtts[ip];
     	std::string rtt_log = stream.str();
 		std::string protocol = sn.probe_service(port);
 
@@ -1261,6 +1281,7 @@ help_menu(void)
     puts("88 V8o88 88~~~~~   `Y8b. 8b      88~~~88      V88888D");
     puts("88  V888 88.     db   8D Y8b  d8 88   88          88 ");
     puts("VP   V8P Y88888P `8888Y'  `Y88P' YP   YP          VP \n");
+
 	np.gray_nesca_on();
 	std::cout << "[VERSION]:";
 	np.green_html_on();
@@ -1767,8 +1788,6 @@ parse_args(int argc, char** argv)
 			   argp.custom_ttl = true;
 			   argp._custom_ttl = atoi(optarg);
                break;
-
-
            case 38:
 			   argp.custom_g_max = true;
 			   gs.max_group_size = atoi(optarg);
@@ -1781,8 +1800,6 @@ parse_args(int argc, char** argv)
 			   argp.custom_g_rate = true;
 			   gs.group_rate = atoi(optarg);
                break;
-
-
            case 49:
 			   argp.ping_timeout = atoi(optarg);
                break;
@@ -1910,6 +1927,9 @@ parse_args(int argc, char** argv)
 			argp.custom_recv_timeout_ms = true;
 			argp.recv_timeout_ms = atoi(optarg);
 			break;
+         default: 
+			 help_menu();
+			 break;
         }
     }
 }
@@ -1947,7 +1967,7 @@ get_dns_thread(std::string ip)
 	delay_ms(argp.resol_delay);
 	std::string temp_dns = dus.get_dns_by_ip(ip.c_str(), argp.resol_source_port);
 	ls.lock(); /*Добавление DNS.*/
-	argp.dns_completed.insert(std::make_pair(ip, temp_dns));
+	nd.dns_completed.insert(std::make_pair(ip, temp_dns));
 	ls.unlock();
 }
 
@@ -2073,10 +2093,10 @@ probe_scan_ports(const std::string& ip, std::vector<int> ports, const int timeou
     if (argp.custom_recv_timeout_ms){s3n.timeout_ms = argp.recv_timeout_ms;}else
 	{
 	   /*Расчёт таймаута для приёма данных*/
-	   auto it = argp.rtts.find(ip);
-	   if (it != argp.rtts.end())
+	   auto it = nd.rtts.find(ip);
+	   if (it != nd.rtts.end())
 	   {
-		  double rtt_ping = argp.rtts.at(ip);
+		  double rtt_ping = nd.rtts.at(ip);
 		  /*Тут всегда требуется много времени.*/
 		  s3n.timeout_ms = calc_port_timeout(1, rtt_ping);
 	   }
@@ -2104,10 +2124,10 @@ probe_scan_ports(const std::string& ip, std::vector<int> ports, const int timeou
 		{
 			probe = s3n.https_probe(ip, port);
 		}
-	    if (probe == PORT_CLOSED && argp.debug){argp.closed_target[ip].push_back(port);}
-	    else if (probe == PORT_OPEN){argp.success_target[ip].push_back(port);}
-	    else if (probe == PORT_FILTER && argp.debug){argp.filtered_target[ip].push_back(port);}
-	    else if (probe == PORT_ERROR && argp.print_errors){argp.error_target[ip].push_back(port);}
+	    if (probe == PORT_CLOSED && argp.debug){nd.closed_target[ip].push_back(port);}
+	    else if (probe == PORT_OPEN){nd.success_target[ip].push_back(port);}
+	    else if (probe == PORT_FILTER && argp.debug){nd.filtered_target[ip].push_back(port);}
+	    else if (probe == PORT_ERROR && argp.print_errors){nd.error_target[ip].push_back(port);}
 	}
 	return 0;
 }

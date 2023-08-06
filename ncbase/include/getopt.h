@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int getopt_reset(void);
 extern int optind, opterr, optopt;
 extern char *optarg;
@@ -31,5 +35,9 @@ extern int getopt_long_only(int argc, char * argv[], const char *shortopts,
 extern int _getopt_internal(int argc, char * argv[], const char *shortopts,
                             const struct option *longopts, int *longind,
                             int long_only);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

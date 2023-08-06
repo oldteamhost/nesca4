@@ -121,8 +121,6 @@ public:
 	   int ack_dest_port = ACK_PING_DEFAULT_DEST_PORT;
 	   int syn_dest_port = SYN_PING_DEFAULT_DEST_PORT;
 
-	   std::unordered_map<std::string,double> rtts;
-
 	   /*Don`t touch*/
 	   int error_fuck;
        bool print_help_menu;
@@ -132,16 +130,6 @@ public:
 	   double dns_duration;
 	   double scan_duration;
 	   double proc_duration;
-
-	   std::unordered_map<std::string, std::vector<int>> success_target;
-	   std::unordered_map<std::string, std::vector<int>> error_target;
-	   std::unordered_map<std::string, std::vector<int>> filtered_target;
-	   std::unordered_map<std::string, std::vector<int>> open_or_filtered_target;
-	   std::unordered_map<std::string, std::vector<int>> no_filtered_target;
-	   std::unordered_map<std::string, std::vector<int>> closed_target;
-
-	   std::unordered_map<std::string, std::string> dns_completed;
-	   std::unordered_map<std::string, std::string> http_requests;
 
        bool thread_on_port;
 	   bool info_version;

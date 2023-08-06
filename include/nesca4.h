@@ -18,7 +18,6 @@
 #include <set>
 
 #include "bruteforce.h"
-#include "getopt.h"
 #include "files.h"
 #include "generation.h"
 #include "other.h"
@@ -43,6 +42,7 @@
 #include "../config/nescaopts.h"
 #include "../ncsock/include/icmp4.h"
 #include "../ncsock/include/base.h"
+#include "../ncbase/include/getopt.h"
 #include "../config/compile.h"
 
 /*Угадайте?*/

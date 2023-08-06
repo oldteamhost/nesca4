@@ -22,7 +22,6 @@
 #include <poll.h>
 #include <cstdio>
 #include <unistd.h>
-#include "../../include/callbacks.h"
 #include "../../ncsock/include/socket.h"
 
 #define HTTPREQUEST_ERROR "HTTPREQUEST: error"

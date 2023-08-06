@@ -23,7 +23,7 @@
 #include "../config/compile.h"
 
 #ifdef HAVE_CURL
-#include "../include/callbacks.h"
+#include "../ncbase/include/callbacks.h"
 #endif
 
 class brute_ftp_data{

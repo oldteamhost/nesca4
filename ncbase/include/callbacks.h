@@ -7,13 +7,19 @@
 
 #ifndef CALLBBACKS_H
 #define CALLBBACKS_H
-#include <iostream>
+#include <stdlib.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 size_t 
 write_callback(char* ptr, size_t size, size_t nmemb, void* userdata);
 size_t 
 clear_callback(void *buffer, size_t size, size_t nmemb, void *userp);
-size_t
-http_request(char* contents, size_t size, size_t nmemb, std::string* buffer);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
