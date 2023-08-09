@@ -1089,14 +1089,13 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
                 path_to_file_easy = argp.screenshots_save_path + ip + ".png";
             }
             unsigned char* file_data = binary_file(path_to_file_easy.c_str(), &file_size);
-            if (!file_data)
+            if (file_data)
             {
+                char* encoded_data = base64_encode(file_data, file_size);
+                screenshot_base64 = encoded_data;
                 free(file_data);
+                free(encoded_data);
             }
-            char* encoded_data = base64_encode(file_data, file_size);
-            screenshot_base64 = encoded_data;
-            free(file_data);
-            free(encoded_data);
         }
     }
 #endif
