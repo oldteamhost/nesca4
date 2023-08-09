@@ -31,8 +31,14 @@ cmake .
 make -j12
 ```
 
-**Screenshots no save!**  
+**Screenshots not save!**
 ```
+Для сохранения скриншотов запуск возможен только через sudo -E
+```
+
+```
+Если и так не выодит то:
+
 cd nesca4/utils
 
 Arch linux 2023:
