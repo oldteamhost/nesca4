@@ -84,6 +84,7 @@ public:
 	std::string brute_temp;
     std::string http_title;
     std::string content_base64;
+    std::string screenshot_base64;
 	std::string result_print;
 };
 

@@ -1094,7 +1094,7 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
                 free(file_data);
             }
             char* encoded_data = base64_encode(file_data, file_size);
-            content_base64 = encoded_data;
+            screenshot_base64 = encoded_data;
             free(file_data);
             free(encoded_data);
         }
@@ -1327,7 +1327,8 @@ processing_tcp_scan_ports(std::string ip, int port, int result)
                 npd.port = port;
                 npd.protocol = protocol.c_str();
                 npd.http_title = ports_strategy_->http_title.c_str();
-                npd.content = ports_strategy_->content_base64.c_str();
+                npd.screenshot = ports_strategy_->screenshot_base64.c_str();
+                npd.content = "";
                 npd.passwd = ports_strategy_->brute_temp.c_str();
                 nesca_json_save_port(argp.json_save_path, &npd);
             }

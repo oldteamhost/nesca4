@@ -26,6 +26,7 @@ struct nesca_port_details
     const char* protocol;
     const char* passwd;
     const char* content;
+    const char* screenshot;
     const char* http_title;
 };
 
