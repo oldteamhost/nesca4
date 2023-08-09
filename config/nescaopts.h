@@ -62,7 +62,7 @@ public:
 #ifdef HAVE_NODE_JS
        bool save_screenshots;
        std::string screenshots_save_path;
-       int timeout_save_screenshots = 1500;
+       int timeout_save_screenshots = 2000;
 #endif
        bool robots_txt;
        bool sitemap_xml;
