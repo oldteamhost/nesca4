@@ -96,7 +96,9 @@ public:
 
        bool random_ip;
 	   bool no_get_dns;
+       bool json_save;
        int random_ip_count;
+       const char* json_save_path;
 	   int dns_threads;
 	   int resol_source_port = DNS_RESOLV_SOURCE_PORT_DEFUALT;
 	   int resol_delay;
@@ -124,6 +126,9 @@ public:
 	   /*Don`t touch*/
 	   int error_fuck;
        bool print_help_menu;
+       int count_success_ports;
+       int result_success_ports;
+       int result_success_ip;
        int threads_temp;
        std::string ports_temp;
 	   double ping_duration;

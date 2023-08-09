@@ -6,6 +6,7 @@
 */
 
 #include "include/nescalog.h"
+#include "ncbase/include/json.h"
 
 html_output hou;
 

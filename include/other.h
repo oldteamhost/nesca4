@@ -26,7 +26,7 @@ const char*
 get_time();
 
 int
-write_temp(const std::string& data);
+write_temp(const std::string& data, const std::string& file_name);
 
 std::string
 get_current_date();

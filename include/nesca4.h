@@ -43,10 +43,11 @@
 #include "../ncsock/include/icmp4.h"
 #include "../ncsock/include/base.h"
 #include "../ncbase/include/getopt.h"
+#include "../ncbase/include/json.h"
 #include "../config/compile.h"
 
 /*Угадайте?*/
-#define VERSION "20230804"
+#define VERSION "20230809"
 
 void help_menu(void);
 void version_menu(void);
@@ -68,6 +69,7 @@ void parse_args(int argc, char** argv);
 void pre_check(void);
 void print_results(std::string ip);
 void get_dns_thread(std::string ip);
+int count_map_vector(const std::unordered_map<std::string, std::vector<int>>& map, const std::string& key);
 int traceroute(std::string ip, int jumps);
 std::vector<std::string> resolv_hosts(std::vector<std::string> hosts);
 
@@ -78,6 +80,7 @@ public:
 	virtual void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
 			const std::string& protocol, int port, arguments_program& argp, nesca_prints& np) = 0;
 	std::string brute_temp;
+    std::string http_title;
 	std::string result_print;
 };
 
@@ -177,6 +180,7 @@ option long_options[] = {
     {"PA", required_argument, 0, 81},
     {"PE", no_argument, 0, 82},
     {"PI", no_argument, 0, 86},
+    {"json", required_argument, 0, 43},
     {"PM", no_argument, 0, 87},
     {"source-port", required_argument, 0, 36},
     {"ttl", required_argument, 0, 37},

@@ -12,6 +12,7 @@
 #include "include/target.h"
 #include "modules/include/requests.h"
 #include "modules/include/robots.h"
+#include "ncbase/include/json.h"
 #include "ncsock/include/tcp.h"
 #include <string>
 #include <vector>
@@ -421,13 +422,19 @@ int main(int argc, char** argv)
 		auto start_time_proc = std::chrono::high_resolution_clock::now();
 
         /*Обработка результатов для текущей группы*/
+        size_t successful_ip_count = 0;
+        bool is_last_iteration = false;
         for (const auto& ip : gs.current_group)
 		{
-	   		if (nd.success_target.find(ip) != nd.success_target.end() 
-			   	|| argp.debug 
+	   		if (nd.success_target.find(ip) != nd.success_target.end() || argp.debug 
 			   	|| nd.open_or_filtered_target.find(ip) != nd.open_or_filtered_target.end()
-	           	|| nd.no_filtered_target.find(ip) != nd.no_filtered_target.end())
-			{
+	           	|| nd.no_filtered_target.find(ip) != nd.no_filtered_target.end()){
+
+                if (nd.success_target.find(ip) != nd.success_target.end())
+                {
+                    successful_ip_count++;
+                }
+
 		  		double time_ms = nd.rtts[ip];
 		  		if (np.save_file){write_line(np.file_path_save, "\n");}
 
@@ -437,6 +444,12 @@ int main(int argc, char** argv)
 	   			print_results(ip);
 				ls.unlock();
 				std::cout << std::endl;
+
+                nesca_json_close_info(argp.json_save_path);
+                if (successful_ip_count < nd.success_target.size()){
+                    nesca_json_set_comma(argp.json_save_path);
+                    nesca_json_skip_line(argp.json_save_path);
+                }
 			}
         }
 
@@ -585,7 +598,7 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
 
 	   ls.lock();
 	   if (port_status == PORT_CLOSED && argp.debug){nd.closed_target[ip].push_back(port);}
-	   else if (port_status == PORT_OPEN){nd.success_target[ip].push_back(port);}
+	   else if (port_status == PORT_OPEN){nd.success_target[ip].push_back(port); argp.count_success_ports++;}
 	   if (port_status == PORT_FILTER && argp.debug){nd.filtered_target[ip].push_back(port);}
 	   else if (port_status == PORT_NO_FILTER){nd.no_filtered_target[ip].push_back(port);}
 	   ls.unlock();
@@ -598,6 +611,18 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
 void
 print_results(std::string ip)
 {
+    if (argp.json_save)
+    {
+        nesca_host_details nhd;
+        nhd.ip_address = ip.c_str();
+        nhd.rtt = nd.rtts[ip];
+        nhd.dns_name = nd.dns_completed[ip].c_str();
+        nhd.content = "n/a";
+        nesca_json_save_host(argp.json_save_path, &nhd);
+    }
+
+    int total_ports_to_process = 0;
+
 	/*Лямбда функция.*/
 	auto process_ports = [&](const std::unordered_map<std::string, std::vector<int>>& target_map, int port_type) 
 	{
@@ -605,7 +630,21 @@ print_results(std::string ip)
         if (it != target_map.end()) 
 		{
             const std::vector<int>& ports = it->second;
-            for (int port : ports){processing_tcp_scan_ports(ip, port, port_type);}
+            total_ports_to_process = ports.size();
+            int port_count_on_this_ip = 0;
+
+            for (int port : ports){
+                processing_tcp_scan_ports(ip, port, port_type);
+
+                int num_ports_for_current_ip = count_map_vector(nd.success_target, ip);
+                if (port_count_on_this_ip != total_ports_to_process - 1)
+                {
+                    nesca_json_set_comma(argp.json_save_path);
+                    nesca_json_skip_line(argp.json_save_path);
+                }
+
+                port_count_on_this_ip++;
+            }
         }
     };
 
@@ -1037,6 +1076,9 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
 	/*Получение заголовка.*/
     std::string http_title_result = get_http_title(html_pro);
 
+    /*http title это из класса.*/
+    http_title = http_title_result;
+
 	/*Сравнение списка negatives*/
 	for (const auto& n : nn.nesca_negatives)
 	{
@@ -1183,6 +1225,8 @@ void else_strategy::handle(const std::string& ip, const std::string& result, con
 void 
 processing_tcp_scan_ports(std::string ip, int port, int result)
 {
+        argp.result_success_ports++;
+        argp.result_success_ip++;
 		std::stringstream stream; stream << std::fixed << std::setprecision(2) << nd.rtts[ip];
     	std::string rtt_log = stream.str();
 		std::string protocol = sn.probe_service(port);
@@ -1242,6 +1286,16 @@ processing_tcp_scan_ports(std::string ip, int port, int result)
 
 			/*Запуск стратегий.*/
 			if (ports_strategy_){ports_strategy_->handle(ip, result1, rtt_log, protocol, port, argp, np);}
+
+            if (argp.json_save)
+            { 
+                nesca_port_details npd;
+                npd.port = port;
+                npd.protocol = protocol.c_str();
+                npd.http_title = ports_strategy_->http_title.c_str();
+                npd.passwd = ports_strategy_->brute_temp.c_str();
+                nesca_json_save_port(argp.json_save_path, &npd);
+            }
         }
 
 		/*Ошибочный порт.*/
@@ -1365,6 +1419,7 @@ help_menu(void)
     std::cout << "SAVE OUTPUT:" << std::endl;
     np.reset_colors();
     std::cout << "  -html, -l <path file>: Classic nesca save, write on html page.\n";
+    std::cout << "  -json <path file>: Save on json file.\n";
     std::cout << "  -txt <path file>: Save result(s) to text document.\n";
     np.golder_rod_on();
     std::cout << "VERBOSE OUTPUT:" << std::endl;
@@ -1878,6 +1933,10 @@ parse_args(int argc, char** argv)
 	      case 79:
 			 argp.nesca3_scan = true;
 		     break;
+	      case 43:
+			 argp.json_save = true;
+             argp.json_save_path = optarg;
+		     break;
 	      case 82:
 			 argp.custom_ping = true;
 			 argp.echo_ping = true;
@@ -1997,7 +2056,7 @@ pre_check(void)
 
 	if (np.html_save)
 	{
-		std::vector<std::string> temp = write_file("resources/data");
+		std::vector<std::string> temp = write_file("resources/data_html");
 		auto it = std::find(temp.begin(), temp.end(), np.html_file_path);
 		if (it == temp.end() || temp[0] == "-1")
 		{
@@ -2011,8 +2070,24 @@ pre_check(void)
 		}
 
 		ho.html_pre_init(np.html_file_path);
-		write_temp(np.html_file_path);
+		write_temp(np.html_file_path, "resources/data_html");
 	}
+
+    if (argp.json_save)
+    {
+		std::vector<std::string> temp = write_file("resources/data_json");
+		auto it = std::find(temp.begin(), temp.end(), argp.json_save_path);
+		if (it != temp.end() && temp[0] != "-1")
+        {
+            if (check_file(argp.json_save_path))
+            {
+                nesca_json_set_comma(argp.json_save_path);
+                nesca_json_skip_line(argp.json_save_path);
+            }
+        }
+		write_temp(argp.json_save_path, "resources/data_json");
+
+    }
 
     if (np.save_file)
 	{
@@ -2132,3 +2207,14 @@ probe_scan_ports(const std::string& ip, std::vector<int> ports, const int timeou
 	return 0;
 }
 #endif
+
+int count_map_vector(const std::unordered_map<std::string, std::vector<int>>& map, const std::string& key)
+{
+    auto it = map.find(key);
+    if (it != map.end())
+    {
+        return it->second.size();
+    }
+
+    return 0;
+}

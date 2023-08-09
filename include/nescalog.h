@@ -53,6 +53,7 @@ private:
     public:
 		bool save_file;
 		bool html_save;
+        bool json_save;
 		bool colors = true;
         std::map<std::string, std::string> config_values;
 		std::string file_path_save;

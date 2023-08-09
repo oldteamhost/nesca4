@@ -142,17 +142,17 @@ dns_or_ip(std::string &node)
 }
 
 int
-write_temp(const std::string& data)
+write_temp(const std::string& data, const std::string& file_name)
 {
-	const std::vector<std::string> temp = write_file("resources/data");
+	const std::vector<std::string> temp = write_file(file_name);
 	for (auto& str : temp) {
         if (str == data) {return -1;}
     }
 	if (temp.size() > 2000){
-		std::filesystem::path file_path("resources/data");
+		std::filesystem::path file_path(file_name);
         std::filesystem::remove(file_path);
 	}
-	const int write = write_line("resources/data", data + "\n");
+	const int write = write_line(file_name, data + "\n");
 	if (write != 0) {return -1;}
 
 	return 0;
