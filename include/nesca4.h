@@ -44,6 +44,8 @@
 #include "../ncsock/include/base.h"
 #include "../ncbase/include/getopt.h"
 #include "../ncbase/include/json.h"
+#include "../ncbase/include/base64.h"
+#include "../ncbase/include/binary.h"
 #include "../config/compile.h"
 
 /*Угадайте?*/
@@ -81,6 +83,7 @@ public:
 			const std::string& protocol, int port, arguments_program& argp, nesca_prints& np) = 0;
 	std::string brute_temp;
     std::string http_title;
+    std::string content_base64;
 	std::string result_print;
 };
 

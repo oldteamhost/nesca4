@@ -17,7 +17,6 @@ struct nesca_host_details
 {
     const char* ip_address;
     const char* dns_name;
-    const char* content;
     double rtt;
 };
 
@@ -26,6 +25,7 @@ struct nesca_port_details
     unsigned int port;
     const char* protocol;
     const char* passwd;
+    const char* content;
     const char* http_title;
 };
 

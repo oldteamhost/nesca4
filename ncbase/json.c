@@ -40,7 +40,6 @@ nesca_json_save_host(const char* filename, const struct nesca_host_details* host
         fprintf(file, "    \"ip_address\": \"%s\",\n", host_data->ip_address);
         fprintf(file, "    \"details\": {\n");
         fprintf(file, "        \"dns_name\": \"%s\",\n", host_data->dns_name);
-        fprintf(file, "        \"content\": \"%s\",\n", host_data->content);
         fprintf(file, "        \"rtt\": %lf,\n", host_data->rtt);
         fprintf(file, "        \"ports\": [\n");
         fclose(file);
@@ -89,7 +88,8 @@ nesca_json_save_port(const char* filename, const struct nesca_port_details* port
         {
             fprintf(file, "                \"http_title\": \"%s\",\n", port_data->http_title);
         }
-        fprintf(file, "                \"passwd\": \"%s\"\n", port_data->passwd);
+        fprintf(file, "                \"passwd\": \"%s\",\n", port_data->passwd);
+        fprintf(file, "                \"content\": \"%s\"\n", port_data->content);
         fprintf(file, "            }");
         fclose(file);
         return 0;

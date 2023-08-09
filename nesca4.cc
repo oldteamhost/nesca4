@@ -12,6 +12,8 @@
 #include "include/target.h"
 #include "modules/include/requests.h"
 #include "modules/include/robots.h"
+#include "ncbase/include/base64.h"
+#include "ncbase/include/binary.h"
 #include "ncbase/include/json.h"
 #include "ncsock/include/tcp.h"
 #include <bits/getopt_core.h>
@@ -619,7 +621,6 @@ print_results(std::string ip)
         nhd.ip_address = ip.c_str();
         nhd.rtt = nd.rtts[ip];
         nhd.dns_name = nd.dns_completed[ip].c_str();
-        nhd.content = "n/a";
         nesca_json_save_host(argp.json_save_path, &nhd);
     }
 
@@ -1075,6 +1076,28 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
         std::string command = "node utils/screenshot.js " + default_result + " " +
             std::to_string(argp.timeout_save_screenshots) + " " + argp.screenshots_save_path;
         std::system(command.c_str());
+        if (argp.json_save)
+        {
+            size_t file_size;
+            std::string path_to_file_easy;
+            if (argp.screenshots_save_path == ".")
+            {
+                path_to_file_easy = ip + ".png";
+            }
+            else
+            {
+                path_to_file_easy = argp.screenshots_save_path + ip + ".png";
+            }
+            unsigned char* file_data = binary_file(path_to_file_easy.c_str(), &file_size);
+            if (!file_data)
+            {
+                free(file_data);
+            }
+            char* encoded_data = base64_encode(file_data, file_size);
+            content_base64 = encoded_data;
+            free(file_data);
+            free(encoded_data);
+        }
     }
 #endif
 
@@ -1304,6 +1327,7 @@ processing_tcp_scan_ports(std::string ip, int port, int result)
                 npd.port = port;
                 npd.protocol = protocol.c_str();
                 npd.http_title = ports_strategy_->http_title.c_str();
+                npd.content = ports_strategy_->content_base64.c_str();
                 npd.passwd = ports_strategy_->brute_temp.c_str();
                 nesca_json_save_port(argp.json_save_path, &npd);
             }
