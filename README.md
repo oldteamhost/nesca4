@@ -31,7 +31,7 @@ cmake .
 make -j12
 ```
 
-**Screenshots no save!:**  
+**Screenshots no save!**  
 ```
 cd nesca4/utils
 
