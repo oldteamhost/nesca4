@@ -2,6 +2,7 @@
 #include <vector>
 #include <unordered_map>
 #include <set>
+#include "compile.h"
 
 #define SPEED_TYPE_DEFAULT 4
 #define SCAN_PORTS_TYPE_DEFAULT 1
@@ -58,6 +59,11 @@ public:
 	   bool fin_scan;
 	   bool null_scan;
 	   bool nesca3_scan;
+#ifdef HAVE_NODE_JS
+       bool save_screenshots;
+       std::string screenshots_save_path;
+       int timeout_save_screenshots = 1500;
+#endif
        bool robots_txt;
        bool sitemap_xml;
 	   bool xmas_scan;

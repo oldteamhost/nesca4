@@ -188,6 +188,10 @@ option long_options[] = {
     {"nesca3", no_argument, 0, 79},
     {"robots", no_argument, 0, 67},
     {"sitemap", no_argument, 0, 68},
+#ifdef HAVE_NODE_JS
+    {"screenshots", required_argument, 0, 's'},
+    {"ss-timeout", required_argument, 0, 41},
+#endif
 
     {"max-group", required_argument, 0, 38},
     {"min-group", required_argument, 0, 60},

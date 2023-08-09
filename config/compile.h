@@ -1,10 +1,10 @@
 #ifndef COMPILE_H
 #define COMPILE_H
 
-/*Disable lib(s).*/
-#define HAVE_CURL
-#define HAVE_SSL
-#define HAVE_HIKVISION
+#define HAVE_CURL      /*Disable libcurl*/
+#define HAVE_SSL       /*Disable openSSH lib*/
+#define HAVE_HIKVISION /*Disable HIKVISION lib*/
+#define HAVE_NODE_JS   /*Disable save screenshots*/
 
 #ifdef HAVE_CURL
 #include <curl/curl.h>

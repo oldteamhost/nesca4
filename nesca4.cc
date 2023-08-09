@@ -14,11 +14,13 @@
 #include "modules/include/robots.h"
 #include "ncbase/include/json.h"
 #include "ncsock/include/tcp.h"
+#include <bits/getopt_core.h>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
 const char*
-short_options = "hl:vd:T:p:aS:";
+short_options = "s:hl:vd:T:p:aS:";
 const char* run;
 std::mutex ls;
 
@@ -1067,6 +1069,15 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
     std::string html = to_lower_case(send_http_request_no_curl(ip, "/", port));
     std::string default_result = "http://" + ip + ":" + std::to_string(port) + "/";
 
+#ifdef HAVE_NODE_JS
+    if (argp.save_screenshots)
+    {
+        std::string command = "node utils/screenshot.js " + default_result + " " +
+            std::to_string(argp.timeout_save_screenshots) + " " + argp.screenshots_save_path;
+        std::system(command.c_str());
+    }
+#endif
+
 	/*Получение перенаправления.*/
     if (argp.no_get_path != true){redirect = parse_redirect(html, html, ip, true, port);}
 
@@ -1360,7 +1371,9 @@ help_menu(void)
     np.reset_colors();
     std::cout << "  -fin, -xmas, -null: Use one of these scanning methods.\n";
     std::cout << "  -ack, -windows -maimon: Use ack or window or maimon scan method.\n";
+#ifdef HAVE_CURL
     std::cout << "  -nesca3: Use classic probe scan nesca3.\n";
+#endif
     std::cout << "  -p <port ranges>: Only scan specified port(s) \n    Ex: -p 80; -p 22,80; -p 1-65535;\n";
     std::cout << "  -delay, -d <ms>: Set delay for scan.\n";
     std::cout << "  -scan-timeout <ms>: Edit timeout for getting packet on port.\n";
@@ -1394,7 +1407,7 @@ help_menu(void)
     std::cout << "DNS SCAN OPTIONS:" << std::endl;
     np.reset_colors();
     std::cout << "  -dns-scan <.dns>: On dns-scan and set domain 1 level.\n";
-    std::cout << "  -T, -threads <num>: Edit thread(s) count.\n";
+    std::cout << "  -threads, -T <num>: Edit thread(s) count.\n";
     std::cout << "  -dns-length <num>: Edit length generating domain.\n";
     std::cout << "  -dns-dict <dict>: Edit dictionary for generation.\n";
     np.golder_rod_on();
@@ -1410,6 +1423,13 @@ help_menu(void)
     std::cout << "  -max-group <num>: Edit max size group & threads for port scan.\n";
     std::cout << "  -min-group <num>: Edit min size group & threads for port scan.\n";
     std::cout << "  -rate-group <num>: Edit the value by which the group is incremented.\n";
+#ifdef HAVE_NODE_JS
+    np.golder_rod_on();
+    std::cout << "SAVE SCREENSHOTS:" << std::endl;
+    np.reset_colors();
+    std::cout << "  -screenshot, -s <folder>: Save screenshot on pages.\n";
+    std::cout << "  -ss-timeout <ms>: Set timeout on save screenshots.\n";
+#endif
     np.golder_rod_on();
     std::cout << "SPEED OPTIONS:" << std::endl;
     np.reset_colors();
@@ -1847,6 +1867,15 @@ parse_args(int argc, char** argv)
 			   argp.custom_g_max = true;
 			   gs.max_group_size = atoi(optarg);
                break;
+#ifdef HAVE_NODE_JS
+           case 's':
+               argp.save_screenshots = true;
+               argp.screenshots_save_path = optarg;
+               break;
+           case 41:
+               argp.timeout_save_screenshots = atoi(optarg);
+               break;
+#endif
            case 60:
 			   argp.custom_g_min = true;
 			   gs.group_size = atoi(optarg);

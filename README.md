@@ -12,9 +12,9 @@ PS: Перечислять все возможности тут я не буду
 как это разрабатывалось читайте в resources/do_not_read.txt
 ```
 
-**Debian 11:**  
+**Debian 12:**  
 ```
-sudo apt-get install libcurl4-openssl-dev
+sudo apt-get install libcurl4-openssl-dev nodejs
 sudo apt install gcc g++ make git cmake libssh-dev
 git clone https://github.com/oldteamhost/nesca4
 cd nesca4
@@ -24,16 +24,31 @@ make -j12
 
 **Arch 2023:**  
 ```
-sudo pacman -S curl cmake
+sudo pacman -S curl cmake nodejs
 git clone https://github.com/oldteamhost/nesca4
 cd nesca4
 cmake .
 make -j12
 ```
+
+**Screenshots no save!:**  
+```
+cd nesca4/utils
+
+Arch linux 2023:
+    sudo pacman -S npm
+
+Debian 12:
+    sudo apt-get install npm
+
+npm install puppeteer
+```
+
 Для компиляции без библиотек, нужно зайти в файл `config/compile.h`, и закомментировать, или удалить строчку отвечающую за библиотеку, без которой вы хотите скомпилировать:
 
 ``` с++
 #define HAVE_CURL
 #define HAVE_SSH
 #define HAVE_HIKVISION
+#define HAVE_NODE_JS
 ```
