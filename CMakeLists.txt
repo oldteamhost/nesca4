@@ -1,3 +1,10 @@
+#
+# NESCA 4
+# by oldteam & lomaster
+# license GPL-3.0
+#   Сделано от души 2023.
+#
+
 cmake_minimum_required(VERSION 3.18.4)
 set(CMAKE_CXX_STANDARD 20)
 

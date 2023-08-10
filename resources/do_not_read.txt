@@ -1,5 +1,9 @@
-# OldTeam & Lomaster                                                                      [May 2023]
-# NESCA4 Reference Guide                                                                  [RU]
+NESCA 4
+by oldteam & lomaster
+license GPL-3.0
+Сделано от души 2023.
+
+# NESCA4 Reference Guide                                                                  [May 2023]
 # PS: Тут огромное количество граматических ошибок, и мне насрать. 
 
                                         Содержание                        

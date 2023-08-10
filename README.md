@@ -18,6 +18,7 @@ sudo apt-get install libcurl4-openssl-dev nodejs
 sudo apt install gcc g++ make git cmake libssh-dev
 git clone https://github.com/oldteamhost/nesca4
 cd nesca4
+sudo chmod u+rwx,g+r,o+r utils/ 
 cmake .
 make -j12
 ```
@@ -27,18 +28,13 @@ make -j12
 sudo pacman -S curl cmake nodejs
 git clone https://github.com/oldteamhost/nesca4
 cd nesca4
+sudo chmod u+rwx,g+r,o+r utils/ 
 cmake .
 make -j12
 ```
 
 **Screenshots not save!**
 ```
-Для сохранения скриншотов запуск возможен только через sudo -E
-```
-
-```
-Если и так не выходит то:
-
 cd nesca4/utils
 
 Arch linux 2023:

@@ -1,8 +1,8 @@
 /*
- * NESCA4
+ * NESCA 4
  * by oldteam & lomaster
  * license GPL-3.0
- * - Сделано от души 2023.
+ *   Сделано от души 2023.
  * -----------------------------------------------------------
  * ip4.h - This file contains structures, constants, and
  * functions for working with IP protocol version 4. 
