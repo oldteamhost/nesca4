@@ -18,7 +18,6 @@ sudo apt-get install libcurl4-openssl-dev nodejs
 sudo apt install gcc g++ make git cmake libssh-dev
 git clone https://github.com/oldteamhost/nesca4
 cd nesca4
-sudo chmod u+rwx,g+r,o+r utils/ 
 cmake .
 make -j12
 ```
@@ -28,22 +27,13 @@ make -j12
 sudo pacman -S curl cmake nodejs
 git clone https://github.com/oldteamhost/nesca4
 cd nesca4
-sudo chmod u+rwx,g+r,o+r utils/ 
 cmake .
 make -j12
 ```
 
 **Screenshots not save!**
 ```
-cd nesca4/utils
-
-Arch linux 2023:
-    sudo pacman -S npm
-
-Debian 12:
-    sudo apt-get install npm
-
-npm install puppeteer
+cd nesca4 && sudo chmod u+rwx,g+r,o+r utils/ 
 ```
 
 Для компиляции без библиотек, нужно зайти в файл `config/compile.h`, и закомментировать, или удалить строчку отвечающую за библиотеку, без которой вы хотите скомпилировать:
