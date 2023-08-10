@@ -52,6 +52,7 @@ public:
 
 	   bool custom_source_port;
 	   bool custom_ttl;
+       bool ns_track;
 
 	   int _custom_ttl;
 	   int _custom_source_port;

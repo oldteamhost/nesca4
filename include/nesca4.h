@@ -195,6 +195,7 @@ option long_options[] = {
 #ifdef HAVE_NODE_JS
     {"screenshots", required_argument, 0, 's'},
     {"ss-timeout", required_argument, 0, 41},
+    {"ns-track", no_argument, 0, 39},
 #endif
 
     {"max-group", required_argument, 0, 38},

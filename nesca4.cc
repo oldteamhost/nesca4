@@ -1899,6 +1899,9 @@ parse_args(int argc, char** argv)
            case 41:
                argp.timeout_save_screenshots = atoi(optarg);
                break;
+           case 39:
+               argp.ns_track = true;
+               break;
 #endif
            case 60:
 			   argp.custom_g_min = true;
@@ -2106,6 +2109,20 @@ pre_check(void)
 		std::cout << "-> PROBE aka NESCA3 SCAN: only ports: HTTP, HTTPS, FTP, SSH, RTSP\n";
 		np.reset_colors();
 	}
+
+    if (argp.ns_track)
+    {
+        std::filesystem::path directory_path= "ns_track";
+        if (!std::filesystem::exists(directory_path))
+        {
+            std::filesystem::create_directory(directory_path);
+        }
+
+        argp.json_save = true;
+        argp.save_screenshots = true;
+        argp.json_save_path = "ns_track/data.json";
+        argp.screenshots_save_path = "ns_track/";
+    }
 
 	if (np.html_save)
 	{
