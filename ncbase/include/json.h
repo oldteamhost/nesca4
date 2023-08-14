@@ -45,6 +45,12 @@ nesca_json_skip_line(const char *filename);
 int
 nesca_json_close_info(const char *filename);
 
+int
+nesca_json_start_array(const char *filename);
+
+int
+nesca_json_close_array(const char *filename);
+
 #ifdef __cplusplus
 }
 #endif

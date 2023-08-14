@@ -20,7 +20,6 @@ unsigned char* binary_file(const char* file_name, size_t* file_size)
     FILE* file = fopen(file_name, "rb");
     if (!file)
     {
-        perror("Failed to open file");
         return NULL;
     }
 
@@ -28,7 +27,6 @@ unsigned char* binary_file(const char* file_name, size_t* file_size)
     unsigned char* buffer = (unsigned char*)malloc(size);
     if (!buffer)
     {
-        perror("Memory allocation error");
         fclose(file);
         return NULL;
     }
@@ -36,7 +34,6 @@ unsigned char* binary_file(const char* file_name, size_t* file_size)
     size_t bytes_read = fread(buffer, 1, size, file);
     if (bytes_read != size)
     {
-        perror("Failed to read file");
         free(buffer);
         fclose(file);
         return NULL;

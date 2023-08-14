@@ -43,7 +43,6 @@ unsigned char
     size_t length = strlen(input);
     if (length % 4 != 0)
     {
-        perror("Invalid Base64 input");
         return NULL;
     }
 
@@ -61,7 +60,6 @@ unsigned char
     unsigned char *decoded_data = (unsigned char *)malloc(*output_length);
     if (!decoded_data)
     {
-        perror("Memory allocation failed");
         return NULL;
     }
 

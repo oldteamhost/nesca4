@@ -353,6 +353,11 @@ int main(int argc, char** argv)
     std::vector<std::future<int>> futures;
 	int count_success_ips = 0;
 
+    if (argp.json_save)
+    {
+        nesca_json_start_array(argp.json_save_path);
+    }
+
 	/*Создание пула потоков.*/
 	thread_pool pool(argp._threads);
 
@@ -474,6 +479,11 @@ int main(int argc, char** argv)
 		auto duration_proc = std::chrono::duration_cast<std::chrono::microseconds>(end_time_proc - start_time_proc);
 		argp.proc_duration += duration_proc.count() / 1000000.0;
 	}
+
+    if (argp.json_save){
+        nesca_json_skip_line(argp.json_save_path);
+        nesca_json_close_array(argp.json_save_path);
+    }
 
 	if (np.save_file){write_line(np.file_path_save, "\n");}
     double elapsed_result = argp.ping_duration+argp.dns_duration+argp.scan_duration+argp.proc_duration;
@@ -1074,7 +1084,7 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
     if (argp.save_screenshots)
     {
         std::string command = "node utils/screenshot.js " + default_result + " " +
-            std::to_string(argp.timeout_save_screenshots) + " " + argp.screenshots_save_path;
+        std::to_string(argp.timeout_save_screenshots) + " " + argp.screenshots_save_path;
         std::system(command.c_str());
         if (argp.json_save)
         {
