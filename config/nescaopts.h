@@ -74,6 +74,7 @@ public:
 #endif
        bool robots_txt;
        bool sitemap_xml;
+       std::string screenshots_save_path_cam;
 	   bool xmas_scan;
 	   bool ack_scan;
 	   bool window_scan;
@@ -96,6 +97,7 @@ public:
 	   bool my_life_my_rulez;
        bool get_path_log;
        bool syn_debug;
+       bool save_camera_screens;
 
        bool ping_off;
        bool no_get_path;

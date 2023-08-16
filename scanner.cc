@@ -22,7 +22,7 @@ checking_finds::contains_word(const std::string& word, const std::string& senten
         if (std::isalpha(lowerSentence[pos - 1]) || std::isalpha(lowerSentence[pos + lowerWord.length()])) 
 		{
           pos = lowerSentence.find(lowerWord, pos + 1);
-        } else{return true;}
+        } else {return true;}
     }
 
     return false;
@@ -110,9 +110,7 @@ checking_finds::set_target_at_title(const std::string& title)
 {
 	if (contains_word("error 404 (not found)!!1", title)){return GOOGLE_404;}
 	if (contains_word("ngnix", title)){return NGNIX;}
-	if (contains_word("302 found", title)){return RANDOM;}
 	if (contains_word("axis", title)){return CAMERA_AXIS_Q6055_E;}
-	if (contains_word("301 moved permanently", title)){return RANDOM;}
 
 	return "fuck";
 }

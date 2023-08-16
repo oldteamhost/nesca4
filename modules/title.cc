@@ -30,7 +30,17 @@ get_http_title(std::string &html_content)
     if (title_end == std::string::npos){return HTTPTITLE_ERROR;}
 
     std::string title = html_content.substr(title_start, title_end - title_start);
-    return title;
+
+    std::string cleaned_title;
+    for (char c : title)
+    {
+        if (std::isalnum(c) || std::isspace(c))
+        {
+            cleaned_title += c;
+        }
+    }
+
+    return cleaned_title;
 }
 
 std::string

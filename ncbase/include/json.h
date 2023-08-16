@@ -8,6 +8,8 @@
 #ifndef JSON_H
 #define JSON_H
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,6 +25,7 @@ struct nesca_host_details
 struct nesca_port_details
 {
     unsigned int port;
+    const char* type_target;
     const char* protocol;
     const char* passwd;
     const char* content;
@@ -44,6 +47,9 @@ nesca_json_skip_line(const char *filename);
 
 int
 nesca_json_close_info(const char *filename);
+
+int
+nesca_json_fix_file(const char* filename);
 
 int
 nesca_json_start_array(const char *filename);

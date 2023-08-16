@@ -16,13 +16,13 @@
             "rtt": 10.5,
             "ports": [
                 {
-                    "protocol": "TCP",
+                    "protocol": "HTTP",
                     "passwd": "secret",
                     "http_title": "Welcome Page",
                     "port": 80
                 },
                 {
-                    "protocol": "UDP",
+                    "protocol": "HZ",
                     "passwd": "anothersecret",
                     "http_title": "Alternate Page",
                     "port": 123
@@ -94,6 +94,10 @@ nesca_json_save_port(const char* filename, const struct nesca_port_details* port
         {
             fprintf(file, "                    \"screenshot\": \"%s\",\n", port_data->screenshot);
         }
+        if (*port_data->type_target != '\0')
+        {
+            fprintf(file, "            \"type_target\": \"%s\",\n", port_data->type_target);
+        }
         if (*port_data->content!= '\0')
         {
             fprintf(file, "                    \"content\": \"%s\",\n", port_data->content);
@@ -148,4 +152,53 @@ nesca_json_close_array(const char *filename)
     }
 
     return -1;
+}
+
+int
+nesca_json_fix_file(const char* filename)
+{
+    FILE *inputFile = fopen(filename, "r");
+    if (inputFile == NULL)
+    {
+        perror("Failed to open input file");
+        return 1;
+    }
+
+    fseek(inputFile, 0, SEEK_END);
+    long fileSize = ftell(inputFile);
+    rewind(inputFile);
+
+    char *jsonContent = (char *)malloc(fileSize + 1);
+    if (jsonContent == NULL)
+    {
+        perror("Memory allocation failed");
+        fclose(inputFile);
+        return 1;
+    }
+
+    fread(jsonContent, 1, fileSize, inputFile);
+    jsonContent[fileSize] = '\0';
+
+    fclose(inputFile);
+
+    char *lastCommaPos = strrchr(jsonContent, ',');
+    if (lastCommaPos != NULL)
+    {
+        *lastCommaPos = '\0';
+    }
+
+    FILE *outputFile = fopen(filename, "w");
+    if (outputFile == NULL)
+    {
+        perror("Failed to open output file");
+        free(jsonContent);
+        return 1;
+    }
+
+    fprintf(outputFile, "%s", jsonContent);
+
+    fclose(outputFile);
+    free(jsonContent);
+
+    return 0;
 }

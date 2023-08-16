@@ -90,7 +90,9 @@ public:
 			const std::string& protocol, int port, arguments_program& argp, nesca_prints& np) = 0;
 	std::string brute_temp;
     std::string http_title;
+    std::string type_target;
     std::string content_base64;
+    std::string screenshot_base64_cam;
     std::string screenshot_base64;
 	std::string result_print;
 };
@@ -198,6 +200,7 @@ option long_options[] = {
     {"pro-mode", no_argument, 0, 78},
     {"nesca3", no_argument, 0, 79},
     {"robots", no_argument, 0, 67},
+    {"hikshots", required_argument, 0, 35},
     {"sitemap", no_argument, 0, 68},
 #ifdef HAVE_NODE_JS
     {"screenshots", required_argument, 0, 's'},

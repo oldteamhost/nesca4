@@ -344,7 +344,8 @@ int main(int argc, char** argv)
 		}
 	}
 
-	if (!argp.nesca3_scan){
+	if (!argp.nesca3_scan)
+    {
     	ncopts.source_ip = argp.source_ip;
 		ncopts.tcpf = set_flags(argp.type);
 	}
@@ -430,19 +431,15 @@ int main(int argc, char** argv)
 		argp.scan_duration += duration_scan.count() / 1000000.0;
 		auto start_time_proc = std::chrono::high_resolution_clock::now();
 
+        bool last_success_in_group = false;
+
         /*Обработка результатов для текущей группы*/
-        size_t successful_ip_count = 0;
-        bool is_last_iteration = false;
         for (const auto& ip : gs.current_group)
 		{
-	   		if (nd.success_target.find(ip) != nd.success_target.end() || argp.debug 
-			   	|| nd.open_or_filtered_target.find(ip) != nd.open_or_filtered_target.end()
-	           	|| nd.no_filtered_target.find(ip) != nd.no_filtered_target.end()){
-
-                if (nd.success_target.find(ip) != nd.success_target.end())
-                {
-                    successful_ip_count++;
-                }
+	   		if (nd.success_target.find(ip) != nd.success_target.end() 
+            || argp.debug 
+			|| nd.open_or_filtered_target.find(ip) != nd.open_or_filtered_target.end()
+	        || nd.no_filtered_target.find(ip) != nd.no_filtered_target.end()){
 
 		  		double time_ms = nd.rtts[ip];
 		  		if (np.save_file){write_line(np.file_path_save, "\n");}
@@ -454,10 +451,13 @@ int main(int argc, char** argv)
 				ls.unlock();
 				std::cout << std::endl;
 
-                nesca_json_close_info(argp.json_save_path);
-                if (successful_ip_count < nd.success_target.size()){
+                if (argp.json_save)
+                {
+                    nesca_json_close_info(argp.json_save_path);
+                    ls.lock();
                     nesca_json_set_comma(argp.json_save_path);
                     nesca_json_skip_line(argp.json_save_path);
+                    ls.unlock();
                 }
 			}
         }
@@ -480,7 +480,9 @@ int main(int argc, char** argv)
 		argp.proc_duration += duration_proc.count() / 1000000.0;
 	}
 
-    if (argp.json_save){
+    if (argp.json_save)
+    {
+        nesca_json_fix_file(argp.json_save_path);
         nesca_json_skip_line(argp.json_save_path);
         nesca_json_close_array(argp.json_save_path);
     }
@@ -634,7 +636,6 @@ print_results(std::string ip)
         nesca_json_save_host(argp.json_save_path, &nhd);
     }
 
-    int total_ports_to_process = 0;
 
 	/*Лямбда функция.*/
 	auto process_ports = [&](const std::unordered_map<std::string, std::vector<int>>& target_map, int port_type) 
@@ -643,19 +644,18 @@ print_results(std::string ip)
         if (it != target_map.end()) 
 		{
             const std::vector<int>& ports = it->second;
-            total_ports_to_process = ports.size();
+            int total_ports_to_process = ports.size();
             int port_count_on_this_ip = 0;
 
             for (int port : ports){
                 processing_tcp_scan_ports(ip, port, port_type);
 
                 int num_ports_for_current_ip = count_map_vector(nd.success_target, ip);
-                if (port_count_on_this_ip != total_ports_to_process - 1)
+                if (port_count_on_this_ip != total_ports_to_process - 1 && argp.json_save)
                 {
                     nesca_json_set_comma(argp.json_save_path);
                     nesca_json_skip_line(argp.json_save_path);
                 }
-
                 port_count_on_this_ip++;
             }
         }
@@ -990,6 +990,20 @@ void hikvision_strategy::handle(const std::string& ip, const std::string& result
         result_print = np.main_nesca_out("BA", "" + result, 3, "", "", "", "",rtt_log, "", protocol);
     }
     std::cout << result_print << std::endl;
+    if (brute_temp.length() > 1)
+    {
+        /*
+        unsigned char* file_data = binary_file(path_to_file_easy.c_str(), &file_size);
+        if (file_data)
+        {
+            char* encoded_data = base64_encode(file_data, file_size);
+            screenshot_base64_cam = encoded_data;
+            free(file_data);
+            free(encoded_data);
+        }
+        */
+
+    }
 }
 
 void https_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
@@ -1160,7 +1174,6 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
 	if (http_title_result.empty()){http_title_result = "n/a";}
 
 	/*Получение характеристики.*/
-	std::string type_target = "n/a";
     std::string temp_check_http = cfs.set_target_at_path(redirect);
 	std::string temp_check_http1 = cfs.set_target_at_http_header(html);
 	std::string temp_check_http2 = cfs.set_target_at_title(http_title_result);
@@ -1339,6 +1352,7 @@ processing_tcp_scan_ports(std::string ip, int port, int result)
                 npd.screenshot = ports_strategy_->screenshot_base64.c_str();
                 npd.content = "";
                 npd.passwd = ports_strategy_->brute_temp.c_str();
+                npd.type_target = ports_strategy_->type_target.c_str();
                 nesca_json_save_port(argp.json_save_path, &npd);
             }
         }
@@ -1888,6 +1902,10 @@ parse_args(int argc, char** argv)
                break;
            case 34:
 			   argp.source_ip = optarg;
+               break;
+           case 35:
+               argp.save_camera_screens = true;
+               argp.screenshots_save_path_cam = optarg;
                break;
            case 36:
 			   argp.custom_source_port = true;
