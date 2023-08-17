@@ -146,6 +146,7 @@ public:
 /*Аргументы.*/
 const struct 
 option long_options[] = {
+    /*45*/
     {"threads", required_argument, 0, 'T'},
     {"delay", required_argument, 0, 'd'},
     {"import", required_argument, 0, 23},
@@ -160,7 +161,6 @@ option long_options[] = {
     {"no-brute", required_argument, 0, 44},
     {"brute-only", required_argument, 0, 46},
     {"brute-timeout", required_argument, 0, 47},
-    {"sftp-brute-known-hosts", no_argument, 0, 45},
     {"dns-scan", required_argument, 0, 19},
     {"negatives", required_argument, 0, 76},
     {"dns-length", required_argument, 0, 20},

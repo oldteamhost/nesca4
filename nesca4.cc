@@ -880,7 +880,7 @@ void ssh_strategy::handle(const std::string& ip, const std::string& result, cons
 		np.reset_colors();
 
 		brute_temp = threads_brute_ssh(ip, port, argp.sftp_logins, argp.sftp_passwords, argp.sftp_brute_log,
-            argp.sftp_brute_verbose, argp.sftp_using_know_hosts, argp.brute_timeout_ms);
+            argp.sftp_brute_verbose, argp.brute_timeout_ms);
 
         if (argp.sftp_only)
 		{
@@ -971,7 +971,7 @@ void hikvision_strategy::handle(const std::string& ip, const std::string& result
 		std::cout << "[>][HIKVISION]:" + ip + " [BRUTEFORCE]\n";
 		np.reset_colors();
         brute_temp = threads_brute_hikvision(ip, argp.hikvision_logins, argp.hikvision_passwords, argp.hikvision_brute_log,
-                    argp.brute_timeout_ms);
+                    argp.brute_timeout_ms, argp.screenshots_save_path_cam);
 
         if (argp.hikvision_only)
 		{
@@ -1566,7 +1566,7 @@ parse_args(int argc, char** argv)
 			   {
                     argp.path_ftp_login = what_convert;
                }
-               else if (what[1] == "sftp")
+               else if (what[1] == "sftp" || what[1] == "ssh")
 			   {
                    argp.path_sftp_login = what_convert;
                }
@@ -1614,7 +1614,7 @@ parse_args(int argc, char** argv)
 			   {
                     argp.path_ftp_pass = what_convert;
                }
-               else if (what[1] == "sftp")
+               else if (what[1] == "sftp" || what[1] == "ssh")
 			   {
                    argp.path_sftp_pass = what_convert;
                }
@@ -1660,7 +1660,7 @@ parse_args(int argc, char** argv)
 					{
                         argp.ftp_brute_log = true;
                     }
-                    else if (what[i] == "sftp")
+                    else if (what[i] == "sftp" || what[i] == "ssh")
 					{
                         argp.sftp_brute_log = true;
                     }
@@ -1710,7 +1710,7 @@ parse_args(int argc, char** argv)
 					{
                         argp.ftp_brute_verbose = true;
                     }
-                    else if (what[i] == "sftp")
+                    else if (what[i] == "sftp" || what[i] == "ssh")
 					{
                         argp.sftp_brute_verbose = true;
                     }
@@ -1749,7 +1749,7 @@ parse_args(int argc, char** argv)
 				   {
                        argp.off_ftp_brute = true;
                    }
-                   else if (what[i] == "sftp")
+                   else if (what[i] == "sftp" || what[i] == "ssh")
 				   {
                        argp.off_sftp_brute = true;
                    }
@@ -1797,7 +1797,7 @@ parse_args(int argc, char** argv)
 				   {
                        argp.ftp_only = true;
                    }
-                   else if (what[i] == "sftp")
+                   else if (what[i] == "sftp" || what[i] == "ssh")
 				   {
                        argp.sftp_only = true;
                    }
@@ -1847,9 +1847,6 @@ parse_args(int argc, char** argv)
                 break;
            case 7:
                 argp.debug = true;
-                break;
-           case 45:
-                argp.sftp_using_know_hosts = true;
                 break;
           case 'd':
                 argp.timeout = true;

@@ -74,7 +74,7 @@ public:
 #endif
        bool robots_txt;
        bool sitemap_xml;
-       std::string screenshots_save_path_cam;
+       std::string screenshots_save_path_cam = "";
 	   bool xmas_scan;
 	   bool ack_scan;
 	   bool window_scan;
@@ -185,7 +185,7 @@ public:
 	   std::string path_rvi_login = PATH_RVI_LOGIN_DEFAULT;
 	   std::string path_rvi_pass = PATH_RVI_PASS_DEFAULT;
 
-       int brute_timeout_ms;
+       int brute_timeout_ms = 10;
        bool ftp_brute_verbose;
        bool sftp_brute_verbose;
        bool rtsp_brute_verbose;
@@ -215,8 +215,6 @@ public:
        bool http_only;
        bool smtp_only;
        bool hikvision_only;
-
-       bool sftp_using_know_hosts;
 
 	   /*Color options*/
        bool color_off;

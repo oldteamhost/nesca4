@@ -7,7 +7,9 @@
 
 #include "include/bruteforce.h"
 #include "lib/HCNetSDK.h"
+#include "modules/include/hikvision.h"
 #include "ncsock/include/socket.h"
+#include <cstdio>
 
 int
 ncread_recv(int sockfd, void* buf, size_t len, int timeout_ms)
@@ -156,8 +158,17 @@ brute_ftp(const std::string ip, int port, const std::string login, const std::st
 
     char buffer[1024];
     memset(buffer, 0, 1024);
-    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0){close(sock);return "";}
+    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0)
+    {
+        close(sock);
+        return "";
+    }
+
     if (verbose){std::cout << buffer;}
+    if (std::string(buffer).find("421") != std::string::npos && std::string(buffer).find("are already logged") != std::string::npos) {
+        close(sock);
+        return "421";
+    }
 
     std::string user_command = "USER " + login + "\r\n";
     if (send(sock, user_command.c_str(), user_command.length(), 0) < 0) {close(sock);return "";}
@@ -191,9 +202,19 @@ brute_ftp(const std::string ip, int port, const std::string login, const std::st
 std::string 
 threads_brute_ftp(const std::string ip, int port, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms) 
 {
+
+    for (int i = 0; i < 5; i++){
+        std::string test = brute_ftp(ip, port, logins[0], passwords[0], brute_log, verbose);
+        if (test == "421")
+        {
+            return "";
+        }
+    }
+
     std::vector<std::string> results;
 	std::vector<std::future<void>> futures;
 	thread_pool pool(100);
+    bool fuck = false;
 
     for (const auto& login : logins) {
         for (const auto& password : passwords) {
@@ -204,6 +225,7 @@ threads_brute_ftp(const std::string ip, int port, const std::vector<std::string>
             }));
         }
     }
+
 	for (auto& future : futures) {future.wait();}
 
     if (!results.empty()) {return results[0];} else {return "";}
@@ -211,7 +233,7 @@ threads_brute_ftp(const std::string ip, int port, const std::vector<std::string>
 }
 
 std::string 
-brute_ssh(const std::string& ip, int port, const std::string login, const std::string pass, int brute_log, int verbose, int known_hosts)
+brute_ssh(const std::string& ip, int port, const std::string login, const std::string pass, int brute_log, int verbose)
 {
 #ifdef HAVE_SSL
     if (brute_log) {np1.nlog_custom("SSH", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
@@ -253,7 +275,7 @@ brute_ssh(const std::string& ip, int port, const std::string login, const std::s
 }
 
 std::string 
-threads_brute_ssh(const std::string ip, int port, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int known_hosts, int brute_timeout_ms) 
+threads_brute_ssh(const std::string ip, int port, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms) 
 {
     std::vector<std::string> results;
 	std::vector<std::future<void>> futures;
@@ -262,8 +284,8 @@ threads_brute_ssh(const std::string ip, int port, const std::vector<std::string>
     for (const auto& login : logins) {
         for (const auto& password : passwords) {
             delay_ms(brute_timeout_ms);
-			futures.push_back(pool.enqueue([ip, port, login, password, brute_log, verbose, known_hosts, &results]() {
-                std::string temp = brute_ssh(ip, port, login, password, brute_log, verbose, known_hosts);
+			futures.push_back(pool.enqueue([ip, port, login, password, brute_log, verbose, &results]() {
+                std::string temp = brute_ssh(ip, port, login, password, brute_log, verbose);
                 if (!temp.empty() && temp.length() > 3){results.push_back(temp);}
             }));
         }
@@ -421,7 +443,7 @@ void
 brute_ftp_data::set_success_pass(std::string success_pass)   {this->success_pass = success_pass;}
 
 std::string 
-brute_hikvision(const std::string ip, const std::string login, const std::string pass, int brute_log)
+brute_hikvision(const std::string ip, const std::string login, const std::string pass, int brute_log, const std::string& path)
 {
 #ifdef HAVE_HIKVISION
   std::string result;
@@ -454,27 +476,10 @@ brute_hikvision(const std::string ip, const std::string login, const std::string
     return "";
   }
 
-  for (int channel = deviceInfo.struDeviceV30.byStartChan; channel < deviceInfo.struDeviceV30.byChanNum + deviceInfo.struDeviceV30.byStartChan; ++channel)
+  if (path != "")
   {
-        NET_DVR_JPEGPARA jpegPara = {0};
-        jpegPara.wPicQuality = 2;
-        jpegPara.wPicSize = 0;
-
-        char screenshotFilenameBuffer[256];
-        std::string screenshotFilename = "screenshot_" + std::to_string(channel) + ".jpg";
-        strcpy(screenshotFilenameBuffer, screenshotFilename.c_str());
-
-        BOOL captureResult = NET_DVR_CaptureJPEGPicture(userId, channel, &jpegPara, screenshotFilenameBuffer);
-
-        if (captureResult)
-        {
-            std::cout << "Screenshot captured and saved as " << screenshotFilename << std::endl;
-            result += login + ":" + pass + "@" + screenshotFilename + ",";
-        }
-        else
-        {
-            std::cout << "Failed to capture screenshot for channel " << channel << ". Error code: " << NET_DVR_GetLastError() << std::endl;
-        }
+      hikvision_screenshot(ip, userId, deviceInfo, path);
+      std::cout << "asasdasd\n";
   }
 
   result = login + ":" + pass + "@";
@@ -489,7 +494,7 @@ brute_hikvision(const std::string ip, const std::string login, const std::string
 }
 
 std::string 
-threads_brute_hikvision(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int brute_timeout_ms)
+threads_brute_hikvision(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int brute_timeout_ms, const std::string&path)
 {
     std::vector<std::string> results;
 	std::vector<std::future<void>> futures;
@@ -498,8 +503,8 @@ threads_brute_hikvision(const std::string ip, const std::vector<std::string> log
     for (const auto& login : logins) {
         for (const auto& password : passwords) {
             delay_ms(brute_timeout_ms);
-			futures.push_back(pool.enqueue([ip, login, password, brute_log, &results]() {
-                std::string temp = brute_hikvision(ip, login, password, brute_log);
+			futures.push_back(pool.enqueue([ip, login, password, brute_log, path, &results]() {
+                std::string temp = brute_hikvision(ip, login, password, brute_log, path);
                 if (!temp.empty() && temp.length() > 3){results.push_back(temp);}
             }));
         }
