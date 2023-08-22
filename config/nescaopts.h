@@ -11,7 +11,7 @@
 #include <set>
 #include "compile.h"
 
-#define SPEED_TYPE_DEFAULT 4
+#define SPEED_TYPE_DEFAULT 3
 #define SCAN_PORTS_TYPE_DEFAULT 1
 #define DEFAULT_PORTS {80,443}
 #define GROUP_MIN_SIZE_DEFAULT 5
@@ -185,7 +185,7 @@ public:
 	   std::string path_rvi_login = PATH_RVI_LOGIN_DEFAULT;
 	   std::string path_rvi_pass = PATH_RVI_PASS_DEFAULT;
 
-       int brute_timeout_ms = 10;
+       int brute_timeout_ms = 25;
        bool ftp_brute_verbose;
        bool sftp_brute_verbose;
        bool rtsp_brute_verbose;

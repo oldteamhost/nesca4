@@ -9,6 +9,7 @@
 #include "lib/HCNetSDK.h"
 #include "modules/include/hikvision.h"
 #include "ncsock/include/socket.h"
+#include "ncsock/include/ftp.h"
 #include <cstdio>
 
 int
@@ -144,57 +145,11 @@ brute_ftp(const std::string ip, int port, const std::string login, const std::st
 {
 	int timeout_ms = 1000;
     if (brute_log){np1.nlog_custom("FTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
-
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == EOF) {return "";}
-
-    sockaddr_in server_address{};
-    server_address.sin_family = AF_INET;
-    server_address.sin_port = htons(port);
-
-    if (inet_pton(AF_INET, ip.c_str(), &(server_address.sin_addr)) <= 0) {close(sock);return "";}
-
-    if (connect(sock, reinterpret_cast<sockaddr*>(&server_address), sizeof(server_address)) < 0) {close(sock);return "";}
-
-    char buffer[1024];
-    memset(buffer, 0, 1024);
-    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0)
+    int auth = ftp_auth(ip.c_str(), port, login.c_str(), pass.c_str(), verbose, timeout_ms);
+    if (auth == 0)
     {
-        close(sock);
-        return "";
-    }
-
-    if (verbose){std::cout << buffer;}
-    if (std::string(buffer).find("421") != std::string::npos && std::string(buffer).find("are already logged") != std::string::npos) {
-        close(sock);
-        return "421";
-    }
-
-    std::string user_command = "USER " + login + "\r\n";
-    if (send(sock, user_command.c_str(), user_command.length(), 0) < 0) {close(sock);return "";}
-
-    memset(buffer, 0, 1024);
-    if (ncread_recv(sock, buffer, 1024 - 1, timeout_ms) < 0) {close(sock);return "";}
-    if (verbose){std::cout << buffer;}
-
-    std::string password_command = "PASS " + pass + "\r\n";
-    if (send(sock, password_command.c_str(), password_command.length(), 0) < 0) {close(sock);return "";}
-
-    memset(buffer, 0, 1024);
-    if (ncread_recv(sock, buffer, 1024- 1, timeout_ms) < 0) {close(sock);return "";}
-
-    if (verbose) {std::cout << buffer;}
-
-    if (std::string(buffer).find("230") != std::string::npos) {
-        close(sock);
-	    std::string result = login + ":" + pass + "@";
-	    bfd.set_success_pass(pass);
-	    bfd.set_success_login(login);
+        std::string result = login + ":" + pass + "@";
         return result;
-    } 
-    else {
-        close(sock);
-        return "";
     }
     return "";
 }
@@ -202,14 +157,6 @@ brute_ftp(const std::string ip, int port, const std::string login, const std::st
 std::string 
 threads_brute_ftp(const std::string ip, int port, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms) 
 {
-
-    for (int i = 0; i < 5; i++){
-        std::string test = brute_ftp(ip, port, logins[0], passwords[0], brute_log, verbose);
-        if (test == "421")
-        {
-            return "";
-        }
-    }
 
     std::vector<std::string> results;
 	std::vector<std::future<void>> futures;
