@@ -23,6 +23,9 @@
 #include <sys/socket.h>
 #include <mutex>
 #include <vector>
+#include <cstdint>
+#include <ctime>
+#include <string>
 
 #include "../include/nescalog.h"
 #include "../ncsock/include/ip4.h"
@@ -30,10 +33,6 @@
 #include "../ncsock/include/socket.h"
 #include "../include/other.h"
 #include "services.h"
-#include "services.h"
-#include <cstdint>
-#include <ctime>
-#include <string>
 
 #define PORT_OPEN             0
 #define PORT_CLOSED           1
@@ -50,8 +49,7 @@
 #define WINDOW_SCAN           6
 #define MAIMON_SCAN           7
 
-std::string
-get_type(uint8_t type);
+std::string get_type(uint8_t type);
 
 int /*Определение статуса порта.*/
 get_port_status(unsigned char* buffer, uint8_t scan_type);
@@ -60,8 +58,7 @@ get_port_status(unsigned char* buffer, uint8_t scan_type);
 
 #ifdef HAVE_CURL
 #include <curl/curl.h>
-class nesca3_scan
-{
+class nesca3_scan {
 public:
 	int timeout_ms = 600;
 	int http_probe(const std::string& node, int port);

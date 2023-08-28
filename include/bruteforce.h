@@ -29,14 +29,14 @@
 
 class brute_ftp_data
 {
-    private:
-        std::string success_login;
-        std::string success_pass;
-    public:
-        std::string get_success_login(void);
-        std::string get_success_pass(void);
-        void set_success_login(std::string success_login);
-        void set_success_pass(std::string success_pass);
+  private:
+    std::string success_login;
+    std::string success_pass;
+  public:
+    std::string get_success_login(void);
+    std::string get_success_pass(void);
+    void set_success_login(std::string success_login);
+    void set_success_pass(std::string success_pass);
 };
 
 // brutforce smtp

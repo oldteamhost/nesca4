@@ -15,11 +15,10 @@
 
 class nesca_negatives{
 public:
-	std::unordered_map<std::string, std::string> nesca_negatives;
+  std::unordered_map<std::string, std::string> nesca_negatives;
 
 	std::unordered_map<std::string, std::string>
 	parse_config_file(const std::string& file_path);
 };
-
 
 #endif

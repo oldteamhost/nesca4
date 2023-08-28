@@ -76,9 +76,8 @@
 #define HTTP_BASIC_AUTH_BRUTE  999
 
 /*Получение характеристики.*/
-class checking_finds{
+class checking_finds {
 public:
-
 	/*Заголовок HTTP*/
 	std::vector<std::string> basic_auth_header = {"401 authorization", "401 unauthorized", "www-authenticate",
 											"401 unauthorized access denied", "401 unauthorised", "www-authenticate",

@@ -11,18 +11,17 @@ bool
 checking_finds::contains_word(const std::string& word, const std::string& sentence)
 {
 	std::string lowerWord = word;
-    std::transform(lowerWord.begin(), lowerWord.end(), lowerWord.begin(), [](unsigned char c){ return std::tolower(c); });
+  std::transform(lowerWord.begin(), lowerWord.end(), lowerWord.begin(), [](unsigned char c){ return std::tolower(c); });
 
-    std::string lowerSentence = sentence;
-    std::transform(lowerSentence.begin(), lowerSentence.end(), lowerSentence.begin(), [](unsigned char c){ return std::tolower(c); });
+  std::string lowerSentence = sentence;
+  std::transform(lowerSentence.begin(), lowerSentence.end(), lowerSentence.begin(), [](unsigned char c){ return std::tolower(c); });
 
-    std::string::size_type pos = lowerSentence.find(lowerWord);
-    while (pos != std::string::npos)
-	{
-        if (std::isalpha(lowerSentence[pos - 1]) || std::isalpha(lowerSentence[pos + lowerWord.length()])) 
-		{
-          pos = lowerSentence.find(lowerWord, pos + 1);
-        } else {return true;}
+  std::string::size_type pos = lowerSentence.find(lowerWord);
+  while (pos != std::string::npos) {
+      if (std::isalpha(lowerSentence[pos - 1]) || std::isalpha(lowerSentence[pos + lowerWord.length()])) {
+        pos = lowerSentence.find(lowerWord, pos + 1);
+      }
+      else {return true;}
     }
 
     return false;
@@ -32,7 +31,7 @@ std::string
 checking_finds::set_target_at_path(const std::string& path)
 {
 	/*AXIS камеры.*/
-	if (contains_word("/operator/basic.shtml", path)){return CAMERA_AXIS_205;}
+  if (contains_word("/operator/basic.shtml", path)){return CAMERA_AXIS_205;}
 	for (auto& p : axis_2400_path){if(contains_word(p, path)){return CAMERA_AXIS_2400;}}
 	for (auto& p : axis_other_path){if(contains_word(p, path)){return CAMERA_AXIS;}}
 
@@ -118,7 +117,7 @@ checking_finds::set_target_at_title(const std::string& title)
 int
 checking_finds::than_bruteforce(const std::string type)
 {
-	if (type == CAMERA_AXIS || type == CAMERA_AXIS_205 ||
+  if (type == CAMERA_AXIS || type == CAMERA_AXIS_205 ||
 		type == CAMERA_AXIS_2400 || type == HTTP_BASIC_AUTH ||
 		type == CAMERA_BB_SC384 || type == CAMERA_VB_M40 ||
 		type == CAMERA_PANASONIC || type == CAMERA_UA ||

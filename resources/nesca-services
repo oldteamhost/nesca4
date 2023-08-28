@@ -12,7 +12,7 @@ TELNET          23
 SMTP            25
 RSFTP           26
 WHOIS           43
-DNS			    53
+DNS			        53
 DHCP			67
 TFTP			69
 GOPHER		    70

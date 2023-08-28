@@ -18,35 +18,23 @@
 #include <unordered_map>
 #include <algorithm>
 
-class group_scan
-{
+class group_scan {
 public:
 	int group_size;
 	int group_rate;
 	int max_group_size;
 
-	void 
-	create_group(std::vector<std::string>& ips, std::unordered_map<std::string, double> rtts);
+	void create_group(std::vector<std::string>& ips, std::unordered_map<std::string, double> rtts);
 	void increase_group(void);
 	void clean_group(void);
 
 	std::vector<std::string> current_group;
 };
 
-// cidr to ips
-std::vector<std::string> 
-cidr_to_ips(const std::vector<std::string>& cidr_list);
-// range to ips
-std::vector<std::string> 
-range_to_ips(const std::vector<std::string>& ip_ranges);
-// dns to ip
-std::vector<std::string>
-convert_dns_to_ip(const std::vector<std::string>& dns_vector);
-// split int 
-std::vector<int> 
-split_string_int(const std::string& str, char delimiter);
-// split string
-std::vector<std::string> 
-split_string_string(const std::string& str, char delimiter);
+std::vector<std::string> cidr_to_ips(const std::vector<std::string>& cidr_list);
+std::vector<std::string> range_to_ips(const std::vector<std::string>& ip_ranges);
+std::vector<std::string> convert_dns_to_ip(const std::vector<std::string>& dns_vector);
+std::vector<int> split_string_int(const std::string& str, char delimiter);
+std::vector<std::string> split_string_string(const std::string& str, char delimiter);
 
 #endif

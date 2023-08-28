@@ -14,16 +14,13 @@
 
 class services_nesca{
 private:
-    std::map<int,std::string>
-    parse_services(const std::string& filename);
+  std::map<int,std::string>
+  parse_services(const std::string& filename);
 public:
-    std::map<int,std::string> data;
+  std::map<int,std::string> data;
 
-    void
-    init_services();
+  void init_services();
 
-    std::string
-    probe_service(int port);
-     
+  std::string probe_service(int port);
 };
 #endif

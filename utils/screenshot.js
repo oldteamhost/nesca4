@@ -17,8 +17,7 @@ const puppeteer = require('puppeteer');
 const path = require('path');
 const fs = require('fs');
 
-if (process.argv.length !== 5)
-{
+if (process.argv.length !== 5) {
   console.error('Usage: node script.js <url> <timeout> <screenshotFolderPath>');
   process.exit(1);
 }
@@ -38,20 +37,18 @@ const screenshotPath = path.join(screenshotFolderPath, `${domain}.png`);
 
   const page = await browser.newPage();
 
-  try
-    {
-        await page.goto(url, { timeout });
-        await page.screenshot({ path: screenshotPath });
-    }
+  try {
+    await page.goto(url, { timeout });
+    await page.screenshot({ path: screenshotPath });
+  }
   catch (error)
-    {
+  {
 
-    }
+  }
   finally
-    {
-        await browser.close();
-    }
+  {
+    await browser.close();
+  }
 
   process.exit(0);
 })();
-

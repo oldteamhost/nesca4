@@ -65,8 +65,8 @@ ftp_send_package(int sockfd, const char* message, int verbose, int timeout_ms);
 
 /* Function for authorization on ftp server, uses 2 previous
  * functions, can work in threads.*/
-    #define SUCCESS_AUTH 0
-    #define FAILED_AUTH -1
+        #define SUCCESS_AUTH 0
+        #define FAILED_AUTH -1
 int
 ftp_auth(const char* ip, int port, const char* login, const char* pass,
         int verbose, int timeout_ms);

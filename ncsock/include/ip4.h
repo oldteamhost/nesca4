@@ -29,9 +29,9 @@ struct ip_header
     uint16_t tot_len;
     uint16_t id;
 /* To fragment an IP packet. */
-#define	IP_RF 0x8000			/* Reserved fragment flag. */
-#define	IP_DF 0x4000			/* Dont fragment flag. */
-#define	IP_MF 0x2000			/* More fragments flag. */
+#define	IP_RF 0x8000			  /* Reserved fragment flag. */
+#define	IP_DF 0x4000			  /* Dont fragment flag. */
+#define	IP_MF 0x2000			  /* More fragments flag. */
 #define	IP_OFFMASK 0x1fff		/* Mask for fragmenting bits. */
     uint16_t frag_off;
     uint8_t ttl;

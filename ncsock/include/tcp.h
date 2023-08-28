@@ -31,23 +31,20 @@ extern "C" {
 typedef	uint32_t tcp_seq;
 struct tcp_header
 {
-	union
-	{
-    	struct
-		{
+  union {
+    struct {
 			uint16_t th_sport;	/* Source port. */
 			uint16_t th_dport;	/* Destination port. */
-			tcp_seq th_seq;		/* Sequence number. */
-			tcp_seq th_ack;		/* Acknowledgement number. */
-			uint8_t th_off:4;	/* Data offset. */
-			uint8_t th_x2:4;	/* (unused). */
+			tcp_seq th_seq;		  /* Sequence number. */
+			tcp_seq th_ack;		  /* Acknowledgement number. */
+			uint8_t th_off:4;	  /* Data offset. */
+			uint8_t th_x2:4;	  /* (unused). */
 			uint8_t th_flags;   /* TCP flags. */
-			uint16_t th_win;	/* Window. */
-			uint16_t th_sum;	/* Checksum. */
-			uint16_t th_urp;	/* Urgent pointer. */
-    	};
-    	struct
-		{
+			uint16_t th_win;	  /* Window. */
+			uint16_t th_sum;	  /* Checksum. */
+			uint16_t th_urp;	  /* Urgent pointer. */
+    };
+    struct {
 			uint16_t source;
 			uint16_t dest;
 			uint32_t seq;
@@ -74,32 +71,32 @@ struct tcp_header
 			uint8_t window;
 			uint16_t check;
 			uint16_t urg_ptr;
-    	};
+    };
 	};
 };
 
 struct tcp_flags
 {
-    uint8_t syn; /* Synchronize sequence numbers. */
-    uint8_t ack; /* Acknowledgment field significant. */
-    uint8_t rst; /* Reset the connection. */
-    uint8_t fin; /* No more data from sender. */
-    uint8_t psh; /* Push Function. */
-    uint8_t urg; /* Urgent Pointer field significant. */
-    uint8_t cwr; /* Congestion Window reduced. */
-    uint8_t ece; /* Explicit Congestion notification echo. */
+  uint8_t syn; /* Synchronize sequence numbers. */
+  uint8_t ack; /* Acknowledgment field significant. */
+  uint8_t rst; /* Reset the connection. */
+  uint8_t fin; /* No more data from sender. */
+  uint8_t psh; /* Push Function. */
+  uint8_t urg; /* Urgent Pointer field significant. */
+  uint8_t cwr; /* Congestion Window reduced. */
+  uint8_t ece; /* Explicit Congestion notification echo. */
 };
 
 /* To calculate the fake checksum.
  * Source: CAPEC-287: TCP SYN Scan. */
 struct pseudo_header
 {
-   uint32_t source_address;
-   uint32_t dest_address;
-   uint8_t placeholder;
-   uint8_t protocol;
-   uint16_t tcp_length;
-   struct tcp_header tcp;
+  uint32_t source_address;
+  uint32_t dest_address;
+  uint8_t placeholder;
+  uint8_t protocol;
+  uint16_t tcp_length;
+  struct tcp_header tcp;
 };
 
 /* Function to populate the TCP header above. */
@@ -112,10 +109,10 @@ fill_tcp_header(struct tcp_header* tcp_header, uint16_t source_port, uint16_t de
  * function. */
 struct tcp_packet_opts
 {
-    int source_port;
-    const char* source_ip;
-    unsigned int seq;
-    int ttl;
+  int source_port;
+  const char* source_ip;
+  unsigned int seq;
+  int ttl;
 /* Prepackage Presets. */
 #define SYN_PACKET            1
 #define XMAS_PACKET           2
