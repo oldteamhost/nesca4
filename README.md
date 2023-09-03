@@ -7,11 +7,13 @@ d8b   db d88888b .d8888.  .o88b.  .d8b.    NESCA4 - Многопоточный l
 88  V888 88.     db   8D Y8b  d8 88   88   Был сделан с вдохновением от nesca3 & nmap.
 VP   V8P Y88888P `8888Y'  `Y88P' YP   YP   by oldteam & lomaster.
 ```
+
+![alt text](https://i.imgur.com/dA9tq6n.png)
+
 ```
 PS: Перечислять все возможности тут я не буду. Прочитать о том что умеет nesca4 и
 как это разрабатывалось читайте в resources/do_not_read.txt
 ```
-
 **Debian 12:**  
 ```
 sudo apt-get install libcurl4-openssl-dev nodejs
