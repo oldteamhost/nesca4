@@ -70,7 +70,7 @@ int
 scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms);
 
 int
-probe_scan_ports(const std::string& ip, std::vector<int> ports, const int timeout_ms);
+probe_scan_ports(const std::string& ip, std::vector<int> ports);
 
 void checking_default_files(void);
 bool process_ping(std::string ip);

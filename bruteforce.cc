@@ -161,7 +161,6 @@ threads_brute_ftp(const std::string ip, int port, const std::vector<std::string>
     std::vector<std::string> results;
 	std::vector<std::future<void>> futures;
 	thread_pool pool(100);
-    bool fuck = false;
 
     for (const auto& login : logins) {
         for (const auto& password : passwords) {
@@ -465,12 +464,6 @@ threads_brute_hikvision(const std::string ip, const std::vector<std::string> log
 std::string 
 brute_rvi(const std::string ip, int port, const std::string login, const std::string pass, int brute_log)
 {
-	const unsigned char headerRVI[32] = {
-		0xa0, 0x00, 0x00, 0x60, 0x00, 0x00, 0x00, 0x00,
-		0x61, 0x64, 0x6d, 0x69, 0x6e, 0x00, 0x00, 0x00,
-		0x61, 0x64, 0x6d, 0x69, 0x6e, 0x00, 0x00, 0x00,
-		0x04, 0x01, 0x00, 0x00, 0x00, 0x00, 0xa1, 0xaa
-	};
 	const unsigned char loginRVIHeaderStart[8] = {
 		0xa0, 0x00, 0x00, 0x60, 0x00, 0x00, 0x00, 0x00
 	};

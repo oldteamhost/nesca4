@@ -34,7 +34,7 @@ send_http_request_no_curl(const std::string& node, std::string path, int port)
   std::string response;
   send(sockfd, request.str().c_str(), request.str().length(), 0);
 
-  int timeout = set_socket_timeout(sockfd, 1200, 1, 1);
+  set_socket_timeout(sockfd, 1200, 1, 1);
 
   char buffer[1024];
   ssize_t bytes_received;

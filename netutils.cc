@@ -11,48 +11,47 @@ std::string
 dns_utils::get_dns_by_ip(const char* ip, int port)
 {
 	struct in_addr addr;
-    if (inet_pton(AF_INET, ip, &addr) != 1) {return "n/a";}
+  if (inet_pton(AF_INET, ip, &addr) != 1) {return "n/a";}
 
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == -1) {return "n/a";}
+  int sock = socket(AF_INET, SOCK_STREAM, 0);
+  if (sock == -1) {return "n/a";}
 
-	const int timeout_ms = 600;
 	set_socket_timeout(sock, 600, 1, 1);
 
-    struct sockaddr_in sa;
-    memset(&sa, 0, sizeof(sa));
-    sa.sin_family = AF_INET;
-    sa.sin_addr = addr;
-    sa.sin_port = htons(port);
+  struct sockaddr_in sa;
+  memset(&sa, 0, sizeof(sa));
+  sa.sin_family = AF_INET;
+  sa.sin_addr = addr;
+  sa.sin_port = htons(port);
 
-    char host[NI_MAXHOST];
-    int res = getnameinfo((struct sockaddr*)&sa, sizeof(sa), host, sizeof(host), NULL, 0, NI_NAMEREQD);
-    if (res != 0){close(sock);return "n/a";}
+  char host[NI_MAXHOST];
+  int res = getnameinfo((struct sockaddr*)&sa, sizeof(sa), host, sizeof(host), NULL, 0, NI_NAMEREQD);
+  if (res != 0){close(sock);return "n/a";}
 
-    close(sock);
-    return std::string(host);
+  close(sock);
+  return std::string(host);
 }
 
 const char* 
 dns_utils::get_ip_by_dns(const char* dns)
 {
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == EOF) {return "n/a";}
+  int sock = socket(AF_INET, SOCK_STREAM, 0);
+  if (sock == EOF) {return "n/a";}
 
-    struct addrinfo hints, *res;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    int status = getaddrinfo(dns, NULL, &hints, &res);
+  struct addrinfo hints, *res;
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = AF_INET;
+  hints.ai_socktype = SOCK_STREAM;
+  int status = getaddrinfo(dns, NULL, &hints, &res);
 
-    if (status != 0) {close(sock);return "n/a";}
+  if (status != 0) {close(sock);return "n/a";}
 
-    struct sockaddr_in *addr = (struct sockaddr_in *)res->ai_addr;
-    const char* ip = inet_ntoa(addr->sin_addr);
+  struct sockaddr_in *addr = (struct sockaddr_in *)res->ai_addr;
+  const char* ip = inet_ntoa(addr->sin_addr);
 
-    freeaddrinfo(res);
-    close(sock);
-    return ip;
+  freeaddrinfo(res);
+  close(sock);
+  return ip;
 }
 
 std::vector<std::string>
