@@ -18,7 +18,7 @@ PS: Перечислять все возможности тут я не буду
 ```
 sudo apt-get install libcurl4-openssl-dev nodejs
 sudo apt install gcc g++ make git cmake libssh-dev
-git clone https://github.com/oldteamhost/nesca4
+git clone --recursive https://github.com/oldteamhost/nesca4
 cd nesca4
 cmake .
 make -j12
@@ -27,7 +27,7 @@ make -j12
 **Arch 2023:**  
 ```
 sudo pacman -S curl cmake nodejs
-git clone https://github.com/oldteamhost/nesca4
+git clone --recursive https://github.com/oldteamhost/nesca4
 cd nesca4
 cmake .
 make -j12
