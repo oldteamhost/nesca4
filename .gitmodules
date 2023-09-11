@@ -1,4 +1,3 @@
 [submodule "ncsock"]
 	path = ncsock
   url = https://github.com/oldteamhost/ncsock
-  branch = master
