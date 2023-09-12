@@ -132,7 +132,7 @@ parse_range(const std::string& range_string)
     return result;
 }
 
-bool check_root_perms() {return (geteuid() == 0);}
+bool __check_root_perms() {return (geteuid() == 0);}
 
 bool 
 dns_or_ip(std::string &node)

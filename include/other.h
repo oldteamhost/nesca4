@@ -28,7 +28,7 @@ bool check_ansi_support(void);
 std::vector<int> write_ports(std::string mode);
 void logo(void);
 std::vector<int> parse_range(const std::string& range_string);
-bool check_root_perms();
+bool __check_root_perms();
 int generate_port();
 bool dns_or_ip(std::string &node);
 std::string to_lower_case(std::string str);
