@@ -6,11 +6,24 @@
 */
 
 #include "include/robots.h"
+#include "../../ncsock/include/http.h"
+#include <sstream>
 
 std::string
 get_robots_txt(const std::string& ip, int port)
 {
-  std::string result = send_http_request_no_curl(ip, "/robots.txt", port);
+  http_header hh;
+  hh.user_agent = "ncsock";
+  hh.content_len = 0;
+  hh.content_type = "";
+  hh.method = "GET";
+  hh.path = "/";
+  hh.dest_host = ip.c_str();
+
+  char response_buffer[4096];
+  send_http_request(ip.c_str(), port, 1200, &hh, response_buffer, sizeof(response_buffer));
+
+  std::string result = response_buffer;
   std::istringstream stream(result);
   std::string line;
   while (std::getline(stream, line)) {
@@ -24,7 +37,18 @@ get_robots_txt(const std::string& ip, int port)
 std::string
 get_sitemap_xml(const std::string& ip, int port)
 {
-  std::string result = send_http_request_no_curl(ip, "/sitemap.xml", port);
+  http_header hh;
+  hh.user_agent = "ncsock";
+  hh.content_len = 0;
+  hh.content_type = "";
+  hh.method = "GET";
+  hh.path = "/";
+  hh.dest_host = ip.c_str();
+
+  char response_buffer[4096];
+  send_http_request(ip.c_str(), port, 1200, &hh, response_buffer, sizeof(response_buffer));
+
+  std::string result = response_buffer;
   std::istringstream stream(result);
   std::string line;
   while (std::getline(stream, line)) {

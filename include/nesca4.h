@@ -38,7 +38,6 @@
 #include "nescathread.h"
 #include "mathutils.h"
 
-#include "../modules/include/requests.h"
 #include "../modules/include/title.h"
 #include "../modules/include/robots.h"
 #include "../modules/include/redirect.h"

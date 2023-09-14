@@ -309,70 +309,41 @@ threads_brute_rtsp(const std::string ip, const std::vector<std::string> logins, 
     return "";
 }
 
+#include "ncsock/include/http.h"
 std::string 
-brute_http(const std::string ip, const std::string login, const std::string pass, int brute_log, int verbose)
+brute_http(const std::string ip, const std::string path, const std::string login, const std::string pass, int brute_log, int verbose)
 {
-#ifdef HAVE_CURL
-    CURL *curl;
-    CURLcode res;
-    long http_code;
-    std::string content_type;
-    curl = curl_easy_init();
-
-    if (curl) {
-        curl_easy_setopt(curl, CURLOPT_URL, ip.c_str());
-
-        if (verbose) {curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);}
-        curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-        curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
-        curl_easy_setopt(curl, CURLOPT_USERNAME, login.c_str());
-        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 2L);
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 3L);
-        curl_easy_setopt(curl, CURLOPT_PASSWORD, pass.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-
-        if (brute_log) {np1.nlog_custom("HTTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
-
-        curl_easy_setopt(curl, CURLOPT_FAILONERROR, true);
-        res = curl_easy_perform(curl);
-
-        if (res != CURLE_OK) {curl_easy_cleanup(curl);return "";}
-
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
-        if (http_code < 200 || http_code >= 300) {curl_easy_cleanup(curl);return "";}
-
-        curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &content_type);
-        if (content_type.find("error") != std::string::npos) {curl_easy_cleanup(curl);return "";}
-
-        std::string result = login + ":" + pass + "@";
-        return result;
-    }
-
-    curl_easy_cleanup(curl);
-#endif
+  int auth = basic_http_auth(ip.c_str(), 80, 2000, ip.c_str(), path.c_str(), login.c_str(), pass.c_str());
+  if (brute_log) {np1.nlog_custom("HTTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
+  if (auth == -1) {
     return "";
+  }
+
+  std::string result = login + ":" + pass + "@";
+  return result;
 }
 
 std::string 
-threads_brute_http(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms)
+threads_brute_http(const std::string ip, const std::string path, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms)
 {
-    std::vector<std::string> results;
+  std::vector<std::string> results;
 	std::vector<std::future<void>> futures;
 	thread_pool pool(100);
 
-    for (const auto& login : logins) {
-        for (const auto& password : passwords) {
-            delay_ms(brute_timeout_ms);
-			futures.push_back(pool.enqueue([ip, login, password, brute_log, verbose, &results]() {
-                std::string temp = brute_http(ip, login, password, brute_log, verbose);
-                if (!temp.empty() && temp.length() > 3){results.push_back(temp);}
-            }));
-        }
+  for (const auto& login : logins) {
+    for (const auto& password : passwords) {
+        delay_ms(brute_timeout_ms);
+		    futures.push_back(pool.enqueue([ip, path, login, password, brute_log, verbose, &results]() {
+        std::string temp = brute_http(ip, path, login, password, brute_log, verbose);
+        if (!temp.empty() && temp.length() > 3){results.push_back(temp);}
+      }));
     }
-	for (auto& future : futures) {future.wait();}
-    if (!results.empty()) {return results[0];} else {return "";}
+  }
 
-    return "";
+	for (auto& future : futures) {future.wait();}
+  if (!results.empty()) {return results[0];} else {return "";}
+
+  return "";
 }
 
 

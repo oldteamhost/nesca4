@@ -78,11 +78,10 @@ threads_brute_rtsp(const std::string ip, const std::vector<std::string> logins,
 
 // bruteforce http
 std::string 
-brute_http(const std::string ip, const std::string login, const std::string pass,
-        const int verbose);
+brute_http(const std::string ip, const std::string path, const std::string login, const std::string pass, int brute_log, int verbose);
 // on threads
 std::string 
-threads_brute_http(const std::string ip, const std::vector<std::string> logins,
+threads_brute_http(const std::string ip, const std::string path, const std::vector<std::string> logins,
         const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms);
 
 // bruteforce hikvision

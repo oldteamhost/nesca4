@@ -10,12 +10,12 @@
 #include "include/other.h"
 #include "include/portscan.h"
 #include "include/target.h"
-#include "modules/include/requests.h"
 #include "modules/include/robots.h"
 #include "ncbase/include/base64.h"
 #include "ncbase/include/binary.h"
 #include "ncbase/include/json.h"
 #include "ncsock/include/tcp.h"
+#include "ncsock/include/http.h"
 #include <bits/getopt_core.h>
 #include <cstdlib>
 #include <string>
@@ -137,16 +137,26 @@ int main(int argc, char** argv)
                       }
                   }
                   else {
-                      std::string html = send_http_request_no_curl(ip, "/", 80);
-                      std::lock_guard<std::mutex> lock(mtx);
-                      std::string rtt = std::to_string(nd.rtts[ip]) + "ms";
-                      std::cout << np.main_nesca_out("BA", "http://" + result, 3, "T", "RTT", get_http_title(html), rtt, rtt) << std::endl;
+                    http_header hh;
+                    hh.user_agent = "ncsock";
+                    hh.content_len = 0;
+                    hh.content_type = "";
+                    hh.method = "GET";
+                    hh.path = "/";
+                    hh.dest_host = ip.c_str();
 
-                      if (argp.get_response)
-  					{
-                          std::string result_code = np.main_nesca_out("TT", html, 2, "", "", "", "", "");
-                          std::cout << result_code << std::endl;
-                      }
+                    char response_buffer[4096];
+                    send_http_request(ip.c_str(), 80, 1000, &hh, response_buffer, sizeof(response_buffer));
+
+                    std::string html = response_buffer;
+                    std::lock_guard<std::mutex> lock(mtx);
+                    std::string rtt = std::to_string(nd.rtts[ip]) + "ms";
+                    std::cout << np.main_nesca_out("BA", "http://" + result, 3, "T", "RTT", get_http_title(html), rtt, rtt) << std::endl;
+
+                    if (argp.get_response) {
+                      std::string result_code = np.main_nesca_out("TT", html, 2, "", "", "", "", "");
+                      std::cout << result_code << std::endl;
+                    }
                   }
               }
           });
@@ -1081,10 +1091,19 @@ void rtsp_strategy::handle(const std::string& ip, const std::string& result, con
 void http_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
   	const std::string& protocol, int port, arguments_program& argp, nesca_prints& np)
 {
+  http_header hh;
+  hh.user_agent = "ncsock";
+  hh.content_len = 0;
+  hh.content_type = "";
+  hh.method = "GET";
+  hh.path = "/";
+  hh.dest_host = ip.c_str();
+
   /*Получение заголовков и кода страницы.*/
-    std::string redirect;
-    std::string html = to_lower_case(send_http_request_no_curl(ip, "/", port));
-    std::string default_result = "http://" + ip + ":" + std::to_string(port) + "/";
+  std::string redirect; char response_buffer[4096];
+  send_http_request(ip.c_str(), 80, 1000, &hh, response_buffer, sizeof(response_buffer));
+  std::string html = response_buffer;
+  std::string default_result = "http://" + ip + ":" + std::to_string(port) + "/";
 
 #ifdef HAVE_NODE_JS
     if (argp.save_screenshots)
@@ -1117,43 +1136,39 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
 #endif
 
   /*Получение перенаправления.*/
-    if (argp.no_get_path != true){redirect = parse_redirect(html, html, ip, true, port);}
+  if (argp.no_get_path != true){redirect = parse_redirect(html, html, ip, true, port);}
 
-    /*Второй запрос HTTP по перенаправлению*/
-    std::string html_pro = send_http_request_no_curl(ip, redirect, port);
+  /*Второй запрос HTTP по перенаправлению*/
+  hh.path = redirect.c_str(); 
+  memset(response_buffer, 0, sizeof(response_buffer));
+  send_http_request(ip.c_str(), 80, 1000, &hh, response_buffer, sizeof(response_buffer));
+  std::string html_pro = response_buffer;
 
   /*Получение заголовка.*/
-    std::string http_title_result = get_http_title(html_pro);
+  std::string http_title_result = get_http_title(html_pro);
 
-    /*http title это из класса.*/
-    http_title = http_title_result;
+  /*http title это из класса.*/
+  http_title = http_title_result;
 
   /*Сравнение списка negatives*/
-  for (const auto& n : nn.nesca_negatives)
-  {
+  for (const auto& n : nn.nesca_negatives) {
   	const std::string& first = n.first;
-        const std::string& second = n.second;
+    const std::string& second = n.second;
 
-  	if (second == "1" || second == "title")
-  	{
-  		if(cfs.contains_word(first, http_title_result))
-  		{
+  	if (second == "1" || second == "title") {
+  		if(cfs.contains_word(first, http_title_result)) {
   			if (argp.debug){np.nlog_custom("WARNING", "Skip negative: "+first+"\n", 2);}
   			return;
   		}
   	}
-  	else if (second == "2" || second == "code" || second == "header")
-  	{
-  		if(cfs.contains_word(first, html))
-  		{
+  	else if (second == "2" || second == "code" || second == "header") {
+  		if(cfs.contains_word(first, html)) {
   			if (argp.debug){np.nlog_custom("WARNING", "Skip negative: "+first+"\n", 2);}
   			return;
   		}
   	}
-  	else if (second == "3" || second == "path" || second == "redirect")
-  	{
-  		if(cfs.contains_word(first, redirect))
-  		{
+  	else if (second == "3" || second == "path" || second == "redirect") {
+  		if(cfs.contains_word(first, redirect)) {
   			if (argp.debug){np.nlog_custom("WARNING", "Skip negative: "+first+"\n", 2);}
   			return;
   		}
@@ -1181,7 +1196,7 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   	std::cout << "[>][HTTP]:" + ip + " [BRUTEFORCE]\n";
   	np.reset_colors();
 
-        brute_temp = threads_brute_http("http://" + ip + redirect, argp.http_logins, argp.http_passwords,
+        brute_temp = threads_brute_http(ip, redirect, argp.http_logins, argp.http_passwords,
                 argp.http_brute_log, argp.http_brute_verbose, argp.brute_timeout_ms);
     }
 

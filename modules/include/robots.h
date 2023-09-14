@@ -8,7 +8,6 @@
 #ifndef ROBOTS_H
 #define ROBOTS_H
 #include <iostream>
-#include "requests.h"
 
 std::string
 get_robots_txt(const std::string& ip, int port);
