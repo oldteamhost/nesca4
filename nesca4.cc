@@ -533,41 +533,38 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
   else {source_port = argp._custom_source_port;}
 
   /*Если не было получено RTT, по стандарту время ответа 600.*/
-    int recv_timeout_result = 600;
+  int recv_timeout_result = 600;
 
   /*Если кастомное.*/
-    if (argp.custom_recv_timeout_ms){recv_timeout_result = argp.recv_timeout_ms;}else
-  {
-     /*Расчёт таймаута для приёма данных*/
-     auto it = nd.rtts.find(ip);
-     if (it != nd.rtts.end())
-     {
-  	  double rtt_ping = nd.rtts.at(ip);
+  if (argp.custom_recv_timeout_ms){recv_timeout_result = argp.recv_timeout_ms;}
+  else {
+    /*Расчёт таймаута для приёма данных*/
+    auto it = nd.rtts.find(ip);
+    if (it != nd.rtts.end()) {
+      double rtt_ping = nd.rtts.at(ip);
   	  recv_timeout_result = calc_port_timeout(argp.speed_type, rtt_ping);
-     }
     }
+  }
 
   /*Один рандомный порт отправки на каждый IP.
    * Можно и на каждый порт, но лучше менять не часто.*/
-    ncopts.source_port = source_port;
+  ncopts.source_port = source_port;
 
   /*Рандомный SEQ на каждый IP. Не порт!*/
-    ncopts.seq = generate_seq();
+  ncopts.seq = generate_seq();
 
-    for (const auto& port : ports)
-  {
-  	/*Настройка TTL.*/
+  for (const auto& port : ports) {
+    /*Настройка TTL.*/
   	if (!argp.custom_ttl){ncopts.ttl = generate_ttl();}
   	else{ncopts.ttl = argp._custom_ttl;}
 
-     /*Отправка пакета.*/
-     const int result = send_tcp_packet(&ncopts, ip.c_str(), port, timeout_ms);
+    /*Отправка пакета.*/
+    const int result = send_tcp_packet(&ncopts, ip.c_str(), port, timeout_ms);
 
-     /*Если функция не вернула PORT_OPEN,
-      * Это означает что функция успешно выполнилась.*/
-     if (result != PORT_OPEN)
-     {
-  	  ls.lock();
+    /*Если функция не вернула PORT_OPEN,
+    * Это означает что функция успешно выполнилась.*/
+    if (result != PORT_OPEN) {
+      ls.lock();
   	  /*Значит была ошибка.*/
   	  if (argp.print_errors){nd.error_target[ip].push_back(port); argp.error_fuck++;}
   	  ls.unlock();
@@ -583,47 +580,43 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
       * "Принятие пакета" или скорее его ожидание.*/
      int read = recv_tcp_packet(ip.c_str(), recv_timeout_result, &buffer);
      /*Если функция не получила пакет.*/
-     if (read != 0)
-     {
+     if (read != 0) {
   	  ls.lock();
   	  free(buffer);
   	  ls.unlock();
 
-  	  if (argp.type != SYN_SCAN && argp.type != ACK_SCAN && argp.type != WINDOW_SCAN)
-  	  {
-  	  	  ls.lock();
-  	      /*Значит порт open|filtered.*/
+  	  if (argp.type != SYN_SCAN && argp.type != ACK_SCAN && argp.type != WINDOW_SCAN) {
+  	  	ls.lock();
+  	    /*Значит порт open|filtered.*/
   		  nd.open_or_filtered_target[ip].push_back(port);
-  	  	  ls.unlock();
+  	  	ls.unlock();
   	  }
-  	  else
-  	  {
-  	  	  ls.lock();
-  	  	  /*Значит порт filtered.*/
+  	  else {
+  	  	ls.lock();
+  	  	/*Значит порт filtered.*/
   		  if (argp.debug){nd.filtered_target[ip].push_back(port);}
-  	  	  ls.unlock();
+  	  	ls.unlock();
   	  }
   	  continue;
-     }
-
-     /*В другом случае идёт обработка пакета.
-      * И только на этом этапе мы получаем статус порта.*/
-     int port_status = PORT_ERROR;
-     port_status = get_port_status(buffer, argp.type);
-
-     ls.lock();
-     free(buffer);
-     ls.unlock();
-
-     ls.lock();
-     if (port_status == PORT_CLOSED && argp.debug){nd.closed_target[ip].push_back(port);}
-     else if (port_status == PORT_OPEN){nd.success_target[ip].push_back(port); argp.count_success_ports++;}
-     if (port_status == PORT_FILTER && argp.debug){nd.filtered_target[ip].push_back(port);}
-     else if (port_status == PORT_NO_FILTER){nd.no_filtered_target[ip].push_back(port);}
-     ls.unlock();
     }
 
-    return 0;
+    /*В другом случае идёт обработка пакета.
+     * И только на этом этапе мы получаем статус порта.*/
+    int port_status = PORT_ERROR;
+    port_status = get_port_status(buffer, argp.type);
+
+    ls.lock();
+    free(buffer);
+    ls.unlock();
+
+    ls.lock();
+    if (port_status == PORT_CLOSED && argp.debug){nd.closed_target[ip].push_back(port);}
+    else if (port_status == PORT_OPEN){nd.success_target[ip].push_back(port); argp.count_success_ports++;}
+    if (port_status == PORT_FILTER && argp.debug){nd.filtered_target[ip].push_back(port);}
+    else if (port_status == PORT_NO_FILTER){nd.no_filtered_target[ip].push_back(port);}
+    ls.unlock();
+  }
+  return 0;
 }
 
 
