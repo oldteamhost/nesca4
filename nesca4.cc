@@ -10,12 +10,13 @@
 #include "include/other.h"
 #include "include/portscan.h"
 #include "include/target.h"
-#include "modules/include/robots.h"
 #include "ncbase/include/base64.h"
 #include "ncbase/include/binary.h"
 #include "ncbase/include/json.h"
 #include "ncsock/include/tcp.h"
 #include "ncsock/include/http.h"
+#include "ncsock/include/ftp.h"
+#include "ncsock/include/smtp.h"
 #include <bits/getopt_core.h>
 #include <cstdlib>
 #include <string>
@@ -29,7 +30,6 @@ std::mutex ls;
 struct tcp_packet_opts ncopts;
 checking_finds cfs;
 nesca_prints np;
-brute_ftp_data bfd_;
 group_scan gs;
 html_output ho;
 dns_utils dus;
@@ -151,7 +151,9 @@ int main(int argc, char** argv)
                     std::string html = response_buffer;
                     std::lock_guard<std::mutex> lock(mtx);
                     std::string rtt = std::to_string(nd.rtts[ip]) + "ms";
-                    std::cout << np.main_nesca_out("BA", "http://" + result, 3, "T", "RTT", get_http_title(html), rtt, rtt) << std::endl;
+                    char title[256];
+                    get_http_title(response_buffer, title, sizeof(title));
+                    std::cout << np.main_nesca_out("BA", "http://" + result, 3, "T", "RTT", title, rtt, rtt) << std::endl;
 
                     if (argp.get_response) {
                       std::string result_code = np.main_nesca_out("TT", html, 2, "", "", "", "", "");
@@ -892,9 +894,11 @@ void ftp_strategy::handle(const std::string& ip, const std::string& result, cons
 {
 
   std::string port_s = std::to_string(port);
-  std::string ftp_version = get_ftp_description(ip, port_s, bfd_.get_success_login(), bfd_.get_success_pass());
+  char version[256];
+  get_ftp_version(ip.c_str(), port, 1200, version, sizeof(version));
+  std::string ftp_version = version;
 
-    if (argp.off_ftp_brute != true)
+  if (argp.off_ftp_brute != true)
   {
   	np.yellow_html_on();
   	std::cout << "[>][FTP]:" + ip + " [BRUTEFORCE]\n";
@@ -928,7 +932,9 @@ void ftp_strategy::handle(const std::string& ip, const std::string& result, cons
 void smtp_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
   	const std::string& protocol, int port, arguments_program& argp, nesca_prints& np)
 {
-  std::string responce_220 = smtp_get_220_response(ip, port, 0);
+  char version[256];
+  get_smtp_version(ip.c_str(), port, 1200, version, sizeof(version));
+  std::string responce_220 = version;
     if (argp.off_sftp_brute != true)
   {
   	np.yellow_html_on();
@@ -1129,7 +1135,11 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
 #endif
 
   /*Получение перенаправления.*/
-  if (argp.no_get_path != true){redirect = parse_redirect(html, html, ip, true, port);}
+  if (argp.no_get_path != true){
+    char buffer[1024];
+    get_redirect(html.c_str(), buffer, sizeof(buffer));
+    redirect = buffer;
+  }
 
   /*Второй запрос HTTP по перенаправлению*/
   hh.path = redirect.c_str(); 
@@ -1138,7 +1148,9 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   std::string html_pro = response_buffer;
 
   /*Получение заголовка.*/
-  std::string http_title_result = get_http_title(html_pro);
+  char title[1024];
+  get_http_title(html_pro.c_str(), title, sizeof(title));
+  std::string http_title_result = title;
 
   /*http title это из класса.*/
   http_title = http_title_result;
@@ -1213,8 +1225,8 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
       np.gray_nesca_on();
       std::cout << "[^][ROBOTS]:";
         np.reset_colors();
-        std::string robots = get_robots_txt(ip, port);
-        if (robots == "n/a"){
+        int robots = get_robots_txt(ip.c_str(), port, 1200);
+        if (robots == -1){
             np.red_html_on();
             std::cout << ip << " robots.txt not found!\n";
             np.reset_colors();
@@ -1233,8 +1245,8 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
       np.gray_nesca_on();
       std::cout << "[^][STEMAP]:";
         np.reset_colors();
-        std::string robots = get_sitemap_xml(ip, port);
-        if (robots == "n/a"){
+        int sitemap = get_sitemap_xml(ip.c_str(), port, 1200);
+        if (sitemap == -1){
             np.red_html_on();
             std::cout << ip << " sitemap.xml not found!\n";
             np.reset_colors();

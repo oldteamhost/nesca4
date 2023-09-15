@@ -22,7 +22,6 @@ ncread_recv(int sockfd, void* buf, size_t len, int timeout_ms)
     if (bytes_received == -1) {return -1;} else {return bytes_received;}
 }
 
-brute_ftp_data bfd;
 nesca_prints np1;
 
 std::string 
@@ -108,8 +107,6 @@ brute_smtp(const std::string& ip, int port, const std::string& login, const std:
     if (std::string(buffer).find("235") != std::string::npos) {
         close(sock);
         std::string result = login + ":" + pass + "@";
-        bfd.set_success_pass(pass);
-        bfd.set_success_login(login);
         return result;
     } 
     else {
@@ -350,18 +347,6 @@ threads_brute_http(const std::string ip, const std::string path, const std::vect
   return "";
 }
 
-
-std::string 
-brute_ftp_data::get_success_login(void) {return this->success_login;}
-
-std::string 
-brute_ftp_data::get_success_pass(void) {return this->success_pass;}
-
-void 
-brute_ftp_data::set_success_login(std::string success_login) {this->success_login = success_login;}
-
-void 
-brute_ftp_data::set_success_pass(std::string success_pass)   {this->success_pass = success_pass;}
 
 std::string 
 brute_hikvision(const std::string ip, const std::string login, const std::string pass, int brute_log, const std::string& path)

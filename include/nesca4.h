@@ -38,12 +38,7 @@
 #include "nescathread.h"
 #include "mathutils.h"
 
-#include "../modules/include/title.h"
-#include "../modules/include/robots.h"
-#include "../modules/include/redirect.h"
 #include "../modules/include/negatives.h"
-#include "../modules/include/ftpinfo.h"
-#include "../modules/include/smtpinfo.h"
 
 #include "../config/nescaopts.h"
 #include "../ncsock/include/icmp4.h"
