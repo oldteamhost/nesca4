@@ -143,15 +143,14 @@ threads_brute_smtp(const std::string ip, int port, const std::vector<std::string
 std::string 
 brute_ftp(const std::string ip, int port, const std::string login, const std::string pass, int brute_log, int verbose)
 {
-	int timeout_ms = 1000;
-    if (brute_log){np1.nlog_custom("FTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
-    int auth = ftp_auth(ip.c_str(), port, login.c_str(), pass.c_str(), verbose, timeout_ms);
-    if (auth == 0)
-    {
-        std::string result = login + ":" + pass + "@";
-        return result;
-    }
+  if (brute_log) {np1.nlog_custom("FTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
+  int auth = ftp_auth(ip.c_str(), port, login.c_str(), pass.c_str(), verbose, 1200);
+  if (auth == -1) {
     return "";
+  }
+
+  std::string result = login + ":" + pass + "@";
+  return result;
 }
 
 std::string 
@@ -313,9 +312,14 @@ threads_brute_rtsp(const std::string ip, const std::vector<std::string> logins, 
 std::string 
 brute_http(const std::string ip, const std::string path, const std::string login, const std::string pass, int brute_log, int verbose)
 {
-  int auth = basic_http_auth(ip.c_str(), 80, 2000, ip.c_str(), path.c_str(), login.c_str(), pass.c_str());
   if (brute_log) {np1.nlog_custom("HTTP", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
+  int auth = basic_http_auth(ip.c_str(), 80, 2000, path.c_str(), login.c_str(), pass.c_str());
   if (auth == -1) {
+    return "";
+  }
+
+  int auth_result = basic_http_auth(ip.c_str(), 80, 1000, path.c_str(), login.c_str(), pass.c_str());
+  if (auth_result == -1) {
     return "";
   }
 
