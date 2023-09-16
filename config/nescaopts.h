@@ -65,12 +65,13 @@ public:
 
 	bool fin_scan;
 	bool null_scan;
-	bool nesca3_scan;
+
 #ifdef HAVE_NODE_JS
   bool save_screenshots;
   std::string screenshots_save_path;
   int timeout_save_screenshots = 2000;
 #endif
+
   bool robots_txt;
   bool sitemap_xml;
   std::string screenshots_save_path_cam = "";

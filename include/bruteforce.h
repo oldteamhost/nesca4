@@ -5,8 +5,10 @@
  *   Сделано от души 2023.
 */
 
-#ifndef BRUTEFORCE_H
-#define BRUTEFORCE_H
+#ifndef _BRUTEFORCE_H
+#define _BRUTEFORCE_H
+
+#include <cstdint>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -22,71 +24,25 @@
 #include "nescathread.h"
 #include "../modules/include/hikvision.h"
 #include "../config/compile.h"
+#include "../ncsock/include/bruteforce.h"
 
-#ifdef HAVE_CURL
-#include "../ncbase/include/callbacks.h"
-#endif
+std::string 
+threads_bruteforce(const std::vector<std::string>& login, std::vector<std::string>& pass,
+        std::string http_path, std::string ip, int port, int delay, uint8_t proto, int brute_log);
 
-// brutforce smtp
-std::string 
-base64_encode(const std::string& input);
-std::string 
-brute_smtp(const std::string& ip, int port, const std::string& login, const std::string& pass,
-        int brute_log, int verbose);
-std::string 
-threads_brute_smtp(const std::string ip, int port, const std::vector<std::string> logins,
-        const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms);
 
-// brutforce ftp
-std::string 
-brute_ftp(const std::string ip, int port, const std::string login, const std::string pass,
-        int brute_log, int verbose);
-// on threads
-std::string 
-threads_brute_ftp(const std::string ip, int port, const std::vector<std::string> logins,
-        const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms);
 
-// brutforce ssh
 std::string 
 brute_ssh(const std::string& ip, int port, const std::string login, const std::string pass,
         int brute_log, int verbose);
-// on threads
 std::string 
 threads_brute_ssh(const std::string ip, int port, const std::vector<std::string> logins,
         const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms);
 
-// brutforce rtsp
-std::string 
-brute_rtsp(const std::string ip, const std::string login, const std::string pass,
-        int brute_log, int verbose);
-// on threads
-std::string 
-threads_brute_rtsp(const std::string ip, const std::vector<std::string> logins,
-        const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms);
-
-// bruteforce http
-std::string 
-brute_http(const std::string ip, const std::string path, const std::string login, const std::string pass, int brute_log, int verbose);
-// on threads
-std::string 
-threads_brute_http(const std::string ip, const std::string path, const std::vector<std::string> logins,
-        const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms);
-
-// bruteforce hikvision
 std::string 
 brute_hikvision(const std::string ip, const std::string login, const std::string pass,
         int brute_log, const std::string& path);
-// on threads
 std::string 
 threads_brute_hikvision(const std::string ip, const std::vector<std::string> logins,
         const std::vector<std::string> passwords, int brute_log, int brute_timeout_ms, const std::string&path);
-
-// bruteforce rvi
-std::string 
-brute_rvi(const std::string ip, int port, const std::string login, const std::string pass,
-        int brute_log);
-// on threads
-std::string 
-threads_brute_rvi(const std::string ip, const int port, const std::vector<std::string> logins,
-        const std::vector<std::string> passwords, int brute_log, int brute_timeout_ms);
 #endif

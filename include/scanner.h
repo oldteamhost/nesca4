@@ -10,6 +10,7 @@
 
 #ifndef SCANNER_H
 #define SCANNER_H
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -78,22 +79,23 @@
 /*Получение характеристики.*/
 class checking_finds {
 public:
+
 	/*Заголовок HTTP*/
 	std::vector<std::string> basic_auth_header = {"401 authorization", "401 unauthorized", "www-authenticate",
-											"401 unauthorized access denied", "401 unauthorised", "www-authenticate",
-											"digest realm", "basic realm", "401 Unauthorized"};
+											            "401 unauthorized access denied", "401 unauthorised", "www-authenticate",
+											            "digest realm", "basic realm", "401 Unauthorized"};
 
 	/*Перенаплавления.*/
-    std::vector<std::string> axis_2400_path = {"/view/viewer_index.shtml", "/view/viewer_index.shtml?", "/check_user.cgi",
+  std::vector<std::string> axis_2400_path = {"/view/viewer_index.shtml", "/view/viewer_index.shtml?", "/check_user.cgi",
 									"/view/index2.shtml", "/index.shtml","/view/indexFrame.shtml","/indexFrame.html"};
 
 	std::vector<std::string> network_camera_path ={"/ViewerFrame?Mode=", "/CgiStart?page=", "/admin/index.shtml?"};
 
-    std::vector<std::string> axis_other_path = {"/view/viewer_index.shtml", "/view/viewer_index.shtml", "/check_user.cgi",
-											"/axis-cgi/mjpg/video.cgi", "/jpg/image.jpg?size=3", "/mjpg/video.mjpg",
-                                            "/view/viewer_index.shtml", "/view/viewer_index.shtml", "/check_user.cgi",
-											"/cgi-bin/guest/Video.cgi?", "/ISAPI/Security/userCheck", "/SnapshotJPEG",
-											"/axis-cgi/com/ptz.cgi?", "/mjpg/video.mjpg"};
+  std::vector<std::string> axis_other_path = {"/view/viewer_index.shtml", "/view/viewer_index.shtml", "/check_user.cgi",
+											                        "/axis-cgi/mjpg/video.cgi", "/jpg/image.jpg?size=3", "/mjpg/video.mjpg",
+                                              "/view/viewer_index.shtml", "/view/viewer_index.shtml", "/check_user.cgi",
+											                        "/cgi-bin/guest/Video.cgi?", "/ISAPI/Security/userCheck", "/SnapshotJPEG",
+											                        "/axis-cgi/com/ptz.cgi?", "/mjpg/video.mjpg"};
 
 	bool /*Поиск слова в строчке.*/
 	contains_word(const std::string& word, const std::string& sentence);

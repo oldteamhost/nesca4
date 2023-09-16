@@ -53,21 +53,4 @@ std::string get_type(uint8_t type);
 
 int /*Определение статуса порта.*/
 get_port_status(unsigned char* buffer, uint8_t scan_type);
-
-#include "../config/compile.h"
-
-#ifdef HAVE_CURL
-#include <curl/curl.h>
-class nesca3_scan {
-public:
-	int timeout_ms = 600;
-	int http_probe(const std::string& node, int port);
-	int ftp_probe(const std::string& node, int port);
-	int smtp_probe(const std::string& node, int port);
-	int ssh_probe(const std::string& node, int port);
-	int rtsp_probe(const std::string& node, int port);
-	int https_probe(const std::string& node, int port);
-};
-#endif
-
 #endif

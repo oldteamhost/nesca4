@@ -6,6 +6,7 @@
 */
 
 #include "include/nesca4.h"
+#include "include/bruteforce.h"
 #include "include/files.h"
 #include "include/other.h"
 #include "include/portscan.h"
@@ -13,6 +14,7 @@
 #include "ncbase/include/base64.h"
 #include "ncbase/include/binary.h"
 #include "ncbase/include/json.h"
+#include "ncsock/include/bruteforce.h"
 #include "ncsock/include/tcp.h"
 #include "ncsock/include/http.h"
 #include "ncsock/include/ftp.h"
@@ -51,10 +53,6 @@ public:
   std::unordered_map<std::string,double> rtts;
 
 }; nesca_data nd;
-
-#ifdef HAVE_CURL
-    nesca3_scan s3n;
-#endif
 
 int main(int argc, char** argv)
 {
@@ -144,6 +142,7 @@ int main(int argc, char** argv)
                     hh.method = "GET";
                     hh.path = "/";
                     hh.dest_host = ip.c_str();
+                    hh.auth_header = NULL;
 
                     char response_buffer[4096];
                     send_http_request(ip.c_str(), 80, 1000, &hh, response_buffer, sizeof(response_buffer));
@@ -339,34 +338,21 @@ int main(int argc, char** argv)
   /*Потоки для сканирования портов.*/
   argp._threads = gs.max_group_size;
   
-  if (argp.pro_mode)
-  {
-  	if (argp.nesca3_scan)
-  	{
-  		std::cout << np.main_nesca_out("NESCA4", "PROBE_SCAN", 5, "targets", "threads",
-  				std::to_string(result_main.size()),std::to_string(argp._threads),"") << std::endl;
-  	}
-  	else
-  	{
-  		std::cout << np.main_nesca_out("NESCA4", get_type(argp.type), 5, "targets", "threads",
-  				std::to_string(result_main.size()),std::to_string(argp._threads),"") << std::endl;
-  	}
+  if (argp.pro_mode) {
+    std::cout << np.main_nesca_out("NESCA4", get_type(argp.type), 5, "targets", "threads",
+  		std::to_string(result_main.size()),std::to_string(argp._threads),"") << std::endl;
   }
 
-  if (!argp.nesca3_scan)
-    {
-      ncopts.source_ip = argp.source_ip;
-  	ncopts.tcpf = set_flags(argp.type);
-  }
+  ncopts.source_ip = argp.source_ip;
+  ncopts.tcpf = set_flags(argp.type);
 
-    long long size = result_main.size();
-    std::vector<std::future<int>> futures;
+  long long size = result_main.size();
+  std::vector<std::future<int>> futures;
   int count_success_ips = 0;
 
-    if (argp.json_save)
-    {
-        nesca_json_start_array(argp.json_save_path);
-    }
+  if (argp.json_save) {
+    nesca_json_start_array(argp.json_save_path);
+  }
 
   /*Создание пула потоков.*/
   thread_pool pool(argp._threads);
@@ -403,32 +389,19 @@ int main(int argc, char** argv)
   					std::to_string(gs.max_group_size), 6, "", "", std::to_string(gs.group_rate), "", "") << std::endl;
           }
 
-          /*Добавление задачи сканирования портов в пул потоков*/
-  		if (argp.nesca3_scan)
-  		{
-#ifdef HAVE_CURL
-          	auto fut = pool.enqueue(probe_scan_ports, ip, argp.ports);
-          	futures.push_back(std::move(fut));
-#else
-            np.nlog_error("CURL not found!\n");
-#endif
-  		}
-  		else
-  		{
-          	auto fut = pool.enqueue(scan_ports, ip, argp.ports, argp.timeout_ms);
-          	futures.push_back(std::move(fut));
-  		}
+      /*Добавление задачи сканирования портов в пул потоков*/
+      auto fut = pool.enqueue(scan_ports, ip, argp.ports, argp.timeout_ms);
+      futures.push_back(std::move(fut));
 
-      if (futures.size() >= static_cast<std::vector<std::future<int>>::size_type>(argp._threads))
-  		{
-              futures.front().get();
-              futures.erase(futures.begin());
-          }
+      if (futures.size() >= static_cast<std::vector<std::future<int>>::size_type>(argp._threads)) {
+        futures.front().get();
+        futures.erase(futures.begin());
       }
+    }
 
-      for (auto& fut : futures){fut.wait();} /*Ожидание оставшихся потоков.*/
-      for (auto& fut : futures) {fut.get();} /*Получение результата функции.*/
-      futures.clear(); /*Очистка после потоков.*/
+    for (auto& fut : futures){fut.wait();} /*Ожидание оставшихся потоков.*/
+    for (auto& fut : futures) {fut.get();} /*Получение результата функции.*/
+    futures.clear(); /*Очистка после потоков.*/
 
   	/*Увелечение группы.*/
   	gs.increase_group();
@@ -814,54 +787,43 @@ checking_default_files(void)
 
 void
 print_port_state(int status, int port, std::string service){
-  std::string result_txt = "\n[&][REPORT]:" + std::to_string(port) + "/tcp STATE: ";
-    np.gray_nesca_on();
-    std::cout << "[&][REPORT]:";
+  std::string result_txt = "\n[&][REPORT]:" + std::to_string(port) + "/tcp STATE: "; np.gray_nesca_on();
+  std::cout << "[&][REPORT]:"; np.green_html_on();
+  std::cout << std::to_string(port) << "/tcp";  np.gray_nesca_on();
+  std::cout << " STATE: ";
+
+  if (status == PORT_OPEN) {
     np.green_html_on();
-    std::cout << std::to_string(port) << "/tcp"; 
-    np.gray_nesca_on();
-    std::cout << " STATE: ";
-    if (status == PORT_OPEN)
-  {
-     np.green_html_on();
-     result_txt += "open";
-     std::cout << "open"; 
-    }
-    else if (status == PORT_CLOSED)
-  {
-     np.reset_colors();
-     result_txt += "closed";
-     std::cout << "closed"; 
-    }
-    else if (status == PORT_FILTER)
-  {
-     np.yellow_html_on();
-     result_txt += "filtered";
-     std::cout << "filtered"; 
-    }
-    else if (status == PORT_ERROR)
-  {
-     np.red_html_on();
-     result_txt += "error";
-     std::cout << "error"; 
-    }
-    else if (status == PORT_OPEN_OR_FILTER)
-  {
-     np.yellow_html_on();
-     result_txt += "open|filtered";
-     std::cout << "open|filtered"; 
-    }
-    else if (status == PORT_NO_FILTER)
-  {
-     np.green_html_on();
-     result_txt += "unfiltered";
-     std::cout << "unfiltered"; 
-    }
-    np.gray_nesca_on();
-    std::cout << " SERVICE: ";
-    np.green_html_on();
-    std::cout << service << std::endl;
+    result_txt += "open";
+    std::cout << "open"; 
+  }
+  else if (status == PORT_CLOSED) {
     np.reset_colors();
+    result_txt += "closed";
+    std::cout << "closed"; 
+  }
+  else if (status == PORT_FILTER) {
+    np.yellow_html_on();
+    result_txt += "filtered";
+    std::cout << "filtered"; 
+  }
+  else if (status == PORT_ERROR) {
+    np.red_html_on();
+    result_txt += "error";
+    std::cout << "error"; 
+  }
+  else if (status == PORT_OPEN_OR_FILTER) {
+    np.yellow_html_on();
+    result_txt += "open|filtered";
+    std::cout << "open|filtered"; 
+  }
+  else if (status == PORT_NO_FILTER) {
+    np.green_html_on();
+    result_txt += "unfiltered";
+    std::cout << "unfiltered"; 
+  }
+  np.gray_nesca_on(); std::cout << " SERVICE: "; np.green_html_on();
+  std::cout << service << std::endl; np.reset_colors();
   result_txt += " SERVICE: " + service;
 
   if (np.save_file){write_line(np.file_path_save, result_txt + "\n");}
@@ -870,8 +832,7 @@ print_port_state(int status, int port, std::string service){
 void ssh_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
   	const std::string& protocol, int port, arguments_program& argp, nesca_prints& np)
 {
-    if (argp.off_sftp_brute != true)
-  {
+  if (argp.off_sftp_brute != true) {
   	np.yellow_html_on();
   	std::cout << "[>][SSH]:" + ip + " [BRUTEFORCE]\n";
   	np.reset_colors();
@@ -879,212 +840,162 @@ void ssh_strategy::handle(const std::string& ip, const std::string& result, cons
   	brute_temp = threads_brute_ssh(ip, port, argp.sftp_logins, argp.sftp_passwords, argp.sftp_brute_log,
             argp.sftp_brute_verbose, argp.brute_timeout_ms);
 
-        if (argp.sftp_only)
-  	{
-            if (brute_temp.length() > 1){result_print = np.main_nesca_out("BA", "sftp://" + brute_temp + result, 3, "", "", "", "",rtt_log, "", protocol);}
-        }
-        else {result_print = np.main_nesca_out("BA", "sftp://" + brute_temp + result, 3, "", "", "", "",rtt_log, "", protocol);}
+    if (argp.sftp_only) {
+      if (brute_temp.length() > 1){result_print = np.main_nesca_out("BA", "sftp://" + brute_temp + result, 3, "", "", "", "",rtt_log, "", protocol);}
     }
-    else {result_print = np.main_nesca_out("BA", "sftp://" + result, 3, "", "", "", "",rtt_log,"", protocol);}
-    std::cout << result_print << std::endl;
+    else {result_print = np.main_nesca_out("BA", "sftp://" + brute_temp + result, 3, "", "", "", "",rtt_log, "", protocol);}
+  }
+  else {result_print = np.main_nesca_out("BA", "sftp://" + result, 3, "", "", "", "",rtt_log,"", protocol);}
+  std::cout << result_print << std::endl;
 }
 
 void ftp_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
   	const std::string& protocol, int port, arguments_program& argp, nesca_prints& np)
 {
-
   std::string port_s = std::to_string(port);
-  char version[256];
-  get_ftp_version(ip.c_str(), port, 1200, version, sizeof(version));
+  char version[256]; get_ftp_version(ip.c_str(), port, 1200, version, sizeof(version));
   std::string ftp_version = version;
 
-  if (argp.off_ftp_brute != true)
-  {
+  if (argp.off_ftp_brute != true) {
   	np.yellow_html_on();
   	std::cout << "[>][FTP]:" + ip + " [BRUTEFORCE]\n";
   	np.reset_colors();
 
-        brute_temp = threads_brute_ftp(ip, port, argp.ftp_logins, argp.ftp_passwords, argp.ftp_brute_log,
-                argp.ftp_brute_verbose, argp.brute_timeout_ms);
-
-        if (argp.ftp_only)
-  	{
-            if (brute_temp.length() > 1)
-  		{
-                result_print = np.main_nesca_out("BA", "ftp://" + brute_temp + result, 3, "D", "",
-                        ftp_version ,rtt_log, "", protocol);
-            }
-        }
-        else 
-  	{
-            result_print = np.main_nesca_out("BA", "ftp://" + brute_temp + result, 3, "D", "",
-                ftp_version ,rtt_log, "", protocol);
-        }
-    }
-    else 
-  {
+    brute_temp = threads_bruteforce(argp.ftp_logins, argp.ftp_passwords, "", ip, port, argp.brute_timeout_ms, FTP_BRUTEFORCE, argp.ftp_brute_log);
+    if (argp.ftp_only) {
+      if (brute_temp.length() > 1) {
         result_print = np.main_nesca_out("BA", "ftp://" + brute_temp + result, 3, "D", "",
-                ftp_version ,rtt_log, "", protocol);
+            ftp_version ,rtt_log, "", protocol);
+      }
     }
-                
-    std::cout << result_print << std::endl;
+    else {
+      result_print = np.main_nesca_out("BA", "ftp://" + brute_temp + result, 3, "D", "", ftp_version ,rtt_log, "", protocol);
+    }
+  }
+  else {
+    result_print = np.main_nesca_out("BA", "ftp://" + brute_temp + result, 3, "D", "",
+          ftp_version ,rtt_log, "", protocol);
+  }
+  std::cout << result_print << std::endl;
 }
+
 void smtp_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
   	const std::string& protocol, int port, arguments_program& argp, nesca_prints& np)
 {
   char version[256];
   get_smtp_version(ip.c_str(), port, 1200, version, sizeof(version));
   std::string responce_220 = version;
-    if (argp.off_sftp_brute != true)
-  {
+
+  if (argp.off_sftp_brute != true) {
   	np.yellow_html_on();
   	std::cout << "[>][SMTP]:" + ip + " [BRUTEFORCE]\n";
   	np.reset_colors();
 
-        brute_temp = threads_brute_smtp(ip, port, argp.smtp_logins, argp.smtp_passwords, argp.smtp_brute_log,
-            argp.smtp_brute_verbose, argp.brute_timeout_ms);
-
-
-        if (argp.sftp_only)
-  	{
-            if (brute_temp.length() > 1)
-  		{
-                result_print = np.main_nesca_out("BA", "smtp://" + brute_temp + result, 3, "D", "", responce_220, "",rtt_log, "", protocol);
-            }
-        }
-        else 
-  	{
-            result_print = np.main_nesca_out("BA", "smtp://" + brute_temp + result, 3, "D", "", responce_220, "",rtt_log, "", protocol);
-        }
+    brute_temp = threads_bruteforce(argp.smtp_logins, argp.smtp_passwords, "", ip, port, argp.brute_timeout_ms, SMTP_BRUTEFORCE, argp.smtp_brute_log);
+    if (argp.sftp_only) {
+      if (brute_temp.length() > 1) {
+        result_print = np.main_nesca_out("BA", "smtp://" + brute_temp + result, 3, "D", "", responce_220, "",rtt_log, "", protocol);
+      }
     }
-    else 
-  {
-        result_print = np.main_nesca_out("BA", "smtp://" + result, 3, "", "", responce_220, "",rtt_log, "", protocol);
+    else {
+      result_print = np.main_nesca_out("BA", "smtp://" + brute_temp + result, 3, "D", "", responce_220, "",rtt_log, "", protocol);
     }
-    std::cout << result_print << std::endl;
+  } else {
+    result_print = np.main_nesca_out("BA", "smtp://" + result, 3, "", "", responce_220, "",rtt_log, "", protocol);
+  }
+  std::cout << result_print << std::endl;
 }
+
 void hikvision_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
   	const std::string& protocol, int port, arguments_program& argp, nesca_prints& np)
 {
-    if (argp.off_hikvision_brute != true)
-  {
-  	np.yellow_html_on();
-  	std::cout << "[>][HIKVISION]:" + ip + std::to_string(port) + " [BRUTEFORCE]\n";
-  	np.reset_colors();
-        brute_temp = threads_brute_hikvision(ip, argp.hikvision_logins, argp.hikvision_passwords, argp.hikvision_brute_log,
-                    argp.brute_timeout_ms, argp.screenshots_save_path_cam);
+  if (argp.off_hikvision_brute != true) {
+    np.yellow_html_on(); std::cout << "[>][HIKVISION]:" + ip + std::to_string(port) + " [BRUTEFORCE]\n"; np.reset_colors();
 
-        if (argp.hikvision_only)
-  	{
-            if (brute_temp.length() > 1)
-  		{
-                result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "",rtt_log, "", protocol);
-            }
-        }
-        else 
-  	{
-            result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "",rtt_log, "", protocol);
-        }
-    }
-    else 
-  {
-        result_print = np.main_nesca_out("BA", "" + result, 3, "", "", "", "",rtt_log, "", protocol);
-    }
-    std::cout << result_print << std::endl;
-    if (brute_temp.length() > 1)
-    {
-        /*
-        unsigned char* file_data = binary_file(path_to_file_easy.c_str(), &file_size);
-        if (file_data)
-        {
-            char* encoded_data = base64_encode(file_data, file_size);
-            screenshot_base64_cam = encoded_data;
-            free(file_data);
-            free(encoded_data);
-        }
-        */
+    brute_temp = threads_brute_hikvision(ip, argp.hikvision_logins, argp.hikvision_passwords, argp.hikvision_brute_log,
+            argp.brute_timeout_ms, argp.screenshots_save_path_cam);
 
+    if (argp.hikvision_only) {
+      if (brute_temp.length() > 1) {
+        result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "",rtt_log, "", protocol);
+      }
     }
+    else {
+      result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "",rtt_log, "", protocol);
+    }
+  }
+  else {
+    result_print = np.main_nesca_out("BA", "" + result, 3, "", "", "", "",rtt_log, "", protocol);
+  }
+  std::cout << result_print << std::endl;
 }
 
 void https_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
   	const std::string& protocol, int port, arguments_program& argp, nesca_prints& np)
 {
-    std::string result_print = np.main_nesca_out("BA", "https://" + result, 3, "", "", "", "",rtt_log, "" ,protocol);
-    std::cout << result_print << std::endl;
+  std::string result_print = np.main_nesca_out("BA", "https://" + result, 3, "", "", "", "",rtt_log, "" ,protocol);
+  std::cout << result_print << std::endl;
 }
 
 void rvi_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
   	const std::string& protocol, int port, arguments_program& argp, nesca_prints& np)
 {
-    if (argp.off_rvi_brute != true){
+  if (argp.off_rvi_brute != true) {
   	np.yellow_html_on();
   	std::cout << "[>][RVI]:" + ip + " [BRUTEFORCE]\n";
   	np.reset_colors();
-        brute_temp = threads_brute_rvi(ip, port, argp.rvi_logins, argp.rvi_passwords, argp.rvi_brute_log,
-                    argp.brute_timeout_ms);
+    brute_temp = threads_bruteforce(argp.rvi_logins, argp.rvi_passwords, "", ip, port, argp.brute_timeout_ms, RVI_BRUTEFORCE, argp.rvi_brute_log);
 
-        if (argp.rvi_only)
-  	{
-            if (brute_temp.length() > 1)
-  		{
-                result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "",rtt_log, "", protocol);
-            }
-        }
-        else
-  	{
-          result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "",rtt_log,"", protocol);
-        }
+    if (argp.rvi_only) {
+      if (brute_temp.length() > 1) {
+        result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "",rtt_log, "", protocol);
+      }
     }
-    else
-  {
-        result_print = np.main_nesca_out("BA", "" + result, 3, "", "", "", "",rtt_log,"", protocol);
+    else {
+      result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "",rtt_log,"", protocol);
     }
+  }
+  else {
+    result_print = np.main_nesca_out("BA", "" + result, 3, "", "", "", "",rtt_log,"", protocol);
+  }
 
-    std::cout << result_print << std::endl;
+  std::cout << result_print << std::endl;
 }
 
 void rtsp_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
   	const std::string& protocol, int port, arguments_program& argp, nesca_prints& np)
 {
-    std::string path_yes = "";
-    if (argp.off_rtsp_brute != true)
-  {
-        std::vector<std::string> rtsp_paths = {"/Streaming/Channels/101", "/h264/ch01/main/av_stream", 
-                                            "/cam/realmonitor?channel=1&subtype=0","/live/main",
-                                            "/av0_0", "/mpeg4/ch01/main/av_stream"};
+  std::string path_yes = "";
+  if (argp.off_rtsp_brute != true) {
+
+    std::vector<std::string> rtsp_paths = {"/Streaming/Channels/101", "/h264/ch01/main/av_stream", 
+                                          "/cam/realmonitor?channel=1&subtype=0","/live/main",
+                                          "/av0_0", "/mpeg4/ch01/main/av_stream"};
   	np.yellow_html_on();
   	std::cout << "[>][RTSP]:" + ip + " [BRUTEFORCE]\n";
   	np.reset_colors();
 
-        for (auto& path : rtsp_paths)
-  	{
-            brute_temp = threads_brute_rtsp(ip+path, argp.rtsp_logins, argp.rtsp_passwords, argp.rtsp_brute_log, argp.rtsp_brute_verbose,
-                        argp.brute_timeout_ms);
-            if (brute_temp.length() > 1)
-  		{
-                path_yes = path;
-            }
-        }
-
-        if (argp.rtsp_only)
-  	{
-            if (brute_temp.length() > 1)
-  		{
-                result_print = np.main_nesca_out("BA", "rtsp://" + brute_temp + result + path_yes, 3, "", "", "", "",rtt_log, "", protocol);
-            }
-        }
-        else 
-  	{
-            result_print = np.main_nesca_out("BA", "rtsp://" + brute_temp + result + path_yes, 3, "", "", "", "",rtt_log, "", protocol);
-        }
-    }
-    else 
-  {
-        result_print = np.main_nesca_out("BA", "rtsp://" + result, 3, "", "", "", "",rtt_log,"", protocol);
+    for (auto& path : rtsp_paths) {
+      brute_temp = threads_bruteforce(argp.rtsp_logins, argp.rtsp_passwords, path, ip, port, argp.brute_timeout_ms, RTSP_BRUTEFORCE, argp.rtsp_brute_log);
+      if (brute_temp.length() > 1) {
+          path_yes = path;
+      }
     }
 
-    std::cout << result_print << std::endl;
+    if (argp.rtsp_only) {
+      if (brute_temp.length() > 1) {
+        result_print = np.main_nesca_out("BA", "rtsp://" + brute_temp + result + path_yes, 3, "", "", "", "",rtt_log, "", protocol);
+      }
+    }
+    else {
+      result_print = np.main_nesca_out("BA", "rtsp://" + brute_temp + result + path_yes, 3, "", "", "", "",rtt_log, "", protocol);
+    }
+  }
+  else {
+    result_print = np.main_nesca_out("BA", "rtsp://" + result, 3, "", "", "", "",rtt_log,"", protocol);
+  }
+
+  std::cout << result_print << std::endl;
 }
 
 void http_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
@@ -1097,41 +1008,37 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   hh.method = "GET";
   hh.path = "/";
   hh.dest_host = ip.c_str();
+  hh.auth_header = NULL;
 
   /*Получение заголовков и кода страницы.*/
   std::string redirect; char response_buffer[4096];
-  send_http_request(ip.c_str(), 80, 1000, &hh, response_buffer, sizeof(response_buffer));
+  send_http_request(ip.c_str(), 80, 1200, &hh, response_buffer, sizeof(response_buffer));
   std::string html = response_buffer;
   std::string default_result = "http://" + ip + ":" + std::to_string(port) + "/";
 
 #ifdef HAVE_NODE_JS
-    if (argp.save_screenshots)
-    {
-        std::string command = "node utils/screenshot.js " + default_result + " " +
-        std::to_string(argp.timeout_save_screenshots) + " " + argp.screenshots_save_path;
-        std::system(command.c_str());
-        if (argp.json_save)
-        {
-            size_t file_size;
-            std::string path_to_file_easy;
-            if (argp.screenshots_save_path == ".")
-            {
-                path_to_file_easy = ip + ".png";
-            }
-            else
-            {
-                path_to_file_easy = argp.screenshots_save_path + ip + ".png";
-            }
-            unsigned char* file_data = binary_file(path_to_file_easy.c_str(), &file_size);
-            if (file_data)
-            {
-                char* encoded_data = base64_encode(file_data, file_size);
-                screenshot_base64 = encoded_data;
-                free(file_data);
-                free(encoded_data);
-            }
-        }
+  if (argp.save_screenshots) {
+    std::string command = "node utils/screenshot.js " + default_result + " " +
+    std::to_string(argp.timeout_save_screenshots) + " " + argp.screenshots_save_path;
+    std::system(command.c_str());
+    if (argp.json_save) {
+      size_t file_size;
+      std::string path_to_file_easy;
+      if (argp.screenshots_save_path == ".") {
+        path_to_file_easy = ip + ".png";
+      }
+      else {
+        path_to_file_easy = argp.screenshots_save_path + ip + ".png";
+      }
+      unsigned char* file_data = binary_file(path_to_file_easy.c_str(), &file_size);
+      if (file_data) {
+        char* encoded_data = base64_encode(file_data, file_size);
+        screenshot_base64 = encoded_data;
+        free(file_data);
+        free(encoded_data);
+      }
     }
+ }
 #endif
 
   /*Получение перенаправления.*/
@@ -1144,7 +1051,7 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   /*Второй запрос HTTP по перенаправлению*/
   hh.path = redirect.c_str(); 
   memset(response_buffer, 0, sizeof(response_buffer));
-  send_http_request(ip.c_str(), 80, 1000, &hh, response_buffer, sizeof(response_buffer));
+  send_http_request(ip.c_str(), 80, 1100, &hh, response_buffer, sizeof(response_buffer));
   std::string html_pro = response_buffer;
 
   /*Получение заголовка.*/
@@ -1180,13 +1087,8 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   	}
   }
 
-  /*Удаление переносов из заголовка.*/
-    http_title_result.erase(std::remove(http_title_result.begin(), http_title_result.end(), '\r'), http_title_result.end());
-    http_title_result.erase(std::remove(http_title_result.begin(), http_title_result.end(), '\n'), http_title_result.end());
-  if (http_title_result.empty()){http_title_result = "n/a";}
-
   /*Получение характеристики.*/
-    std::string temp_check_http = cfs.set_target_at_path(redirect);
+  std::string temp_check_http = cfs.set_target_at_path(redirect);
   std::string temp_check_http1 = cfs.set_target_at_http_header(html);
   std::string temp_check_http2 = cfs.set_target_at_title(http_title_result);
   if (temp_check_http != "fuck"){type_target = temp_check_http;}
@@ -1195,89 +1097,78 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   int brute = cfs.than_bruteforce(type_target);
 
   /*Брутфорс HTTP basic auth.*/
-    if (argp.off_http_brute != true && temp_check_http != "no" && argp.no_get_path != true && brute != EOF)
-  {
-  	np.yellow_html_on();
-  	std::cout << "[>][HTTP]:" + ip + " [BRUTEFORCE]\n";
-  	np.reset_colors();
+  if (argp.off_http_brute != true && temp_check_http != "no" && argp.no_get_path != true && brute != EOF) {
+  	np.yellow_html_on(); std::cout << "[>][HTTP]:" + ip + " [BRUTEFORCE]\n"; np.reset_colors();
 
-        brute_temp = threads_brute_http(ip, redirect, argp.http_logins, argp.http_passwords,
-                argp.http_brute_log, argp.http_brute_verbose, argp.brute_timeout_ms);
-    }
+    brute_temp = threads_bruteforce(argp.http_logins, argp.http_passwords, redirect, ip, port, argp.brute_timeout_ms, HTTP_BRUTEFORCE, argp.http_brute_log);
+  }
 
-    result_print = np.main_nesca_out("BA", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "F", http_title_result, 
-  		type_target, rtt_log, "", protocol );
+  result_print = np.main_nesca_out("BA", "http://" + brute_temp + ip + ":" + std::to_string(port), 3, "T", "F", http_title_result, 
+  	    type_target, rtt_log, "", protocol );
 
-    if (argp.http_only)
-  {
-  	if (brute_temp.length() > 1)
-  	{
+  if (argp.http_only) {
+  	if (brute_temp.length() > 1) {
   		result_print = np.main_nesca_out("BA", "http://" + brute_temp + ip + ":" + std::to_string(port),
   			3, "T", "F", http_title_result, type_target, rtt_log, "", protocol);
   	}
   }
 
   /*Вывод основного.*/
-    std::cout << result_print << std::endl;
+  std::cout << result_print << std::endl;
 
-    /*Получение /robots.txt*/
-    if (argp.robots_txt){
-      np.gray_nesca_on();
-      std::cout << "[^][ROBOTS]:";
-        np.reset_colors();
-        int robots = get_robots_txt(ip.c_str(), port, 1200);
-        if (robots == -1){
-            np.red_html_on();
-            std::cout << ip << " robots.txt not found!\n";
-            np.reset_colors();
-        }
-        else
-        {
-            np.green_html_on();
-            std::cout << "http://" << ip + "/robots.txt\n";
-            np.reset_colors();
-          if(np.save_file){write_line(np.file_path_save, "[^][ROBOTS]:http://" + ip + "/robots.txt\n");}
-        }
+  /*Получение /robots.txt*/
+  if (argp.robots_txt){
+    np.gray_nesca_on();
+    std::cout << "[^][ROBOTS]:";
+    np.reset_colors();
+    int robots = get_robots_txt(ip.c_str(), port, 1100);
+    if (robots == -1){
+      np.red_html_on();
+      std::cout << ip << " robots.txt not found!\n";
+      np.reset_colors();
     }
+    else {
+      np.green_html_on();
+      std::cout << "http://" << ip + "/robots.txt\n";
+      np.reset_colors();
+      if(np.save_file){write_line(np.file_path_save, "[^][ROBOTS]:http://" + ip + "/robots.txt\n");}
+    }
+  }
 
-    /*Получение /sitemap.xml*/
-    if (argp.sitemap_xml){
-      np.gray_nesca_on();
-      std::cout << "[^][STEMAP]:";
-        np.reset_colors();
-        int sitemap = get_sitemap_xml(ip.c_str(), port, 1200);
-        if (sitemap == -1){
-            np.red_html_on();
-            std::cout << ip << " sitemap.xml not found!\n";
-            np.reset_colors();
-        }
-        else
-        {
-            np.green_html_on();
-            std::cout << "http://" << ip + "/sitemap.xml\n";
-            np.reset_colors();
-          if(np.save_file){write_line(np.file_path_save, "[^][SITEMAP]:http://" + ip + "/sitemap.xml\n");}
-        }
+  /*Получение /sitemap.xml*/
+  if (argp.sitemap_xml){
+    np.gray_nesca_on();
+    std::cout << "[^][STEMAP]:";
+    np.reset_colors();
+    int sitemap = get_sitemap_xml(ip.c_str(), port, 1100);
+    if (sitemap == -1){
+      np.red_html_on();
+      std::cout << ip << " sitemap.xml not found!\n";
+      np.reset_colors();
     }
+    else {
+      np.green_html_on();
+      std::cout << "http://" << ip + "/sitemap.xml\n";
+      np.reset_colors();
+      if(np.save_file){write_line(np.file_path_save, "[^][SITEMAP]:http://" + ip + "/sitemap.xml\n");}
+    }
+  }
 
   /*Вывод перенаправления.*/
-    if (redirect.length() != default_result.length())
-  {
-        if (redirect.length() != 0)
-  	{
-  	    np.gray_nesca_on();
-  	    std::cout << "[^][REDIRT]:";
-  		np.yellow_html_on();
+  if (redirect.length() != default_result.length()) {
+    if (redirect.length() != 0) {
+  	  np.gray_nesca_on();
+  	  std::cout << "[^][REDIRT]:";
+  	  np.yellow_html_on();
   		std::cout << redirect + "\n";
   		np.reset_colors();
   		if (np.save_file){write_line(np.file_path_save, "[^][REDIRT]:" + redirect);}
-        }
     }
+  }
 
   /*Вывод ответа http.*/
-    if (argp.get_response)
-  {
-  	np.yellow_html_on();
+  if (argp.get_response) {
+    np.yellow_html_on();
   	std::cout << html << std::endl;
   	np.reset_colors();
   }
@@ -1293,107 +1184,93 @@ void else_strategy::handle(const std::string& ip, const std::string& result, con
 void 
 processing_tcp_scan_ports(std::string ip, int port, int result)
 {
-        argp.result_success_ports++;
-        argp.result_success_ip++;
-  	std::stringstream stream; stream << std::fixed << std::setprecision(2) << nd.rtts[ip];
-      std::string rtt_log = stream.str();
-  	std::string protocol = sn.probe_service(port);
+  argp.result_success_ports++;
+  argp.result_success_ip++;
+  std::stringstream stream; stream << std::fixed << std::setprecision(2) << nd.rtts[ip];
+  std::string rtt_log = stream.str();
+  std::string protocol = sn.probe_service(port);
 
-  	/*Класс с обработками.*/
-  	std::unique_ptr<ports_strategy> ports_strategy_;
+  /*Класс с обработками.*/
+  std::unique_ptr<ports_strategy> ports_strategy_;
 
-  	/*Открытый порт.*/
-        if (result == PORT_OPEN)
-  	{
-  	  	if (argp.no_proc){print_port_state(PORT_OPEN, port, sn.probe_service(port));return;}
-            std::string result1 = ip + ":" + std::to_string(port);
+  /*Открытый порт.*/
+  if (result == PORT_OPEN) {
+    if (argp.no_proc){print_port_state(PORT_OPEN, port, sn.probe_service(port));return;}
+    std::string result1 = ip + ":" + std::to_string(port);
 
-            if (sn.probe_service(port) == "HTTP")
-  		{
-  			print_port_state(PORT_OPEN, port, "HTTP");
-  			ports_strategy_ = std::make_unique<http_strategy>();
-            }
-            else if (port == 20 || port == 21)
-  		{
-  		 	print_port_state(PORT_OPEN, port, "FTP");
-  		 	ports_strategy_ = std::make_unique<ftp_strategy>();
-            }
-            else if (port == 22)
-  		{
-  		 	print_port_state(PORT_OPEN, port, "SSH");
-  			ports_strategy_ = std::make_unique<ssh_strategy>();
-            }
-            else if (port == 554)
-  		{
-  		 	print_port_state(PORT_OPEN, port, "RTSP");
-  		 	ports_strategy_ = std::make_unique<rtsp_strategy>();
-            }else if (port == 37777)
-  		{
-  		    print_port_state(PORT_OPEN, port, "RVI");
-  		 	ports_strategy_ = std::make_unique<rvi_strategy>();
-  		}
-            else if (port == 8000)
-  		{
-  		 	print_port_state(PORT_OPEN, port, "HIKVISION");
-  		 	ports_strategy_ = std::make_unique<hikvision_strategy>();
-            }
-            else if (port == 443)
-  		{
-  		 	print_port_state(PORT_OPEN, port, "HTTPS");
-  			ports_strategy_ = std::make_unique<https_strategy>();
-            }else if (port == 25)
-  		{
-  		 	print_port_state(PORT_OPEN, port, "SMTP");
-  			ports_strategy_ = std::make_unique<smtp_strategy>();
-  	  	}
-            else
-  		{
-  		 	print_port_state(PORT_OPEN, port, sn.probe_service(port));
-  			ports_strategy_ = std::make_unique<else_strategy>();
-            }
+    if (sn.probe_service(port) == "HTTP") {
+  	  print_port_state(PORT_OPEN, port, "HTTP");
+  		ports_strategy_ = std::make_unique<http_strategy>();
+    }
+    else if (port == 20 || port == 21) {
+  	  print_port_state(PORT_OPEN, port, "FTP");
+  		ports_strategy_ = std::make_unique<ftp_strategy>();
+    }
+    else if (port == 22) {
+  	  print_port_state(PORT_OPEN, port, "SSH");
+  		ports_strategy_ = std::make_unique<ssh_strategy>();
+    }
+    else if (port == 554) {
+  	  print_port_state(PORT_OPEN, port, "RTSP");
+  		ports_strategy_ = std::make_unique<rtsp_strategy>();
+    }
+    else if (port == 37777) {
+  		print_port_state(PORT_OPEN, port, "RVI");
+  		ports_strategy_ = std::make_unique<rvi_strategy>();
+  	}
+    else if (port == 8000) {
+  	  print_port_state(PORT_OPEN, port, "HIKVISION");
+  		ports_strategy_ = std::make_unique<hikvision_strategy>();
+    }
+    else if (port == 443) {
+  	  print_port_state(PORT_OPEN, port, "HTTPS");
+  		ports_strategy_ = std::make_unique<https_strategy>();
+    }
+    else if (port == 25) {
+      print_port_state(PORT_OPEN, port, "SMTP");
+      ports_strategy_ = std::make_unique<smtp_strategy>();
+  	}
+    else {
+  		print_port_state(PORT_OPEN, port, sn.probe_service(port));
+  		ports_strategy_ = std::make_unique<else_strategy>();
+    }
 
-  		/*Запуск стратегий.*/
-  		if (ports_strategy_){ports_strategy_->handle(ip, result1, rtt_log, protocol, port, argp, np);}
+  	/*Запуск стратегий.*/
+    if (ports_strategy_){ports_strategy_->handle(ip, result1, rtt_log, protocol, port, argp, np);}
 
-            if (argp.json_save)
-            { 
-                nesca_port_details npd;
-                npd.port = port;
-                npd.protocol = protocol.c_str();
-                npd.http_title = ports_strategy_->http_title.c_str();
-                npd.screenshot = ports_strategy_->screenshot_base64.c_str();
-                npd.content = "";
-                npd.passwd = ports_strategy_->brute_temp.c_str();
-                npd.type_target = ports_strategy_->type_target.c_str();
-                nesca_json_save_port(argp.json_save_path, &npd);
-            }
-        }
+    if (argp.json_save) { 
+      nesca_port_details npd;
+      npd.port = port;
+      npd.protocol = protocol.c_str();
+      npd.http_title = ports_strategy_->http_title.c_str();
+      npd.screenshot = ports_strategy_->screenshot_base64.c_str();
+      npd.content = "";
+      npd.passwd = ports_strategy_->brute_temp.c_str();
+      npd.type_target = ports_strategy_->type_target.c_str();
+      nesca_json_save_port(argp.json_save_path, &npd);
+    }
+  }
 
-  	/*Ошибочный порт.*/
-        else if (result == EOF)
-  	{
-            if (argp.print_errors){print_port_state(PORT_ERROR, port, sn.probe_service(port));}
-        }
-  	/*Закрытый порт.*/
-        else if (result == 1)
-  	{
-            if (argp.debug){print_port_state(PORT_CLOSED, port, sn.probe_service(port));}
-        }
-  	/*Фильтруемый порт.*/
-        else if (result == 2)
-  	{
-            if (argp.debug){print_port_state(PORT_FILTER, port, sn.probe_service(port));}
-        }
-  	/*Открыт или фильтруеться.*/
-        else if (result == 3)
-  	{
-  		print_port_state(PORT_OPEN_OR_FILTER, port, sn.probe_service(port));
-        }
-  	/*Не фильтруеться.*/
-        else if (result == 4)
-  	{
-  		print_port_state(PORT_NO_FILTER, port, sn.probe_service(port));
-        }
+  /*Ошибочный порт.*/
+  else if (result == PORT_ERROR) {
+    if (argp.print_errors){print_port_state(PORT_ERROR, port, sn.probe_service(port));}
+  }
+  /*Закрытый порт.*/
+  else if (result == PORT_CLOSED) {
+    if (argp.debug){print_port_state(PORT_CLOSED, port, sn.probe_service(port));}
+  }
+  /*Фильтруемый порт.*/
+  else if (result == PORT_FILTER) {
+    if (argp.debug){print_port_state(PORT_FILTER, port, sn.probe_service(port));}
+  }
+  /*Открыт или фильтруеться.*/
+  else if (result == PORT_OPEN_OR_FILTER) {
+    print_port_state(PORT_OPEN_OR_FILTER, port, sn.probe_service(port));
+  }
+  /*Не фильтруеться.*/
+  else if (result == PORT_NO_FILTER) {
+    print_port_state(PORT_NO_FILTER, port, sn.probe_service(port));
+  }
 }
 // You live?
 
@@ -1431,9 +1308,6 @@ help_menu(void)
     np.reset_colors();
     std::cout << "  -fin, -xmas, -null: Use one of these scanning methods.\n";
     std::cout << "  -ack, -windows -maimon: Use ack or window or maimon scan method.\n";
-#ifdef HAVE_CURL
-    std::cout << "  -nesca3: Use classic probe scan nesca3.\n";
-#endif
     std::cout << "  -p <port ranges>: Only scan specified port(s) \n    Ex: -p 80; -p 22,80; -p 1-65535;\n";
     std::cout << "  -delay, -d <ms>: Set delay for scan.\n";
     std::cout << "  -scan-timeout <ms>: Edit timeout for getting packet on port.\n";
@@ -2022,9 +1896,6 @@ parse_args(int argc, char** argv)
         case 78:
   		 argp.pro_mode = true;
   	     break;
-        case 79:
-  		 argp.nesca3_scan = true;
-  	     break;
         case 43:
   		 argp.json_save = true;
              argp.json_save_path = optarg;
@@ -2138,13 +2009,6 @@ pre_check(void)
   np.reset_colors();
 
     if (argp.info_version) {version_menu();}
-
-  if (argp.nesca3_scan)
-  {
-  	np.golder_rod_on();
-  	std::cout << "-> PROBE aka NESCA3 SCAN: only ports: HTTP, HTTPS, FTP, SSH, RTSP\n";
-  	np.reset_colors();
-  }
 
     if (argp.ns_track)
     {
@@ -2266,53 +2130,6 @@ version_menu(void)
   std::cout << std::endl;
   exit(0);
 }
-
-#ifdef HAVE_CURL
-int
-probe_scan_ports(const std::string& ip, std::vector<int> ports){
-
-    if (argp.custom_recv_timeout_ms){s3n.timeout_ms = argp.recv_timeout_ms;}else
-  {
-     /*Расчёт таймаута для приёма данных*/
-     auto it = nd.rtts.find(ip);
-     if (it != nd.rtts.end())
-     {
-  	  double rtt_ping = nd.rtts.at(ip);
-  	  /*Тут всегда требуется много времени.*/
-  	  s3n.timeout_ms = calc_port_timeout(1, rtt_ping);
-     }
-    }
-
-  for (const auto& port : ports){
-  	int probe = PORT_FILTER;
-  	if (sn.probe_service(port) == "HTTP")
-  	{
-  		probe = s3n.http_probe(ip, port);
-  	}
-  	else if (sn.probe_service(port) == "FTP")
-  	{
-  		probe = s3n.ftp_probe(ip, port);
-  	}
-  	else if (sn.probe_service(port) == "SMTP")
-  	{
-  		probe = s3n.smtp_probe(ip, port);
-  	}
-  	else if (sn.probe_service(port) == "SSH")
-  	{
-  		probe = s3n.ssh_probe(ip, port);
-  	}
-  	else if (sn.probe_service(port) == "HTTPS")
-  	{
-  		probe = s3n.https_probe(ip, port);
-  	}
-      if (probe == PORT_CLOSED && argp.debug){nd.closed_target[ip].push_back(port);}
-      else if (probe == PORT_OPEN){nd.success_target[ip].push_back(port);}
-      else if (probe == PORT_FILTER && argp.debug){nd.filtered_target[ip].push_back(port);}
-      else if (probe == PORT_ERROR && argp.print_errors){nd.error_target[ip].push_back(port);}
-  }
-  return 0;
-}
-#endif
 
 int count_map_vector(const std::unordered_map<std::string, std::vector<int>>& map, const std::string& key)
 {

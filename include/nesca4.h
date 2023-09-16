@@ -50,7 +50,7 @@
 #include "../config/compile.h"
 
 /*Угадайте?*/
-#define VERSION "20230915"
+#define VERSION "20230916"
 
 void help_menu(void);
 void version_menu(void);
@@ -62,9 +62,6 @@ void fix_time(double time);
 
 int
 scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms);
-
-int
-probe_scan_ports(const std::string& ip, std::vector<int> ports);
 
 void checking_default_files(void);
 bool process_ping(std::string ip);
@@ -192,7 +189,7 @@ option long_options[] = {
   {"source-port", required_argument, 0, 36},
   {"ttl", required_argument, 0, 37},
   {"pro-mode", no_argument, 0, 78},
-  {"nesca3", no_argument, 0, 79},
+  /*79*/
   {"robots", no_argument, 0, 67},
   {"hikshots", required_argument, 0, 35},
   {"sitemap", no_argument, 0, 68},
