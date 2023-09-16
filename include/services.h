@@ -12,7 +12,7 @@
 #include <sstream>
 #include <map>
 
-class services_nesca{
+class services_nesca {
 private:
   std::map<int,std::string>
   parse_services(const std::string& filename);

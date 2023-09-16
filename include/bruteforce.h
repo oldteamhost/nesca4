@@ -26,23 +26,23 @@
 #include "../config/compile.h"
 #include "../ncsock/include/bruteforce.h"
 
-std::string 
+std::string
 threads_bruteforce(const std::vector<std::string>& login, std::vector<std::string>& pass,
         std::string http_path, std::string ip, int port, int delay, uint8_t proto, int brute_log);
 
 
 
-std::string 
+std::string
 brute_ssh(const std::string& ip, int port, const std::string login, const std::string pass,
         int brute_log, int verbose);
-std::string 
+std::string
 threads_brute_ssh(const std::string ip, int port, const std::vector<std::string> logins,
         const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms);
 
-std::string 
+std::string
 brute_hikvision(const std::string ip, const std::string login, const std::string pass,
         int brute_log, const std::string& path);
-std::string 
+std::string
 threads_brute_hikvision(const std::string ip, const std::vector<std::string> logins,
         const std::vector<std::string> passwords, int brute_log, int brute_timeout_ms, const std::string&path);
 #endif

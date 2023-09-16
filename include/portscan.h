@@ -7,6 +7,7 @@
 
 #ifndef SYN_SCAN_H
 #define SYN_SCAN_H
+
 #include <iostream>
 #include <cstdint>
 #include <cstring>
@@ -53,4 +54,5 @@ std::string get_type(uint8_t type);
 
 int /*Определение статуса порта.*/
 get_port_status(unsigned char* buffer, uint8_t scan_type);
+
 #endif

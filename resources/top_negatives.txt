@@ -1,5 +1,3 @@
-// Guide check negatives.txt
-
 404 not found                                  | 1
 error: the request could not be satisfied      | 1
 invalid url                                    | 1

@@ -7,6 +7,7 @@
 
 #ifndef OTHER_H
 #define OTHER_H
+
 #include <vector>
 #include <iostream>
 #include <regex>

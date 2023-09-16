@@ -11,9 +11,9 @@
  * Именно перемешения, я думаю это лучшее что можно было сделать.*/
 void group_scan::create_group(std::vector<std::string>& ips, std::unordered_map<std::string, double> rtts)
 {
-	/*Сортировка по возрастанию времени ответа.*/
-	std::sort(ips.begin(), ips.end(), [&rtts](const std::string& a, const std::string& b){return rtts[a] < rtts[b];});
-	for (int i = 1; i <= group_size && !ips.empty(); i++) {
+  /*Сортировка по возрастанию времени ответа.*/
+  std::sort(ips.begin(), ips.end(), [&rtts](const std::string& a, const std::string& b){return rtts[a] < rtts[b];});
+  for (int i = 1; i <= group_size && !ips.empty(); i++) {
     current_group.push_back(std::move(ips[0]));
     ips.erase(ips.begin());
   }
@@ -21,7 +21,7 @@ void group_scan::create_group(std::vector<std::string>& ips, std::unordered_map<
 
 void group_scan::increase_group(void)
 {
-	group_size += group_rate;
+  group_size += group_rate;
 }
 
 void group_scan::clean_group(void) {current_group.clear();}
@@ -56,13 +56,13 @@ range_to_ips(const std::vector<std::string>& ip_ranges)
 }
 
 std::vector<std::string>
-cidr_to_ips(const std::vector<std::string>& cidr_list) 
+cidr_to_ips(const std::vector<std::string>& cidr_list)
 {
   std::vector<std::string> ipAddresses;
   for (const std::string& cidr : cidr_list) {
     std::string networkAddress = cidr.substr(0, cidr.find('/'));
     int subnetMaskBits = std::stoi(cidr.substr(cidr.find('/') + 1));
-    
+
     std::vector<unsigned long long int> octets;
     std::string octetString;
     std::stringstream networkAddressStream(networkAddress);
@@ -70,7 +70,7 @@ cidr_to_ips(const std::vector<std::string>& cidr_list)
     while (std::getline(networkAddressStream, octetString, '.')) {
       octets.push_back(std::strtoull(octetString.c_str(), nullptr, 10));
     }
-    
+
     unsigned long long int ipAddress = 0;
 
     for (auto octet : octets) {

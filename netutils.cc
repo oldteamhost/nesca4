@@ -10,13 +10,13 @@
 std::string
 dns_utils::get_dns_by_ip(const char* ip, int port)
 {
-	struct in_addr addr;
+  struct in_addr addr;
   if (inet_pton(AF_INET, ip, &addr) != 1) {return "n/a";}
 
   int sock = socket(AF_INET, SOCK_STREAM, 0);
   if (sock == -1) {return "n/a";}
 
-	set_socket_timeout(sock, 600, 1, 1);
+  set_socket_timeout(sock, 600, 1, 1);
 
   struct sockaddr_in sa;
   memset(&sa, 0, sizeof(sa));
@@ -32,7 +32,7 @@ dns_utils::get_dns_by_ip(const char* ip, int port)
   return std::string(host);
 }
 
-const char* 
+const char*
 dns_utils::get_ip_by_dns(const char* dns)
 {
   int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -57,38 +57,35 @@ dns_utils::get_ip_by_dns(const char* dns)
 std::vector<std::string>
 dns_utils::get_all_ips_by_dns(const char* dns)
 {
-	std::vector<std::string> ip_addresses;
-    struct addrinfo* result;
+  std::vector<std::string> ip_addresses;
+  struct addrinfo* result;
 
-    int status = getaddrinfo(dns, nullptr, nullptr, &result);
-    if (status != 0) {return ip_addresses;}
+  int status = getaddrinfo(dns, nullptr, nullptr, &result);
+  if (status != 0) {return ip_addresses;}
 
-    struct addrinfo* current = result;
-    while (current != nullptr) 
-	{
-        char ip_address[INET6_ADDRSTRLEN];
-        void* addr;
+  struct addrinfo* current = result;
 
-        if (current->ai_family == AF_INET) 
-		{
-            struct sockaddr_in* addr_in = reinterpret_cast<struct sockaddr_in*>(current->ai_addr);
-            addr = &(addr_in->sin_addr);
-        } 
-        else 
-		{
-            struct sockaddr_in6* addr_in6 = reinterpret_cast<struct sockaddr_in6*>(current->ai_addr);
-            addr = &(addr_in6->sin6_addr);
-        }
+  while (current != nullptr) {
+    char ip_address[INET6_ADDRSTRLEN];
+    void* addr;
 
-        inet_ntop(current->ai_family, addr, ip_address, sizeof(ip_address));
-        std::string ip_str(ip_address);
-        if (std::find(ip_addresses.begin(), ip_addresses.end(), ip_str) == ip_addresses.end()) 
-		{
-            ip_addresses.push_back(ip_str);
-        }
-        current = current->ai_next;
+    if (current->ai_family == AF_INET) {
+      struct sockaddr_in* addr_in = reinterpret_cast<struct sockaddr_in*>(current->ai_addr);
+      addr = &(addr_in->sin_addr);
+    }
+    else {
+      struct sockaddr_in6* addr_in6 = reinterpret_cast<struct sockaddr_in6*>(current->ai_addr);
+      addr = &(addr_in6->sin6_addr);
     }
 
-    freeaddrinfo(result);
-    return ip_addresses;
+    inet_ntop(current->ai_family, addr, ip_address, sizeof(ip_address));
+    std::string ip_str(ip_address);
+    if (std::find(ip_addresses.begin(), ip_addresses.end(), ip_str) == ip_addresses.end()) {
+      ip_addresses.push_back(ip_str);
+    }
+    current = current->ai_next;
+  }
+
+  freeaddrinfo(result);
+  return ip_addresses;
 }

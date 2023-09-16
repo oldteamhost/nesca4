@@ -20,15 +20,15 @@
 
 class group_scan {
 public:
-	int group_size;
-	int group_rate;
-	int max_group_size;
+  int group_size;
+  int group_rate;
+  int max_group_size;
 
-	void create_group(std::vector<std::string>& ips, std::unordered_map<std::string, double> rtts);
-	void increase_group(void);
-	void clean_group(void);
+  void create_group(std::vector<std::string>& ips, std::unordered_map<std::string, double> rtts);
+  void increase_group(void);
+  void clean_group(void);
 
-	std::vector<std::string> current_group;
+  std::vector<std::string> current_group;
 };
 
 std::vector<std::string> cidr_to_ips(const std::vector<std::string>& cidr_list);

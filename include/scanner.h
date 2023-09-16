@@ -80,37 +80,36 @@
 class checking_finds {
 public:
 
-	/*Заголовок HTTP*/
-	std::vector<std::string> basic_auth_header = {"401 authorization", "401 unauthorized", "www-authenticate",
-											            "401 unauthorized access denied", "401 unauthorised", "www-authenticate",
-											            "digest realm", "basic realm", "401 Unauthorized"};
+  /*Заголовок HTTP*/
+  std::vector<std::string> basic_auth_header = {"401 authorization", "401 unauthorized", "www-authenticate",
+                                  "401 unauthorized access denied", "401 unauthorised", "www-authenticate",
+                                  "digest realm", "basic realm", "401 Unauthorized"};
 
-	/*Перенаплавления.*/
+  /*Перенаплавления.*/
   std::vector<std::string> axis_2400_path = {"/view/viewer_index.shtml", "/view/viewer_index.shtml?", "/check_user.cgi",
-									"/view/index2.shtml", "/index.shtml","/view/indexFrame.shtml","/indexFrame.html"};
+              "/view/index2.shtml", "/index.shtml","/view/indexFrame.shtml","/indexFrame.html"};
 
-	std::vector<std::string> network_camera_path ={"/ViewerFrame?Mode=", "/CgiStart?page=", "/admin/index.shtml?"};
+  std::vector<std::string> network_camera_path ={"/ViewerFrame?Mode=", "/CgiStart?page=", "/admin/index.shtml?"};
 
   std::vector<std::string> axis_other_path = {"/view/viewer_index.shtml", "/view/viewer_index.shtml", "/check_user.cgi",
-											                        "/axis-cgi/mjpg/video.cgi", "/jpg/image.jpg?size=3", "/mjpg/video.mjpg",
-                                              "/view/viewer_index.shtml", "/view/viewer_index.shtml", "/check_user.cgi",
-											                        "/cgi-bin/guest/Video.cgi?", "/ISAPI/Security/userCheck", "/SnapshotJPEG",
-											                        "/axis-cgi/com/ptz.cgi?", "/mjpg/video.mjpg"};
+                                        "/axis-cgi/mjpg/video.cgi", "/jpg/image.jpg?size=3", "/mjpg/video.mjpg",
+                                        "/view/viewer_index.shtml", "/view/viewer_index.shtml", "/check_user.cgi",
+                                        "/cgi-bin/guest/Video.cgi?", "/ISAPI/Security/userCheck", "/SnapshotJPEG",
+                                        "/axis-cgi/com/ptz.cgi?", "/mjpg/video.mjpg"};
+  bool /*Поиск слова в строчке.*/
+  contains_word(const std::string& word, const std::string& sentence);
 
-	bool /*Поиск слова в строчке.*/
-	contains_word(const std::string& word, const std::string& sentence);
+  std::string /*Установка характеристики по перенаправлению.*/
+  set_target_at_path(const std::string& path);
 
-	std::string /*Установка характеристики по перенаправлению.*/
-	set_target_at_path(const std::string& path);
+  std::string /*Установка характеристики по HTTP заголовку.*/
+  set_target_at_http_header(const std::string& buffer);
 
-	std::string /*Установка характеристики по HTTP заголовку.*/
-	set_target_at_http_header(const std::string& buffer);
+  std::string /*Установка характеристики по HTTP названию*/
+  set_target_at_title(const std::string& buffer);
 
-	std::string /*Установка характеристики по HTTP названию*/
-	set_target_at_title(const std::string& buffer);
-
-	int /*Узнать метод брутфорса для определённого типа.*/
-	than_bruteforce(const std::string type);
+  int /*Узнать метод брутфорса для определённого типа.*/
+  than_bruteforce(const std::string type);
 };
 
 #endif

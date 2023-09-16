@@ -69,7 +69,7 @@ _getopt(int argc, char * argv[], const char *opts)
         } else if(*(++s) != ':') {
           charind = 0;
           if(++optind >= argc) {
-		  	if(opterr) fprintf(stderr,"This bad, check help_menu.\n");
+        if(opterr) fprintf(stderr,"This bad, check help_menu.\n");
             opt = (colon_mode == ':') ? ':' : '?';
             goto my_getopt_ok;
           }

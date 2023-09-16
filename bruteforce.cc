@@ -14,12 +14,12 @@
 #include "ncsock/include/ftp.h"
 #include <mutex>
 
-std::string 
+std::string
 threads_bruteforce(const std::vector<std::string>& login, std::vector<std::string>& pass,
         std::string http_path, std::string ip, int port, int delay, uint8_t proto, int brute_log)
 {
-	std::vector<std::future<void>> futures;
-	thread_pool pool(100);
+  std::vector<std::future<void>> futures;
+  thread_pool pool(100);
   std::string result = "";
   std::mutex wait;
 
@@ -51,71 +51,71 @@ threads_bruteforce(const std::vector<std::string>& login, std::vector<std::strin
 
 nesca_prints np1;
 
-std::string 
+std::string
 brute_ssh(const std::string& ip, int port, const std::string login, const std::string pass, int brute_log, int verbose)
 {
 #ifdef HAVE_SSL
-    if (brute_log) {np1.nlog_custom("SSH", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
+  if (brute_log) {np1.nlog_custom("SSH", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
 
-    ssh_session sshSession = ssh_new();
-    if (sshSession == nullptr){return "";}
+  ssh_session sshSession = ssh_new();
+  if (sshSession == nullptr){return "";}
 
-	const int timeout = 2;
-	ssh_options_set(sshSession, SSH_OPTIONS_TIMEOUT, &timeout);
-    ssh_options_set(sshSession, SSH_OPTIONS_HOST, ip.c_str());
-    ssh_options_set(sshSession, SSH_OPTIONS_PORT, &port);
-    ssh_options_set(sshSession, SSH_OPTIONS_USER, login.c_str());
+  const int timeout = 2;
+  ssh_options_set(sshSession, SSH_OPTIONS_TIMEOUT, &timeout);
+  ssh_options_set(sshSession, SSH_OPTIONS_HOST, ip.c_str());
+  ssh_options_set(sshSession, SSH_OPTIONS_PORT, &port);
+  ssh_options_set(sshSession, SSH_OPTIONS_USER, login.c_str());
 
-    int connectionStatus = ssh_connect(sshSession);
-    if (connectionStatus != SSH_OK) {
-	   if (verbose) {std::cerr << "Не удалось установить соединение SSH: " << ssh_get_error(sshSession) << std::endl;}
-        ssh_free(sshSession);
-        return "";
-    }
+  int connectionStatus = ssh_connect(sshSession);
+  if (connectionStatus != SSH_OK) {
+  if (verbose) {std::cerr << "Не удалось установить соединение SSH: " << ssh_get_error(sshSession) << std::endl;}
+    ssh_free(sshSession);
+    return "";
+  }
 
-    int authenticationStatus = ssh_userauth_password(sshSession, nullptr, pass.c_str());
-    if (authenticationStatus != SSH_AUTH_SUCCESS) {
-	   if (verbose) {std::cerr << "Не удалось авторизоваться: " << ssh_get_error(sshSession) << std::endl;}
-        ssh_disconnect(sshSession);
-        ssh_free(sshSession);
-        return "";
-    }
-
-    if (verbose){std::cout << "Авторизация прошла успешно!" << std::endl;}
-
+  int authenticationStatus = ssh_userauth_password(sshSession, nullptr, pass.c_str());
+  if (authenticationStatus != SSH_AUTH_SUCCESS) {
+  if (verbose) {std::cerr << "Не удалось авторизоваться: " << ssh_get_error(sshSession) << std::endl;}
     ssh_disconnect(sshSession);
     ssh_free(sshSession);
+    return "";
+  }
 
-    std::string result = login + ":" + pass + "@";
-    return result;
+  if (verbose){std::cout << "Авторизация прошла успешно!" << std::endl;}
+
+  ssh_disconnect(sshSession);
+  ssh_free(sshSession);
+
+  std::string result = login + ":" + pass + "@";
+  return result;
 #else
-    return "no_ssh";
+  return "no_ssh";
 #endif
 }
 
-std::string 
-threads_brute_ssh(const std::string ip, int port, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms) 
+std::string
+threads_brute_ssh(const std::string ip, int port, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms)
 {
-    std::vector<std::string> results;
-	std::vector<std::future<void>> futures;
-	thread_pool pool(100);
+  std::vector<std::string> results;
+  std::vector<std::future<void>> futures;
+  thread_pool pool(100);
 
     for (const auto& login : logins) {
-        for (const auto& password : passwords) {
-            delay_ms(brute_timeout_ms);
-			futures.push_back(pool.enqueue([ip, port, login, password, brute_log, verbose, &results]() {
-                std::string temp = brute_ssh(ip, port, login, password, brute_log, verbose);
-                if (!temp.empty() && temp.length() > 3){results.push_back(temp);}
-            }));
-        }
-    }
-	for (auto& future : futures) {future.wait();}
+      for (const auto& password : passwords) {
+        delay_ms(brute_timeout_ms);
+        futures.push_back(pool.enqueue([ip, port, login, password, brute_log, verbose, &results]() {
+        std::string temp = brute_ssh(ip, port, login, password, brute_log, verbose);
+        if (!temp.empty() && temp.length() > 3){results.push_back(temp);}
+        }));
+      }
+  }
+  for (auto& future : futures) {future.wait();}
 
-    if (!results.empty()) {return results[0];} else{return "";}
-    return "";
+  if (!results.empty()) {return results[0];} else{return "";}
+  return "";
 }
 
-std::string 
+std::string
 brute_hikvision(const std::string ip, const std::string login, const std::string pass, int brute_log, const std::string& path)
 {
 #ifdef HAVE_HIKVISION
@@ -166,24 +166,24 @@ brute_hikvision(const std::string ip, const std::string login, const std::string
 #endif
 }
 
-std::string 
+std::string
 threads_brute_hikvision(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int brute_timeout_ms, const std::string&path)
 {
-    std::vector<std::string> results;
-	std::vector<std::future<void>> futures;
-	thread_pool pool(100);
+  std::vector<std::string> results;
+  std::vector<std::future<void>> futures;
+  thread_pool pool(100);
 
-    for (const auto& login : logins) {
-        for (const auto& password : passwords) {
-            delay_ms(brute_timeout_ms);
-			futures.push_back(pool.enqueue([ip, login, password, brute_log, path, &results]() {
-                std::string temp = brute_hikvision(ip, login, password, brute_log, path);
-                if (!temp.empty() && temp.length() > 3){results.push_back(temp);}
-            }));
-        }
-    }
-	for (auto& future : futures) {future.wait();}
-    if (!results.empty()) {return results[0];} else{return "";}
+  for (const auto& login : logins) {
+    for (const auto& password : passwords) {
+      delay_ms(brute_timeout_ms);
+      futures.push_back(pool.enqueue([ip, login, password, brute_log, path, &results]() {
+        std::string temp = brute_hikvision(ip, login, password, brute_log, path);
+        if (!temp.empty() && temp.length() > 3){results.push_back(temp);}
+      }));
+      }
+  }
+  for (auto& future : futures) {future.wait();}
+  if (!results.empty()) {return results[0];} else{return "";}
 
-    return "";
+  return "";
 }

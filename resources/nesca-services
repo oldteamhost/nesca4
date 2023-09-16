@@ -12,11 +12,11 @@ TELNET          23
 SMTP            25
 RSFTP           26
 WHOIS           43
-DNS			        53
-DHCP			67
-TFTP			69
-GOPHER		    70
-HTTP			8008
+DNS             53
+DHCP            67
+TFTP            69
+GOPHE           70
+HTTP            8008
 NESCA?		    60001
 NESCA?		    60002
 HTTP			80

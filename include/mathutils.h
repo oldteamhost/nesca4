@@ -5,8 +5,9 @@
  *   Сделано от души 2023.
 */
 
-#ifndef MATHUTILS_H 
+#ifndef MATHUTILS_H
 #define MATHUTILS_H
+
 #include <algorithm>
 
 int /*Функция для расчёта количества поток на основе скорости.*/
