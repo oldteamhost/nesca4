@@ -73,7 +73,7 @@ get_port_status(unsigned char* buffer, uint8_t scan_type){
 			 /*SYN + ACK + PSH
 			 * Если хост ответил флагом ack и psh затем  послал syn
 			 значит порт считаеться открытым, и готовым для
-			 передачи данных*/
+			 передач>и данных*/
 			 return PORT_OPEN;
 		  }
 		  case 0x04:
