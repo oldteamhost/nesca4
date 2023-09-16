@@ -8,7 +8,6 @@ VP   V8P Y88888P `8888Y'  `Y88P' YP   YP   by oldteam & lomaster.
 PS: Перечислять все возможности тут я не буду. Прочитать о том что умеет nesca4 и
 как это разрабатывалось читайте в resources/do_not_read.txt
 
-Debian 12:
 sudo apt-get install libcurl4-openssl-dev nodejs
 sudo apt install gcc g++ make git cmake libssh-dev
 git clone --recursive https://github.com/oldteamhost/nesca4
@@ -16,7 +15,6 @@ cd nesca4
 cmake .
 make -j12
 
-Arch 2023:
 sudo pacman -S curl cmake nodejs
 git clone --recursive https://github.com/oldteamhost/nesca4
 cd nesca4
