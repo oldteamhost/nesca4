@@ -6,6 +6,7 @@
 */
 
 #include "include/portscan.h"
+#include <cstdint>
 
 nesca_prints np2;
 std::mutex packet_trace;
@@ -86,6 +87,19 @@ get_port_status(unsigned char* buffer, uint8_t scan_type)
       }
     }
   }
+}
+
+std::string return_port_status(uint8_t type)
+{
+  switch (type)
+  {
+    case PORT_OPEN: return "open";
+    case PORT_CLOSED: return "closed";
+    case PORT_FILTER: return "filtered";
+    case PORT_OPEN_OR_FILTER: return "open/filtered";
+    case PORT_NO_FILTER: return "unfiltered";
+  }
+  return "error";
 }
 
 std::string

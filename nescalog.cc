@@ -9,6 +9,7 @@
 #include "ncbase/include/json.h"
 #include "ncsock/include/strbase.h"
 #include "ncsock/include/base.h"
+#include <cstdio>
 
 html_output hou;
 
@@ -112,7 +113,7 @@ nesca_prints::nlog_packet_trace(std::string action, std::string protocol, std::s
     write_line(file_path_save, temp_file + "\n");
   }
 
-  std::cout << temp << std::endl;
+  fprintf(stdout, "%s",temp.c_str()) ;
 }
 
 void
@@ -155,25 +156,39 @@ nesca_prints::import_color_scheme(const std::string& file_name, std::map<std::st
 }
 
 void
-nesca_prints::golder_rod_on(void) {std::cout << golder_rod;}
+nesca_prints::golder_rod_on(void) {
+  fprintf(stdout, "%s", golder_rod.c_str());
+}
 
 void
-nesca_prints::sea_green_on(void) {std::cout << sea_green;}
+nesca_prints::sea_green_on(void) {
+  fprintf(stdout, "%s", sea_green.c_str());
+}
 
 void
-nesca_prints::reset_colors(void) {std::cout << reset_color;}
+nesca_prints::reset_colors(void) {
+  fprintf(stdout, "%s", reset_color.c_str());
+}
 
 void
-nesca_prints::gray_nesca_on(void) {std::cout << gray_nesca;}
+nesca_prints::gray_nesca_on(void) {
+  fprintf(stdout, "%s", gray_nesca.c_str());
+}
 
 void
-nesca_prints::yellow_html_on(void) {std::cout << yellow_html;}
+nesca_prints::yellow_html_on(void) {
+  fprintf(stdout, "%s", yellow_html.c_str());
+}
 
 void
-nesca_prints::green_html_on(void) {std::cout << green_html;}
+nesca_prints::green_html_on(void) {
+  fprintf(stdout, "%s", green_html.c_str());
+}
 
 void
-nesca_prints::red_html_on(void) {std::cout << red_html;}
+nesca_prints::red_html_on(void) {
+  fprintf(stdout, "%s", red_html.c_str());
+}
 
 void
 nesca_prints::custom_color_on(const std::string& html_color)
@@ -211,7 +226,7 @@ void
 nesca_prints::nlog_trivial(const std::string& message)
 {
   std::string log = print_get_time(get_time()) + "[OK]:" + message;
-  std::cout << green_html << log << reset_color;
+  fprintf(stdout, "%s%s", green_html.c_str(), log.c_str()); 
 
   if (save_file) {write_line(file_path_save, log);}
 }
@@ -220,7 +235,7 @@ void
 nesca_prints::nlog_error(const std::string& message)
 {
   const std::string log = print_get_time(get_time()) + "[ERROR]:" + message;
-  std::cout << red_html << log << reset_color;
+  fprintf(stdout, "%s%s", red_html.c_str(), log.c_str()); 
 
   if (save_file) {write_line(file_path_save, log);}
 }
@@ -231,9 +246,9 @@ nesca_prints::nlog_custom(const std::string& auth, std::string message, int colo
   const std::string log = print_get_time(get_time()) + "[" + auth + "]:" + message;
   if (save_file)write_line(file_path_save, log);
 
-  if      (color == 0) {std::cout << green_html;}
-  else if (color == 1) {std::cout << yellow_html;}
-  else if (color == 2) {std::cout << red_html;}
+  if      (color == 0) {green_html_on();}
+  else if (color == 1) {yellow_html_on();}
+  else if (color == 2) {red_html_on();}
 
-  std::cout << log << reset_color;
+  fprintf(stdout, "%s",log.c_str()) ;
 }

@@ -58,6 +58,7 @@
 #include "ncsock/include/smtp.h"
 #include <bits/getopt_core.h>
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <string>
 #include <unordered_map>
@@ -140,10 +141,8 @@ int main(int argc, char** argv)
         generate_random_str(argp.dns_scan_domain_count, argp.dns_dictionary.c_str());
         std::string random_;
         std::string result = random_ + argp.domain_1level;
-        char ipbuf[1024];
-        get_ip(result.c_str(), ipbuf, sizeof(ipbuf));
+        char ipbuf[1024]; get_ip(result.c_str(), ipbuf, sizeof(ipbuf));
         std::string ip = ipbuf;
-
 
         if (ip == "N/A") {
           if (argp.debug) {
@@ -209,7 +208,6 @@ int main(int argc, char** argv)
     temp_ips = split_string_string(argv[optind], ',');
     argp.result = resolv_hosts(temp_ips);
   }
-
   if (argp.random_ip) {
     for (int i = 1; i <= argp.random_ip_count; i++) {
       std::string random_temp = generate_ipv4();
@@ -217,8 +215,7 @@ int main(int argc, char** argv)
     }
   }
 
-  int ip_count = 0;
-  std::vector<std::string> result_main;
+  int ip_count = 0; std::vector<std::string> result_main;
 
   /*Расчёт количества потоков и таймаута для пинга.*/
   if (!argp.custom_threads) {
@@ -292,6 +289,7 @@ int main(int argc, char** argv)
     //int error_count = argp.result.size() - result_main.size();
     // std::cout << np.main_nesca_out("NESCA4", "FINISH ping", 5, "success", "errors", std::to_string(result_main.size()), std::to_string(error_count)) << std::endl;
   }
+
   if (argp.ping_off){result_main = argp.result;}
   auto end_time_ping = std::chrono::high_resolution_clock::now();
   auto duration_ping = std::chrono::duration_cast<std::chrono::microseconds>(end_time_ping - start_time_ping);
@@ -303,6 +301,7 @@ int main(int argc, char** argv)
 
   auto start_time_dns = std::chrono::high_resolution_clock::now();
 
+  /* DNS сканирование */
   if (!argp.no_get_dns) {
     if (argp.pro_mode) {
       std::cout << np.main_nesca_out("NESCA4", "DNS_RESOLUTION", 5, "threads", "",
@@ -329,28 +328,25 @@ int main(int argc, char** argv)
   gs.group_size = GROUP_MIN_SIZE_DEFAULT;
 
   /*Установка настроек группы и потоков.*/
-  if (argp.speed_type == 5)
-  {
+  if (argp.speed_type == 5) {
     if (!argp.custom_g_rate){gs.group_rate = 100;}
   }
-  else if (argp.speed_type == 4)
-  {
+  else if (argp.speed_type == 4) {
     if (!argp.custom_g_rate){gs.group_rate = 50;}
   }
-  else if (argp.speed_type == 3)
-  {
+  else if (argp.speed_type == 3) {
     if (!argp.custom_g_rate){gs.group_rate = 20;}
   }
-  else if (argp.speed_type == 2)
-  {
+  else if (argp.speed_type == 2) {
     if (!argp.custom_g_rate){gs.group_rate = 10;}
   }
-  else if (argp.speed_type == 1)
-  {
+  else if (argp.speed_type == 1) {
     if (!argp.custom_g_rate){gs.group_rate = 5;}
   }
 
-  if (!argp.custom_g_max){gs.max_group_size = result_main.size();}
+  if (!argp.custom_g_max){
+    gs.max_group_size = result_main.size();
+  }
 
   /*Потоки для сканирования портов.*/
   argp._threads = gs.max_group_size;
@@ -659,8 +655,7 @@ void fix_time(double time) {std::cout << std::fixed << std::setprecision(2) << t
 
 bool process_ping(std::string ip)
 {
-  int ttl = 121;
-  uint16_t source_port;
+  int ttl = 121; uint16_t source_port = 3443;
   if (!argp.custom_source_port){source_port = generate_rare_port();}
   else {source_port = argp._custom_source_port;}
   if (argp.custom_ttl){ttl = argp._custom_ttl;}
@@ -707,22 +702,7 @@ bool process_ping(std::string ip)
   return false;
 }
 
-int errors_files = 0;
-
-void check_files(const char* path, const char* path1)
-{
-  if (!check_file(path)){
-    np.nlog_error(std::string(path) + " (" + std::to_string(get_count_lines(path)) + ") entries\n");
-    errors_files++;
-  }
-  else if (!check_file(path1)){
-    np.nlog_error(std::string(path1) + " (" + std::to_string(get_count_lines(path1)) + ") entries\n");
-    errors_files++;
-  }
-}
-
-std::vector<std::string>
-resolv_hosts(std::vector<std::string> hosts)
+std::vector<std::string> resolv_hosts(std::vector<std::string> hosts)
 {
   std::vector<std::string> result;
   for (const auto& t : hosts) {
@@ -748,6 +728,21 @@ resolv_hosts(std::vector<std::string> hosts)
 
   return result;
 }
+
+int errors_files = 0;
+
+void check_files(const char* path, const char* path1)
+{
+  if (!check_file(path)){
+    np.nlog_error(std::string(path) + " (" + std::to_string(get_count_lines(path)) + ") entries\n");
+    errors_files++;
+  }
+  else if (!check_file(path1)){
+    np.nlog_error(std::string(path1) + " (" + std::to_string(get_count_lines(path1)) + ") entries\n");
+    errors_files++;
+  }
+}
+
 
 void checking_default_files(void)
 {
@@ -783,48 +778,27 @@ void checking_default_files(void)
   }
 }
 
+/* Function for outputting the port status, fprintf is used here because
+ * it is simply faster than std::cout.*/
 void print_port_state(int status, int port, std::string service)
 {
   std::string result_txt = "\n[&][REPORT]:" + std::to_string(port) + "/tcp STATE: "; np.gray_nesca_on();
-  std::cout << "[&][REPORT]:"; np.green_html_on();
+  fprintf(stdout, "[&][REPORT]:");
+  np.green_html_on();
   std::cout << std::to_string(port) << "/tcp";  np.gray_nesca_on();
-  std::cout << " STATE: ";
-
-  if (status == PORT_OPEN) {
-    np.green_html_on();
-    result_txt += "open";
-    std::cout << "open";
-  }
-  else if (status == PORT_CLOSED) {
-    np.reset_colors();
-    result_txt += "closed";
-    std::cout << "closed";
-  }
-  else if (status == PORT_FILTER) {
-    np.yellow_html_on();
-    result_txt += "filtered";
-    std::cout << "filtered";
-  }
-  else if (status == PORT_ERROR) {
-    np.red_html_on();
-    result_txt += "error";
-    std::cout << "error";
-  }
-  else if (status == PORT_OPEN_OR_FILTER) {
-    np.yellow_html_on();
-    result_txt += "open|filtered";
-    std::cout << "open|filtered";
-  }
-  else if (status == PORT_NO_FILTER) {
-    np.green_html_on();
-    result_txt += "unfiltered";
-    std::cout << "unfiltered";
-  }
-  np.gray_nesca_on(); std::cout << " SERVICE: "; np.green_html_on();
-  std::cout << service << std::endl; np.reset_colors();
+  fprintf(stdout, " STATE: ");
+  std::string status_port = return_port_status(status);
+  np.golder_rod_on();
+  fprintf(stdout, "%s", status_port.c_str());
+  np.reset_colors();
+  result_txt += status_port;
   result_txt += " SERVICE: " + service;
+  np.gray_nesca_on(); fprintf(stdout, " SERVICE: "); np.green_html_on();
+  fprintf(stdout, "%s\n", service.c_str()); np.reset_colors();
 
-  if (np.save_file){write_line(np.file_path_save, result_txt + "\n");}
+  if (np.save_file) {
+    write_line(np.file_path_save, result_txt + "\n");
+  }
 }
 
 void ftp_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
@@ -2075,9 +2049,9 @@ parse_args(int argc, char** argv)
   		argp.custom_recv_timeout_ms = true;
   		argp.recv_timeout_ms = atoi(optarg);
   		break;
-         default: 
+      default: 
   		 help_menu();
-  		 break;
-        }
+       exit(1);
+      }
     }
 }

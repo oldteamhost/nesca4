@@ -51,8 +51,7 @@
 #define MAIMON_SCAN           7
 
 std::string get_type(uint8_t type);
-
-int /*Определение статуса порта.*/
-get_port_status(unsigned char* buffer, uint8_t scan_type);
+int get_port_status(unsigned char* buffer, uint8_t scan_type);
+std::string return_port_status(uint8_t type);
 
 #endif

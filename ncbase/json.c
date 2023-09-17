@@ -89,7 +89,7 @@ nesca_json_save_port(const char* filename, const struct nesca_port_details* port
       fprintf(file, "                    \"screenshot\": \"%s\",\n", port_data->screenshot);
     }
     if (*port_data->type_target != '\0') {
-      fprintf(file, "            \"type_target\": \"%s\",\n", port_data->type_target);
+      fprintf(file, "                     \"type_target\": \"%s\",\n", port_data->type_target);
     }
     if (*port_data->content!= '\0') {
       fprintf(file, "                    \"content\": \"%s\",\n", port_data->content);
