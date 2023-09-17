@@ -98,7 +98,7 @@ brute_hikvision(const std::string ip, const std::string login, const std::string
 
   return result;
 #else
-  return "no_hikvision";
+  return "no-hikvision";
 #endif
 }
 
