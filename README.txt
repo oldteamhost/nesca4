@@ -10,14 +10,14 @@ PS: Перечислять все возможности тут я не буду
 
 ==========================================================================================
 
-sudo apt-get install libcurl4-openssl-dev nodejs
-sudo apt install gcc g++ make git cmake libssh-dev
+sudo apt-get install nodejs
+sudo apt install gcc g++ make git cmake
 git clone --recursive https://github.com/oldteamhost/nesca4
 cd nesca4
 cmake .
 make -j12
 
-sudo pacman -S curl cmake nodejs
+sudo pacman -S cmake nodejs
 git clone --recursive https://github.com/oldteamhost/nesca4
 cd nesca4
 cmake .
@@ -27,6 +27,5 @@ Screenshots not save!:
 cd nesca4 && sudo chmod u+rwx,g+r,o+r utils/ 
 
 Для компиляции без библиотек, нужно зайти в файл `config/compile.h`, и закомментировать, или удалить строчку отвечающую за библиотеку, без которой вы хотите скомпилировать:
-#define HAVE_SSH
 #define HAVE_HIKVISION
 #define HAVE_NODE_JS
