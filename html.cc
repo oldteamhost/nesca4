@@ -6,6 +6,8 @@
 */
 
 #include "include/html.h"
+#include "ncsock/include/base.h"
+#include "ncsock/include/strbase.h"
 
 int
 html_output::html_main_init(const std::string& filepath)
@@ -18,12 +20,13 @@ html_output::html_main_init(const std::string& filepath)
 int
 html_output::html_pre_init(const std::string& filepath)
 {
+  char formatted_date[11]; get_current_date(formatted_date, sizeof(formatted_date));
   const std::string data_html = R"(
   <br><br>
   <hr>
       <center>
       <h5>
-      <font color="#a1a1a1">[)" + std::string(get_time()) + " & " + get_current_date() + R"(]</font>
+      <font color="#a1a1a1">[)" + std::string(get_time()) + " & " + formatted_date + R"(]</font>
       </h5>
       </center>
   <hr>

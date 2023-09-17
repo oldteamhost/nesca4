@@ -26,7 +26,8 @@ thread_pool::thread_pool(size_t numThreads) : stop(false)
 }
 
 thread_pool::~thread_pool()
-{ {
+{
+  {
     std::unique_lock<std::mutex> lock(queueMutex);
     stop = true;
   }

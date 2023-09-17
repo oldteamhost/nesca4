@@ -26,17 +26,14 @@
 
 #include "bruteforce.h"
 #include "files.h"
-#include "generation.h"
 #include "other.h"
 #include "scanner.h"
 #include "target.h"
 #include "html.h"
 #include "nescalog.h"
 #include "portscan.h"
-#include "netutils.h"
 #include "services.h"
 #include "nescathread.h"
-#include "mathutils.h"
 
 #include "../modules/include/negatives.h"
 
@@ -67,7 +64,7 @@ void checking_default_files(void);
 bool process_ping(std::string ip);
 void parse_args(int argc, char** argv);
 void pre_check(void);
-void print_results(std::string ip);
+void process_port(const std::string& ip, const std::unordered_map<std::string, std::vector<int>>& target_map, int port_type);
 void get_dns_thread(std::string ip);
 int count_map_vector(const std::unordered_map<std::string, std::vector<int>>& map, const std::string& key);
 int traceroute(std::string ip, int jumps);

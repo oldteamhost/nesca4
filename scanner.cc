@@ -118,6 +118,7 @@ checking_finds::set_target_at_title(const std::string& title)
 int
 checking_finds::than_bruteforce(const std::string type)
 {
+  if (type == "n/a"){return -1;}
   if (type == CAMERA_AXIS || type == CAMERA_AXIS_205 ||
     type == CAMERA_AXIS_2400 || type == HTTP_BASIC_AUTH ||
     type == CAMERA_BB_SC384 || type == CAMERA_VB_M40 ||

@@ -7,6 +7,8 @@
 
 #include "include/nescalog.h"
 #include "ncbase/include/json.h"
+#include "ncsock/include/strbase.h"
+#include "ncsock/include/base.h"
 
 html_output hou;
 

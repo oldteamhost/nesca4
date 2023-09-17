@@ -7,37 +7,7 @@
 
 #include "include/other.h"
 
-const char*
-get_time()
-{
-  time_t rawtime;
-  struct tm * timeinfo;
-  static char time_str[9];
-
-  time(&rawtime);
-  timeinfo = localtime(&rawtime);
-
-  sprintf(time_str, "%02d:%02d:%02d", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
-  return time_str;
-}
-
-std::string get_current_date()
-{
-  std::time_t current_time = std::time(nullptr);
-  std::tm* local_time = std::localtime(&current_time);
-
-  const int year = local_time->tm_year + 1900;
-  const int month = local_time->tm_mon + 1;
-  const int day = local_time->tm_mday;
-
-  const std::string formatted_date = std::to_string(year) + "-" +
-                            (month < 10 ? "0" : "") + std::to_string(month) + "-" +
-                            (day < 10 ? "0" : "") + std::to_string(day);
-  return formatted_date;
-}
-
-bool
-check_ansi_support(void)
+bool check_ansi_support(void)
 {
   const char* envValue = std::getenv("TERM");
   if (envValue == nullptr) {return false;}
@@ -45,16 +15,7 @@ check_ansi_support(void)
   return std::string(envValue).find("xterm") != std::string::npos;
 }
 
-void delay_ms(int milliseconds)
-{
-  struct timespec ts;
-  ts.tv_sec = milliseconds / 1000;
-  ts.tv_nsec = (milliseconds % 1000) * 1000000;
-  nanosleep(&ts, NULL);
-}
-
-std::vector<int>
-write_ports(std::string mode)
+std::vector<int> write_ports(std::string mode)
 {
   std::vector<int> temp;
   std::transform(mode.begin(), mode.end(), mode.begin(), [](unsigned char c) {
@@ -113,8 +74,7 @@ void logo(void)
   puts("VP   V8P Y88888P `8888Y'  `Y88P' YP   YP          VP  \n");
 }
 
-std::vector<int>
-parse_range(const std::string& range_string)
+std::vector<int> parse_range(const std::string& range_string)
 {
   std::vector<int> result;
   int start = 0, end = 0;
@@ -135,15 +95,7 @@ parse_range(const std::string& range_string)
 
 bool __check_root_perms() {return (geteuid() == 0);}
 
-bool
-dns_or_ip(std::string &node)
-{
-  struct sockaddr_in sa;
-  return (inet_pton(AF_INET, node.c_str(), &(sa.sin_addr)) == 0);
-}
-
-int
-write_temp(const std::string& data, const std::string& file_name)
+int write_temp(const std::string& data, const std::string& file_name)
 {
   const std::vector<std::string> temp = write_file(file_name);
   for (auto& str : temp) {
@@ -159,8 +111,7 @@ write_temp(const std::string& data, const std::string& file_name)
   return 0;
 }
 
-std::string
-parse_word(const std::vector<std::string>& options,
+std::string parse_word(const std::vector<std::string>& options,
     const std::string& search_word)
 {
   for (const std::string& option : options) {
@@ -169,15 +120,13 @@ parse_word(const std::vector<std::string>& options,
   return "failed";
 }
 
-std::string
-to_lower_case(std::string str)
+std::string to_lower_case(std::string str)
 {
   std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c) {return std::tolower(c);});
   return str;
 }
 
-size_t
-find_char(const std::string& str, char ch)
+size_t find_char(const std::string& str, char ch)
 {
   return str.find(ch);
 }

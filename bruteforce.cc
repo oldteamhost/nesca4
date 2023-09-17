@@ -12,11 +12,15 @@
 #include "ncsock/include/bruteforce.h"
 #include "ncsock/include/socket.h"
 #include "ncsock/include/ftp.h"
+#include "ncsock/include/base.h"
+#include "ncsock/include/strbase.h"
 #include <mutex>
+
+nesca_prints np1;
 
 std::string
 threads_bruteforce(const std::vector<std::string>& login, std::vector<std::string>& pass,
-        std::string http_path, std::string ip, int port, int delay, uint8_t proto, int brute_log)
+    std::string http_path, std::string ip, int port, int delay, uint8_t proto, int brute_log)
 {
   std::vector<std::future<void>> futures;
   thread_pool pool(100);
@@ -25,9 +29,9 @@ threads_bruteforce(const std::vector<std::string>& login, std::vector<std::strin
 
   for (const auto& l : login){
     for (const auto& p : pass){
-      futures.push_back(pool.enqueue([&wait, l, p, ip, port, proto, http_path, delay, &result]() {
-
+      futures.push_back(pool.enqueue([&wait, brute_log, l, p, ip, port, proto, http_path, delay, &result]() {
         wait.lock();
+        if (brute_log) {np1.nlog_custom("SSH", "                 try: " + l + "@" + p + " [BRUTEFORCE]\n", 1);}
         bruteforce_opts bo;
         bo.dest_ip = ip.c_str();
         bo.dest_port = port;
@@ -49,10 +53,8 @@ threads_bruteforce(const std::vector<std::string>& login, std::vector<std::strin
   return "";
 }
 
-nesca_prints np1;
 
-std::string
-brute_ssh(const std::string& ip, int port, const std::string login, const std::string pass, int brute_log, int verbose)
+std::string brute_ssh(const std::string& ip, int port, const std::string login, const std::string pass, int brute_log, int verbose)
 {
 #ifdef HAVE_SSL
   if (brute_log) {np1.nlog_custom("SSH", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);}
@@ -102,7 +104,7 @@ threads_brute_ssh(const std::string ip, int port, const std::vector<std::string>
 
     for (const auto& login : logins) {
       for (const auto& password : passwords) {
-        delay_ms(brute_timeout_ms);
+        delayy(brute_timeout_ms);
         futures.push_back(pool.enqueue([ip, port, login, password, brute_log, verbose, &results]() {
         std::string temp = brute_ssh(ip, port, login, password, brute_log, verbose);
         if (!temp.empty() && temp.length() > 3){results.push_back(temp);}
@@ -138,21 +140,19 @@ brute_hikvision(const std::string ip, const std::string login, const std::string
   NET_DVR_DEVICEINFO_V40 deviceInfo = {0};
 
   if (brute_log){
-      np1.nlog_custom("HIKVISION", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
+    np1.nlog_custom("HIKVISION", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
   }
 
   LONG userId = NET_DVR_Login_V40(&loginInfo, &deviceInfo);
 
-  if (userId < 0)
-  {
+  if (userId < 0) {
     NET_DVR_Cleanup();
     return "";
   }
 
-  if (path != "")
-  {
-      hikvision_screenshot(ip, userId, deviceInfo, path);
-      std::cout << "asasdasd\n";
+  if (path != "") {
+    hikvision_screenshot(ip, userId, deviceInfo, path);
+    std::cout << "asasdasd\n";
   }
 
   result = login + ":" + pass + "@";
@@ -167,7 +167,8 @@ brute_hikvision(const std::string ip, const std::string login, const std::string
 }
 
 std::string
-threads_brute_hikvision(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords, int brute_log, int brute_timeout_ms, const std::string&path)
+threads_brute_hikvision(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords,
+    int brute_log, int brute_timeout_ms, const std::string&path)
 {
   std::vector<std::string> results;
   std::vector<std::future<void>> futures;
@@ -175,12 +176,12 @@ threads_brute_hikvision(const std::string ip, const std::vector<std::string> log
 
   for (const auto& login : logins) {
     for (const auto& password : passwords) {
-      delay_ms(brute_timeout_ms);
+      delayy(brute_timeout_ms);
       futures.push_back(pool.enqueue([ip, login, password, brute_log, path, &results]() {
         std::string temp = brute_hikvision(ip, login, password, brute_log, path);
         if (!temp.empty() && temp.length() > 3){results.push_back(temp);}
       }));
-      }
+    }
   }
   for (auto& future : futures) {future.wait();}
   if (!results.empty()) {return results[0];} else{return "";}

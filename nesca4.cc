@@ -1,8 +1,43 @@
 /*
- * NESCA 4
- * by oldteam & lomaster
- * license GPL-3.0
- *   Сделано от души 2023.
+ *
+ *  d8b   db d88888b .d8888.  .o88b.  .d8b.    NESCA4 - Многопоточный linux сканер портов,
+ *  888o  88 88'     88'  YP d8P  Y8 d8' `8b   с точностью nmap-а, обработкой nesca3 брутфорсом
+ *  88V8o 88 88ooooo `8bo.   8P      88ooo88   самых популярных протоколов и сканированием DNS.
+ *  88 V8o88 88~~~~~   `Y8b. 8b      88~~~88
+ *  88  V888 88.     db   8D Y8b  d8 88   88   Был сделан с вдохновением от nesca3 & nmap.
+ *  VP   V8P Y88888P `8888Y'  `Y88P' YP   YP   by oldteam & lomaster.
+ *
+ *  license GPL-3.0                            Github - [https://github.com/oldteamhost/nesca4]
+ *  Сделано от души 2023.                      Telegram - [https://t.me/+Ft1ABe8P8Tc1YzZi]
+ *
+ *  PS: Перечислять все возможности тут я не буду.
+ *  Прочитать о том что умеет nesca4 и как это разрабатывалось
+ *  читайте в resources/do_not_read.txt
+ *
+ *  Структура кода:
+ *  01. Вся работа с сетью находится в ncsock/
+ *     ^ (даже брутфорс: RVI, HTTP, FTP, SMTP, RTSP)
+ *  02. nesca4.cc - вся обработка, сканирование, и т.д находиться тут.
+ *  03. bruteforce.cc - функция для брутфорса в потоках, другие брутфорсы которых нету в ncsock/(hikvision, ssh).
+ *  04. files.cc - работа с файлами.
+ *  04. html.cc - функции для сохранения в html.
+ *  05. nescalog.cc - для вывода лога и прочих его сохранений, помимо html.
+ *  06. nescathread.cc - пул потоков.
+ *  07. portscan.cc - функция для определения статуса порта.
+ *  08. target.cc - функции для работы с группами, и для конвертирований, и настройки целей.
+ *  09. services.cc - для парсинга и работы с resources/nesca-services.
+ *  10. scanner.cc - для получения характеристик.
+ *  11. other.cc - прочие функции.
+ *
+ *  Screenshots not save!:
+ *  cd nesca4 && sudo chmod u+rwx,g+r,o+r utils/
+ *
+ *  Для компиляции без библиотек, нужно зайти в файл `config/compile.h`, и закомментировать,
+ *  или удалить строчку отвечающую за библиотеку, без которой вы хотите скомпилировать:
+ *  #define HAVE_SSH
+ *  #define HAVE_HIKVISION
+ *  #define HAVE_NODE_JS
+ *
 */
 
 #include "include/nesca4.h"
@@ -14,14 +49,19 @@
 #include "ncbase/include/base64.h"
 #include "ncbase/include/binary.h"
 #include "ncbase/include/json.h"
+#include "ncsock/include/base.h"
 #include "ncsock/include/bruteforce.h"
 #include "ncsock/include/tcp.h"
 #include "ncsock/include/http.h"
+#include "ncsock/include/dns.h"
+#include "ncsock/include/strbase.h"
 #include "ncsock/include/ftp.h"
 #include "ncsock/include/smtp.h"
 #include <bits/getopt_core.h>
+#include <cstdint>
 #include <cstdlib>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 const char* short_options = "s:hl:vd:T:p:aS:";
@@ -33,7 +73,6 @@ checking_finds cfs;
 nesca_prints np;
 group_scan gs;
 html_output ho;
-dns_utils dus;
 services_nesca sn;
 nesca_negatives nn;
 arguments_program argp;
@@ -53,7 +92,8 @@ public:
 }; nesca_data nd;
 
 int main(int argc, char** argv)
-{ run = argv[0];
+{
+  run = argv[0];
 
   if (argc <= 1) {
     help_menu();
@@ -98,9 +138,13 @@ int main(int argc, char** argv)
     for (int i = 0; i < argp._threads_dns; i++) {
       dns_pool.enqueue([&]() {
       for (;;) {
-        std::string random_ = generate_random_str(argp.dns_scan_domain_count, argp.dns_dictionary);
+        generate_random_str(argp.dns_scan_domain_count, argp.dns_dictionary.c_str());
+        std::string random_;
         std::string result = random_ + argp.domain_1level;
-        std::string ip = dus.get_ip_by_dns(result.c_str());
+        char ipbuf[1024];
+        get_ip(result.c_str(), ipbuf, sizeof(ipbuf));
+        std::string ip = ipbuf;
+
 
         if (ip == "N/A") {
           if (argp.debug) {
@@ -151,7 +195,7 @@ int main(int argc, char** argv)
           }
         }
       }});
-      if (argp.timeout) {delay_ms(argp.timeout_ms);}
+      if (argp.timeout) {delayy(argp.timeout_ms);}
     }
     std::getchar();
     std::cout << np.main_nesca_out("NN", "Stoping threads...", 0, "", "", "", "", "") << std::endl;
@@ -184,8 +228,8 @@ int main(int argc, char** argv)
       argp.ping_timeout = 250;
     }
     else {
-      argp.threads_ping = calc_threads(argp.speed_type, argp.result.size());
-      argp.ping_timeout = calc_timeout(argp.speed_type);
+      argp.threads_ping = calculate_threads(argp.speed_type, argp.result.size());
+      argp.ping_timeout = calculate_ping_timeout(argp.speed_type);
     }
   }
 
@@ -255,7 +299,7 @@ int main(int argc, char** argv)
   argp.ping_duration = duration_ping.count() / 1000000.0;
 
   /*Расчёт количеста потоков для DNS resolv.*/
-  if (!argp.custom_threads_resolv){argp.dns_threads = calc_threads(argp.speed_type, result_main.size());}
+  if (!argp.custom_threads_resolv){argp.dns_threads = calculate_threads(argp.speed_type, result_main.size());}
   if (argp.my_life_my_rulez){argp.dns_threads = result_main.size();}
 
   auto start_time_dns = std::chrono::high_resolution_clock::now();
@@ -389,15 +433,36 @@ int main(int argc, char** argv)
         || nd.open_or_filtered_target.find(ip) != nd.open_or_filtered_target.end()
         || nd.no_filtered_target.find(ip) != nd.no_filtered_target.end()){
 
-        if (np.save_file){write_line(np.file_path_save, "\n");}
-        std::string result; ls.lock();
+        if (np.save_file) {
+          write_line(np.file_path_save, "\n");
+        }
+
         std::cout << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", nd.dns_completed[ip], std::to_string(nd.rtts[ip])+"ms","") << std::endl;
-        print_results(ip); ls.unlock();
+
+        ls.lock();
+
+        if (argp.json_save) {
+          nesca_host_details nhd;
+          nhd.ip_address = ip.c_str();
+          nhd.rtt = nd.rtts[ip];
+          nhd.dns_name = nd.dns_completed[ip].c_str();
+          nesca_json_save_host(argp.json_save_path, &nhd);
+        }
+
+        process_port(ip, nd.success_target, PORT_OPEN);
+        process_port(ip, nd.error_target, PORT_ERROR);
+        process_port(ip, nd.filtered_target, PORT_FILTER);
+        process_port(ip, nd.closed_target, PORT_CLOSED);
+        process_port(ip, nd.open_or_filtered_target, PORT_OPEN_OR_FILTER);
+        process_port(ip, nd.no_filtered_target, PORT_NO_FILTER);
+
+        ls.unlock();
 
         std::cout << std::endl;
 
         if (argp.json_save) {
-          nesca_json_close_info(argp.json_save_path); ls.lock();
+          ls.lock();
+            nesca_json_close_info(argp.json_save_path);
             nesca_json_set_comma(argp.json_save_path);
             nesca_json_skip_line(argp.json_save_path);
           ls.unlock();
@@ -466,7 +531,7 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
   /*Установка порты с которого будут идти пакеты на этот IP.*/
   int source_port;
   if (!argp.custom_source_port){
-    source_port = generate_port();
+    source_port = generate_rare_port();
   }
   else {
     source_port = argp._custom_source_port;
@@ -484,7 +549,7 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
     auto it = nd.rtts.find(ip);
     if (it != nd.rtts.end()) {
       double rtt_ping = nd.rtts.at(ip);
-      recv_timeout_result = calc_port_timeout(argp.speed_type, rtt_ping);
+      recv_timeout_result = calculate_timeout(rtt_ping, argp.speed_type);
     }
   }
 
@@ -498,7 +563,7 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
   for (const auto& port : ports) {
     /*Настройка TTL.*/
     if (!argp.custom_ttl) {
-      ncopts.ttl = generate_ttl();
+      ncopts.ttl = random_num(29, 255);
     }
     else {
       ncopts.ttl = argp._custom_ttl;
@@ -571,63 +636,39 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
   return 0;
 }
 
-
-void
-print_results(std::string ip)
+void process_port(const std::string& ip, const std::unordered_map<std::string, std::vector<int>>& target_map, int port_type)
 {
-  if (argp.json_save) {
-    nesca_host_details nhd;
-    nhd.ip_address = ip.c_str();
-    nhd.rtt = nd.rtts[ip];
-    nhd.dns_name = nd.dns_completed[ip].c_str();
-    nesca_json_save_host(argp.json_save_path, &nhd);
-  }
+  auto it = target_map.find(ip);
+  if (it != target_map.end()) {
+    const std::vector<int>& ports = it->second;
+    int total_ports_to_process = ports.size();
+    int port_count_on_this_ip = 0;
 
-  /*Лямбда функция.*/
-  auto process_ports = [&](const std::unordered_map<std::string, std::vector<int>>& target_map, int port_type)
-  {
-    auto it = target_map.find(ip);
-    if (it != target_map.end()) {
-      const std::vector<int>& ports = it->second;
-      int total_ports_to_process = ports.size();
-      int port_count_on_this_ip = 0;
+    for (int port : ports) {
+      processing_tcp_scan_ports(ip, port, port_type);
 
-      for (int port : ports) {
-        processing_tcp_scan_ports(ip, port, port_type);
-
-        if (port_count_on_this_ip != total_ports_to_process - 1 && argp.json_save) {
-          nesca_json_set_comma(argp.json_save_path);
-          nesca_json_skip_line(argp.json_save_path);
-        }
-        port_count_on_this_ip++;
+      if (port_count_on_this_ip != total_ports_to_process - 1 && argp.json_save) {
+        nesca_json_set_comma(argp.json_save_path);
+        nesca_json_skip_line(argp.json_save_path);
       }
+      port_count_on_this_ip++;
     }
-  };
-
-  /*Её использование.*/
-  process_ports(nd.success_target, PORT_OPEN);
-  process_ports(nd.error_target, PORT_ERROR);
-  process_ports(nd.filtered_target, PORT_FILTER);
-  process_ports(nd.closed_target, PORT_CLOSED);
-  process_ports(nd.open_or_filtered_target, PORT_OPEN_OR_FILTER);
-  process_ports(nd.no_filtered_target, PORT_NO_FILTER);
+  }
 }
 
-void
-fix_time(double time) {std::cout << std::fixed << std::setprecision(2) << time << "s";}
+void fix_time(double time) {std::cout << std::fixed << std::setprecision(2) << time << "s";}
 
-bool /*Лесенка ping-ов.*/
-process_ping(std::string ip)
+bool process_ping(std::string ip)
 {
   int ttl = 121;
-  int source_port;
-  if (!argp.custom_source_port){source_port = generate_port();}
+  uint16_t source_port;
+  if (!argp.custom_source_port){source_port = generate_rare_port();}
   else {source_port = argp._custom_source_port;}
   if (argp.custom_ttl){ttl = argp._custom_ttl;}
 
   /*ICMP ECHO классика.*/
   if (argp.echo_ping) {
-    double icmp_casual = icmp_ping(ip.c_str(), argp.ping_timeout, 8, 0, 0, 64);
+    double icmp_casual = icmp_ping(ip.c_str(), argp.ping_timeout, 8, 0, 0, ttl);
     if (icmp_casual != EOF) {
       nd.rtts[ip] = icmp_casual;
       return true;
@@ -651,14 +692,14 @@ process_ping(std::string ip)
   }
   /*ICMP пинг 2 методами.*/
   if (argp.info_ping) {
-    double icmp_rev = icmp_ping(ip.c_str(), argp.ping_timeout, 13, 0, 0, 64);
+    double icmp_rev = icmp_ping(ip.c_str(), argp.ping_timeout, 13, 0, 0, ttl);
     if (icmp_rev != EOF) {
       nd.rtts[ip] = icmp_rev;
       return true;
     }
   }
   if (argp.timestamp_ping) {
-    double icmp_rev1 = icmp_ping(ip.c_str(), argp.ping_timeout, 15, 0, 0, 64);
+    double icmp_rev1 = icmp_ping(ip.c_str(), argp.ping_timeout, 15, 0, 0, ttl);
     if (icmp_rev1 != EOF) {
       nd.rtts[ip] = icmp_rev1;
       return true;
@@ -699,16 +740,17 @@ resolv_hosts(std::vector<std::string> hosts)
       for (auto& tt : temp){result.push_back(tt);}
     }
 
-    bool dns = dns_or_ip(f);
-    if (dns){result.push_back(dus.get_ip_by_dns(f.c_str()));}
+    int dns = dns_or_ip(f.c_str());
+    if (dns == 0) {
+      char ipbuf[1024]; get_ip(f.c_str(), ipbuf, sizeof(ipbuf)); result.push_back(ipbuf);
+    }
     else{result.push_back(f);}
   }
 
   return result;
 }
 
-void
-checking_default_files(void)
+void checking_default_files(void)
 {
   /*Чек целей из файлов.*/
   if (argp.ip_scan_import) {
@@ -743,8 +785,7 @@ checking_default_files(void)
   }
 }
 
-void
-print_port_state(int status, int port, std::string service)
+void print_port_state(int status, int port, std::string service)
 {
   std::string result_txt = "\n[&][REPORT]:" + std::to_string(port) + "/tcp STATE: "; np.gray_nesca_on();
   std::cout << "[&][REPORT]:"; np.green_html_on();
@@ -812,8 +853,8 @@ void ssh_strategy::handle(const std::string& ip, const std::string& result, cons
 void ftp_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np)
 {
-  std::string port_s = std::to_string(port);
   char version[256]; get_ftp_version(ip.c_str(), port, 1200, version, sizeof(version));
+  std::string port_s = std::to_string(port);
   std::string ftp_version = version;
 
   if (argp.off_ftp_brute != true) {
@@ -842,8 +883,7 @@ void ftp_strategy::handle(const std::string& ip, const std::string& result, cons
 void smtp_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np)
 {
-  char version[256];
-  get_smtp_version(ip.c_str(), port, 1200, version, sizeof(version));
+  char version[256]; get_smtp_version(ip.c_str(), port, 1200, version, sizeof(version));
   std::string responce_220 = version;
 
   if (argp.off_sftp_brute != true) {
@@ -1007,15 +1047,16 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
 
   /*Получение перенаправления.*/
   if (argp.no_get_path != true) {
-    char buffer[1024];
-    get_redirect(html.c_str(), buffer, sizeof(buffer));
+    char buffer[1024]; get_redirect(html.c_str(), buffer, sizeof(buffer));
     redirect = buffer;
   }
 
   /*Второй запрос HTTP по перенаправлению*/
-  hh.path = redirect.c_str(); 
-  memset(response_buffer, 0, sizeof(response_buffer));
-  send_http_request(ip.c_str(), 80, 1100, &hh, response_buffer, sizeof(response_buffer));
+  if (redirect.length() > 2) {
+    hh.path = redirect.c_str();
+    memset(response_buffer, 0, sizeof(response_buffer));
+    send_http_request(ip.c_str(), 80, 1100, &hh, response_buffer, sizeof(response_buffer));
+  }
   std::string html_pro = response_buffer;
 
   /*Получение заголовка.*/
@@ -1058,6 +1099,8 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   if (temp_check_http != "fuck"){type_target = temp_check_http;}
   if (temp_check_http1 != "fuck"){type_target = temp_check_http1;}
   if (temp_check_http2 != "fuck"){type_target = temp_check_http2;}
+  else {type_target = "n/a";}
+
   int brute = cfs.than_bruteforce(type_target);
 
   /*Брутфорс HTTP basic auth.*/
@@ -1397,8 +1440,10 @@ format_percentage(double procents)
 void /*Для DNS_RESOLV*/
 get_dns_thread(std::string ip)
 {
-  delay_ms(argp.resol_delay);
-  std::string temp_dns = dus.get_dns_by_ip(ip.c_str(), argp.resol_source_port);
+  delayy(argp.resol_delay);
+  std::string temp_dns;
+  char dnsbuf[1024]; get_dns(ip.c_str(), argp.resol_source_port, dnsbuf, sizeof(dnsbuf));
+  temp_dns = dnsbuf;
   ls.lock(); /*Добавление DNS.*/
   nd.dns_completed.insert(std::make_pair(ip, temp_dns));
   ls.unlock();
@@ -1414,8 +1459,9 @@ pre_check(void)
   }
 
   np.golder_rod_on();
+  char formatted_date[11]; get_current_date(formatted_date, sizeof(formatted_date));
   std::cout << "-> Running NESCA [v" + std::string(VERSION) + "] # " +
-  std::string(get_time()) + " at " + get_current_date() << std::endl; 
+  std::string(get_time()) + " at " + formatted_date << std::endl; 
   np.reset_colors();
 
   if (argp.info_version) {
@@ -1793,7 +1839,7 @@ parse_args(int argc, char** argv)
   			   {
   			   	   argp.off_smtp_brute = true;
                    }
-                    else if (what[i] == "rvi")
+                  else if (what[i] == "rvi")
   			   {
   				   argp.off_rvi_brute = true;
                     }
