@@ -706,26 +706,25 @@ std::vector<std::string> resolv_hosts(std::vector<std::string> hosts)
 {
   std::vector<std::string> result;
   for (const auto& t : hosts) {
-    std::string f = t;
-    size_t cidr_pos = find_char(f, '/');
-    size_t range_pos = find_char(f, '-');
-
-    if (cidr_pos != std::string::npos) {
+    int temp = this_is(t.c_str());
+    if (temp == CIDR) {
       std::vector<std::string> temp = cidr_to_ips({t});
       for (auto& tt : temp){result.push_back(tt);}
     }
-    if (range_pos != std::string::npos) {
+    if (temp == RANGE) {
       std::vector<std::string> temp = range_to_ips({t});
       for (auto& tt : temp){result.push_back(tt);}
     }
-
-    int dns = dns_or_ip(f.c_str());
-    if (dns == 0) {
-      char ipbuf[1024]; get_ip(f.c_str(), ipbuf, sizeof(ipbuf)); result.push_back(ipbuf);
+    if (temp == _URL_) {
+      char* clean = clean_url(t.c_str());
+      char ipbuf[1024]; get_ip(clean, ipbuf, sizeof(ipbuf)); result.push_back(ipbuf);
+      free(clean);
     }
-    else{result.push_back(f);}
+    if (temp == DNS) {
+      char ipbuf[1024]; get_ip(t.c_str(), ipbuf, sizeof(ipbuf)); result.push_back(ipbuf);
+    }
+    else{result.push_back(t);}
   }
-
   return result;
 }
 
