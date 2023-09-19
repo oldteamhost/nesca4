@@ -85,6 +85,7 @@ public:
   std::unordered_map<std::string, std::vector<int>> open_or_filtered_target;
   std::unordered_map<std::string, std::vector<int>> no_filtered_target;
   std::unordered_map<std::string, std::vector<int>> closed_target;
+
   std::unordered_map<std::string, std::string> dns_completed;
   std::unordered_map<std::string,double> rtts;
 
@@ -434,6 +435,7 @@ int main(int argc, char** argv)
 
   if (np.save_file){write_line(np.file_path_save, "\n");}
   if (removedCount > 0){std::cout << np.main_nesca_out("NESCA4", std::to_string(removedCount)+" identical IPs", 5, "status", "", "OK", "","") << std::endl;}
+
   return 0;
 }
 
@@ -1055,11 +1057,9 @@ void else_strategy::handle(const std::string& ip, const std::string& result, con
 void
 processing_tcp_scan_ports(std::string ip, int port, int result)
 {
-  argp.result_success_ports++;
-  argp.result_success_ip++;
+  argp.result_success_ports++; argp.result_success_ip++;
   std::stringstream stream; stream << std::fixed << std::setprecision(2) << nd.rtts[ip];
-  std::string rtt_log = stream.str();
-  std::string protocol = sn.probe_service(port);
+  std::string rtt_log = stream.str(); std::string protocol = sn.probe_service(port);
 
   /*Класс с обработками.*/
   std::unique_ptr<ports_strategy> ports_strategy_;
@@ -1102,7 +1102,7 @@ processing_tcp_scan_ports(std::string ip, int port, int result)
       ports_strategy_ = std::make_unique<else_strategy>();
     }
     /*Запуск стратегий.*/
-    if (ports_strategy_){
+    if (ports_strategy_) {
       ports_strategy_->handle(ip, result1, rtt_log, protocol, port, argp, np);
     }
 
@@ -1320,6 +1320,12 @@ pre_check(void)
   if (argp.info_version) {
     version_menu();
   }
+  if (argp.print_help_menu){
+    help_menu();
+    exit(0);
+  }
+
+  if (!check_root_perms()){np.nlog_error("RAW socket only sudo run!\n");exit(1);}
 
   if (argp.ns_track) {
     std::filesystem::path directory_path= "ns_track";
@@ -1388,9 +1394,6 @@ pre_check(void)
   else {
     nn.nesca_negatives = nn.parse_config_file(argp.negatives_path);
   }
-
-  if (argp.print_help_menu){help_menu();exit(0);}
-  if (!check_root_perms()){np.nlog_error("RAW socket only sudo run!\n");exit(1);}
 }
 
 void

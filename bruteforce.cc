@@ -15,6 +15,7 @@
 #include "ncsock/include/base.h"
 #include "ncsock/include/strbase.h"
 #include <mutex>
+#include <string>
 
 nesca_prints np1;
 
@@ -27,9 +28,12 @@ threads_bruteforce(const std::vector<std::string>& login, std::vector<std::strin
   std::string result = "";
   std::mutex wait;
 
+  int total = login.size() * pass.size();
+  int combinations = 0;
+
   for (const auto& l : login){
     for (const auto& p : pass){
-      futures.push_back(pool.enqueue([&wait, brute_log, l, p, ip, port, proto, http_path, delay, &result]() {
+      futures.push_back(pool.enqueue([&combinations, &total, &wait, brute_log, l, p, ip, port, proto, http_path, delay, &result]() {
         wait.lock();
         if (brute_log) {np1.nlog_custom("SSH", "                 try: " + l + "@" + p + " [BRUTEFORCE]\n", 1);}
         bruteforce_opts bo;
@@ -44,6 +48,12 @@ threads_bruteforce(const std::vector<std::string>& login, std::vector<std::strin
 
         int auth = ncsock_bruteforce(&bo);
         if(auth == 0){result = l + ":" + p + "@";}
+
+        combinations++;
+        if (combinations % 20 == 0) {
+          int procents = (combinations * 100) / total;
+          std::cout << np1.main_nesca_out("#", "BRUTE "+std::to_string(combinations)+" out of "+std::to_string(total) +" passwd", 6, "", "", std::to_string(procents)+"%", "", "") << std::endl;
+        }
       }));
     }
   }

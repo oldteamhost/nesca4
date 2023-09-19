@@ -81,7 +81,7 @@
 #include "../config/compile.h"
 
 /*Угадайте?*/
-#define VERSION "20230917"
+#define VERSION "20230919"
 
 void help_menu(void);
 void version_menu(void);
