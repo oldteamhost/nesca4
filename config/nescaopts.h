@@ -19,10 +19,7 @@
 #define ACK_PING_DEFAULT_DEST_PORT 80
 #define PING_LOG_DEFAULT 20
 #define DNS_RESOLV_SOURCE_PORT_DEFUALT 4555
-#define DNS_SCAN_THREADS_DEFAULT 50
-#define DNS_SCAN_SIZE_DNS_DEFAULT 5
 #define NEGATIVES_PATH_DEFAULT "resources/negatives.txt"
-#define DNS_SCAN_DICTIONARY_DEFAULT "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 #define PATH_FTP_LOGIN_DEFAULT "passwd/ftp_logins.txt"
 #define PATH_FTP_PASS_DEFAULT "passwd/ftp_passwords.txt"
@@ -42,7 +39,6 @@
 class arguments_program {
 public:
   std::string negatives_path = NEGATIVES_PATH_DEFAULT;
-  bool pro_mode;
 
   bool txt;
   std::string txt_save;
@@ -58,6 +54,8 @@ public:
   bool custom_g_min;
   bool custom_source_port;
   bool custom_ttl;
+  bool random_dns;
+  int random_dns_count;
   bool ns_track;
 
   int _custom_ttl;
@@ -87,7 +85,6 @@ public:
   bool custom_log_set;
   int log_set;
   int _threads;
-  int _threads_dns = DNS_SCAN_THREADS_DEFAULT;
 
   std::vector<int> ports = DEFAULT_PORTS;
   bool no_proc;
@@ -104,10 +101,6 @@ public:
 
   bool get_response;
 
-  bool dns_scan;
-  std::string domain_1level;
-  std::string dns_dictionary = DNS_SCAN_DICTIONARY_DEFAULT;
-  int dns_scan_domain_count = DNS_SCAN_SIZE_DNS_DEFAULT;
   bool custom_threads_resolv;
 
   bool random_ip;

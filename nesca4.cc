@@ -85,7 +85,6 @@ public:
   std::unordered_map<std::string, std::vector<int>> open_or_filtered_target;
   std::unordered_map<std::string, std::vector<int>> no_filtered_target;
   std::unordered_map<std::string, std::vector<int>> closed_target;
-
   std::unordered_map<std::string, std::string> dns_completed;
   std::unordered_map<std::string,double> rtts;
 
@@ -107,96 +106,40 @@ int main(int argc, char** argv)
 
   /*Установка методов пинга.*/
   if (!argp.custom_ping) {
-    if (argp.max_ping || argp.speed_type == 1) {
+    if (argp.max_ping == true) {
       argp.syn_ping = true;
       argp.ack_ping = true;
       argp.echo_ping = true;
       argp.info_ping = true;
       argp.timestamp_ping = true;
     }
-    if (argp.speed_type == 5){
-      argp.ack_ping = true;
+    switch (argp.speed_type)
+    {
+      case 5: {
+        argp.ack_ping = true;
+        break;
+      }
+      case 4: {
+        argp.echo_ping = true;
+        argp.ack_ping = true;
+        break;
+      }
+      case 3:
+      case 2: {
+        argp.ack_ping = true;
+        argp.syn_ping = true;
+        argp.echo_ping = true;
+        break;
+      }
+      case 1: {
+        argp.syn_ping = true;
+        argp.ack_ping = true;
+        argp.echo_ping = true;
+        argp.info_ping = true;
+        argp.timestamp_ping = true;
+        break;
+      }
     }
-    else if (argp.speed_type == 4){
-      argp.echo_ping = true;
-      argp.ack_ping = true;
-    }
-    else if (argp.speed_type == 2 || argp.speed_type == 3) {
-      argp.ack_ping = true;
-      argp.syn_ping = true;
-      argp.echo_ping = true;
-    }
-  }
-
-  /*Начало DNS сканирования.*/
-  if (argp.dns_scan) {
-    std::mutex mtx;
-    argp.timeout_ms = 100;
-    std::cout << np.main_nesca_out("NESCA4", "Starting " + std::to_string(argp._threads_dns) + " threads...", 5, "on", "", "DNS", "", "") << std::endl << std::endl;
-    thread_pool dns_pool(argp._threads_dns);
-
-    for (int i = 0; i < argp._threads_dns; i++) {
-      dns_pool.enqueue([&]() {
-      for (;;) {
-        generate_random_str(argp.dns_scan_domain_count, argp.dns_dictionary.c_str());
-        std::string random_;
-        std::string result = random_ + argp.domain_1level;
-        char ipbuf[1024]; get_ip(result.c_str(), ipbuf, sizeof(ipbuf));
-        std::string ip = ipbuf;
-
-        if (ip == "N/A") {
-          if (argp.debug) {
-            std::lock_guard<std::mutex> lock(mtx);
-            np.nlog_custom("BA", result + " [FaILEd]\n", 2);
-          }
-          continue;
-        }
-        if (ip == "-1") {
-          if (argp.debug) {
-            std::lock_guard<std::mutex> lock(mtx);
-            np.nlog_custom("BA", result + " [FaILEd]\n", 2);
-          }
-          continue;
-        }
-
-        std::string result_print;
-        bool ping_status = process_ping(ip.c_str());
-
-        if (!ping_status) {
-          if (argp.debug) {
-            std::lock_guard<std::mutex> lock(mtx);
-            np.nlog_custom("BA", result + " [FaILEd]\n", 2);
-          }
-        }
-        else {
-          http_header hh;
-          hh.user_agent = "ncsock";
-          hh.content_len = 0;
-          hh.content_type = "";
-          hh.method = "GET";
-          hh.path = "/";
-          hh.dest_host = ip.c_str();
-          hh.auth_header = NULL;
-
-          char response_buffer[4096];
-          send_http_request(ip.c_str(), 80, 1000, &hh, response_buffer, sizeof(response_buffer));
-
-          std::string html = response_buffer;
-          std::lock_guard<std::mutex> lock(mtx);
-          std::string rtt = std::to_string(nd.rtts[ip]) + "ms";
-          char title[256];
-          get_http_title(response_buffer, title, sizeof(title));
-          std::cout << np.main_nesca_out("BA", "http://" + result, 3, "T", "RTT", title, rtt, rtt) << std::endl;
-          if (argp.get_response) {
-            std::string result_code = np.main_nesca_out("TT", html, 2, "", "", "", "", "");
-            std::cout << result_code << std::endl;
-          }
-        }
-      }});
-      if (argp.timeout) {delayy(argp.timeout_ms);}
-    }
-    std::getchar();
-    std::cout << np.main_nesca_out("NN", "Stoping threads...", 0, "", "", "", "", "") << std::endl;
   }
 
   /*Иницилизация брутфорса.*/
@@ -215,7 +158,7 @@ int main(int argc, char** argv)
     }
   }
 
-  int ip_count = 0; std::vector<std::string> result_main;
+  std::vector<std::string> result_main;
 
   /*Расчёт количества потоков и таймаута для пинга.*/
   if (!argp.custom_threads) {
@@ -229,7 +172,6 @@ int main(int argc, char** argv)
     }
   }
 
-  if (!argp.syn_ping && !argp.ack_ping && !argp.echo_ping && !argp.info_ping && !argp.timestamp_ping){argp.ack_ping = true;argp.echo_ping = true;}
   auto start_time_ping = std::chrono::high_resolution_clock::now();
 
   /*Вырез одиниковых IP.*/
@@ -241,16 +183,10 @@ int main(int argc, char** argv)
   /*Удаление не тех хостов.*/
   argp.result.erase(std::remove_if(argp.result.begin(), argp.result.end(), [&](const std::string& element) {
     return std::find(argp.exclude.begin(), argp.exclude.end(), element) != argp.exclude.end();
-  }),
-  argp.result.end());
+  }), argp.result.end());
 
   /*Пинг сканирования*/
   if (!argp.ping_off) {
-    if (argp.pro_mode) {
-      std::cout << np.main_nesca_out("NESCA4", "PING_SCAN", 5, "recv-timeout", "threads",
-          std::to_string(argp.ping_timeout), std::to_string(argp.threads_ping), "") << std::endl;
-    }
-
     thread_pool ping_pool(argp.threads_ping);
     int threads_ping = argp.threads_ping;
     std::vector<std::future<std::pair<bool, std::string>>> futures;
@@ -286,27 +222,27 @@ int main(int argc, char** argv)
         std::to_string(argp.result.size()) + " IPs", 6, "", "", _result+"%", "", "") << std::endl;
       }
     }
-    //int error_count = argp.result.size() - result_main.size();
-    // std::cout << np.main_nesca_out("NESCA4", "FINISH ping", 5, "success", "errors", std::to_string(result_main.size()), std::to_string(error_count)) << std::endl;
+  }
+  else {
+    result_main = argp.result;
   }
 
-  if (argp.ping_off){result_main = argp.result;}
   auto end_time_ping = std::chrono::high_resolution_clock::now();
   auto duration_ping = std::chrono::duration_cast<std::chrono::microseconds>(end_time_ping - start_time_ping);
   argp.ping_duration = duration_ping.count() / 1000000.0;
 
   /*Расчёт количеста потоков для DNS resolv.*/
-  if (!argp.custom_threads_resolv){argp.dns_threads = calculate_threads(argp.speed_type, result_main.size());}
-  if (argp.my_life_my_rulez){argp.dns_threads = result_main.size();}
+  if (!argp.custom_threads_resolv){
+    argp.dns_threads = calculate_threads(argp.speed_type, result_main.size());
+  }
+  if (argp.my_life_my_rulez){
+    argp.dns_threads = result_main.size();
+  }
 
   auto start_time_dns = std::chrono::high_resolution_clock::now();
 
   /* DNS сканирование */
   if (!argp.no_get_dns) {
-    if (argp.pro_mode) {
-      std::cout << np.main_nesca_out("NESCA4", "DNS_RESOLUTION", 5, "threads", "",
-      std::to_string(argp.dns_threads), "","") << std::endl;
-    }
     std::vector<std::future<void>> futures_dns;
     thread_pool dns_pool(argp.dns_threads);
 
@@ -328,33 +264,31 @@ int main(int argc, char** argv)
   gs.group_size = GROUP_MIN_SIZE_DEFAULT;
 
   /*Установка настроек группы и потоков.*/
-  if (argp.speed_type == 5) {
-    if (!argp.custom_g_rate){gs.group_rate = 100;}
+  if (!argp.custom_g_rate){
+    switch (argp.speed_type) {
+      case 5:
+        gs.group_rate = 100;
+        break;
+      case 4:
+        gs.group_rate = 50;
+        break;
+      case 3:
+        gs.group_rate = 20;
+        break;
+      case 2:
+        gs.group_rate = 10;
+        break;
+      case 1:
+        gs.group_rate = 5;
+        break;
+    }
   }
-  else if (argp.speed_type == 4) {
-    if (!argp.custom_g_rate){gs.group_rate = 50;}
-  }
-  else if (argp.speed_type == 3) {
-    if (!argp.custom_g_rate){gs.group_rate = 20;}
-  }
-  else if (argp.speed_type == 2) {
-    if (!argp.custom_g_rate){gs.group_rate = 10;}
-  }
-  else if (argp.speed_type == 1) {
-    if (!argp.custom_g_rate){gs.group_rate = 5;}
-  }
-
-  if (!argp.custom_g_max){
+  if (!argp.custom_g_max) {
     gs.max_group_size = result_main.size();
   }
 
   /*Потоки для сканирования портов.*/
   argp._threads = gs.max_group_size;
-
-  if (argp.pro_mode) {
-    std::cout << np.main_nesca_out("NESCA4", get_type(argp.type), 5, "targets", "threads",
-    std::to_string(result_main.size()),std::to_string(argp._threads),"") << std::endl;
-  }
 
   ncopts.source_ip = argp.source_ip;
   ncopts.tcpf = set_flags(argp.type);
@@ -371,7 +305,7 @@ int main(int argc, char** argv)
   thread_pool pool(argp._threads);
 
   /*Сканирование по группам*/
-  int group_start = 0;
+  int group_start = 0; int ip_count = 0;
 
   while(group_start < size) {
     auto start_time_scan = std::chrono::high_resolution_clock::now();
@@ -495,25 +429,10 @@ int main(int argc, char** argv)
       + std::to_string(elapsed_result) + " seconds");}
 
   np.golder_rod_on();
-  std::cout << "-> NESCA finished " << count_success_ips << " up IPs (success) in " << std::fixed << std::setprecision(2) << elapsed_result << " seconds";
+  std::cout << "-> NESCA finished " << count_success_ips << " up IPs (success) in " << std::fixed << std::setprecision(2) << elapsed_result << " seconds\n";
   np.reset_colors();
 
-  if (!argp.pro_mode) {
-    np.golder_rod_on();
-    std::cout << "\n-^ If you want to see the detailed execution use: -pro\n";
-    np.reset_colors();
-  }
   if (np.save_file){write_line(np.file_path_save, "\n");}
-
-  if (argp.pro_mode) {
-    np.golder_rod_on();
-    std::cout << "\n-> PING:"; fix_time(argp.ping_duration);
-    std::cout << "  DNS:";     fix_time(argp.dns_duration);
-    std::cout << "  SCAN:";    fix_time(argp.scan_duration);
-    std::cout << "  PROC:";    fix_time(argp.proc_duration);
-    std::cout << std::endl;
-  }
-
   if (removedCount > 0){std::cout << np.main_nesca_out("NESCA4", std::to_string(removedCount)+" identical IPs", 5, "status", "", "OK", "","") << std::endl;}
   return 0;
 }
@@ -768,9 +687,6 @@ void checking_default_files(void)
 
   /*Ну чё там.*/
   if (errors_files == 0) {
-    if (argp.pro_mode) {
-      std::cout << np.main_nesca_out("NESCA4", "BRUTEFORCE_DATA", 5, "status", "", "OK","","") << std::endl;
-    }
   }
   else {
     std::cout << std::endl << np.main_nesca_out("NESCA4", "BRUTEFORCE_DATA", 5, "status", "ERRORS", "FAILED", std::to_string(errors_files),"") << std::endl;
@@ -1042,13 +958,13 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   }
 
   /*Получение характеристики.*/
+  type_target = "n/a";
   std::string temp_check_http = cfs.set_target_at_path(redirect);
   std::string temp_check_http1 = cfs.set_target_at_http_header(html);
   std::string temp_check_http2 = cfs.set_target_at_title(http_title_result);
   if (temp_check_http != "fuck"){type_target = temp_check_http;}
   if (temp_check_http1 != "fuck"){type_target = temp_check_http1;}
   if (temp_check_http2 != "fuck"){type_target = temp_check_http2;}
-  else {type_target = "n/a";}
 
   int brute = cfs.than_bruteforce(type_target);
 
@@ -1290,13 +1206,6 @@ help_menu(void)
   std::cout << "  -brute-verbose <ss,2>: Display bruteforce <ss> all info.\n";
   std::cout << "  -brute-log <ss,2>: Display bruteforce <ss> info.\n";
   np.golder_rod_on();
-  std::cout << "DNS SCAN OPTIONS:" << std::endl;
-  np.reset_colors();
-  std::cout << "  -dns-scan <.dns>: On dns-scan and set domain 1 level.\n";
-  std::cout << "  -threads, -T <num>: Edit thread(s) count.\n";
-  std::cout << "  -dns-length <num>: Edit length generating domain.\n";
-  std::cout << "  -dns-dict <dict>: Edit dictionary for generation.\n";
-  np.golder_rod_on();
   std::cout << "OTHER OPTIONS:" << std::endl;
   np.reset_colors();
   std::cout << "  -negatives <path>: Set custom path for negatives.\n";
@@ -1352,6 +1261,7 @@ help_menu(void)
   np.reset_colors();
   std::cout << "  ./nesca4 google.com -p 80,443\n";
   std::cout << "  ./nesca4 72.230.205.0/24 -p 80,8080,81 -S5\n";
+  std::cout << "  ./nesca4 https://www.youtube.com\n";
 }
 
 void
@@ -1463,9 +1373,6 @@ pre_check(void)
   if (argp.import_color_scheme) {
     np.import_color_scheme(argp.path_color_scheme, np.config_values);
     np.processing_color_scheme(np.config_values);
-    if (argp.pro_mode) {
-      std::cout << np.main_nesca_out("NESCA4", "COLORSCHEME_DATA", 5, "STATE", "", "OK","","") << std::endl;
-    }
   }
 
   if (!check_file("./resources/nesca-services")) {
@@ -1473,9 +1380,6 @@ pre_check(void)
   }
   else {
     sn.init_services();
-    if (argp.pro_mode) {
-      std::cout << np.main_nesca_out("NESCA4", "SERVICES_DATA", 5, "status", "", "OK","","") << std::endl;
-    }
   }
 
   if (!check_file(argp.negatives_path.c_str())){
@@ -1483,10 +1387,6 @@ pre_check(void)
   }
   else {
     nn.nesca_negatives = nn.parse_config_file(argp.negatives_path);
-    std::size_t num_first_values = nn.nesca_negatives.size();
-    if (argp.pro_mode) {
-      std::cout << np.main_nesca_out("NESCA4", "NEGATIVES_LOAD", 5, "status", "count", "OK", std::to_string(num_first_values),"") << std::endl;
-    }
   }
 
   if (argp.print_help_menu){help_menu();exit(0);}
@@ -1835,20 +1735,6 @@ parse_args(int argc, char** argv)
                 argp.timeout = true;
                 argp.timeout_ms = atoi(optarg);
                 break;
-          case 'T':
-  			argp._threads_dns = atoi(optarg);
-                break;
-           case 19:
-                argp.dns_scan = true;
-                argp.domain_1level = optarg;
-                break;
-           case 20:
-                argp.dns_scan = true;
-                argp.dns_scan_domain_count = atoi(optarg);
-                break;
-           case 21:
-                argp.dns_dictionary = optarg;
-                break;
            case 22:
                 np.save_file = true;
                 np.file_path_save = optarg;
@@ -1925,6 +1811,10 @@ parse_args(int argc, char** argv)
            case 33:
   		   argp.resol_source_port = atoi(optarg);
                break;
+           case 32:
+               argp.random_dns = true;
+               argp.random_dns_count = atoi(optarg);
+               break;
            case 40:
   		   argp.resol_delay = atoi(optarg);
                break;
@@ -1990,9 +1880,6 @@ parse_args(int argc, char** argv)
   		 argp.custom_ping = true;
   		 argp.ack_ping = true;
   		 argp.ack_dest_port = atoi(optarg);
-  	     break;
-        case 78:
-  		 argp.pro_mode = true;
   	     break;
         case 43:
   		 argp.json_save = true;

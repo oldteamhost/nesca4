@@ -50,7 +50,7 @@
 #include <thread>
 #include <iomanip>
 #include <mutex>
-#include <algorithm> 
+#include <algorithm>
 #include <random>
 #include <string>
 #include <future>
@@ -164,7 +164,7 @@ public:
 /*Аргументы.*/
 const struct
 option long_options[] = {
-  /*45*/
+  /*45, 19, 20, 21, 79, 78*/
   {"threads", required_argument, 0, 'T'},
   {"delay", required_argument, 0, 'd'},
   {"import", required_argument, 0, 23},
@@ -179,10 +179,7 @@ option long_options[] = {
   {"no-brute", required_argument, 0, 44},
   {"brute-only", required_argument, 0, 46},
   {"brute-timeout", required_argument, 0, 47},
-  {"dns-scan", required_argument, 0, 19},
   {"negatives", required_argument, 0, 76},
-  {"dns-length", required_argument, 0, 20},
-  {"dns-dict", required_argument, 0, 21},
   {"txt", required_argument, 0, 22},
   {"TP", required_argument, 0, 57},
   {"debug", no_argument, 0, 27},
@@ -215,24 +212,21 @@ option long_options[] = {
   {"PM", no_argument, 0, 87},
   {"source-port", required_argument, 0, 36},
   {"ttl", required_argument, 0, 37},
-  {"pro-mode", no_argument, 0, 78},
-  /*79*/
   {"robots", no_argument, 0, 67},
   {"hikshots", required_argument, 0, 35},
   {"sitemap", no_argument, 0, 68},
-
 #ifdef HAVE_NODE_JS
   {"screenshots", required_argument, 0, 's'},
   {"ss-timeout", required_argument, 0, 41},
   {"ns-track", no_argument, 0, 39},
 #endif
-
   {"max-group", required_argument, 0, 38},
   {"min-group", required_argument, 0, 60},
   {"rate-group", required_argument, 0, 61},
   {"exclude", required_argument, 0, 62},
   {"excludefile", required_argument, 0, 63},
   {"max-ping", no_argument, 0, 88},
+  {"random-dns", required_argument, 0, 32},
   {"source-ip", required_argument, 0, 34},
   {"ack", no_argument, 0, 89},
   {"window", no_argument, 0, 94},
