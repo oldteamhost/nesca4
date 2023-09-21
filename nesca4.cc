@@ -163,6 +163,12 @@ int main(int argc, char** argv)
     }
   }
 
+  if (argp.result.size() > 50000 && argp.speed_type != 5){
+    np.golder_rod_on();
+    std::cout << "-> NOTE: With your number of IPs - (" << argp.result.size() << "), it is better to use speed (-S5), otherwise scanning may take longer.\n";
+    np.reset_colors();
+  }
+
   std::vector<std::string> result_main;
 
   /*Расчёт количества потоков и таймаута для пинга.*/
@@ -249,14 +255,23 @@ int main(int argc, char** argv)
 
   /* DNS сканирование */
   if (!argp.no_get_dns) {
+    int complete = 0;
+    int total = result_main.size();
     std::vector<std::future<void>> futures_dns;
     thread_pool dns_pool(argp.dns_threads);
 
     for (const auto& ip : result_main) {
       futures_dns.emplace_back(dns_pool.enqueue(get_dns_thread, ip));
+      complete++;
       if (futures_dns.size() >= static_cast<long unsigned int>(argp.dns_threads)) {
         for (auto& future : futures_dns){future.get();}
         futures_dns.clear();
+      }
+
+      if (complete % 300 == 0) {
+        double procents = (static_cast<double>(complete) / total) * 100;
+        std::cout << np.main_nesca_out("#", "Resolv "+std::to_string(complete)+" out of "+
+        std::to_string(total) + " IPs", 6, "", "", std::to_string(procents)+"%", "", "") << std::endl;
       }
     }
     for (auto& future : futures_dns){future.wait();}
@@ -337,10 +352,10 @@ int main(int argc, char** argv)
         double procents = (static_cast<double>(ip_count) / size) * 100;
         std::string result = format_percentage(procents);
 
-        std::cout << np.main_nesca_out("#", "Scan "+std::to_string(ip_count)+" out of "+
+        std::cout << np.main_nesca_out("#", "SCAN "+std::to_string(ip_count)+" out of "+
         std::to_string(size) + " IPs", 6, "", "", result+"%", "", "") << std::endl;
 
-        std::cout << np.main_nesca_out("# rate", "Group "+std::to_string(gs.group_size)+" out of "+
+        std::cout << np.main_nesca_out("# rate", "GROUP "+std::to_string(gs.group_size)+" out of "+
         std::to_string(gs.max_group_size), 6, "", "", std::to_string(gs.group_rate), "", "") << std::endl;
       }
 
