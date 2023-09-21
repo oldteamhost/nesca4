@@ -49,12 +49,9 @@ class nesca_prints {
   html_to_ansi_color(const std::string& html_color);
 
   public:
-    bool save_file;
     bool html_save;
-    bool json_save;
     bool colors = true;
     std::map<std::string, std::string> config_values;
-    std::string file_path_save;
     std::string html_file_path;
 
     /*Создание класса*/

@@ -89,6 +89,10 @@ public:
   std::unordered_map<std::string, std::string> dns_completed;
   std::unordered_map<std::string,double> rtts;
 
+  /* Если пользователь указал в качестве цели DNS,
+   * то HTTP запрос будет на него.*/
+  std::unordered_map<std::string, std::string> dns_targets;
+
 }; nesca_data nd;
 
 int main(int argc, char** argv)
@@ -288,6 +292,10 @@ int main(int argc, char** argv)
   if (!argp.custom_g_max) {
     gs.max_group_size = result_main.size();
   }
+  
+  if (argp.my_life_my_rulez){
+    gs.group_rate = 1000;
+  }
 
   /*Потоки для сканирования портов.*/
   argp._threads = gs.max_group_size;
@@ -365,10 +373,6 @@ int main(int argc, char** argv)
         || argp.debug || nd.open_or_filtered_target.find(ip) != nd.open_or_filtered_target.end()
         || nd.no_filtered_target.find(ip) != nd.no_filtered_target.end()){
 
-        if (np.save_file) {
-          write_line(np.file_path_save, "\n");
-        }
-
         std::cout << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", nd.dns_completed[ip], std::to_string(nd.rtts[ip])+"ms","") << std::endl;
 
         if (argp.json_save) {
@@ -420,20 +424,12 @@ int main(int argc, char** argv)
     nesca_json_close_array(argp.json_save_path);
   }
 
-  if (np.save_file) {
-    write_line(np.file_path_save, "\n");
-  }
-
   double elapsed_result = argp.ping_duration+argp.dns_duration+argp.scan_duration+argp.proc_duration;
-  if (np.save_file) {
-    write_line(np.file_path_save, "-> NESCA finished "+std::to_string(count_success_ips) + " up IPs (success) in " + std::to_string(elapsed_result) + " seconds");
-  }
 
   np.golder_rod_on();
   std::cout << "-> NESCA finished " << count_success_ips << " up IPs (success) in " << std::fixed << std::setprecision(2) << elapsed_result << " seconds\n";
   np.reset_colors();
 
-  if (np.save_file){write_line(np.file_path_save, "\n");}
   if (removedCount > 0){std::cout << np.main_nesca_out("NESCA4", std::to_string(removedCount)+" identical IPs", 5, "status", "", "OK", "","") << std::endl;}
 
   return 0;
@@ -659,10 +655,12 @@ std::vector<std::string> resolv_hosts(std::vector<std::string> hosts)
     if (temp == _URL_) {
       char* clean = clean_url(t.c_str());
       char ipbuf[1024]; get_ip(clean, ipbuf, sizeof(ipbuf)); result.push_back(ipbuf);
+      nd.dns_targets[ipbuf] = clean;
       free(clean);
     }
     if (temp == DNS) {
       char ipbuf[1024]; get_ip(t.c_str(), ipbuf, sizeof(ipbuf)); result.push_back(ipbuf);
+      nd.dns_targets[ipbuf] = t;
     }
     else{result.push_back(t);}
   }
@@ -728,10 +726,6 @@ void print_port_state(int status, int port, std::string service)
   result_txt += status_port; result_txt += " SERVICE: " + service;
   np.gray_nesca_on(); fprintf(stdout, " SERVICE: "); np.green_html_on();
   fprintf(stdout, "%s\n", service.c_str()); np.reset_colors();
-
-  if (np.save_file) {
-    write_line(np.file_path_save, result_txt + "\n");
-  }
 }
 
 void ftp_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
@@ -819,7 +813,7 @@ void rtsp_strategy::handle(const std::string& ip, const std::string& result, con
 
     for (auto& path : rtsp_paths) {
       brute_temp = threads_bruteforce(argp.rtsp_logins, argp.rtsp_passwords, path, ip, port, argp.brute_timeout_ms, RTSP_BRUTEFORCE, argp.rtsp_brute_log);
-      if (brute_temp.length() > 1) {
+      if (!brute_temp.empty()){
           path_yes = path;
       }
     }
@@ -841,6 +835,11 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   hh.method = "GET";
   hh.path = "/";
   hh.dest_host = ip.c_str();
+
+  auto it = nd.dns_targets.find(ip);
+  if (it != nd.dns_targets.end()) {
+    hh.dest_host = nd.dns_targets[ip].c_str();
+  }
   hh.auth_header = NULL;
 
   /*Получение заголовков и кода страницы.*/
@@ -884,7 +883,7 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   }
 
   /*Второй запрос HTTP по перенаправлению*/
-  if (redirect.length() > 2) {
+  if (!redirect.empty()){
     hh.path = redirect.c_str();
     memset(response_buffer, 0, sizeof(response_buffer));
     send_http_request(ip.c_str(), 80, 1100, &hh, response_buffer, sizeof(response_buffer));
@@ -961,9 +960,6 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
       np.green_html_on();
       std::cout << "http://" << ip + "/robots.txt\n";
       np.reset_colors();
-      if(np.save_file) {
-        write_line(np.file_path_save, "[^][ROBOTS]:http://" + ip + "/robots.txt\n");
-      }
     }
   }
 
@@ -980,20 +976,14 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
       np.green_html_on();
       std::cout << "http://" << ip + "/sitemap.xml\n";
       np.reset_colors();
-      if(np.save_file) {
-        write_line(np.file_path_save, "[^][SITEMAP]:http://" + ip + "/sitemap.xml\n");
-      }
     }
   }
 
   /*Вывод перенаправления.*/
   if (redirect.length() != default_result.length()) {
-    if (redirect.length() != 0) {
+    if (!redirect.empty()){
       np.gray_nesca_on(); std::cout << "[^][REDIRT]:"; np.yellow_html_on();
       std::cout << redirect + "\n"; np.reset_colors();
-      if (np.save_file){
-        write_line(np.file_path_save, "[^][REDIRT]:" + redirect);
-      }
     }
   }
 
@@ -1004,19 +994,22 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   }
 
   if (argp.find) {
-    std::vector<std::string> finds = cfs.find_sentences_with_word(argp.find_target, html_pro);
-    if (!finds.empty()) {
-      for (const auto& find : finds){
-        np.gray_nesca_on(); std::cout << "[HTTP-FIND]:"; np.reset_colors();
-        np.green_html_on();
-        std::cout << find;
-        np.reset_colors();
-        np.gray_nesca_on();
-        std::cout << " example: ";
-        np.reset_colors();
-        np.golder_rod_on();
-        std::cout << "\"" << argp.find_target << "\"" << std::endl;
-        np.reset_colors();
+    for (const auto& target : argp.find_target){
+      std::vector<std::string> finds = cfs.find_sentences_with_word(target, html_pro);
+      if (!finds.empty()) {
+        for (const auto& find : finds){
+          np.gray_nesca_on();
+          std::cout << "[FOUND]:";
+          np.green_html_on();
+          std::cout << find;
+          np.reset_colors();
+          np.gray_nesca_on();
+          std::cout << " example: ";
+          np.reset_colors();
+          np.golder_rod_on();
+          std::cout << "\"" << target << "\"" << std::endl;
+          np.reset_colors();
+        }
       }
     }
   }
@@ -1194,6 +1187,10 @@ help_menu(void)
   std::cout << "  -max-group <num>: Edit max size group & threads for port scan.\n";
   std::cout << "  -min-group <num>: Edit min size group & threads for port scan.\n";
   std::cout << "  -rate-group <num>: Edit the value by which the group is incremented.\n";
+  np.golder_rod_on();
+  std::cout << "DELISEARCH SCAN:" << std::endl;
+  np.reset_colors();
+  std::cout << "  -find <target1[,target2][,target3],...>: Search for keywords on the host.\n";
 #ifdef HAVE_NODE_JS
   np.golder_rod_on();
   std::cout << "SAVE SCREENSHOTS:" << std::endl;
@@ -1211,7 +1208,6 @@ help_menu(void)
   np.reset_colors();
   std::cout << "  -html, -l <path file>: Classic nesca save, write on html page.\n";
   std::cout << "  -json <path file>: Save on json file.\n";
-  std::cout << "  -txt <path file>: Save result(s) to text document.\n";
   np.golder_rod_on();
   std::cout << "VERBOSE OUTPUT:" << std::endl;
   np.reset_colors();
@@ -1287,6 +1283,11 @@ pre_check(void)
     np.disable_colors();
   }
 
+  if (argp.import_color_scheme) {
+    np.import_color_scheme(argp.path_color_scheme, np.config_values);
+    np.processing_color_scheme(np.config_values);
+  }
+
   np.golder_rod_on();
   char formatted_date[11]; get_current_date(formatted_date, sizeof(formatted_date));
   std::cout << "-> Running NESCA [v" + std::string(VERSION) + "] # " +
@@ -1340,21 +1341,6 @@ pre_check(void)
       }
     }
     write_temp(argp.json_save_path, "resources/data_json");
-  }
-
-  if (np.save_file) {
-    auto now = std::chrono::system_clock::now();
-    std::time_t time = std::chrono::system_clock::to_time_t(now);
-    std::tm* tm = std::localtime(&time);
-    std::ostringstream oss;
-    oss << std::put_time(tm, "%d.%m.%Y");
-    std::string date_str = oss.str();
-    write_line(np.file_path_save, "\n\n\t\tNESCA4:[" + date_str + "]:[" + get_time() + "]\n\n");
-  }
-
-  if (argp.import_color_scheme) {
-    np.import_color_scheme(argp.path_color_scheme, np.config_values);
-    np.processing_color_scheme(np.config_values);
   }
 
   if (!check_file("./resources/nesca-services")) {
@@ -1671,13 +1657,9 @@ parse_args(int argc, char** argv)
                 argp.timeout = true;
                 argp.timeout_ms = atoi(optarg);
                 break;
-           case 22:
-                np.save_file = true;
-                np.file_path_save = optarg;
-                break;
            case 19:
                 argp.find = true;
-                argp.find_target = optarg;
+                argp.find_target = split_string_string(optarg, ',');
                 break;
            case 23:
            {
@@ -1788,7 +1770,7 @@ parse_args(int argc, char** argv)
   	    }
            case 53:
   		   argp.my_life_my_rulez = true;
-  		   argp.speed_type = 0;
+         argp.speed_type = 5;
                break;
            case 54:
                argp.import_color_scheme = true;

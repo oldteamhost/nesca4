@@ -39,10 +39,7 @@
 class arguments_program {
 public:
   std::string negatives_path = NEGATIVES_PATH_DEFAULT;
-
-  bool txt;
-  std::string txt_save;
-  std::string find_target;
+  std::vector<std::string> find_target;
 
   const char* source_ip;
   int type = SCAN_PORTS_TYPE_DEFAULT;

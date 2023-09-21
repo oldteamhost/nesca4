@@ -81,7 +81,7 @@
 #include "../config/compile.h"
 
 /*Угадайте?*/
-#define VERSION "20230919"
+#define VERSION "20230921"
 
 void help_menu(void);
 void version_menu(void);
@@ -164,7 +164,7 @@ public:
 /*Аргументы.*/
 const struct
 option long_options[] = {
-  /*45, 19, 20, 21, 79, 78, 46*/
+  /*45, 19, 20, 21, 79, 78, 46, 22*/
   {"threads", required_argument, 0, 'T'},
   {"delay", required_argument, 0, 'd'},
   {"import", required_argument, 0, 23},
@@ -180,7 +180,6 @@ option long_options[] = {
   {"no-brute", required_argument, 0, 44},
   {"brute-timeout", required_argument, 0, 47},
   {"negatives", required_argument, 0, 76},
-  {"txt", required_argument, 0, 22},
   {"TP", required_argument, 0, 57},
   {"debug", no_argument, 0, 27},
   {"er", no_argument, 0, 28},

@@ -88,7 +88,6 @@ nesca_prints::main_nesca_out(const std::string& opt, const std::string& result, 
       temp_file = "-> " + result + " " + opt + " " + result1;
 
   }
-  if (save_file) {write_line(file_path_save, temp_file + "\n");}
 
   return temp;
 }
@@ -106,13 +105,6 @@ nesca_prints::nlog_packet_trace(std::string action, std::string protocol, std::s
       gray_nesca + "  TTL  " + golder_rod + std::to_string(ttl) + gray_nesca + "  ID  " + golder_rod +
       std::to_string(id) + gray_nesca + "  WINDOW  " + golder_rod + std::to_string(win) + gray_nesca +
       "  IPLEN  " + golder_rod + std::to_string(iplen) + gray_nesca + "  SEQ  " + golder_rod + std::to_string(seq) +reset_color;
-
-  if (save_file) {
-    const std::string temp_file = "-> " + action + "  " + protocol + "  " + source_ip + ":" + std::to_string(source_port) + " > " + dest_ip + ":" +
-    std::to_string(dest_port) + message + "  TTL  " + std::to_string(ttl) + "  ID  " + std::to_string(id) + "  WINDOW  " +
-    std::to_string(win) +"  IPLEN  " + std::to_string(iplen) + "  SEQ  " + std::to_string(seq);
-    write_line(file_path_save, temp_file + "\n");
-  }
 
   fwrite(temp.c_str(), sizeof(char), strlen(temp.c_str()), stdout);
 }
@@ -228,8 +220,6 @@ nesca_prints::nlog_trivial(const std::string& message)
 {
   std::string log = print_get_time(get_time()) + "[OK]:" + message;
   fprintf(stdout, "%s%s", green_html.c_str(), log.c_str()); 
-
-  if (save_file) {write_line(file_path_save, log);}
 }
 
 void
@@ -237,15 +227,12 @@ nesca_prints::nlog_error(const std::string& message)
 {
   const std::string log = print_get_time(get_time()) + "[ERROR]:" + message;
   fprintf(stdout, "%s%s", red_html.c_str(), log.c_str()); 
-
-  if (save_file) {write_line(file_path_save, log);}
 }
 
 void
 nesca_prints::nlog_custom(const std::string& auth, std::string message, int color)
 {
   const std::string log = print_get_time(get_time()) + "[" + auth + "]:" + message;
-  if (save_file)write_line(file_path_save, log);
 
   if      (color == 0) {green_html_on();}
   else if (color == 1) {yellow_html_on();}
