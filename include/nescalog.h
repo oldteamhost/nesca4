@@ -21,12 +21,7 @@
 
 enum log_level
 {
-  OK,
-  INFO,
-  WARNING,
-  ERROR,
-  MAIN,
-  MAIN_OLD
+  OK, INFO, WARNING, ERROR, MAIN, MAIN_OLD
 };
 
 struct log_enty

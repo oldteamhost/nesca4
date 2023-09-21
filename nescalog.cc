@@ -10,6 +10,7 @@
 #include "ncsock/include/strbase.h"
 #include "ncsock/include/base.h"
 #include <cstdio>
+#include <cstring>
 
 html_output hou;
 
@@ -83,7 +84,7 @@ nesca_prints::main_nesca_out(const std::string& opt, const std::string& result, 
 
   }
   else if (mode == 6) {
-    temp = golder_rod + "-> LOG  " + result + " " + opt + " " + result1;
+    temp = golder_rod + "-> " + result + " " + opt + " " + result1;
       temp_file = "-> " + result + " " + opt + " " + result1;
 
   }
@@ -113,7 +114,7 @@ nesca_prints::nlog_packet_trace(std::string action, std::string protocol, std::s
     write_line(file_path_save, temp_file + "\n");
   }
 
-  fprintf(stdout, "%s",temp.c_str()) ;
+  fwrite(temp.c_str(), sizeof(char), strlen(temp.c_str()), stdout);
 }
 
 void
@@ -157,37 +158,37 @@ nesca_prints::import_color_scheme(const std::string& file_name, std::map<std::st
 
 void
 nesca_prints::golder_rod_on(void) {
-  fprintf(stdout, "%s", golder_rod.c_str());
+  fwrite(golder_rod.c_str(), sizeof(char), strlen(golder_rod.c_str()), stdout);
 }
 
 void
 nesca_prints::sea_green_on(void) {
-  fprintf(stdout, "%s", sea_green.c_str());
+  fwrite(sea_green.c_str(), sizeof(char), strlen(sea_green.c_str()), stdout);
 }
 
 void
 nesca_prints::reset_colors(void) {
-  fprintf(stdout, "%s", reset_color.c_str());
+  fwrite(reset_color.c_str(), sizeof(char), strlen(reset_color.c_str()), stdout);
 }
 
 void
 nesca_prints::gray_nesca_on(void) {
-  fprintf(stdout, "%s", gray_nesca.c_str());
+  fwrite(gray_nesca.c_str(), sizeof(char), strlen(gray_nesca.c_str()), stdout);
 }
 
 void
 nesca_prints::yellow_html_on(void) {
-  fprintf(stdout, "%s", yellow_html.c_str());
+  fwrite(yellow_html.c_str(), sizeof(char), strlen(yellow_html.c_str()), stdout);
 }
 
 void
 nesca_prints::green_html_on(void) {
-  fprintf(stdout, "%s", green_html.c_str());
+  fwrite(green_html.c_str(), sizeof(char), strlen(green_html.c_str()), stdout);
 }
 
 void
 nesca_prints::red_html_on(void) {
-  fprintf(stdout, "%s", red_html.c_str());
+  fwrite(red_html.c_str(), sizeof(char), strlen(red_html.c_str()), stdout);
 }
 
 void
@@ -250,5 +251,5 @@ nesca_prints::nlog_custom(const std::string& auth, std::string message, int colo
   else if (color == 1) {yellow_html_on();}
   else if (color == 2) {red_html_on();}
 
-  fprintf(stdout, "%s",log.c_str()) ;
+  fwrite(log.c_str(), sizeof(char), strlen(log.c_str()), stdout);
 }

@@ -7,6 +7,43 @@
 
 #include "include/scanner.h"
 
+std::vector<std::string>
+checking_finds::find_sentences_with_word(const std::string& word, const std::string& input_text)
+{
+  std::vector<std::string> sentences;
+  std::string lowerWord = word;
+  std::transform(lowerWord.begin(), lowerWord.end(), lowerWord.begin(), [](unsigned char c){ return std::tolower(c); });
+
+  std::string lowerText = input_text;
+  std::transform(lowerText.begin(), lowerText.end(), lowerText.begin(), [](unsigned char c){ return std::tolower(c); });
+
+  std::string::size_type pos = lowerText.find(lowerWord);
+  while (pos != std::string::npos) {
+    std::string::size_type sentenceStart = lowerText.rfind('\n', pos);
+    if (sentenceStart == std::string::npos) {
+      sentenceStart = 0;
+    }
+
+    std::string::size_type sentenceEnd = lowerText.find('\n', pos);
+
+    if (sentenceEnd == std::string::npos) {
+      sentenceEnd = lowerText.length();
+    }
+
+    std::string sentence = input_text.substr(sentenceStart, sentenceEnd - sentenceStart);
+
+    if (lowerText.find(lowerWord, sentenceStart) != std::string::npos) {
+      sentence.erase(std::remove(sentence.begin(), sentence.end(), '\n'), sentence.end());
+      sentence.erase(std::remove(sentence.begin(), sentence.end(), '\r'), sentence.end());
+      sentences.push_back(sentence);
+    }
+
+    pos = lowerText.find(lowerWord, sentenceEnd);
+  }
+
+  return sentences;
+}
+
 bool
 checking_finds::contains_word(const std::string& word, const std::string& sentence)
 {

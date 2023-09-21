@@ -23,4 +23,4 @@ file(GLOB C_NCBASE_SRCS ncbase/*.c)
 
 add_executable(nesca4 ${SRCS} ${C_NCSOCK_SRCS} ${PLUS_NCSOCK_SRCS} ${MODULE_SRCS} ${C_NCBASE_SRCS})
 target_link_libraries(nesca4 pthread hcnetsdk)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g")

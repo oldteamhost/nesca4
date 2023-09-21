@@ -1,7 +1,7 @@
 d8b   db d88888b .d8888.  .o88b.  .d8b.    NESCA4 - Многопоточный linux сканер портов,
 888o  88 88'     88'  YP d8P  Y8 d8' `8b   с точностью nmap-а, обработкой nesca3 брутфорсом
 88V8o 88 88ooooo `8bo.   8P      88ooo88   самых популярных протоколов и сканированием DNS.
-88 V8o88 88~~~~~   `Y8b. 8b      88~~~88    
+88 V8o88 88~~~~~   `Y8b. 8b      88~~~88
 88  V888 88.     db   8D Y8b  d8 88   88   Был сделан с вдохновением от nesca3 & nmap.
 VP   V8P Y88888P `8888Y'  `Y88P' YP   YP   by oldteam & lomaster.
 
@@ -24,7 +24,7 @@ cmake .
 make -j12
 
 Screenshots not save!:
-cd nesca4 && sudo chmod u+rwx,g+r,o+r utils/ 
+cd nesca4 && sudo chmod u+rwx,g+r,o+r utils/
 
 Для компиляции без библиотек, нужно зайти в файл `config/compile.h`, и закомментировать, или удалить строчку отвечающую за библиотеку, без которой вы хотите скомпилировать:
 #define HAVE_HIKVISION

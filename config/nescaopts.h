@@ -42,6 +42,7 @@ public:
 
   bool txt;
   std::string txt_save;
+  std::string find_target;
 
   const char* source_ip;
   int type = SCAN_PORTS_TYPE_DEFAULT;
@@ -53,6 +54,7 @@ public:
   bool custom_g_max;
   bool custom_g_min;
   bool custom_source_port;
+  bool find;
   bool custom_ttl;
   bool random_dns;
   int random_dns_count;
@@ -133,7 +135,6 @@ public:
   int syn_dest_port = SYN_PING_DEFAULT_DEST_PORT;
 
   /*Don`t touch*/
-  int error_fuck;
   bool print_help_menu;
   int count_success_ports;
   int result_success_ports;
@@ -200,14 +201,6 @@ public:
   bool http_brute_log;
   bool smtp_brute_log;
   bool hikvision_brute_log;
-
-  bool ftp_only;
-  bool sftp_only;
-  bool rtsp_only;
-  bool rvi_only;
-  bool http_only;
-  bool smtp_only;
-  bool hikvision_only;
 
   /*Color options*/
   bool color_off;

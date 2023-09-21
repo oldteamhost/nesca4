@@ -17,7 +17,7 @@ nesca_negatives::parse_config_file(const std::string& file_path)
 
   while (std::getline(file, line)) {
     /*Игнорируем пустые строки и строки-комментарии*/
-    if (line.empty() || line.substr(0, 2) == "//"){continue;}
+    if (line.empty() || line.substr(0, 2) == "##"){continue;}
 
     std::stringstream ss(line);
     std::string value, type;

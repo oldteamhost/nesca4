@@ -99,6 +99,9 @@ public:
   bool /*Поиск слова в строчке.*/
   contains_word(const std::string& word, const std::string& sentence);
 
+  std::vector<std::string>
+  find_sentences_with_word(const std::string& word, const std::string& input_text);
+
   std::string /*Установка характеристики по перенаправлению.*/
   set_target_at_path(const std::string& path);
 

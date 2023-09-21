@@ -164,10 +164,11 @@ public:
 /*Аргументы.*/
 const struct
 option long_options[] = {
-  /*45, 19, 20, 21, 79, 78*/
+  /*45, 19, 20, 21, 79, 78, 46*/
   {"threads", required_argument, 0, 'T'},
   {"delay", required_argument, 0, 'd'},
   {"import", required_argument, 0, 23},
+  {"find", required_argument, 0, 19},
   {"random-ip", required_argument, 0, 5},
   {"brute-login", required_argument, 0, 12},
   {"brute-pass", required_argument, 0, 11},
@@ -177,7 +178,6 @@ option long_options[] = {
   {"brute-verbose", required_argument, 0, 31},
   {"thread-on-port", no_argument, 0, 48},
   {"no-brute", required_argument, 0, 44},
-  {"brute-only", required_argument, 0, 46},
   {"brute-timeout", required_argument, 0, 47},
   {"negatives", required_argument, 0, 76},
   {"txt", required_argument, 0, 22},
