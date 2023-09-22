@@ -330,7 +330,7 @@ int main(int argc, char** argv)
   thread_pool pool(argp._threads);
 
   /*Сканирование по группам*/
-  int group_start = 0; int ip_count = 0;
+  int group_start = 0; int ip_count = 0; bool first = false;
 
   while (group_start < size) {
     auto start_time_scan = std::chrono::high_resolution_clock::now();
@@ -348,6 +348,11 @@ int main(int argc, char** argv)
         log_set = gs.group_size;
       }
 
+      if (ip_count % log_set == 0 && !first) {
+        first = true;
+        std::cout << std::endl;
+      }
+
       if (ip_count % log_set == 0) {
         double procents = (static_cast<double>(ip_count) / size) * 100;
         std::string result = format_percentage(procents);
@@ -356,7 +361,7 @@ int main(int argc, char** argv)
         std::to_string(size) + " IPs", 6, "", "", result+"%", "", "") << std::endl;
 
         std::cout << np.main_nesca_out("# rate", "GROUP "+std::to_string(gs.group_size)+" out of "+
-        std::to_string(gs.max_group_size), 6, "", "", std::to_string(gs.group_rate), "", "") << std::endl;
+        std::to_string(gs.max_group_size), 6, "", "", std::to_string(gs.group_rate), "", "") << std::endl << std::endl;
       }
 
       /*Добавление задачи сканирования портов в пул потоков*/
