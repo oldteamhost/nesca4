@@ -455,8 +455,10 @@ int main(int argc, char** argv)
   return 0;
 }
 
+
+
 /*Функция через которую происходит само сканирование
- * портов. Стабильно.*/
+ * портов. Даже расчеты и генерации.*/
 int
 scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
 {
@@ -583,6 +585,8 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
 
   return 0;
 }
+
+
 
 void process_port(const std::string& ip, const std::unordered_map<std::string, std::vector<int>>& target_map, int port_type)
 {

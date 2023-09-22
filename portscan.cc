@@ -16,7 +16,9 @@ std::mutex packet_trace;
 * https://nmap.org/man/ru/man-port-scanning-techniques.html
 * https://nmap.org/book/scan-methods-window-scan.html
 * https://nmap.org/book/scan-methods-maimon-scan.html
-*/
+*
+* get_port_status - функция для получения статуса порта,
+* при сканированях SYN, NULL, XMAS, FIN, MAIMON, WINDOW, ACK. */
 
 int get_port_status(unsigned char* buffer, uint8_t scan_type)
 {
@@ -100,11 +102,11 @@ std::string return_port_status(uint8_t type)
 {
   switch (type)
   {
-    case PORT_OPEN: return "open";
-    case PORT_CLOSED: return "closed";
-    case PORT_FILTER: return "filtered";
-    case PORT_OPEN_OR_FILTER: return "open/filtered";
-    case PORT_NO_FILTER: return "unfiltered";
+    case PORT_OPEN:            return "open";
+    case PORT_CLOSED:          return "closed";
+    case PORT_FILTER:          return "filtered";
+    case PORT_OPEN_OR_FILTER:  return "open/filtered";
+    case PORT_NO_FILTER:       return "unfiltered";
   }
   return "error";
 }
@@ -114,12 +116,12 @@ get_type(uint8_t type)
 {
   switch (type)
   {
-    case SYN_SCAN: return "SYN_SCAN";
-    case ACK_SCAN: return "ACK_SCAN";
-    case XMAS_SCAN: return "XMAS_SCAN";
-    case FIN_SCAN: return "FIN_SCAN";
+    case SYN_SCAN:    return "SYN_SCAN";
+    case ACK_SCAN:    return "ACK_SCAN";
+    case XMAS_SCAN:   return "XMAS_SCAN";
+    case FIN_SCAN:    return "FIN_SCAN";
     case WINDOW_SCAN: return "WINDOW_SCAN";
-    case NULL_SCAN: return "NULL_SCAN";
+    case NULL_SCAN:   return "NULL_SCAN";
     case MAIMON_SCAN: return "MAIMON_SCAN";
   }
 

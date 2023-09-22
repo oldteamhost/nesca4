@@ -43,7 +43,7 @@ html_output::html_add_result(const std::string& filepath, const std::string& tim
     const std::string& opt2, const std::string& res2, const std::string& opt3, const std::string& res3)
 {
 
-  char dots[4] = 
+  char dots[4] =
   {':', ':', ':', ':'};
 
   if (res.empty())  {dots[0] = ' ';}

@@ -35,7 +35,7 @@ threads_bruteforce(const std::vector<std::string>& login, std::vector<std::strin
     for (const auto& p : pass){
       futures.push_back(pool.enqueue([&combinations, &total, &wait, brute_log, l, p, ip, port, proto, http_path, delay, &result]() {
         wait.lock();
-        if (brute_log) {np1.nlog_custom("SSH", "                 try: " + l + "@" + p + " [BRUTEFORCE]\n", 1);}
+        if (brute_log) {np1.nlog_custom("LOG", "                 try: " + l + "@" + p + " [BRUTEFORCE]\n", 1);}
         bruteforce_opts bo;
         bo.dest_ip = ip.c_str();
         bo.dest_port = port;
@@ -98,7 +98,6 @@ brute_hikvision(const std::string ip, const std::string login, const std::string
 
   if (path != "") {
     hikvision_screenshot(ip, userId, deviceInfo, path);
-    std::cout << "asasdasd\n";
   }
 
   result = login + ":" + pass + "@";
