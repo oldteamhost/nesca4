@@ -69,8 +69,17 @@ checking_finds::set_target_at_path(const std::string& path)
 {
   /*AXIS камеры.*/
   if (contains_word("/operator/basic.shtml", path)){return CAMERA_AXIS_205;}
-  for (auto& p : axis_2400_path){if(contains_word(p, path)){return CAMERA_AXIS_2400;}}
-  for (auto& p : axis_other_path){if(contains_word(p, path)){return CAMERA_AXIS;}}
+  for (auto& p : axis_2400_path){
+    if(contains_word(p, path)) {
+      return CAMERA_AXIS_2400;
+    }
+  }
+
+  for (auto& p : axis_other_path) {
+    if(contains_word(p, path)) {
+      return CAMERA_AXIS;
+    }
+  }
 
   /*NETWORK камеры.*/
   for (auto& p : network_camera_path){if(contains_word(p, path)){return CAMERA_NETWORK;}}
@@ -117,7 +126,11 @@ std::string
 checking_finds::set_target_at_http_header(const std::string& buffer)
 {
   /*Разное.*/
-  for (auto& p : basic_auth_header){if(contains_word(p, buffer)){return HTTP_BASIC_AUTH;}}
+  for (auto& p : basic_auth_header) {
+    if(contains_word(p, buffer)) {
+      return HTTP_BASIC_AUTH;
+    }
+  }
 
   /*Другие камеры.*/
   if (contains_word("airos_logo", buffer)){return CAMERA_AIROS;}

@@ -35,7 +35,9 @@ threads_bruteforce(const std::vector<std::string>& login, std::vector<std::strin
     for (const auto& p : pass){
       futures.push_back(pool.enqueue([&combinations, &total, &wait, brute_log, l, p, ip, port, proto, http_path, delay, &result]() {
         wait.lock();
-        if (brute_log) {np1.nlog_custom("LOG", "                 try: " + l + "@" + p + " [BRUTEFORCE]\n", 1);}
+        if (brute_log) {
+          np1.nlog_custom("LOG", "                 try: " + l + "@" + p + " [BRUTEFORCE]\n", 1);
+        }
         bruteforce_opts bo;
         bo.dest_ip = ip.c_str();
         bo.dest_port = port;
@@ -47,7 +49,9 @@ threads_bruteforce(const std::vector<std::string>& login, std::vector<std::strin
         wait.unlock();
 
         int auth = ncsock_bruteforce(&bo);
-        if(auth == 0){result = l + ":" + p + "@";}
+        if(auth == 0) {
+          result = l + ":" + p + "@";
+        }
 
         combinations++;
         if (combinations % 20 == 0) {

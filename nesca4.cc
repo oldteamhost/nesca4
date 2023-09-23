@@ -87,13 +87,25 @@ public:
   std::unordered_map<std::string, std::vector<int>> closed_target;
 
   std::unordered_map<std::string, std::string> dns_completed;
-  std::unordered_map<std::string,double> rtts;
+  std::unordered_map<std::string, double> rtts;
 
   /* Если пользователь указал в качестве цели DNS,
    * то HTTP запрос будет на него.*/
   std::unordered_map<std::string, std::string> dns_targets;
 
+  void clean_data_ports(void);
+
 }; nesca_data nd;
+
+void nesca_data::clean_data_ports(void)
+{
+  nd.open_or_filtered_target.clear();
+  nd.filtered_target.clear();
+  nd.closed_target.clear();
+  nd.success_target.clear();
+  nd.no_filtered_target.clear();
+  nd.error_target.clear();
+}
 
 int main(int argc, char** argv)
 {
@@ -261,8 +273,7 @@ int main(int argc, char** argv)
     thread_pool dns_pool(argp.dns_threads);
 
     for (const auto& ip : result_main) {
-      futures_dns.emplace_back(dns_pool.enqueue(get_dns_thread, ip));
-      complete++;
+      futures_dns.emplace_back(dns_pool.enqueue(get_dns_thread, ip)); complete++;
       if (futures_dns.size() >= static_cast<long unsigned int>(argp.dns_threads)) {
         for (auto& future : futures_dns){future.get();}
         futures_dns.clear();
@@ -405,10 +416,10 @@ int main(int argc, char** argv)
 
         process_port(ip, nd.success_target, PORT_OPEN);
         process_port(ip, nd.filtered_target, PORT_FILTER);
-        process_port(ip, nd.closed_target, PORT_CLOSED);
-        process_port(ip, nd.error_target, PORT_ERROR);
         process_port(ip, nd.open_or_filtered_target, PORT_OPEN_OR_FILTER);
         process_port(ip, nd.no_filtered_target, PORT_NO_FILTER);
+        process_port(ip, nd.closed_target, PORT_CLOSED);
+        process_port(ip, nd.error_target, PORT_ERROR);
 
         std::cout << std::endl;
 
@@ -425,12 +436,7 @@ int main(int argc, char** argv)
     count_success_ips += nd.no_filtered_target.size();
     count_success_ips += nd.open_or_filtered_target.size();
 
-    nd.open_or_filtered_target.clear();
-    nd.filtered_target.clear();
-    nd.closed_target.clear();
-    nd.success_target.clear();
-    nd.no_filtered_target.clear();
-    nd.error_target.clear();
+    nd.clean_data_ports();
     gs.clean_group();
 
     auto end_time_proc = std::chrono::high_resolution_clock::now();
@@ -450,7 +456,9 @@ int main(int argc, char** argv)
   std::cout << "-> NESCA finished " << count_success_ips << " up IPs (success) in " << std::fixed << std::setprecision(2) << elapsed_result << " seconds\n";
   np.reset_colors();
 
-  if (removedCount > 0){std::cout << np.main_nesca_out("NESCA4", std::to_string(removedCount)+" identical IPs", 5, "status", "", "OK", "","") << std::endl;}
+  if (removedCount > 0) {
+    std::cout << np.main_nesca_out("NESCA4", std::to_string(removedCount)+" identical IPs", 5, "status", "", "OK", "","") << std::endl;
+  }
 
   return 0;
 }
@@ -566,6 +574,11 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
       case PORT_CLOSED:
         if (argp.debug) {
           nd.closed_target[ip].push_back(port);
+        }
+        break;
+      case PORT_ERROR:
+        if (argp.print_errors) {
+          nd.error_target[ip].push_back(port);
         }
         break;
       case PORT_FILTER:
