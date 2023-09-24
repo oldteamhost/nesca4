@@ -9,6 +9,8 @@
 #include <cmath>
 #include <vector>
 
+/*A basic function that allows you to replace the mechanism of getting values via
+ * a key, as in dictionaries.*/
 _nescadata_* NESCADATA::get_data_block(const std::string& ip)
 {
   auto it = std::find_if(all_data.begin(), all_data.end(), [&ip](const _nescadata_& data) {
@@ -20,6 +22,7 @@ _nescadata_* NESCADATA::get_data_block(const std::string& ip)
   return nullptr;
 }
 
+/*Setting the DNS that the user specified when calling nesca4.*/
 void NESCADATA::set_new_dns(const std::string& ip, const std::string& new_dns)
 {
   _nescadata_* data = get_data_block(ip);
@@ -28,6 +31,7 @@ void NESCADATA::set_new_dns(const std::string& ip, const std::string& new_dns)
   }
 }
 
+/*Removal of all ports in all blocks.*/
 void NESCADATA::clean_ports(void)
 {
   for (auto& data : all_data) {

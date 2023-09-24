@@ -56,8 +56,12 @@
 #include <string>
 #include <future>
 #include <sstream>
-#include <vector>
 #include <set>
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "bruteforce.h"
 #include "files.h"
@@ -78,8 +82,15 @@
 #include "../ncbase/include/getopt.h"
 #include "../ncbase/include/json.h"
 #include "../ncbase/include/base64.h"
+#include "../ncsock/include/bruteforce.h"
 #include "../ncbase/include/binary.h"
 #include "../config/compile.h"
+#include "../ncsock/include/tcp.h"
+#include "../ncsock/include/http.h"
+#include "../ncsock/include/dns.h"
+#include "../ncsock/include/strbase.h"
+#include "../ncsock/include/ftp.h"
+#include "../ncsock/include/smtp.h"
 
 /*Угадайте?*/
 #define VERSION "20230921"

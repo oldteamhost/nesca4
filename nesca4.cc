@@ -40,33 +40,8 @@
 */
 
 #include "include/nesca4.h"
-#include "include/bruteforce.h"
 #include "include/files.h"
-#include "include/other.h"
-#include "include/portscan.h"
-#include "include/target.h"
-#include "ncbase/include/base64.h"
-#include "ncbase/include/binary.h"
-#include "ncbase/include/json.h"
-#include "ncsock/include/base.h"
-#include "ncsock/include/bruteforce.h"
-#include "ncsock/include/tcp.h"
-#include "ncsock/include/http.h"
-#include "ncsock/include/dns.h"
-#include "ncsock/include/strbase.h"
-#include "ncsock/include/ftp.h"
-#include "ncsock/include/smtp.h"
-#include <bits/getopt_core.h>
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
 #include <string>
-#include <unordered_map>
-#include <vector>
-
-const char* short_options = "s:hl:vd:T:p:aS:";
-const char* run;
-std::mutex ls;
 
 struct tcp_packet_opts ncopts;
 checking_finds cfs;
@@ -76,6 +51,10 @@ services_nesca sn;
 nesca_negatives nn;
 arguments_program argp;
 NESCADATA n;
+
+const char* short_options = "s:hl:vd:T:p:aS:";
+const char* run;
+std::mutex ls;
 
 int main(int argc, char** argv)
 {
@@ -649,25 +628,32 @@ int errors_files = 0;
 void check_files(const char* path, const char* path1)
 {
   if (!check_file(path)){
-    np.nlog_error(std::string(path) + " (" + std::to_string(get_count_lines(path)) + ") entries\n");
+    np.golder_rod_on();
+    std::cout << "-> FAILED Import file (" + std::string(path) + ") loaded " + std::to_string(get_count_lines(path)) + " entries\n";
+    np.reset_colors();
     errors_files++;
   }
   else if (!check_file(path1)){
-    np.nlog_error(std::string(path1) + " (" + std::to_string(get_count_lines(path1)) + ") entries\n");
+    np.golder_rod_on();
+    std::cout << "-> FAILED Import file (" + std::string(path1) + ") loaded " + std::to_string(get_count_lines(path1)) + " entries\n";
+    np.reset_colors();
     errors_files++;
   }
 }
-
 
 void checking_default_files(void)
 {
   /*Чек целей из файлов.*/
   if (argp.ip_scan_import) {
     if (check_file(argp.path_ips)) {
-      np.nlog_trivial(std::string(argp.path_ips) + " (" + std::to_string(get_count_lines(argp.path_ips)) + ") entries\n");
+      np.golder_rod_on();
+      std::cout << "-> Import file (" + std::string(argp.path_ips) + ") loaded " + std::to_string(get_count_lines(argp.path_ips)) + " entries\n";
+      np.reset_colors();
     }
     else {
-      np.nlog_error(std::string(argp.path_ips) + " (" + std::to_string(get_count_lines(argp.path_ips)) + ") entries\n");
+      np.golder_rod_on();
+      std::cout << "-> FAILED Import file (" + std::string(argp.path_ips) + ") loaded " + std::to_string(get_count_lines(argp.path_ips)) + " entries\n";
+      np.reset_colors();
       exit(1);
     }
     std::vector<std::string> temp_ips = write_file(argp.path_ips);
