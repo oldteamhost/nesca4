@@ -6,25 +6,178 @@
 */
 
 #include "include/target.h"
+#include <vector>
 
-/*Тут создаётся группа путём перемешения из всех IP.
- * Именно перемешение, я думаю это лучшее что можно было сделать.*/
-void group_scan::create_group(std::vector<std::string>& ips, std::unordered_map<std::string, double> rtts)
+_nescadata_* NESCADATA::get_data_block(const std::string& ip)
 {
-  /*Сортировка по возрастанию времени ответа.*/
-  std::sort(ips.begin(), ips.end(), [&rtts](const std::string& a, const std::string& b){return rtts[a] < rtts[b];});
-  for (int i = 1; i <= group_size && !ips.empty(); i++) {
-    current_group.push_back(std::move(ips[0]));
-    ips.erase(ips.begin());
+  auto it = std::find_if(all_data.begin(), all_data.end(), [&ip](const _nescadata_& data) {
+    return data.ip == ip;
+  });
+  if (it != all_data.end()) {
+    return &(*it);
+  }
+  return nullptr;
+}
+
+void NESCADATA::set_new_dns(const std::string& ip, const std::string& new_dns)
+{
+  _nescadata_* data = get_data_block(ip);
+  if (data) {
+    data->new_dns = new_dns;
   }
 }
 
-void group_scan::increase_group(void)
+void NESCADATA::clean_ports(void)
+{
+  for (auto& data : all_data) {
+    data.ports.clear();
+  }
+}
+
+void NESCADATA::add_port(const std::string& ip, uint16_t port, short state)
+{
+  _nescadata_* data = get_data_block(ip);
+  if (data) {
+    _portlist_ port_enty = {port, state};
+    data->ports.push_back(port_enty);
+  }
+}
+
+std::vector<std::string> NESCADATA::get_all_ips(void)
+{
+  std::vector<std::string> all_ips;
+  for (const _nescadata_& data : all_data) {
+    all_ips.push_back(data.ip);
+  }
+  return all_ips;
+}
+
+void NESCADATA::update_data_from_ips(const std::vector<std::string>& updated_ips)
+{
+  std::vector<_nescadata_> new_all_data;
+  for (const std::string& ip : updated_ips) {
+    _nescadata_* data = get_data_block(ip);
+    if (data) {
+      new_all_data.push_back(*data);
+    }
+  }
+  all_data = new_all_data;
+}
+
+void NESCADATA::set_dns(const std::string& ip, const std::string& dns)
+{
+  _nescadata_* data = get_data_block(ip);
+  if (data) {
+    data->dns = dns;
+  }
+}
+
+void NESCADATA::set_rtt(const std::string& ip, double rtt)
+{
+  _nescadata_* data = get_data_block(ip);
+  if (data) {
+    data->rtt = rtt;
+  }
+}
+
+bool NESCADATA::find_port_status(const std::string& ip, short state)
+{
+  _nescadata_* data = get_data_block(ip);
+  if (data) {
+    for (const _portlist_& entry : data->ports) {
+      if (entry.state == state) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+void NESCADATA::add_ip(const std::string& ip)
+{
+  _nescadata_ new_data;
+  strncpy(new_data.ip, ip.c_str(), sizeof(new_data.ip) - 1);
+  new_data.ip[sizeof(new_data.ip) - 1] = '\0';
+  all_data.push_back(new_data);
+}
+
+std::vector<uint16_t> NESCADATA::get_port_list(const std::string& ip, short state)
+{
+  std::vector<uint16_t> port_list;
+  _nescadata_* data = get_data_block(ip);
+  if (data) {
+    for (const _portlist_& entry : data->ports) {
+      if (entry.state == state) {
+        port_list.push_back(entry.port);
+      }
+    }
+  }
+  return port_list;
+}
+
+short NESCADATA::get_port_state(const std::string& ip, uint16_t port)
+{
+  _nescadata_* data = get_data_block(ip);
+  if (data) {
+    for (const _portlist_& entry : data->ports) {
+      if (entry.port == port) {
+        return entry.state;
+      }
+    }
+  }
+  return -1;
+}
+
+std::string NESCADATA::get_new_dns(const std::string& ip)
+{
+  _nescadata_* data = get_data_block(ip);
+  if (data) {
+    return data->new_dns;
+  }
+  return "";
+}
+
+std::string NESCADATA::get_dns(const std::string& ip)
+{
+  _nescadata_* data = get_data_block(ip);
+  if (data) {
+    return data->dns;
+  }
+  return "-1";
+}
+
+double NESCADATA::get_rtt(const std::string& ip)
+{
+  _nescadata_* data = get_data_block(ip);
+  if (data) {
+    return data->rtt;
+  }
+  return -1.0;
+}
+
+/*Тут создаётся группа путём перемешения из всех IP.
+ * Именно перемешение, я думаю это лучшее что можно было сделать.*/
+void NESCADATA::create_group(void)
+{
+  std::vector<std::string> temp_ips = get_all_ips();
+  std::sort(temp_ips.begin(), temp_ips.end(), [this](const std::string& a, const std::string& b) {
+    double rtt_a = get_rtt(a);
+    double rtt_b = get_rtt(b);
+    return rtt_a < rtt_b;
+  });
+
+  for (int i = 1; i <= group_size && !temp_ips.empty(); i++) {
+    current_group.push_back(std::move(temp_ips[0]));
+    temp_ips.erase(temp_ips.begin());
+  }
+}
+
+void NESCADATA::increase_group(void)
 {
   group_size += group_rate;
 }
 
-void group_scan::clean_group(void)
+void NESCADATA::clean_group(void)
 {
   current_group.clear();
 }

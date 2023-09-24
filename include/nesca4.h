@@ -39,6 +39,7 @@
  *
 */
 
+#include <cstdint>
 #include <cstdio>
 #include <iostream>
 #include <cstdlib>
@@ -98,7 +99,7 @@ void checking_default_files(void);
 bool process_ping(std::string ip);
 void parse_args(int argc, char** argv);
 void pre_check(void);
-void process_port(const std::string& ip, const std::unordered_map<std::string, std::vector<int>>& target_map, int port_type);
+void process_port(const std::string& ip, std::vector<uint16_t> ports, int port_type);
 void get_dns_thread(std::string ip);
 int count_map_vector(const std::unordered_map<std::string, std::vector<int>>& map, const std::string& key);
 int traceroute(std::string ip, int jumps);

@@ -112,7 +112,6 @@ public:
   int resol_delay;
 
   bool ip_scan_import;
-  std::vector<std::string> result;
   const char* path_ips;
 
   bool custom_ping;
