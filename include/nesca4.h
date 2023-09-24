@@ -93,7 +93,7 @@
 #include "../ncsock/include/smtp.h"
 
 /*Угадайте?*/
-#define VERSION "20230921"
+#define VERSION "20230924"
 
 void help_menu(void);
 void version_menu(void);
