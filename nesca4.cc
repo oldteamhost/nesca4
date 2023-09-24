@@ -168,15 +168,10 @@ int main(int argc, char** argv)
   auto start_time_ping = std::chrono::high_resolution_clock::now();
 
   /*Вырез одиниковых IP.*/
-  std::sort(temp_vector.begin(), temp_vector.end());
-  auto newEnd = std::unique(temp_vector.begin(), temp_vector.end());
-  int removedCount = temp_vector.end() - newEnd;
-  temp_vector.erase(newEnd, temp_vector.end());
+  n.remove_duplicates();
 
   /*Удаление не тех хостов.*/
-  temp_vector.erase(std::remove_if(temp_vector.begin(), temp_vector.end(), [&](const std::string& element) {
-    return std::find(argp.exclude.begin(), argp.exclude.end(), element) != argp.exclude.end();
-  }), temp_vector.end());
+  n.negatives_hosts(argp.exclude);
 
   /*Пинг сканирования*/
   std::vector<std::string> result_main;
@@ -219,9 +214,9 @@ int main(int argc, char** argv)
     }
 
     temp_vector = result_main;
+    n.update_data_from_ips(temp_vector);
   }
 
-  n.update_data_from_ips(temp_vector);
 
   int count_success_ips = temp_vector.size();
   auto end_time_ping = std::chrono::high_resolution_clock::now();
@@ -423,10 +418,6 @@ int main(int argc, char** argv)
   std::cout << "-> NESCA finished " << count_success_ips << " up IPs (success) in " << std::fixed << std::setprecision(2) << elapsed_result << " seconds\n";
   np.reset_colors();
 
-  if (removedCount > 0) {
-    std::cout << np.main_nesca_out("NESCA4", std::to_string(removedCount)+" identical IPs", 5, "status", "", "OK", "","") << std::endl;
-  }
-
   return 0;
 }
 
@@ -456,7 +447,7 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
   else {
     /*Расчёт таймаута для приёма данных*/
     double rtt_ping = n.get_rtt(ip);
-    if (rtt_ping != -1){
+    if (rtt_ping != EOF ){
       recv_timeout_result = calculate_timeout(rtt_ping, argp.speed_type);
     }
   }
@@ -821,7 +812,7 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   hh.method = "GET";
   hh.path = "/";
   hh.dest_host = n.get_dns(ip).c_str();
-  if (std::string(hh.dest_host) == "-1") {
+  if (std::string(hh.dest_host) == "n/a") {
     hh.dest_host = ip.c_str();
   }
   hh.auth_header = NULL;

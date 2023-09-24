@@ -6,6 +6,7 @@
 */
 
 #include "include/target.h"
+#include <cmath>
 #include <vector>
 
 _nescadata_* NESCADATA::get_data_block(const std::string& ip)
@@ -31,6 +32,40 @@ void NESCADATA::clean_ports(void)
 {
   for (auto& data : all_data) {
     data.ports.clear();
+  }
+}
+
+#include <unordered_set>
+void NESCADATA::remove_duplicates(void)
+{
+  std::unordered_set<std::string> unique_ips;
+  std::vector<_nescadata_> unique_data;
+
+  for (const _nescadata_& data : all_data) {
+    std::string ip = data.ip;
+
+    if (unique_ips.find(ip) == unique_ips.end()) {
+      unique_ips.insert(ip);
+      unique_data.push_back(data);
+    }
+  }
+
+  all_data = std::move(unique_data);
+}
+
+void NESCADATA::negatives_hosts(const std::vector<std::string> ips)
+{
+  std::unordered_set<std::string> ips_set(ips.begin(), ips.end());
+
+  auto it = all_data.begin();
+  while (it != all_data.end()) {
+    std::string ip = it->ip;
+    if (ips_set.find(ip) != ips_set.end()) {
+      it = all_data.erase(it);
+    }
+    else {
+      ++it;
+    }
   }
 }
 
@@ -77,6 +112,7 @@ void NESCADATA::set_rtt(const std::string& ip, double rtt)
   _nescadata_* data = get_data_block(ip);
   if (data) {
     data->rtt = rtt;
+    data->rtt_init = true;
   }
 }
 
@@ -134,7 +170,7 @@ std::string NESCADATA::get_new_dns(const std::string& ip)
   if (data) {
     return data->new_dns;
   }
-  return "";
+  return "n/a";
 }
 
 std::string NESCADATA::get_dns(const std::string& ip)
@@ -143,16 +179,16 @@ std::string NESCADATA::get_dns(const std::string& ip)
   if (data) {
     return data->dns;
   }
-  return "-1";
+  return "n/a";
 }
 
 double NESCADATA::get_rtt(const std::string& ip)
 {
   _nescadata_* data = get_data_block(ip);
-  if (data) {
+  if (data && data->rtt_init == true) {
     return data->rtt;
   }
-  return -1.0;
+  return -1;
 }
 
 /*Тут создаётся группа путём перемешения из всех IP.

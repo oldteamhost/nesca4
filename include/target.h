@@ -30,6 +30,7 @@ struct _nescadata_
 {
   char ip[16];
   double rtt;
+  bool rtt_init;
   std::string dns;
   std::string new_dns;
 
@@ -46,14 +47,16 @@ class NESCADATA {
     std::vector<uint16_t> get_port_list(const std::string& ip, short state);
     void add_port(const std::string& ip, uint16_t port, short state);
     void set_dns(const std::string& ip, const std::string& dns);
+    short get_port_state(const std::string& ip, uint16_t port);
+    bool find_port_status(const std::string& ip, short state);
+    void negatives_hosts(const std::vector<std::string> ips);
     void set_rtt(const std::string& ip, double rtt);
     void add_ip(const std::string& ip);
-    short get_port_state(const std::string& ip, uint16_t port);
     std::string get_new_dns(const std::string& ip);
     std::string get_dns(const std::string& ip);
-    bool find_port_status(const std::string& ip, short state);
     double get_rtt(const std::string& ip);
     std::vector<std::string> get_all_ips(void);
+    void remove_duplicates(void);
     void clean_ports(void);
 
     std::vector<std::string> current_group;
