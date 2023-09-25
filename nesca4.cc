@@ -1086,7 +1086,7 @@ help_menu(void)
   np.gray_nesca_on();
   std::cout << "[VERSION]:";
   np.green_html_on();
-  std::cout << VERSION << std::endl;
+  std::cout << _VERSION << std::endl;
   np.gray_nesca_on();
 
   np.gray_nesca_on();
@@ -1251,7 +1251,7 @@ pre_check(void)
 
   np.golder_rod_on();
   char formatted_date[11]; get_current_date(formatted_date, sizeof(formatted_date));
-  std::cout << "-> Running NESCA [v" + std::string(VERSION) + "] # " +
+  std::cout << "-> Running NESCA [v" + std::string(_VERSION) + "] # " +
   std::string(get_time()) + " at " + formatted_date << std::endl; 
   np.reset_colors();
 
@@ -1327,7 +1327,7 @@ version_menu(void)
   std::cout << np.print_get_time(get_time());
   std::cout << "[VERSION]:";
   np.green_html_on();
-  std::cout << VERSION << std::endl;
+  std::cout << _VERSION << std::endl;
   np.gray_nesca_on();
   std::cout << np.print_get_time(get_time());
   std::cout << "[INFO]:";
