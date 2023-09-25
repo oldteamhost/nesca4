@@ -11,15 +11,16 @@
 nesca_prints np2;
 std::mutex packet_trace;
 
-/* Обработка пакета, писалась используя эти статьи:
-* https://nmap.org/book/synscan.html
-* https://nmap.org/man/ru/man-port-scanning-techniques.html
-* https://nmap.org/book/scan-methods-window-scan.html
-* https://nmap.org/book/scan-methods-maimon-scan.html
-*
-* get_port_status - функция для получения статуса порта,
-* при сканированях SYN, NULL, XMAS, FIN, MAIMON, WINDOW, ACK. */
-
+/*
+ * Обработка пакета, писалась используя эти статьи:
+ * https://nmap.org/book/synscan.html
+ * https://nmap.org/man/ru/man-port-scanning-techniques.html
+ * https://nmap.org/book/scan-methods-window-scan.html
+ * https://nmap.org/book/scan-methods-maimon-scan.html
+ *
+ * get_port_status - функция для получения статуса порта,
+ * при сканированях SYN, NULL, XMAS, FIN, MAIMON, WINDOW, ACK.
+*/
 int get_port_status(unsigned char* buffer, uint8_t scan_type)
 {
   const struct ip_header *iph = (struct ip_header*)buffer;

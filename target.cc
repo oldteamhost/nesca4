@@ -201,8 +201,7 @@ void NESCADATA::create_group(void)
 {
   std::vector<std::string> temp_ips = get_all_ips();
   std::sort(temp_ips.begin(), temp_ips.end(), [this](const std::string& a, const std::string& b) {
-    double rtt_a = get_rtt(a);
-    double rtt_b = get_rtt(b);
+    double rtt_a = get_rtt(a), rtt_b = get_rtt(b);
     return rtt_a < rtt_b;
   });
 

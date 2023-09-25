@@ -1354,472 +1354,408 @@ int count_map_vector(const std::unordered_map<std::string, std::vector<int>>& ma
   return 0;
 }
 
-/* not see! */
-
 void
 parse_args(int argc, char** argv)
 {
-    int rez;
-    int option_index = 0;
+  int rez;
+  int option_index = 0;
 
-    while ((rez = getopt_long_only(argc, argv, short_options, long_options, &option_index)) != EOF)
-  {
-        switch (rez) 
-  	{
-            case 'h':
-                argp.print_help_menu = true;
-                break;
-            case 'v':
-  		 argp.info_version = true;
-                break;
-            case 'S':
-  			argp.speed_type = atoi(optarg);
-                break;
-            case 'p':
-            {
-                argp.ports_temp = optarg;
-                argp.ports = write_ports(argp.ports_temp);
-                if (argp.ports[0] == EOF)
-  			{
-                    size_t pos1 = argp.ports_temp.find("-");
+  while ((rez = getopt_long_only(argc, argv, short_options, long_options, &option_index)) != EOF) {
+    switch (rez)
+    {
+      case 'h':
+        argp.print_help_menu = true;
+        break;
+      case 'v':
+        argp.info_version = true;
+        break;
+      case 'S':
+        argp.speed_type = atoi(optarg);
+        break;
+      case 'p': {
+        argp.ports_temp = optarg;
+        argp.ports = write_ports(argp.ports_temp);
+        if (argp.ports[0] == EOF) {
+          size_t pos1 = argp.ports_temp.find("-");
+          if (pos1 != std::string::npos) {
+            argp.ports = parse_range(optarg);
+          }
+          else {
+            argp.ports = split_string_int(optarg, ',');
+          }
+        }
+        break;
+      }
+      case 12: {
+        std::vector<std::string> what = split_string_string(optarg, ',');
+        what[0] = to_lower_case(what[0]);
+        what[1] = to_lower_case(what[1]);
 
-                    if (pos1 != std::string::npos)
-  				{
-                        argp.ports = parse_range(optarg);
-                    }
-                    else 
-  				{
-                        argp.ports = split_string_int(optarg, ',');
-                    }
-                }
-                break;
-            }
-           case 12:
-           {
-               std::vector<std::string> what = split_string_string(optarg, ',');
-  		   what[0] = to_lower_case(what[0]);
-  		   what[1] = to_lower_case(what[1]);
+        const char* what_convert = what[0].c_str();
+        if (what[1] == "ftp") {
+          argp.path_ftp_login = what_convert;
+        }
+        else if (what[1] == "rtsp") {
+          argp.path_rtsp_login = what_convert;
+        }
+        else if (what[1] == "http") {
+          argp.path_http_login = what_convert;
+        }
+        else if (what[1] == "smtp") {
+          argp.path_smtp_login = what_convert;
+        }
+        else if (what[1] == "hikvision") {
+          argp.path_hikvision_login = what_convert;
+        }
+        else if (what[1] == "rvi") {
+          argp.path_rvi_login = what_convert;
+        }
+        else if (what[1] == "all") {
+          argp.path_rvi_login = what_convert;
+          argp.path_ftp_login = what_convert;
+          argp.path_http_login = what_convert;
+          argp.path_rtsp_login = what_convert;
+          argp.path_smtp_login = what_convert;
+          argp.path_hikvision_login = what_convert;
+        }
+        break;
+      }
+      case 11: {
+        std::vector<std::string> what = split_string_string(optarg, ',');
+        what[0] = to_lower_case(what[0]);
+        what[1] = to_lower_case(what[1]);
 
-               const char* what_convert = what[0].c_str();
-               if (what[1] == "ftp")
-  		   {
-                    argp.path_ftp_login = what_convert;
-               }
-               else if (what[1] == "rtsp")
-  		   {
-                   argp.path_rtsp_login = what_convert;
-               }
-               else if (what[1] == "http")
-  		   {
-                   argp.path_http_login = what_convert;
-               }
-               else if (what[1] == "smtp")
-  		   {
-  		       argp.path_smtp_login = what_convert;
-               }
-               else if (what[1] == "hikvision")
-  		   {
-                   argp.path_hikvision_login = what_convert;
-               }
-               else if (what[1] == "rvi")
-  		   {
-                   argp.path_rvi_login = what_convert;
-               }
-               else if (what[1] == "all")
-  		   {
-                   argp.path_rvi_login = what_convert;
-                   argp.path_ftp_login = what_convert;
-                   argp.path_http_login = what_convert;
-                   argp.path_rtsp_login = what_convert;
-  		       argp.path_smtp_login = what_convert;
-                   argp.path_hikvision_login = what_convert;
-               }
+        const char* what_convert = what[0].c_str();
+        if (what[1] == "ftp") {
+          argp.path_ftp_pass = what_convert;
+        }
+        else if (what[1] == "rtsp") {
+          argp.path_rtsp_pass = what_convert;
+        }
+        else if (what[1] == "http") {
+          argp.path_http_pass = what_convert;
+        }
+        else if (what[1] == "smtp") {
+          argp.path_smtp_pass = what_convert;
+        }
+        else if (what[1] == "hikvision") {
+          argp.path_hikvision_pass = what_convert;
+        }
+        else if (what[1] == "rvi") {
+          argp.path_rvi_pass = what_convert;
+        }
+        else if (what[1] == "all") {
+          argp.path_rvi_pass = what_convert;
+          argp.path_ftp_pass = what_convert;
+          argp.path_smtp_pass = what_convert;
+          argp.path_rtsp_pass = what_convert;
+          argp.path_http_pass = what_convert;
+          argp.path_hikvision_pass = what_convert;
+        }
+        break;
+      }
+      case 30: {
+        std::vector<std::string> what = split_string_string(optarg, ',');
+        for (int i = 0; i < static_cast<int>(what.size()); i++) {
+          what[i] = to_lower_case(what[i]);
+          if (what[i] == "ftp") {
+            argp.ftp_brute_log = true;
+          }
+          else if (what[i] == "rtsp") {
+            argp.rtsp_brute_log = true;
+          }
+          else if (what[i] == "http") {
+            argp.http_brute_log = true;
+          }
+          else if (what[i] == "hikvision") {
+            argp.hikvision_brute_log = true;
+          }
+          else if (what[i] == "smtp") {
+            argp.smtp_brute_log = true;
+          }
+          else if (what[i] == "rvi") {
+            argp.rvi_brute_log = true;
+          }
+          else if (what[i] == "all") {
+            argp.ftp_brute_log = true;
+            argp.smtp_brute_log = true;
+            argp.rvi_brute_log = true;
+            argp.rtsp_brute_log = true;
+            argp.http_brute_log = true;
+            argp.hikvision_brute_log = true;
+          }
+        }
+        break;
+      }
+      case 31: {
+        std::vector<std::string> what = split_string_string(optarg, ',');
+        for (int i = 0; i < static_cast<int>(what.size()); i++) {
+          what[i] = to_lower_case(what[i]);
+          if (what[i] == "ftp") {
+            argp.ftp_brute_verbose = true;
+          }
+          else if (what[i] == "rtsp") {
+            argp.rtsp_brute_verbose = true;
+          }
+          else if (what[i] == "http") {
+            argp.http_brute_verbose = true;
+          }
+          else if (what[i] == "smtp") {
+            argp.smtp_brute_verbose = true;
+          }
+          else if (what[i] == "all") {
+            argp.ftp_brute_verbose = true;
+            argp.smtp_brute_verbose = true;
+            argp.rtsp_brute_verbose = true;
+            argp.http_brute_verbose = true;
+          }
+        }
+        break;
+      }
+      case 44: {
+        std::vector<std::string> what = split_string_string(optarg, ',');
 
-               break;
-           }
-           case 11:
-           {
-               std::vector<std::string> what = split_string_string(optarg, ',');
-  		   what[0] = to_lower_case(what[0]);
-  		   what[1] = to_lower_case(what[1]);
-
-               const char* what_convert = what[0].c_str();
-               if (what[1] == "ftp")
-  		   {
-                    argp.path_ftp_pass = what_convert;
-               }
-               else if (what[1] == "rtsp")
-  		   {
-                   argp.path_rtsp_pass = what_convert;
-               }
-               else if (what[1] == "http")
-  		   {
-                   argp.path_http_pass = what_convert;
-               }
-               else if (what[1] == "smtp")
-  		   {
-  		       argp.path_smtp_pass = what_convert;
-               }
-               else if (what[1] == "hikvision")
-  		   {
-                   argp.path_hikvision_pass = what_convert;
-               }
-               else if (what[1] == "rvi")
-  		   {
-                   argp.path_rvi_pass = what_convert;
-               }
-               else if (what[1] == "all")
-  		   {
-                   argp.path_rvi_pass = what_convert;
-                   argp.path_ftp_pass = what_convert;
-  		       argp.path_smtp_pass = what_convert;
-                   argp.path_rtsp_pass = what_convert;
-                   argp.path_http_pass = what_convert;
-                   argp.path_hikvision_pass = what_convert;
-               }
-               break;
-           }
-           case 30:
-           {
-               std::vector<std::string> what = split_string_string(optarg, ',');
-        for (int i = 0; i < static_cast<int>(what.size()); i++)
-  			{
-  		   		what[i] = to_lower_case(what[i]);
-                    if (what[i] == "ftp")
-  				{
-                        argp.ftp_brute_log = true;
-                    }
-                    else if (what[i] == "rtsp")
-  				{
-                        argp.rtsp_brute_log = true;
-                    }
-                    else if (what[i] == "http")
-  				{
-                        argp.http_brute_log = true;
-                    }
-                    else if (what[i] == "hikvision")
-  				{
-                        argp.hikvision_brute_log = true;
-                    }
-                    else if (what[i] == "smtp")
-  				{
-  			    	argp.smtp_brute_log = true;
-                    }else if (what[i] == "rvi")
-  				{
-                     	argp.rvi_brute_log = true;
-                 	}
-                    else if (what[i] == "all")
-  				{
-                        argp.ftp_brute_log = true;
-  			    	argp.smtp_brute_log = true;
-                     	argp.rvi_brute_log = true;
-                        argp.rtsp_brute_log = true;
-                        argp.http_brute_log = true;
-                        argp.hikvision_brute_log = true;
-                    }
-                    else {
-                        break;
-                    }
-                }
-
-                break;
-           }
-           case 31:
-           {
-                std::vector<std::string> what = split_string_string(optarg, ',');
-        for (int i = 0; i < static_cast<int>(what.size()); i++)
-  			{
-  		   		what[i] = to_lower_case(what[i]);
-                    if (what[i] == "ftp")
-  				{
-                        argp.ftp_brute_verbose = true;
-                    }
-                    else if (what[i] == "rtsp")
-  				{
-                        argp.rtsp_brute_verbose = true;
-                    }
-                    else if (what[i] == "http")
-  				{
-                        argp.http_brute_verbose = true;
-                    }
-                    else if (what[i] == "smtp")
-  				{
-  			    	argp.smtp_brute_verbose = true;
-                    }
-                    else if (what[i] == "all")
-  				{
-                        argp.ftp_brute_verbose = true;
-  			    	argp.smtp_brute_verbose = true;
-                        argp.rtsp_brute_verbose = true;
-                        argp.http_brute_verbose = true;
-                    }
-                }
-
-               break;
-           }
-           case 44:
-           {
-               std::vector<std::string> what = split_string_string(optarg, ',');
-
-        for (int i = 0; i < static_cast<int>(what.size()); i++)
-  		   {
-  		   	   what[i] = to_lower_case(what[i]);
-                   if (what[i] == "ftp")
-  			   {
-                       argp.off_ftp_brute = true;
-                   }
-                   else if (what[i] == "rtsp")
-  			   {
-                       argp.off_rtsp_brute = true;
-                   }
-                   else if (what[i] == "http")
-  			   {
-                       argp.off_http_brute = true;
-                   }
-                   else if (what[i] == "hikvision")
-  			   {
-                       argp.off_hikvision_brute = true;
-                   }
-                   else if (what[i] == "smtp")
-  			   {
-  			   	   argp.off_smtp_brute = true;
-                   }
-                  else if (what[i] == "rvi")
-  			   {
-  				   argp.off_rvi_brute = true;
-                    }
-                   else if (what[i] == "all")
-  			   {
-                       argp.off_ftp_brute = true;
-  				   argp.off_rvi_brute = true;
-  			   	   argp.off_smtp_brute = true;
-                       argp.off_rtsp_brute = true;
-                       argp.off_http_brute = true;
-                       argp.off_hikvision_brute = true;
-                   }
-               }
-
-               break;
-           }
-           case 47:
-               argp.brute_timeout_ms = atoi(optarg);
-               break;
-           case 48:
-               argp.thread_on_port = true;
-               break;
-           case 5:
-                argp.random_ip = true;
-                argp.random_ip_count = atoi(optarg); 
-                break;
-           case 7:
-                argp.debug = true;
-                break;
-          case 'd':
-                argp.timeout = true;
-                argp.timeout_ms = atoi(optarg);
-                break;
-           case 19:
-                argp.find = true;
-                argp.find_target = split_string_string(optarg, ',');
-                break;
-           case 23:
-           {
-               argp.ip_scan_import = true;
-               argp.path_ips = optarg;
-               break;
-           }
-           case 24:
-  	   	  argp.custom_log_set = true;
-              argp.log_set = atoi(optarg);
-              break;
-           case 25:
-              argp.print_errors = true;
-              break;
-           case 26:
-           {
-               np.disable_colors();
-               break;
-           }
-           case 27:
-               argp.debug = true;
-               break;
-           case 28:
-               argp.print_errors = true;
-               break;
-           case 29:
-               argp.ping_off = true;
-               break;
-           case 34:
-  		   argp.source_ip = optarg;
-               break;
-           case 35:
-               argp.save_camera_screens = true;
-               argp.screenshots_save_path_cam = optarg;
-               break;
-           case 36:
-  		   argp.custom_source_port = true;
-  		   argp._custom_source_port = atoi(optarg);
-               break;
-           case 37:
-  		   argp.custom_ttl = true;
-  		   argp._custom_ttl = atoi(optarg);
-               break;
-           case 38:
-  		   argp.custom_g_max = true;
-  		   n.max_group_size = atoi(optarg);
-               break;
+        for (int i = 0; i < static_cast<int>(what.size()); i++) {
+          what[i] = to_lower_case(what[i]);
+          if (what[i] == "ftp") {
+            argp.off_ftp_brute = true;
+          }
+          else if (what[i] == "rtsp") {
+            argp.off_rtsp_brute = true;
+          }
+          else if (what[i] == "http") {
+            argp.off_http_brute = true;
+          }
+          else if (what[i] == "hikvision") {
+            argp.off_hikvision_brute = true;
+          }
+          else if (what[i] == "smtp") {
+            argp.off_smtp_brute = true;
+          }
+          else if (what[i] == "rvi") {
+            argp.off_rvi_brute = true;
+          }
+          else if (what[i] == "all") {
+            argp.off_ftp_brute = true;
+            argp.off_rvi_brute = true;
+            argp.off_smtp_brute = true;
+            argp.off_rtsp_brute = true;
+            argp.off_http_brute = true;
+            argp.off_hikvision_brute = true;
+          }
+        }
+        break;
+      }
+      case 47:
+        argp.brute_timeout_ms = atoi(optarg);
+        break;
+      case 48:
+        argp.thread_on_port = true;
+        break;
+      case 5:
+        argp.random_ip = true;
+        argp.random_ip_count = atoi(optarg);
+        break;
+      case 7:
+        argp.debug = true;
+        break;
+      case 'd':
+        argp.timeout = true;
+        argp.timeout_ms = atoi(optarg);
+        break;
+      case 19:
+        argp.find = true;
+        argp.find_target = split_string_string(optarg, ',');
+        break;
+      case 23:
+        argp.ip_scan_import = true;
+        argp.path_ips = optarg;
+        break;
+      case 24:
+        argp.custom_log_set = true;
+        argp.log_set = atoi(optarg);
+        break;
+      case 25:
+        argp.print_errors = true;
+        break;
+      case 26:
+        np.disable_colors();
+        break;
+      case 27:
+        argp.debug = true;
+        break;
+      case 28:
+        argp.print_errors = true;
+        break;
+      case 29:
+        argp.ping_off = true;
+        break;
+      case 34:
+        argp.source_ip = optarg;
+        break;
+      case 35:
+        argp.save_camera_screens = true;
+        argp.screenshots_save_path_cam = optarg;
+        break;
+      case 36:
+        argp.custom_source_port = true;
+        argp._custom_source_port = atoi(optarg);
+        break;
+      case 37:
+        argp.custom_ttl = true;
+        argp._custom_ttl = atoi(optarg);
+        break;
+      case 38:
+        argp.custom_g_max = true;
+        n.max_group_size = atoi(optarg);
+        break;
 #ifdef HAVE_NODE_JS
-           case 's':
-               argp.save_screenshots = true;
-               argp.screenshots_save_path = optarg;
-               break;
-           case 41:
-               argp.timeout_save_screenshots = atoi(optarg);
-               break;
-           case 39:
-               argp.ns_track = true;
-               break;
+      case 's':
+        argp.save_screenshots = true;
+        argp.screenshots_save_path = optarg;
+        break;
+      case 41:
+        argp.timeout_save_screenshots = atoi(optarg);
+        break;
+      case 39:
+        argp.ns_track = true;
+        break;
 #endif
-           case 60:
-  		   argp.custom_g_min = true;
-  		   n.group_size = atoi(optarg);
-               break;
-           case 61:
-  		   argp.custom_g_rate = true;
-  		   n.group_rate = atoi(optarg);
-               break;
-           case 49:
-  		   argp.ping_timeout = atoi(optarg);
-               break;
-           case 33:
-  		   argp.resol_source_port = atoi(optarg);
-               break;
-           case 32:
-               argp.random_dns = true;
-               argp.random_dns_count = atoi(optarg);
-               break;
-           case 40:
-  		   argp.resol_delay = atoi(optarg);
-               break;
-           case 50:
-               argp.no_get_path = true;
-               break;
-           case 51:
-               argp.get_response = true;
-               break;
-           case 67:
-               argp.robots_txt = true;
-               break;
-           case 68:
-               argp.sitemap_xml = true;
-               break;
-           case 52:
-  		   argp.custom_threads_resolv = true;
-  		   argp.dns_threads = atoi(optarg);
-               break;
-           case 62:
-  		{
-  		   std::vector<std::string> temp_ips = split_string_string(optarg, ',');
-  		   argp.exclude = resolv_hosts(temp_ips);
-               break;
-  		}
-           case 63:
-  		{
-  		   std::vector<std::string> temp_ips = write_file(optarg);
-  		   argp.exclude = resolv_hosts(temp_ips);
-               break;
-  	    }
-           case 53:
-  		   argp.my_life_my_rulez = true;
-         argp.speed_type = 5;
-               break;
-           case 54:
-               argp.import_color_scheme = true;
-               argp.path_color_scheme = optarg;
-               break;
-           case 'l':
-  		   np.html_save = true;
-  		   np.html_file_path = std::string(optarg);
-               break;
-           case 57:
-  		   argp.custom_threads = true;
-  		   argp.threads_ping = atoi(optarg);
-               break;
-           case 56:
-               break;
-           case 59:
-  		   argp.no_get_dns = true;
-               break;
-           case 76:
-  		   argp.negatives_path = std::string(optarg);
-               break;
-  	  /*Пинг аргументы влкючения.*/
-        case 80:
-  		 argp.custom_ping = true;
-  		 argp.syn_ping = true;
-  		 argp.syn_dest_port = atoi(optarg);
-  	     break;
-        case 81:
-  		 argp.custom_ping = true;
-  		 argp.ack_ping = true;
-  		 argp.ack_dest_port = atoi(optarg);
-  	     break;
-        case 43:
-  		 argp.json_save = true;
-             argp.json_save_path = optarg;
-  	     break;
-        case 82:
-  		 argp.custom_ping = true;
-  		 argp.echo_ping = true;
-  	     break;
-        case 86:
-  		 argp.custom_ping = true;
-  		 argp.info_ping = true;
-  	     break;
-        case 87:
-  		 argp.custom_ping = true;
-  		 argp.timestamp_ping= true;
-  	     break;
-        case 88:
-  		 argp.max_ping = true;
-  	     break;
-        case 89:
-  		 argp.ack_scan = true;
-  		 argp.type = ACK_SCAN;
-  	     break;
-        case 90:
-  		argp.ping_log = atoi(optarg);
-  	     break;
-        case 91:
-  		argp.null_scan = true;
-  		argp.type = NULL_SCAN;
-  		break;
-        case 92:
-  		argp.fin_scan = true;
-  		argp.type = FIN_SCAN;
-  		break;
-        case 93:
-  		argp.xmas_scan = true;
-  		argp.type = XMAS_SCAN;
-  		break;
-        case 94:
-  		argp.window_scan = true;
-  		argp.type = WINDOW_SCAN;
-  		break;
-        case 95:
-  		argp.no_proc = true;
-  		break;
-        case 97:
-  		argp.maimon_scan = true;
-  		argp.type = MAIMON_SCAN;
-  		break;
-        case 101:
-  		argp.custom_recv_timeout_ms = true;
-  		argp.recv_timeout_ms = atoi(optarg);
-  		break;
-      default: 
-  		 help_menu();
-       exit(1);
+      case 60:
+        argp.custom_g_min = true;
+        n.group_size = atoi(optarg);
+        break;
+      case 61:
+        argp.custom_g_rate = true;
+        n.group_rate = atoi(optarg);
+        break;
+      case 49:
+        argp.ping_timeout = atoi(optarg);
+        break;
+      case 33:
+        argp.resol_source_port = atoi(optarg);
+        break;
+      case 32:
+        argp.random_dns = true;
+        argp.random_dns_count = atoi(optarg);
+        break;
+      case 40:
+        argp.resol_delay = atoi(optarg);
+        break;
+      case 50:
+        argp.no_get_path = true;
+        break;
+      case 51:
+        argp.get_response = true;
+        break;
+      case 67:
+        argp.robots_txt = true;
+        break;
+      case 68:
+        argp.sitemap_xml = true;
+        break;
+      case 52:
+        argp.custom_threads_resolv = true;
+        argp.dns_threads = atoi(optarg);
+        break;
+      case 62: {
+        std::vector<std::string> temp_ips = split_string_string(optarg, ',');
+        argp.exclude = resolv_hosts(temp_ips);
+        break;
+      }
+      case 63: {
+        std::vector<std::string> temp_ips = write_file(optarg);
+        argp.exclude = resolv_hosts(temp_ips);
+        break;
+      }
+      case 53:
+        argp.my_life_my_rulez = true;
+        argp.speed_type = 5;
+        break;
+      case 54:
+        argp.import_color_scheme = true;
+        argp.path_color_scheme = optarg;
+        break;
+      case 'l':
+        np.html_save = true;
+        np.html_file_path = std::string(optarg);
+        break;
+      case 57:
+        argp.custom_threads = true;
+        argp.threads_ping = atoi(optarg);
+        break;
+      case 59:
+        argp.no_get_dns = true;
+        break;
+      case 76:
+        argp.negatives_path = std::string(optarg);
+        break;
+      case 80:
+        argp.custom_ping = true;
+        argp.syn_ping = true;
+        argp.syn_dest_port = atoi(optarg);
+        break;
+      case 81:
+        argp.custom_ping = true;
+        argp.ack_ping = true;
+        argp.ack_dest_port = atoi(optarg);
+        break;
+      case 43:
+        argp.json_save = true;
+        argp.json_save_path = optarg;
+        break;
+      case 82:
+        argp.custom_ping = true;
+        argp.echo_ping = true;
+        break;
+      case 86:
+        argp.custom_ping = true;
+        argp.info_ping = true;
+        break;
+      case 87:
+        argp.custom_ping = true;
+        argp.timestamp_ping= true;
+        break;
+      case 88:
+        argp.max_ping = true;
+        break;
+      case 89:
+        argp.ack_scan = true;
+        argp.type = ACK_SCAN;
+        break;
+      case 90:
+        argp.ping_log = atoi(optarg);
+        break;
+      case 91:
+        argp.null_scan = true;
+        argp.type = NULL_SCAN;
+        break;
+      case 92:
+        argp.fin_scan = true;
+        argp.type = FIN_SCAN;
+        break;
+      case 93:
+        argp.xmas_scan = true;
+        argp.type = XMAS_SCAN;
+        break;
+      case 94:
+        argp.window_scan = true;
+        argp.type = WINDOW_SCAN;
+        break;
+      case 95:
+        argp.no_proc = true;
+        break;
+      case 97:
+        argp.maimon_scan = true;
+        argp.type = MAIMON_SCAN;
+        break;
+      case 101:
+        argp.custom_recv_timeout_ms = true;
+        argp.recv_timeout_ms = atoi(optarg);
+        break;
+      default:
+        help_menu();
+        exit(1);
       }
     }
 }

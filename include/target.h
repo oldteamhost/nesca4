@@ -28,12 +28,13 @@ struct _portlist_
 
 struct _nescadata_
 {
-  char ip[16];
-  double rtt;
-  bool rtt_init;
-  std::string dns;
-  std::string new_dns;
+  char ip[16];         /* IP адрес не может быть больше 16 байт */
+  double rtt;          /* Время ответа хоста, после ping-а */
+  bool rtt_init;       /* Иногда ping может просто skip-утся поэтому нужен флаг для отслежки этого */
+  std::string dns;     /* DNS который указал пользователь при вызове ./nesca4 google.com */
+  std::string new_dns; /* DNS который получила nesca */
 
+  /* Собственно сюда идут все порты во время сканирования */
   std::vector<_portlist_> ports;
 };
 

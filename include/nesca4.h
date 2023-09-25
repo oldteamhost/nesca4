@@ -117,7 +117,7 @@ int traceroute(std::string ip, int jumps);
 std::vector<std::string> resolv_hosts(std::vector<std::string> hosts);
 
 /*Для обработки портов класс на паттерне Strategy Pattern.*/
-class ports_strategy{
+class ports_strategy {
 public:
   virtual ~ports_strategy() {}
   virtual void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
