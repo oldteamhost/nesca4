@@ -14,12 +14,14 @@ sudo apt-get install nodejs
 sudo apt install gcc g++ make git autoconf
 git clone --recursive https://github.com/oldteamhost/nesca4
 cd nesca4
+autoreconf --install
 ./configure
 make -j12
 
-sudo pacman -S nodejs
+sudo pacman -S nodejs autoconf
 git clone --recursive https://github.com/oldteamhost/nesca4
 cd nesca4
+autoreconf --install
 ./configure
 make -j12
 
