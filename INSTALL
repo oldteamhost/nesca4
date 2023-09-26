@@ -1,0 +1,22 @@
+sudo apt-get install nodejs
+sudo apt install gcc g++ make git autoconf
+git clone --recursive https://github.com/oldteamhost/nesca4
+cd nesca4
+autoreconf -i
+./configure
+make -j12
+
+sudo pacman -S nodejs autoconf
+git clone --recursive https://github.com/oldteamhost/nesca4
+cd nesca4
+autoreconf -i
+./configure
+make -j12
+
+Скриншоты не сохраняются!:
+cd nesca4 && sudo chmod u+rwx,g+r,o+r utils/
+
+Для компиляции без библиотек, нужно зайти в файл `config/compile.h`, и закомментировать, или удалить строчку отвечающую за библиотеку,
+без которой вы хотите скомпилировать:
+#define HAVE_HIKVISION
+#define HAVE_NODE_JS

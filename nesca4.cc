@@ -29,14 +29,6 @@
  *  10. scanner.cc - для получения характеристик.
  *  11. other.cc - прочие функции.
  *
- *  Screenshots not save!:
- *  cd nesca4 && sudo chmod u+rwx,g+r,o+r utils/
- *
- *  Для компиляции без библиотек, нужно зайти в файл `config/compile.h`, и закомментировать,
- *  или удалить строчку отвечающую за библиотеку, без которой вы хотите скомпилировать:
- *  #define HAVE_HIKVISION
- *  #define HAVE_NODE_JS
- *
 */
 
 #include "include/nesca4.h"
