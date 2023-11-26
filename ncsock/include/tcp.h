@@ -8,6 +8,7 @@
 #ifndef TCP_HEADER
 #define TCP_HEADER
 
+#include <netinet/in.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -76,6 +77,8 @@ u8 *build_tcp6_pkt(const struct in6_addr *source, const struct in6_addr *victim,
   u8 hoplimit, u16 sport, u16 dport, u32 seq, u32 ack, u8 reserved, u8 flags, u16 window, u16 urp,
   const u8 *tcpopt, int tcpoptlen, const char *data, u16 datalen, u32 *packetlen);
 
+struct tcp_flags set_flags(uint8_t type);
+struct tcp_flags str_set_flags(const char *flags);
 u8 set_tcp_flags(struct tcp_flags *tf);
 
 int send_tcp_packet(int fd, const u32 saddr, const u32 daddr, int ttl, bool df,
@@ -89,9 +92,10 @@ int send_tcp_packet(int fd, const u32 saddr, const u32 daddr, int ttl, bool df,
 #define ACK_PACKET            5
 #define WINDOW_PACKET         6
 #define MAIMON_PACKET         7
-struct tcp_flags set_flags(uint8_t type);
 
-int fast_send_tcp(int fd, const char* saddr, const char* daddr, int ttl, u16 dport, u8 flags, const char* data, u16 datalen);
+int fast_send_tcp(int fd, const char* saddr, const char* daddr, int ttl, u16 dport, u8 flags,
+    const char* data, u16 datalen);
+
 double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
     int source_port, int timeout_ms, int ttl, const char *data, u16 datalen, int fragscan);
 

@@ -62,8 +62,8 @@ double icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int
     return -1;
   }
   clock_gettime(CLOCK_MONOTONIC, &end_time);
-
   struct icmp4_header *icmphdr = ext_icmphdr(buffer);
+
   pthread_mutex_lock(&mutex);
   free(buffer);
   pthread_mutex_unlock(&mutex);

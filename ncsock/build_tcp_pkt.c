@@ -20,8 +20,7 @@ u8 *build_tcp_pkt(u32 saddr, u32 daddr, u8 ttl, u16 ipid, u8 tos,
   u32 tcplen;
   u8 *ip;
 
-  tcp = (struct tcp_header*)build_tcp(sport, dport, seq, ack, reserved, flags,
-                                     window, urp, tcpopt, tcpoptlen, data, datalen, &tcplen);
+  tcp = (struct tcp_header*)build_tcp(sport, dport, seq, ack, reserved, flags, window, urp, tcpopt, tcpoptlen, data, datalen, &tcplen);
   tcp->th_sum = ip4_pseudoheader_check(saddr, daddr, IPPROTO_TCP, tcplen, tcp);
   ip = build_ip_pkt(saddr, daddr, IPPROTO_TCP, ttl, ipid, tos, df, ipopt, ipoptlen, (char *) tcp, tcplen, packetlen);
 

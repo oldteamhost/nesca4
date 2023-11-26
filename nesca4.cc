@@ -76,8 +76,20 @@ int main(int argc, char** argv)
   pre_check();
   checking_default_files();
 
-  struct tcp_flags tf = set_flags(argp.type);
+  /* set tcp flags */
+  struct tcp_flags tf;
+  if (!argp.custom_tcpflags)
+    tf = set_flags(argp.type);
+  else
+    tf = str_set_flags(argp.custom_res_tcpflags);
+
   argp.tcpflags = set_tcp_flags(&tf);
+  if (argp.custom_tcpflags){
+    np.golder_rod_on();
+    printf("-> syn: %d, ack: %d, rst: %d, fin: %d, psh: %d, urg: %d, cwr: %d, ece: %d\n",
+            tf.syn, tf.ack, tf.rst, tf.fin, tf.psh, tf.urg, tf.cwr, tf.ece);
+    np.reset_colors();
+  }
 
   /*Установка методов пинга.*/
   if (!argp.custom_ping) {
@@ -511,6 +523,13 @@ bool nesca_ping(const char* ip)
   double rtt = -1;
   u8 ttl = random_num(29, 255);
   u16 source_port = 3443;
+  u32 datalen = 0;
+  const char* data = "";
+
+  if (!argp.data_string.empty()) {
+    data = argp.data_string.c_str();
+    datalen = strlen(argp.data_string.c_str());
+  }
 
   if (!argp.custom_source_port)
     source_port = generate_rare_port();
@@ -520,33 +539,28 @@ bool nesca_ping(const char* ip)
   if (argp.custom_ttl)
     ttl = argp._custom_ttl;
 
-  if (argp.info_ping) {
-    rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, 13, 0, 0, ttl,
-        argp.data_string.c_str(), strlen(argp.data_string.c_str()), argp.frag_mtu);
-    if (rtt != EOF)
-      goto ok;
-  }
   if (argp.echo_ping) {
-    rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, 8, 0, 0, ttl,
-        argp.data_string.c_str(), strlen(argp.data_string.c_str()), argp.frag_mtu);
+    rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, 8, 0, 0, ttl, data, datalen, argp.frag_mtu);
     if (rtt != EOF)
       goto ok;
   }
   if (argp.syn_ping) {
-    rtt = tcp_ping(SYN_PACKET, ip, argp.source_ip, argp.syn_dest_port, source_port,
-        argp.ping_timeout, ttl, argp.data_string.c_str(), strlen(argp.data_string.c_str()), argp.frag_mtu);
+    rtt = tcp_ping(SYN_PACKET, ip, argp.source_ip, argp.syn_dest_port, source_port, argp.ping_timeout, ttl, data, datalen, argp.frag_mtu);
     if (rtt != EOF)
       goto ok;
   }
   if (argp.ack_ping) {
-    rtt = tcp_ping(ACK_PACKET, ip, argp.source_ip, argp.syn_dest_port, source_port,
-        argp.ping_timeout, ttl, argp.data_string.c_str(), strlen(argp.data_string.c_str()), argp.frag_mtu);
+    rtt = tcp_ping(ACK_PACKET, ip, argp.source_ip, argp.syn_dest_port, source_port, argp.ping_timeout, ttl, data, datalen, argp.frag_mtu);
     if (rtt != EOF)
       goto ok;
   }
   if (argp.timestamp_ping) {
-    rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, 15, 0, 0, ttl,
-        argp.data_string.c_str(), strlen(argp.data_string.c_str()), argp.frag_mtu);
+    rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, 15, 0, 0, ttl, data, datalen, argp.frag_mtu);
+    if (rtt != EOF)
+      goto ok;
+  }
+  if (argp.info_ping) {
+    rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, 13, 0, 0, ttl, data, datalen, argp.frag_mtu);
     if (rtt != EOF)
       goto ok;
   }
@@ -1093,6 +1107,7 @@ help_menu(void)
   np.reset_colors();
   std::cout << "  -fin, -xmas, -null: Use one of these scanning methods.\n";
   std::cout << "  -ack, -windows -maimon: Use ack or window or maimon scan method.\n";
+  std::cout << "  -scanflags <flags>: Customize TCP scan flag (ACKSYN).\n";
   std::cout << "  -p <port ranges>: Only scan specified port(s) \n    Ex: -p 80; -p 22,80; -p 1-65535;\n";
   std::cout << "  -delay, -d <ms>: Set delay for scan.\n";
   std::cout << "  -scan-timeout <ms>: Edit timeout for getting packet on port.\n";
@@ -1128,6 +1143,7 @@ help_menu(void)
   std::cout << "  -source-ip <ip>: Set custom source_ip.\n";
   std::cout << "  -source-port <port>: Set custom source_port.\n";
   std::cout << "  -data-string <string>: Append a custom ASCII string to scan packets.\n";
+  std::cout << "  -data-len <num>: Append random data to sent packets.\n";
   std::cout << "  -frag <mtu>: fragment packets for port scan.\n";
   std::cout << "  -ttl <num>: Set custom ip_header_ttl.\n";
   np.golder_rod_on();
@@ -1160,7 +1176,6 @@ help_menu(void)
   np.golder_rod_on();
   std::cout << "VERBOSE OUTPUT:" << std::endl;
   np.reset_colors();
-  std::cout << "  -pro: On pro mode, display more info.\n";
   std::cout << "  -db, -debug: On debug mode, save and display not even working hosts.\n";
   std::cout << "  -er, -error: On display errors.\n";
   np.golder_rod_on();
@@ -1333,6 +1348,21 @@ int count_map_vector(const std::unordered_map<std::string, std::vector<int>>& ma
     return it->second.size();
 
   return 0;
+}
+
+std::string randomstr(int len)
+{
+  int i;
+  std::string res;
+  const std::string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const int chlen = characters.length(); /* член */
+
+  std::srand(static_cast<unsigned int>(std::time(0)));
+  for (i = 0; i < len; ++i) {
+    char _char = characters[std::rand() % chlen];
+    res += _char;
+  }
+  return res;
 }
 
 void parse_args(int argc, char** argv)
@@ -1554,6 +1584,16 @@ void parse_args(int argc, char** argv)
           exit(1);
         }
         break;
+      case 21:
+        argp.custom_tcpflags = true;
+        argp.custom_res_tcpflags = optarg;
+        break;
+      case 79:
+      {
+        u32 datalen = atoi(optarg);
+        argp.data_string = randomstr(datalen);
+        break;
+      }
       case 23:
         argp.ip_scan_import = true;
         argp.path_ips = optarg;

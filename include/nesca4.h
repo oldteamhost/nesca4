@@ -170,7 +170,9 @@ public:
 /*Аргументы.*/
 const struct
 option long_options[] = {
-  /*21, 79, 78, 46, 22*/
+  /*22, 79, 78, 46*/
+  {"data-len", required_argument, 0, 79},
+  {"scanflags", required_argument, 0, 21},
   {"frag", required_argument, 0, 20},
   {"threads", required_argument, 0, 'T'},
   {"delay", required_argument, 0, 'd'},

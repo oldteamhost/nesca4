@@ -16,7 +16,6 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/if_ether.h>
-#include <pcap.h>
 
 #include <netinet/ip.h>
 #include <netinet/tcp.h>

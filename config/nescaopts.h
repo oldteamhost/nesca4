@@ -76,7 +76,11 @@ public:
   bool xmas_scan;
   bool ack_scan;
   bool window_scan;
+
   uint8_t tcpflags;
+  bool custom_tcpflags;
+  const char* custom_res_tcpflags;
+
   bool maimon_scan;
 
   std::string data_string;

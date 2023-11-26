@@ -11,6 +11,8 @@ struct tcp_flags
 set_flags(uint8_t packet_preset)
 {
   struct tcp_flags tpf;
+  memset(&tpf, 0, sizeof(struct tcp_flags));
+
   tpf.rst = 0;
   tpf.ack = 0;
   switch (packet_preset) {
