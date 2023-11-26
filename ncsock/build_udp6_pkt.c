@@ -24,8 +24,7 @@ u8 *build_udp6_pkt(const struct in6_addr *source, const struct in6_addr *victim,
 
   udp = (struct udp_header *) build_udp(sport, dport, data, datalen, &udplen);
   udp->check = ip6_pseudoheader_check(source, victim, IPPROTO_UDP, udplen, udp);
-  ipv6 = build_ip6_pkt(source, victim, tc, flowlabel, IPPROTO_UDP, hoplimit,
-                        (char *) udp, udplen, plen);
+  ipv6 = build_ip6_pkt(source, victim, tc, flowlabel, IPPROTO_UDP, hoplimit, (char *) udp, udplen, plen);
   free(udp);
 
   return ipv6;

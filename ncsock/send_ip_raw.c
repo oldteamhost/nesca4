@@ -11,7 +11,7 @@ int send_ip_raw(int fd, const struct sockaddr_in *dst, const u8 *packet, u32 ple
 {
   int res;
   struct sockaddr_in sock;
-  struct ip_header *ip = (struct ip_header*) packet;
+  struct ip_header *ip = (struct ip_header*)packet;
   struct tcp_header *tcp;
   struct udp_header *udp;
 

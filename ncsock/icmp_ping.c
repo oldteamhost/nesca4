@@ -37,8 +37,14 @@ double icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int
   rf.protocol = IPPROTO_ICMP;
 
   sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+  if (sock == -1)
+    return -1;
+
   send = send_icmp_packet(sock, saddr, daddr, ttl, df, 0, 0, seq, code, type, data, datalen, fragscan);
+
+  pthread_mutex_lock(&mutex);
   close(sock);
+  pthread_mutex_unlock(&mutex);
 
   if (send == -1)
     return -1;

@@ -6,13 +6,15 @@
 */
 
 #include "include/files.h"
+#include <complex.h>
 
 int get_count_lines(const char* path)
 {
   int count = 0;
   std::ifstream file(path);
   std::string line;
-  while (std::getline(file, line)){++count;}
+  while (std::getline(file, line))
+    ++count;
   return count;
 }
 
@@ -28,21 +30,26 @@ std::vector<std::string> write_file(const std::string& filename)
   std::string line;
 
   std::ifstream file(filename);
-  if (file.fail()){return {"-1"};}
+  if (file.fail())
+    return {"-1"};
+
   while (std::getline(file, line))
-  {lines.push_back(line);}
+    lines.push_back(line);
+
   return lines;
 }
 
 int write_line(std::string path, std::string line)
 {
   std::ofstream outfile;
+
   outfile.open(path, std::ios_base::app);
-  if (!outfile.is_open()){return -1;}
+  if (!outfile.is_open())
+    return -1;
+
   outfile << line;
-  if (outfile.fail()){return -2;}
   outfile.close();
-  if (outfile.fail()){return -3;}
+
   return 0;
 }
 
@@ -52,21 +59,26 @@ int delete_line_from_file(const std::string& filename, const std::string& line_t
   std::string line;
 
   std::ifstream input_file(filename);
-  if (!input_file){return -1;}
+  if (!input_file)
+    return -1;
 
   while (std::getline(input_file, line))
-  {lines.push_back(line);}
+    lines.push_back(line);
 
   input_file.close();
 
   auto it = std::find(lines.begin(), lines.end(), line_to_delete);
-  if (it == lines.end()){return -1;}
+  if (it == lines.end())
+    return -1;
 
   lines.erase(it);
 
   std::ofstream output_file(filename);
-  if (!output_file){return -1;}
-  for (const auto& updated_line : lines){output_file << updated_line << std::endl;}
+  if (!output_file)
+    return -1;
+
+  for (const auto& updated_line : lines)
+    output_file << updated_line << std::endl;
 
   output_file.close();
   return 0;

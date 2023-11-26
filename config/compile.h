@@ -8,7 +8,6 @@
 #ifndef COMPILE_H
 #define COMPILE_H
 
-#define HAVE_SSL       /*Disable openSSH lib*/
 #define HAVE_HIKVISION /*Disable HIKVISION lib*/
 #define HAVE_NODE_JS   /*Disable save screenshots*/
 

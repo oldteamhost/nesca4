@@ -42,8 +42,15 @@ double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
   flags = set_tcp_flags(&tf);
 
   sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+  if (sock == -1)
+    return -1;
+
   send = send_tcp_packet(sock, saddr, daddr, ttl, df, 0, 0, source_port, dest_port, seq, 0, 0, flags, 1024, 0, 0, 0, data, datalen, fragscan);
+
+  pthread_mutex_lock(&mutex);
   close(sock);
+  pthread_mutex_unlock(&mutex);
+
   if (send == EOF)
     return -1;
 

@@ -93,7 +93,10 @@ std::vector<int> parse_range(const std::string& range_string)
   return result;
 }
 
-bool __check_root_perms() {return (geteuid() == 0);}
+bool __check_root_perms()
+{
+  return (geteuid() == 0);
+}
 
 int write_temp(const std::string& data, const std::string& file_name)
 {
@@ -114,9 +117,10 @@ int write_temp(const std::string& data, const std::string& file_name)
 std::string parse_word(const std::vector<std::string>& options,
     const std::string& search_word)
 {
-  for (const std::string& option : options) {
-    if (option == search_word) {return option;}
-  }
+  for (const std::string& option : options)
+    if (option == search_word)
+      return option;
+
   return "failed";
 }
 

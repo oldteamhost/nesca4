@@ -7,8 +7,7 @@
 
 #include "include/scanner.h"
 
-std::vector<std::string>
-checking_finds::find_sentences_with_word(const std::string& word, const std::string& input_text)
+std::vector<std::string> checking_finds::find_sentences_with_word(const std::string& word, const std::string& input_text)
 {
   std::vector<std::string> sentences;
   std::string lowerWord = word;
@@ -20,15 +19,13 @@ checking_finds::find_sentences_with_word(const std::string& word, const std::str
   std::string::size_type pos = lowerText.find(lowerWord);
   while (pos != std::string::npos) {
     std::string::size_type sentenceStart = lowerText.rfind('\n', pos);
-    if (sentenceStart == std::string::npos) {
+    if (sentenceStart == std::string::npos)
       sentenceStart = 0;
-    }
 
     std::string::size_type sentenceEnd = lowerText.find('\n', pos);
 
-    if (sentenceEnd == std::string::npos) {
+    if (sentenceEnd == std::string::npos)
       sentenceEnd = lowerText.length();
-    }
 
     std::string sentence = input_text.substr(sentenceStart, sentenceEnd - sentenceStart);
 
@@ -44,8 +41,7 @@ checking_finds::find_sentences_with_word(const std::string& word, const std::str
   return sentences;
 }
 
-bool
-checking_finds::contains_word(const std::string& word, const std::string& sentence)
+bool checking_finds::contains_word(const std::string& word, const std::string& sentence)
 {
   std::string lowerWord = word;
   std::transform(lowerWord.begin(), lowerWord.end(), lowerWord.begin(), [](unsigned char c){ return std::tolower(c); });
@@ -55,34 +51,34 @@ checking_finds::contains_word(const std::string& word, const std::string& senten
 
   std::string::size_type pos = lowerSentence.find(lowerWord);
   while (pos != std::string::npos) {
-    if (std::isalpha(lowerSentence[pos - 1]) || std::isalpha(lowerSentence[pos + lowerWord.length()])) {
+    if (std::isalpha(lowerSentence[pos - 1]) || std::isalpha(lowerSentence[pos + lowerWord.length()]))
       pos = lowerSentence.find(lowerWord, pos + 1);
-    }
-    else {return true;}
+    else
+      return 1;
   }
 
-  return false;
+  return 0;
 }
 
-std::string
-checking_finds::set_target_at_path(const std::string& path)
+std::string checking_finds::set_target_at_path(const std::string& path)
 {
   /*AXIS камеры.*/
-  if (contains_word("/operator/basic.shtml", path)){return CAMERA_AXIS_205;}
-  for (auto& p : axis_2400_path){
-    if(contains_word(p, path)) {
-      return CAMERA_AXIS_2400;
-    }
-  }
+  if (contains_word("/operator/basic.shtml", path))
+    return CAMERA_AXIS_205;
 
-  for (auto& p : axis_other_path) {
-    if(contains_word(p, path)) {
+  for (auto& p : axis_2400_path)
+    if (contains_word(p, path))
+      return CAMERA_AXIS_2400;
+
+  for (auto& p : axis_other_path)
+    if (contains_word(p, path))
       return CAMERA_AXIS;
-    }
-  }
 
   /*NETWORK камеры.*/
-  for (auto& p : network_camera_path){if(contains_word(p, path)){return CAMERA_NETWORK;}}
+  for (auto& p : network_camera_path)
+    if (contains_word(p, path))
+      return CAMERA_NETWORK;
+
   if (contains_word("/viewer/live/index.html", path)){return CAMERA_VB_M40;}
   if (contains_word("/live/index2.html", path)){return CAMERA_BB_SC384;}
 
@@ -122,15 +118,12 @@ checking_finds::set_target_at_path(const std::string& path)
   return "fuck";
 }
 
-std::string
-checking_finds::set_target_at_http_header(const std::string& buffer)
+std::string checking_finds::set_target_at_http_header(const std::string& buffer)
 {
   /*Разное.*/
-  for (auto& p : basic_auth_header) {
-    if(contains_word(p, buffer)) {
+  for (auto& p : basic_auth_header)
+    if (contains_word(p, buffer))
       return HTTP_BASIC_AUTH;
-    }
-  }
 
   /*Другие камеры.*/
   if (contains_word("airos_logo", buffer)){return CAMERA_AIROS;}
@@ -155,8 +148,7 @@ checking_finds::set_target_at_http_header(const std::string& buffer)
   return "fuck";
 }
 
-std::string
-checking_finds::set_target_at_title(const std::string& title)
+std::string checking_finds::set_target_at_title(const std::string& title)
 {
   if (contains_word("error 404 (not found)!!1", title)){return GOOGLE_404;}
   if (contains_word("ngnix", title)){return NGNIX;}
@@ -165,10 +157,11 @@ checking_finds::set_target_at_title(const std::string& title)
   return "fuck";
 }
 
-int
-checking_finds::than_bruteforce(const std::string type)
+int checking_finds::than_bruteforce(const std::string type)
 {
-  if (type == "n/a"){return -1;}
+  if (type == "n/a")
+    return -1;
+
   if (type == CAMERA_AXIS || type == CAMERA_AXIS_205 ||
     type == CAMERA_AXIS_2400 || type == HTTP_BASIC_AUTH ||
     type == CAMERA_BB_SC384 || type == CAMERA_VB_M40 ||

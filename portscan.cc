@@ -31,34 +31,33 @@ int get_port_status(unsigned char* buffer, uint8_t scan_type)
   switch (scan_type)
   {
     case MAIMON_SCAN: {
-      if (tcph->th_flags == 0x04) {
+      if (tcph->th_flags == 0x04)
         return PORT_CLOSED;
-      }
+
       return PORT_OPEN_OR_FILTER;
     }
     case FIN_SCAN:
     case XMAS_SCAN:
     case NULL_SCAN: {
-      if (tcph->th_flags == 0x04) {
+      if (tcph->th_flags == 0x04)
         return PORT_CLOSED;
-      }
+
       return PORT_OPEN;
     }
     case WINDOW_SCAN: {
       if (tcph->th_flags == 0x04) {
-        if (tcph->th_win > 0) {
+        if (tcph->th_win > 0)
           return PORT_OPEN;
-        }
-        else {
+        else
           return PORT_CLOSED;
-        }
+
         return PORT_FILTER;
       }
     }
     case ACK_SCAN: {
-      if (tcph->th_flags == 0x04) {
+      if (tcph->th_flags == 0x04)
         return PORT_NO_FILTER;
-      }
+
       return PORT_FILTER;
     }
     default: {
@@ -107,8 +106,7 @@ std::string return_port_status(uint8_t type)
   return "error";
 }
 
-std::string
-get_type(uint8_t type)
+std::string get_type(uint8_t type)
 {
   switch (type)
   {

@@ -18,9 +18,8 @@ bool hikvision_screenshot(const std::string& ip, const long user_id, const NET_D
     params.wPicQuality = 2;
     params.wPicSize = 0;
 
-    if (NET_DVR_CaptureJPEGPicture(user_id, channel, &params, screenshotFilenameBuffer)) {
+    if (NET_DVR_CaptureJPEGPicture(user_id, channel, &params, screenshotFilenameBuffer))
       return true;
-    }
   }
 
   return false;

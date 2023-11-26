@@ -10,9 +10,8 @@
 char *base64_encode(const unsigned char *input, size_t length)
 {
   char *encoded_data = (char *)malloc(((length + 2) / 3) * 4 + 1);
-  if (!encoded_data) {
+  if (!encoded_data)
     return NULL;
-  }
 
   size_t i = 0, j = 0;
   while (i < length) {
@@ -26,9 +25,8 @@ char *base64_encode(const unsigned char *input, size_t length)
     encoded_data[j++] = base64_chars[c & 63];
   }
 
-  while (j % 4 != 0) {
+  while (j % 4 != 0)
     encoded_data[j++] = '=';
-  }
 
   encoded_data[j] = '\0';
   return encoded_data;
@@ -38,22 +36,20 @@ unsigned char
 *base64_decode(const char *input, size_t *output_length)
 {
   size_t length = strlen(input);
-  if (length % 4 != 0) {
+  if (length % 4 != 0)
     return NULL;
-  }
+
   size_t padding = 0;
-  if (length > 0 && input[length - 1] == '=') {
+  if (length > 0 && input[length - 1] == '=')
     padding++;
-  }
-  if (length > 1 && input[length - 2] == '=') {
+
+  if (length > 1 && input[length - 2] == '=')
     padding++;
-  }
 
   *output_length = (length / 4) * 3 - padding;
   unsigned char *decoded_data = (unsigned char *)malloc(*output_length);
-  if (!decoded_data) {
+  if (!decoded_data)
     return NULL;
-  }
 
   size_t i = 0, j = 0;
   while (i < length) {

@@ -56,9 +56,9 @@ arguments_program argp;
 readfiler rf;
 NESCADATA n;
 
-const char* short_options = "s:hl:vd:T:p:aS:";
 const char* run;
 std::mutex ls;
+const char* short_options = "s:hl:vd:T:p:aS:";
 
 int main(int argc, char** argv)
 {
@@ -438,6 +438,9 @@ int nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_m
 
   for (const auto& port : ports) {
     sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+    if (sock == -1)
+      continue;
+
     if (!argp.custom_ttl)
       ttl = random_num(29, 255);
     else
