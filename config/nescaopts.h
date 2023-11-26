@@ -5,6 +5,7 @@
  *   Сделано от души 2023.
 */
 
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include <unordered_map>
@@ -75,7 +76,10 @@ public:
   bool xmas_scan;
   bool ack_scan;
   bool window_scan;
+  uint8_t tcpflags;
   bool maimon_scan;
+
+  std::string data_string;
 
   bool timeout;
   int timeout_ms;
@@ -91,6 +95,7 @@ public:
   bool debug;
   bool print_errors;
   bool my_life_my_rulez;
+  int frag_mtu = 0;
   bool get_path_log;
   bool syn_debug;
   bool save_camera_screens;

@@ -29,7 +29,7 @@
 #include <string>
 
 #include "../include/nescalog.h"
-#include "../ncsock/include/ip4.h"
+#include "../ncsock/include/ip.h"
 #include "../ncsock/include/tcp.h"
 #include "../ncsock/include/socket.h"
 #include "../include/other.h"

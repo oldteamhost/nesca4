@@ -69,20 +69,23 @@
 #include "../modules/include/negatives.h"
 
 #include "../config/nescaopts.h"
-#include "../ncsock/include/icmp4.h"
-#include "../ncsock/include/base.h"
 #include "../ncbase/include/getopt.h"
 #include "../ncbase/include/json.h"
 #include "../ncbase/include/base64.h"
-#include "../ncsock/include/bruteforce.h"
 #include "../ncbase/include/binary.h"
 #include "../config/compile.h"
+
+#include "../ncsock/include/bruteforce.h"
 #include "../ncsock/include/tcp.h"
 #include "../ncsock/include/http.h"
+#include "../ncsock/include/utils.h"
+#include "../ncsock/include/readpkt.h"
 #include "../ncsock/include/dns.h"
 #include "../ncsock/include/strbase.h"
 #include "../ncsock/include/ftp.h"
 #include "../ncsock/include/smtp.h"
+#include "../ncsock/include/icmp.h"
+#include "../ncsock/include/base.h"
 
 /*Угадайте?*/
 #define _VERSION "20230924"
@@ -168,13 +171,15 @@ public:
 /*Аргументы.*/
 const struct
 option long_options[] = {
-  /*45, 19, 20, 21, 79, 78, 46, 22*/
+  /*21, 79, 78, 46, 22*/
+  {"frag", required_argument, 0, 20},
   {"threads", required_argument, 0, 'T'},
   {"delay", required_argument, 0, 'd'},
   {"import", required_argument, 0, 23},
   {"find", required_argument, 0, 19},
   {"random-ip", required_argument, 0, 5},
   {"brute-login", required_argument, 0, 12},
+  {"data-string", required_argument, 0, 45},
   {"brute-pass", required_argument, 0, 11},
   {"ping-log", required_argument, 0, 90},
   {"my-life-my-rulez", no_argument, 0, 53},

@@ -6,10 +6,7 @@
 */
 
 #include "include/portscan.h"
-#include <cstdint>
-
-nesca_prints np2;
-std::mutex packet_trace;
+#include "ncsock/include/readpkt.h"
 
 /*
  * Обработка пакета, писалась используя эти статьи:
@@ -23,15 +20,13 @@ std::mutex packet_trace;
 */
 int get_port_status(unsigned char* buffer, uint8_t scan_type)
 {
-  const struct ip_header *iph = (struct ip_header*)buffer;
-  const uint16_t iphdrlen = (iph->ihl) * 4;
+  const struct ip_header *iph = ext_iphdr(buffer);
+  const struct tcp_header *tcph = ext_tcphdr(buffer);
 
   /*Если пакет именно TCP.*/
   if (iph->protocol != 6) {
     return PORT_ERROR;
   }
-
-  const struct tcp_header *tcph = (struct tcp_header*)((char*)buffer + iphdrlen);
 
   switch (scan_type)
   {
@@ -51,7 +46,7 @@ int get_port_status(unsigned char* buffer, uint8_t scan_type)
     }
     case WINDOW_SCAN: {
       if (tcph->th_flags == 0x04) {
-        if (tcph->window > 0) {
+        if (tcph->th_win > 0) {
           return PORT_OPEN;
         }
         else {

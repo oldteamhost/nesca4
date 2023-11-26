@@ -33,15 +33,26 @@
 
 #include "include/nesca4.h"
 #include "include/files.h"
+#include "include/portscan.h"
+#include "ncsock/include/readpkt.h"
+#include "ncsock/include/tcp.h"
+#include "ncsock/include/utils.h"
+#include <arpa/inet.h>
+#include <bits/getopt_core.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <stdlib.h>
 #include <string>
+#include <unistd.h>
 
-struct tcp_packet_opts ncopts;
 checking_finds cfs;
 nesca_prints np;
 html_output ho;
 services_nesca sn;
 nesca_negatives nn;
 arguments_program argp;
+readfiler rf;
 NESCADATA n;
 
 const char* short_options = "s:hl:vd:T:p:aS:";
@@ -57,10 +68,16 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  argp.source_ip = get_local_ip();
+  char* templocalip = get_local_ip();
+  std::string temp = templocalip;
+  free(templocalip);
+  argp.source_ip = temp.c_str();
   parse_args(argc, argv);
   pre_check();
   checking_default_files();
+
+  struct tcp_flags tf = set_flags(argp.type);
+  argp.tcpflags = set_tcp_flags(&tf);
 
   /*Установка методов пинга.*/
   if (!argp.custom_ping) {
@@ -257,16 +274,13 @@ int main(int argc, char** argv)
   if (!argp.custom_g_max) {
     n.max_group_size = temp_vector.size();
   }
-  
+
   if (argp.my_life_my_rulez){
     n.group_rate = 1000;
   }
 
   /*Потоки для сканирования портов.*/
   argp._threads = n.max_group_size;
-
-  ncopts.source_ip = argp.source_ip;
-  ncopts.tcpf = set_flags(argp.type);
 
   long long size = temp_vector.size();
   std::vector<std::future<int>> futures;
@@ -399,17 +413,22 @@ int main(int argc, char** argv)
 int
 scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
 {
-  /*Установка порты с которого будут идти пакеты на этот IP.*/
-  int source_port;
+  u32 seq, saddr, daddr;
+  int source_port, res, sock;
+  int recv_timeout_result = 600;
+  u16 ttl;
+  u32 datalen = 0;
+  const char* data;
+
+  saddr = inet_addr(argp.source_ip);
+  daddr = inet_addr(ip.c_str());
+
   if (!argp.custom_source_port){
     source_port = generate_rare_port();
   }
   else {
     source_port = argp._custom_source_port;
   }
-
-  /*Если не было получено RTT, по стандарту время ответа 600.*/
-  int recv_timeout_result = 600;
 
   /*Если кастомное.*/
   if (argp.custom_recv_timeout_ms) {
@@ -423,28 +442,31 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
     }
   }
 
-  /*Один рандомный порт отправки на каждый IP.
-   * Можно и на каждый порт, но лучше менять не часто.*/
-  ncopts.source_port = source_port;
-
   /*Рандомный SEQ на каждый IP. Не порт!*/
-  ncopts.seq = generate_seq();
+  seq = generate_seq();
 
   for (const auto& port : ports) {
+    sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
     /*Настройка TTL.*/
     if (!argp.custom_ttl) {
-      ncopts.ttl = random_num(29, 255);
+      ttl = random_num(29, 255);
     }
     else {
-      ncopts.ttl = argp._custom_ttl;
+      ttl = argp._custom_ttl;
     }
 
+    if (!argp.data_string.empty()) {
+      data = argp.data_string.c_str();
+      datalen = strlen(data);
+    }
     /*Отправка пакета.*/
-    const int result = send_tcp_packet(&ncopts, ip.c_str(), port, timeout_ms);
+    res = send_tcp_packet(sock, saddr, daddr, ttl, false, 0, 0, source_port, port, seq, 0, 0, argp.tcpflags,
+        1024, 0, 0, 0, data, datalen, argp.frag_mtu);
+    close(sock);
 
     /*Если функция вернула PORT_OPEN,
     * Это означает что функция успешно выполнилась.*/
-    if (result != PORT_OPEN) {
+    if (res == -1) {
       ls.lock();
       /*Значит была ошибка.*/
       if (argp.print_errors) {
@@ -461,10 +483,11 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
 
     /*В другом случае, запускается
     * "Принятие пакета" или скорее его ожидание.*/
-    int read = recv_tcp_packet(ip.c_str(), recv_timeout_result, &buffer);
-
+    rf.dest_ip = ip.c_str();
+    rf.protocol = IPPROTO_TCP;
+    res = read_packet(&rf, recv_timeout_result, &buffer);
     /*Если функция не получила пакет.*/
-    if (read != 0) {
+    if (res == -1) {
       ls.lock();
       free(buffer);
       ls.unlock();
@@ -535,7 +558,7 @@ bool process_ping(std::string ip)
 
   /*ICMP ECHO*/
   if (argp.echo_ping) {
-    double icmp_casual = icmp_ping(ip.c_str(), argp.ping_timeout, 8, 0, 0, ttl);
+    double icmp_casual = icmp_ping(ip.c_str(), argp.source_ip, argp.ping_timeout, 8, 0, 0, ttl);
     if (icmp_casual != EOF) {
       n.set_rtt(ip, icmp_casual);
       return true;
@@ -559,7 +582,7 @@ bool process_ping(std::string ip)
   }
   /*ICMP INFO*/
   if (argp.info_ping) {
-    double icmp_rev = icmp_ping(ip.c_str(), argp.ping_timeout, 13, 0, 0, ttl);
+    double icmp_rev = icmp_ping(ip.c_str(), argp.source_ip, argp.ping_timeout, 13, 0, 0, ttl);
     if (icmp_rev != EOF) {
       n.set_rtt(ip, icmp_rev);
       return true;
@@ -567,7 +590,7 @@ bool process_ping(std::string ip)
   }
   /*ICMP TIMESTAMP*/
   if (argp.timestamp_ping) {
-    double icmp_rev1 = icmp_ping(ip.c_str(), argp.ping_timeout, 15, 0, 0, ttl);
+    double icmp_rev1 = icmp_ping(ip.c_str(), argp.source_ip, argp.ping_timeout, 15, 0, 0, ttl);
     if (icmp_rev1 != EOF) {
       n.set_rtt(ip, icmp_rev1);
       return true;
@@ -1133,6 +1156,8 @@ help_menu(void)
   std::cout << "  -negatives <path>: Set custom path for negatives.\n";
   std::cout << "  -source-ip <ip>: Set custom source_ip.\n";
   std::cout << "  -source-port <port>: Set custom source_port.\n";
+  std::cout << "  -data-string <string>: Append a custom ASCII string to scan packets.\n";
+  std::cout << "  -frag <mtu>: fragment packets for port scan.\n";
   std::cout << "  -ttl <num>: Set custom ip_header_ttl.\n";
   np.golder_rod_on();
   std::cout << "PORT SCAN GROUPS:" << std::endl;
@@ -1559,6 +1584,13 @@ parse_args(int argc, char** argv)
         argp.find = true;
         argp.find_target = split_string_string(optarg, ',');
         break;
+      case 20:
+        argp.frag_mtu = atoi(optarg);
+        if (argp.frag_mtu >! 0 && argp.frag_mtu % 8 != 0) {
+          np.nlog_error("Data payload MTU must be > 0 and multiple of 8: (8,16,32,64)\n");
+          exit(1);
+        }
+        break;
       case 23:
         argp.ip_scan_import = true;
         argp.path_ips = optarg;
@@ -1613,6 +1645,9 @@ parse_args(int argc, char** argv)
         argp.ns_track = true;
         break;
 #endif
+      case 45:
+        argp.data_string = optarg;
+        break;
       case 60:
         argp.custom_g_min = true;
         n.group_size = atoi(optarg);
