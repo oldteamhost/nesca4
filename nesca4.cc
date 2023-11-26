@@ -419,6 +419,7 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
   u16 ttl;
   u32 datalen = 0;
   const char* data;
+  bool df = false;
 
   saddr = inet_addr(argp.source_ip);
   daddr = inet_addr(ip.c_str());
@@ -460,7 +461,9 @@ scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms)
       datalen = strlen(data);
     }
     /*Отправка пакета.*/
-    res = send_tcp_packet(sock, saddr, daddr, ttl, false, 0, 0, source_port, port, seq, 0, 0, argp.tcpflags,
+    if (argp.frag_mtu)
+      df = true;
+    res = send_tcp_packet(sock, saddr, daddr, ttl, df, 0, 0, source_port, port, seq, 0, 0, argp.tcpflags,
         1024, 0, 0, 0, data, datalen, argp.frag_mtu);
     close(sock);
 
