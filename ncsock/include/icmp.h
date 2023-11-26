@@ -120,7 +120,8 @@ u8 *build_icmp6_pkt(const struct in6_addr *saddr, const struct in6_addr *daddr, 
 int send_icmp_packet(int fd, const u32 saddr, const u32 daddr, int ttl, bool df, u8 *ipops, int ipoptlen,
     u32 seq, u8 code, u8 type, const char *data, u16 datalen, int fragscan);
 
-double icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int type, int code, int seq, int ttl);
+double icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int type,
+    int code, int seq, int ttl, const char *data, u16 datalen, int fragscan);
 
 __END_DECLS
 

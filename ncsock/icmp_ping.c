@@ -15,7 +15,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-double icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int type, int code, int seq, int ttl)
+double icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int type,
+    int code, int seq, int ttl, const char *data, u16 datalen, int fragscan)
 {
   pthread_mutex_t mutex;
   pthread_mutex_init(&mutex, NULL);
@@ -25,6 +26,9 @@ double icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int
   double response_time = -1;
   int sock, send, read;
   u32 saddr, daddr;
+  bool df = false;
+  if (fragscan)
+    df = true;
 
   saddr = inet_addr(source_ip);
   daddr = inet_addr(dest_ip);
@@ -33,7 +37,7 @@ double icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int
   rf.protocol = IPPROTO_ICMP;
 
   sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
-  send = send_icmp_packet(sock, saddr, daddr, ttl, false, 0, 0, seq, code, type, NULL, 0, 0);
+  send = send_icmp_packet(sock, saddr, daddr, ttl, df, 0, 0, seq, code, type, data, datalen, fragscan);
   close(sock);
 
   if (send == -1)

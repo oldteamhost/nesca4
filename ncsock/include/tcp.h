@@ -90,9 +90,10 @@ int send_tcp_packet(int fd, const u32 saddr, const u32 daddr, int ttl, bool df,
 #define WINDOW_PACKET         6
 #define MAIMON_PACKET         7
 struct tcp_flags set_flags(uint8_t type);
-double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port, int source_port, int timeout_ms, int ttl);
 
 int fast_send_tcp(int fd, const char* saddr, const char* daddr, int ttl, u16 dport, u8 flags, const char* data, u16 datalen);
+double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
+    int source_port, int timeout_ms, int ttl, const char *data, u16 datalen, int fragscan);
 
 __END_DECLS
 

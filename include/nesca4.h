@@ -98,11 +98,10 @@ std::string format_percentage(double procents);
 void check_files(const char* path, const char* path1);
 void fix_time(double time);
 
-int
-scan_ports(const std::string& ip, std::vector<int>ports, const int timeout_ms);
+int nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_ms);
+bool nesca_ping(const char* ip);
 
 void checking_default_files(void);
-bool process_ping(std::string ip);
 void parse_args(int argc, char** argv);
 void pre_check(void);
 void process_port(const std::string& ip, std::vector<uint16_t> ports, int port_type);
