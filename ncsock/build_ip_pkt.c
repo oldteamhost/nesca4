@@ -13,6 +13,9 @@ u8 *build_ip_pkt(u32 saddr, u32 daddr, u8 proto, int ttl,
   static int myttl = 0;
   int packetlen = sizeof(struct ip_header) + ipoptlen + datalen;
   u8 *packet = (u8 *)malloc(packetlen);
+  if (!packet)
+    return NULL;
+
   struct ip_header *ip = (struct ip_header *)packet;
 
   assert(ipoptlen % 4 == 0);

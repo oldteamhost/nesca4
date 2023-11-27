@@ -39,6 +39,7 @@
 #include "ncsock/include/tcp.h"
 #include "ncsock/include/utils.h"
 #include <arpa/inet.h>
+#include <bits/getopt_core.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -88,7 +89,7 @@ int main(int argc, char** argv)
     np.golder_rod_on();
     printf("-> syn: %d, ack: %d, rst: %d, fin: %d, psh: %d, urg: %d, cwr: %d, ece: %d\n",
             tf.syn, tf.ack, tf.rst, tf.fin, tf.psh, tf.urg, tf.cwr, tf.ece);
-    np.reset_colors();
+    reset_colors;
   }
 
   /*Установка методов пинга.*/
@@ -151,7 +152,7 @@ int main(int argc, char** argv)
     np.golder_rod_on();
     std::cout << "-> NOTE: With your number of IPs - (" << temp_vector.size() 
       << "), it is better to use speed (-S5), otherwise scanning may take longer.\n";
-    np.reset_colors();
+    reset_colors;
   }
 
   /*Расчёт количества потоков и таймаута для пинга.*/
@@ -414,7 +415,7 @@ int main(int argc, char** argv)
 
   np.golder_rod_on();
   std::cout << "-> NESCA finished " << count_success_ips << " up IPs (success) in " << std::fixed << std::setprecision(2) << elapsed_result << " seconds\n";
-  np.reset_colors();
+  reset_colors;
 
   return 0;
 }
@@ -540,26 +541,33 @@ bool nesca_ping(const char* ip)
     ttl = argp._custom_ttl;
 
   if (argp.echo_ping) {
+    rtt = -1;
     rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, 8, 0, 0, ttl, data, datalen, argp.frag_mtu);
     if (rtt != EOF)
       goto ok;
   }
   if (argp.syn_ping) {
-    rtt = tcp_ping(SYN_PACKET, ip, argp.source_ip, argp.syn_dest_port, source_port, argp.ping_timeout, ttl, data, datalen, argp.frag_mtu);
+    rtt = -1;
+    rtt = tcp_ping(SYN_PACKET, ip, argp.source_ip, argp.syn_dest_port, source_port, argp.ping_timeout,
+        ttl, data, datalen, argp.frag_mtu);
     if (rtt != EOF)
       goto ok;
   }
   if (argp.ack_ping) {
-    rtt = tcp_ping(ACK_PACKET, ip, argp.source_ip, argp.syn_dest_port, source_port, argp.ping_timeout, ttl, data, datalen, argp.frag_mtu);
+    rtt = -1;
+    rtt = tcp_ping(ACK_PACKET, ip, argp.source_ip, argp.syn_dest_port, source_port, argp.ping_timeout,
+        ttl, data, datalen, argp.frag_mtu);
     if (rtt != EOF)
       goto ok;
   }
   if (argp.timestamp_ping) {
+    rtt = -1;
     rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, 15, 0, 0, ttl, data, datalen, argp.frag_mtu);
     if (rtt != EOF)
       goto ok;
   }
   if (argp.info_ping) {
+    rtt = -1;
     rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, 13, 0, 0, ttl, data, datalen, argp.frag_mtu);
     if (rtt != EOF)
       goto ok;
@@ -642,12 +650,12 @@ void check_files(const char* path, const char* path1)
   if (!check_file(path)){
     np.golder_rod_on();
     std::cout << "-> FAILED Import file (" + std::string(path) + ") loaded " + std::to_string(get_count_lines(path)) + " entries\n";
-    np.reset_colors();
+    reset_colors;
   }
   else if (!check_file(path1)){
     np.golder_rod_on();
     std::cout << "-> FAILED Import file (" + std::string(path1) + ") loaded " + std::to_string(get_count_lines(path1)) + " entries\n";
-    np.reset_colors();
+    reset_colors;
   }
 }
 
@@ -658,12 +666,12 @@ void checking_default_files(void)
     if (check_file(argp.path_ips)) {
       np.golder_rod_on();
       std::cout << "-> Import file (" + std::string(argp.path_ips) + ") loaded " + std::to_string(get_count_lines(argp.path_ips)) + " entries\n";
-      np.reset_colors();
+      reset_colors;
     }
     else {
       np.golder_rod_on();
       std::cout << "-> FAILED Import file (" + std::string(argp.path_ips) + ") loaded " + std::to_string(get_count_lines(argp.path_ips)) + " entries\n";
-      np.reset_colors();
+      reset_colors;
       exit(1);
     }
     std::vector<std::string> temp_ips = write_file(argp.path_ips);
@@ -686,10 +694,12 @@ void print_port_state(int status, int port, std::string service)
   std::cout << std::to_string(port) << "/tcp";  np.gray_nesca_on();
   fprintf(stdout, " STATE: ");
   std::string status_port = return_port_status(status); np.golder_rod_on();
-  fprintf(stdout, "%s", status_port.c_str()); np.reset_colors();
+  fprintf(stdout, "%s", status_port.c_str());
+  reset_colors;
   result_txt += status_port; result_txt += " SERVICE: " + service;
   np.gray_nesca_on(); fprintf(stdout, " SERVICE: "); np.green_html_on();
-  fprintf(stdout, "%s\n", service.c_str()); np.reset_colors();
+  fprintf(stdout, "%s\n", service.c_str());
+  reset_colors;
 }
 
 void ftp_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
@@ -699,7 +709,8 @@ void ftp_strategy::handle(const std::string& ip, const std::string& result, cons
   std::string ftp_version = version;
 
   if (!argp.off_ftp_brute) {
-    np.yellow_html_on(); std::cout << "[>][FTP]:" + ip + " [BRUTEFORCE]\n"; np.reset_colors();
+    np.yellow_html_on(); std::cout << "[>][FTP]:" + ip + " [BRUTEFORCE]\n";
+    reset_colors;
     brute_temp = threads_bruteforce(argp.ftp_logins, argp.ftp_passwords, "", ip, port, argp.brute_timeout_ms, FTP_BRUTEFORCE, argp.ftp_brute_log);
   }
 
@@ -716,7 +727,8 @@ void smtp_strategy::handle(const std::string& ip, const std::string& result, con
   std::string responce_220 = version;
 
   if (!argp.off_smtp_brute) {
-    np.yellow_html_on(); std::cout << "[>][SMTP]:" + ip + " [BRUTEFORCE]\n"; np.reset_colors();
+    np.yellow_html_on(); std::cout << "[>][SMTP]:" + ip + " [BRUTEFORCE]\n";
+    reset_colors;
     brute_temp = threads_bruteforce(argp.smtp_logins, argp.smtp_passwords, "", ip, port, argp.brute_timeout_ms, SMTP_BRUTEFORCE, argp.smtp_brute_log);
   }
 
@@ -730,7 +742,8 @@ void hikvision_strategy::handle(const std::string& ip, const std::string& result
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np)
 {
   if (!argp.off_hikvision_brute){
-    np.yellow_html_on(); std::cout << "[>][HIKVISION]:" + ip + std::to_string(port) + " [BRUTEFORCE]\n"; np.reset_colors();
+    np.yellow_html_on(); std::cout << "[>][HIKVISION]:" + ip + std::to_string(port) + " [BRUTEFORCE]\n";
+    reset_colors;
     brute_temp = threads_brute_hikvision(ip, argp.hikvision_logins, argp.hikvision_passwords, argp.hikvision_brute_log, argp.brute_timeout_ms, argp.screenshots_save_path_cam);
   }
 
@@ -752,7 +765,8 @@ void rvi_strategy::handle(const std::string& ip, const std::string& result, cons
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np)
 {
   if (!argp.off_rvi_brute){
-    np.yellow_html_on(); std::cout << "[>][RVI]:" + ip + " [BRUTEFORCE]\n"; np.reset_colors();
+    np.yellow_html_on(); std::cout << "[>][RVI]:" + ip + " [BRUTEFORCE]\n";
+    reset_colors;
     brute_temp = threads_bruteforce(argp.rvi_logins, argp.rvi_passwords, "", ip, port, argp.brute_timeout_ms, RVI_BRUTEFORCE, argp.rvi_brute_log);
   }
 
@@ -773,7 +787,7 @@ void rtsp_strategy::handle(const std::string& ip, const std::string& result, con
                                           "/av0_0", "/mpeg4/ch01/main/av_stream"};
     np.yellow_html_on();
     std::cout << "[>][RTSP]:" + ip + " [BRUTEFORCE]\n";
-    np.reset_colors();
+    reset_colors;
 
     for (auto& path : rtsp_paths) {
       brute_temp = threads_bruteforce(argp.rtsp_logins, argp.rtsp_passwords, path, ip, port, argp.brute_timeout_ms, RTSP_BRUTEFORCE, argp.rtsp_brute_log);
@@ -898,7 +912,8 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
 
   /*Брутфорс HTTP basic auth.*/
   if (!argp.off_http_brute && temp_check_http != "no" && !argp.no_get_path && brute != EOF) {
-    np.yellow_html_on(); std::cout << "[>][HTTP]:" + ip + " [BRUTEFORCE]\n"; np.reset_colors();
+    np.yellow_html_on(); std::cout << "[>][HTTP]:" + ip + " [BRUTEFORCE]\n";
+    reset_colors;
 
     brute_temp = threads_bruteforce(argp.http_logins, argp.http_passwords, redirect, ip, port, argp.brute_timeout_ms, HTTP_BRUTEFORCE, argp.http_brute_log);
   }
@@ -910,34 +925,36 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
 
   /*Получение /robots.txt*/
   if (argp.robots_txt){
-    np.gray_nesca_on(); std::cout << "[^][ROBOTS]:"; np.reset_colors();
+    np.gray_nesca_on(); std::cout << "[^][ROBOTS]:";
+    reset_colors;
     int robots = get_robots_txt(ip.c_str(), port, 1100);
 
     if (robots == -1) {
       np.red_html_on();
       std::cout << ip << " robots.txt not found!\n";
-      np.reset_colors();
+      reset_colors;
     }
     else {
       np.green_html_on();
       std::cout << "http://" << ip + "/robots.txt\n";
-      np.reset_colors();
+      reset_colors;
     }
   }
 
   /*Получение /sitemap.xml*/
   if (argp.sitemap_xml){
-    np.gray_nesca_on(); std::cout << "[^][STEMAP]:"; np.reset_colors();
+    np.gray_nesca_on(); std::cout << "[^][STEMAP]:"; 
+    reset_colors;
     int sitemap = get_sitemap_xml(ip.c_str(), port, 1100);
     if (sitemap == -1) {
       np.red_html_on();
       std::cout << ip << " sitemap.xml not found!\n";
-      np.reset_colors();
+      reset_colors;
     }
     else {
       np.green_html_on();
       std::cout << "http://" << ip + "/sitemap.xml\n";
-      np.reset_colors();
+      reset_colors;
     }
   }
 
@@ -945,14 +962,16 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   if (redirect.length() != default_result.length()) {
     if (!redirect.empty()){
       np.gray_nesca_on(); std::cout << "[^][REDIRT]:"; np.yellow_html_on();
-      std::cout << redirect + "\n"; np.reset_colors();
+      std::cout << redirect + "\n";
+      reset_colors;
     }
   }
 
   /*Вывод ответа http.*/
   if (argp.get_response) {
     np.yellow_html_on(); std::cout << html << std::endl;
-    std::cout << html_pro << std::endl; np.reset_colors();
+    std::cout << html_pro << std::endl;
+    reset_colors;
   }
 
   if (argp.find) {
@@ -964,13 +983,13 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
           std::cout << "[FOUND]:";
           np.green_html_on();
           std::cout << find;
-          np.reset_colors();
+          reset_colors;
           np.gray_nesca_on();
           std::cout << " example: ";
-          np.reset_colors();
+          reset_colors;
           np.golder_rod_on();
           std::cout << "\"" << target << "\"" << std::endl;
-          np.reset_colors();
+          reset_colors;
         }
       }
     }
@@ -1097,14 +1116,14 @@ help_menu(void)
 
   np.golder_rod_on();
   std::cout << "\nTARGET SPECIFICATION:" << std::endl;
-  np.reset_colors();
+  reset_colors;
   std::cout << "  -import <inputfilename>: Set target(s) from file.\n";
   std::cout << "  -random-ip <num hosts>: Choose random target(s)\n";
   std::cout << "  -exclude <host1[,host2][,host3],...>: Exclude host(s).\n";
   std::cout << "  -excludefile <exclude_file>: Exclude list from file\n";
   np.golder_rod_on();
   std::cout << "PORT SCAN OPTIONS:" << std::endl;
-  np.reset_colors();
+  reset_colors;
   std::cout << "  -fin, -xmas, -null: Use one of these scanning methods.\n";
   std::cout << "  -ack, -windows -maimon: Use ack or window or maimon scan method.\n";
   std::cout << "  -scanflags <flags>: Customize TCP scan flag (ACKSYN).\n";
@@ -1113,7 +1132,7 @@ help_menu(void)
   std::cout << "  -scan-timeout <ms>: Edit timeout for getting packet on port.\n";
   np.golder_rod_on();
   std::cout << "PING SCAN OPTIONS:" << std::endl;
-  np.reset_colors();
+  reset_colors;
   std::cout << "  -TP <num>: Set max thread(s) for ping.\n";
   std::cout << "  -ping-timeout <ms>: Set recv timeout for ping.\n";
   std::cout << "  -PS, -PA <port>: On TCP ping SYN|ACK and edit dest port.\n";
@@ -1122,14 +1141,14 @@ help_menu(void)
   std::cout << "  -no-ping: Skip ping scan.\n";
   np.golder_rod_on();
   std::cout << "HOST RESOLUTION:" << std::endl;
-  np.reset_colors();
+  reset_colors;
   std::cout << "  -TD <num>: Set max thread(s) for dns-resolution.\n";
   std::cout << "  -resol-port <port>: Edit source port for dns-resolution.\n";
   std::cout << "  -resol-delay <ms>: Set delay for dns-resolution.\n";
   std::cout << "  -no-resolv: Skip dns-resolution.\n";
   np.golder_rod_on();
   std::cout << "BRUTEFORCE OPTIONS:" << std::endl;
-  np.reset_colors();
+  reset_colors;
   std::cout << "  -brute-login <ss,path>: Set path for <ss> logins.\n";
   std::cout << "  -brute-pass <ss,path>: Set path for <ss> passwords.\n";
   std::cout << "  -brute-timeout <ms>: Edit brute timout.\n";
@@ -1138,7 +1157,7 @@ help_menu(void)
   std::cout << "  -brute-log <ss,2>: Display bruteforce <ss> info.\n";
   np.golder_rod_on();
   std::cout << "OTHER OPTIONS:" << std::endl;
-  np.reset_colors();
+  reset_colors;
   std::cout << "  -negatives <path>: Set custom path for negatives.\n";
   std::cout << "  -source-ip <ip>: Set custom source_ip.\n";
   std::cout << "  -source-port <port>: Set custom source_port.\n";
@@ -1148,39 +1167,39 @@ help_menu(void)
   std::cout << "  -ttl <num>: Set custom ip_header_ttl.\n";
   np.golder_rod_on();
   std::cout << "PORT SCAN GROUPS:" << std::endl;
-  np.reset_colors();
+  reset_colors;
   std::cout << "  -max-group <num>: Edit max size group & threads for port scan.\n";
   std::cout << "  -min-group <num>: Edit min size group & threads for port scan.\n";
   std::cout << "  -rate-group <num>: Edit the value by which the group is incremented.\n";
   np.golder_rod_on();
   std::cout << "DELISEARCH SCAN:" << std::endl;
-  np.reset_colors();
+  reset_colors;
   std::cout << "  -find <target1[,target2][,target3],...>: Search for keywords on the host.\n";
 #ifdef HAVE_NODE_JS
   np.golder_rod_on();
   std::cout << "SAVE SCREENSHOTS:" << std::endl;
-  np.reset_colors();
+  reset_colors;
   std::cout << "  -screenshot, -s <folder>: Save screenshot on pages.\n";
   std::cout << "  -ss-timeout <ms>: Set timeout on save screenshots.\n";
 #endif
   np.golder_rod_on();
   std::cout << "SPEED OPTIONS:" << std::endl;
-  np.reset_colors();
+  reset_colors;
   std::cout << "  -speed, -S <1-5>: Set timing template (higher is faster).\n";
   std::cout << "  -my-life-my-rulez: Using very MAX speed settings.\n";
   np.golder_rod_on();
   std::cout << "SAVE OUTPUT:" << std::endl;
-  np.reset_colors();
+  reset_colors;
   std::cout << "  -html, -l <path file>: Classic nesca save, write on html page.\n";
   std::cout << "  -json <path file>: Save on json file.\n";
   np.golder_rod_on();
   std::cout << "VERBOSE OUTPUT:" << std::endl;
-  np.reset_colors();
+  reset_colors;
   std::cout << "  -db, -debug: On debug mode, save and display not even working hosts.\n";
   std::cout << "  -er, -error: On display errors.\n";
   np.golder_rod_on();
   std::cout << "PRINT OUTPUT:" << std::endl;
-  np.reset_colors();
+  reset_colors;
   std::cout << "  -no-proc: Skip main processing.\n";
   std::cout << "  -no-get-path: Disable getting paths.\n";
   std::cout << "  -log-set <num>: Change the value of ips after which % will be output.\n";
@@ -1189,12 +1208,13 @@ help_menu(void)
   std::cout << "  -robots: Get /robots.txt.\n";
   np.golder_rod_on();
   std::cout << "COLOR:" << std::endl;
-  np.reset_colors();
+  reset_colors;
   std::cout << "  -no-color: Disable all colors in nesca4.\n";
   std::cout << "  -import-color <path>: Import color scheme from file.\n";
+  std::cout << "  -print-color <path>: Check color scheme.\n";
   np.golder_rod_on();
   std::cout << "EXAMPLES:" << std::endl;
-  np.reset_colors();
+  reset_colors;
   std::cout << "  ./nesca4 google.com -p 80,443\n";
   std::cout << "  ./nesca4 72.230.205.0/24 -p 80,8080,81 -S5\n";
   std::cout << "  ./nesca4 https://www.youtube.com\n";
@@ -1253,11 +1273,13 @@ pre_check(void)
     np.processing_color_scheme(np.config_values);
   }
 
+  char formatted_date[11];
+
   np.golder_rod_on();
-  char formatted_date[11]; get_current_date(formatted_date, sizeof(formatted_date));
+  get_current_date(formatted_date, sizeof(formatted_date));
   std::cout << "-> Running NESCA [v" + std::string(_VERSION) + "] # " +
   std::string(get_time()) + " at " + formatted_date << std::endl; 
-  np.reset_colors();
+  reset_colors;
 
   if (argp.info_version)
     version_menu();
@@ -1321,22 +1343,22 @@ void version_menu(void)
 {
   logo();
   np.gray_nesca_on();
-  std::cout << np.print_get_time(get_time());
+  std::cout << print_get_time(get_time());
   std::cout << "[VERSION]:";
   np.green_html_on();
   std::cout << _VERSION << std::endl;
   np.gray_nesca_on();
-  std::cout << np.print_get_time(get_time());
+  std::cout << print_get_time(get_time());
   std::cout << "[INFO]:";
   np.sea_green_on();
   std::cout << "https://github.com/oldteamhost/nesca4" << std::endl;
-  np.reset_colors();
+  reset_colors;
   np.gray_nesca_on();
-  std::cout << np.print_get_time(get_time());
+  std::cout << print_get_time(get_time());
   std::cout << "[NB]:";
   np.golder_rod_on();
   std::cout << "Don`t read \"do_not_read.txt\"" << std::endl;
-  np.reset_colors();
+  reset_colors;
   std::cout << std::endl;
   exit(0);
 }
@@ -1701,6 +1723,12 @@ void parse_args(int argc, char** argv)
       case 53:
         argp.my_life_my_rulez = true;
         argp.speed_type = 5;
+        break;
+      case 78:
+        np.import_color_scheme(optarg, np.config_values);
+        np.processing_color_scheme(np.config_values);
+        np.printcolorscheme();
+        exit(1);
         break;
       case 54:
         argp.import_color_scheme = true;

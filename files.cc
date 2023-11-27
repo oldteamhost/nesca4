@@ -10,12 +10,14 @@
 
 int get_count_lines(const char* path)
 {
-  int count = 0;
+  int len = 0;
+
   std::ifstream file(path);
   std::string line;
   while (std::getline(file, line))
-    ++count;
-  return count;
+    ++len;
+
+  return len;
 }
 
 bool check_file(const char* path)

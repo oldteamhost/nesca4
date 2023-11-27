@@ -31,6 +31,7 @@
 
 #include "include/eth.h"
 #include "include/addr.h"
+#include "include/debianfix.h"
 
 struct eth_handle {
 	int			fd;
@@ -54,7 +55,7 @@ eth_open(const char *device)
 			sizeof(n)) < 0)
 			return (eth_close(e));
 #endif
-		strlcpy(e->ifr.ifr_name, device, sizeof(e->ifr.ifr_name));
+		_strlcpy(e->ifr.ifr_name, device, sizeof(e->ifr.ifr_name));
 		
 		if (ioctl(e->fd, SIOCGIFINDEX, &e->ifr) < 0)
 			return (eth_close(e));

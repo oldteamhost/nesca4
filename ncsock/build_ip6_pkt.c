@@ -17,6 +17,8 @@ u8 *build_ip6_pkt(const struct in6_addr *source, const struct in6_addr *victim, 
 
   *plen= sizeof(struct ip6_hdr) + datalen;
   packet = (u8 *) malloc(*plen);
+  if (!packet)
+    return NULL;
 
   ip6_pack_hdr(packet, tc, flowlabel, datalen, nexthdr, hoplimit, *source, *victim);
   memcpy(packet + sizeof(struct ip6_hdr), data, datalen);

@@ -22,6 +22,8 @@ u8 *build_udp(u16 sport, u16 dport, const char *data, u16 datalen, u32 *packetle
 
   *packetlen = sizeof(*udp) + datalen;
   packet = (u8 *) malloc(*packetlen);
+  if (!packet)
+    return NULL;
   udp = (struct udp_header*) packet;
 
   memset(udp, 0, sizeof(*udp));

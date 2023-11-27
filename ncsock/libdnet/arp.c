@@ -37,6 +37,7 @@
 #include <unistd.h>
 
 #include "include/arp.h"
+#include "include/debianfix.h"
 
 #ifdef HAVE_LINUX_PROCFS
 #define PROC_ARP_FILE	"/proc/net/arp"
@@ -86,7 +87,7 @@ _arp_set_dev(const struct intf_entry *entry, void *arg)
 	
 		if ((entry->intf_addr.addr_ip & mask) ==
 		    (dst.addr_ip & mask)) {
-			strlcpy(ar->arp_dev, entry->intf_name,
+      _strlcpy(ar->arp_dev, entry->intf_name,
 			    sizeof(ar->arp_dev));
 			return (1);
 		}

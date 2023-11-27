@@ -18,11 +18,14 @@
 double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
     int source_port, int timeout_ms, int ttl, const char *data, u16 datalen, int fragscan)
 {
+  pthread_mutex_t mutex;
+  pthread_mutex_init(&mutex, NULL);
+
   double response_time = -1;
   struct timespec start_time, end_time;
   struct tcp_flags tf;
   struct readfiler rf;
-  int sock, send, read;
+  int sock = -1, send = -1, read = -1;
   u32 seq;
   u8 flags;
   bool df = false;
@@ -33,9 +36,6 @@ double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
   u32 daddr = inet_addr(ip);
   rf.dest_ip = ip;
   rf.protocol = IPPROTO_TCP;
-
-  pthread_mutex_t mutex;
-  pthread_mutex_init(&mutex, NULL);
 
   seq = generate_seq();
   tf = set_flags(type);
@@ -55,13 +55,13 @@ double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
     return -1;
 
   pthread_mutex_lock(&mutex);
-  unsigned char *buffer = (unsigned char *)calloc(4096, sizeof(unsigned char));
+  u8 *buffer = (u8 *)calloc(RECV_BUFFER_SIZE, sizeof(u8));
   pthread_mutex_unlock(&mutex);
 
   clock_gettime(CLOCK_MONOTONIC, &start_time);
 
   read = read_packet(&rf, timeout_ms, &buffer);
-  if (read != 0) {
+  if (read == -1) {
     pthread_mutex_lock(&mutex);
     free(buffer);
     pthread_mutex_unlock(&mutex);

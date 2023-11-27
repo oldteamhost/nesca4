@@ -88,7 +88,7 @@
 #include "../ncsock/include/base.h"
 
 /*Угадайте?*/
-#define _VERSION "20230924"
+#define _VERSION "20231117"
 
 void help_menu(void);
 void version_menu(void);
@@ -167,10 +167,10 @@ public:
   void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np) override;};
 
-/*Аргументы.*/
 const struct
 option long_options[] = {
-  /*22, 79, 78, 46*/
+  /*22, 46*/
+  {"print-color", required_argument, 0, 78},
   {"data-len", required_argument, 0, 79},
   {"scanflags", required_argument, 0, 21},
   {"frag", required_argument, 0, 20},

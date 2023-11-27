@@ -8,12 +8,12 @@
 #include "include/target.h"
 #include <cmath>
 #include <vector>
+#include <unordered_set>
 
-/*A basic function that allows you to replace the mechanism of getting values via
- * a key, as in dictionaries.*/
 _nescadata_* NESCADATA::get_data_block(const std::string& ip)
 {
-  auto it = std::find_if(all_data.begin(), all_data.end(), [&ip](const _nescadata_& data) {
+  auto it = std::find_if(all_data.begin(), all_data.end(),
+      [&ip](const _nescadata_& data) {
     return data.ip == ip;
   });
   if (it != all_data.end())
@@ -22,7 +22,6 @@ _nescadata_* NESCADATA::get_data_block(const std::string& ip)
   return nullptr;
 }
 
-/*Setting the DNS that the user specified when calling nesca4.*/
 void NESCADATA::set_new_dns(const std::string& ip, const std::string& new_dns)
 {
   _nescadata_* data = get_data_block(ip);
@@ -30,14 +29,12 @@ void NESCADATA::set_new_dns(const std::string& ip, const std::string& new_dns)
     data->new_dns = new_dns;
 }
 
-/*Removal of all ports in all blocks.*/
 void NESCADATA::clean_ports(void)
 {
   for (auto& data : all_data)
     data.ports.clear();
 }
 
-#include <unordered_set>
 void NESCADATA::remove_duplicates(void)
 {
   std::unordered_set<std::string> unique_ips;
@@ -183,8 +180,6 @@ double NESCADATA::get_rtt(const std::string& ip)
   return -1;
 }
 
-/*Тут создаётся группа путём перемешения из всех IP.
- * Именно перемешение, я думаю это лучшее что можно было сделать.*/
 void NESCADATA::create_group(void)
 {
   std::vector<std::string> temp_ips = get_all_ips();
@@ -211,7 +206,6 @@ void NESCADATA::clean_group(void)
 
 std::vector<std::string> range_to_ips(const std::vector<std::string>& ip_ranges)
 {
-  int octet = 0;
   unsigned int start_ip = 0;
   unsigned int end_ip = 0;
   std::vector<std::string> result;
@@ -222,18 +216,25 @@ std::vector<std::string> range_to_ips(const std::vector<std::string>& ip_ranges)
     std::getline(iss, start_ip_str, '-');
     std::getline(iss, end_ip_str);
 
-    for (std::istringstream ss(start_ip_str); std::getline(ss, start_ip_str, '.'); ++octet)
-      start_ip |= (std::stoi(start_ip_str) << ((3 - octet) * 8));
+    std::istringstream start_ss(start_ip_str), end_ss(end_ip_str);
 
-    octet = 0;
-    for (std::istringstream ss(end_ip_str); std::getline(ss, end_ip_str, '.'); ++octet)
-      end_ip |= (std::stoi(end_ip_str) << ((3 - octet) * 8));
+    for (int i = 3; i >= 0; --i) {
+      std::string start_octet_str, end_octet_str;
+      std::getline(start_ss, start_octet_str, '.');
+      std::getline(end_ss, end_octet_str, '.');
+
+      start_ip |= (std::stoi(start_octet_str) << (i * 8));
+      end_ip |= (std::stoi(end_octet_str) << (i * 8));
+    }
 
     for (unsigned int i = start_ip; i <= end_ip; ++i) {
       std::stringstream ss;
       ss << ((i >> 24) & 0xFF) << '.' << ((i >> 16) & 0xFF) << '.' << ((i >> 8) & 0xFF) << '.' << (i & 0xFF);
       result.push_back(ss.str());
     }
+
+    start_ip = 0;
+    end_ip = 0;
   }
 
   return result;
@@ -264,13 +265,38 @@ std::vector<std::string> cidr_to_ips(const std::vector<std::string>& cidr_list)
 
     for (unsigned long long int i = 0; i < (1ULL << (32 - subnetMaskBits)); i++) {
       std::stringstream ipAddressStream;
-      ipAddressStream << ((ipAddress >> 24) & 0xFF) << '.' << ((ipAddress >> 16) & 0xFF) << '.' << ((ipAddress >> 8) & 0xFF) << '.' << (ipAddress & 0xFF);
+      ipAddressStream << ((ipAddress >> 24) & 0xFF) << '.' << ((ipAddress >> 16) & 0xFF) << '.'
+        << ((ipAddress >> 8) & 0xFF) << '.' << (ipAddress & 0xFF);
       ipAddresses.push_back(ipAddressStream.str());
       ipAddress++;
     }
   }
 
   return ipAddresses;
+}
+std::vector<std::string> convert_dns_to_ip(const std::vector<std::string>& dns_vector)
+{
+  std::vector<std::string> ip_vector;
+  struct addrinfo hints, *res;
+  int status;
+  char ip_str[INET_ADDRSTRLEN];
+
+  for (const auto& dns : dns_vector) {
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+
+    status = getaddrinfo(dns.c_str(), NULL, &hints, &res);
+    if (status != 0)
+      continue;
+
+    struct sockaddr_in* addr = (struct sockaddr_in*) res->ai_addr;
+    inet_ntop(AF_INET, &(addr->sin_addr), ip_str, INET_ADDRSTRLEN);
+    ip_vector.push_back(ip_str);
+    freeaddrinfo(res);
+  }
+
+  return ip_vector;
 }
 
 std::vector<int> split_string_int(const std::string& str, char delimiter)
@@ -297,29 +323,4 @@ std::vector<std::string> split_string_string(const std::string& str, char delimi
   }
   result.push_back(str.substr(pos));
   return result;
-}
-
-std::vector<std::string> convert_dns_to_ip(const std::vector<std::string>& dns_vector)
-{
-  std::vector<std::string> ip_vector;
-  struct addrinfo hints, *res;
-  int status;
-  char ip_str[INET_ADDRSTRLEN];
-
-  for (const auto& dns : dns_vector) {
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-
-    status = getaddrinfo(dns.c_str(), NULL, &hints, &res);
-    if (status != 0)
-      continue;
-
-    struct sockaddr_in* addr = (struct sockaddr_in*) res->ai_addr;
-    inet_ntop(AF_INET, &(addr->sin_addr), ip_str, INET_ADDRSTRLEN);
-    ip_vector.push_back(ip_str);
-    freeaddrinfo(res);
-  }
-
-  return ip_vector;
 }

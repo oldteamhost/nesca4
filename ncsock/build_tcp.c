@@ -15,6 +15,8 @@ u8 *build_tcp(u16 sport, u16 dport, u32 seq, u32 ack, u8 reserved, u8 flags,
 
   *packetlen = sizeof(*tcp) + tcpoptlen + datalen;
   packet = (u8 *) malloc(*packetlen);
+  if (!packet)
+    return NULL;
   tcp = (struct tcp_header *) packet;
 
   memset(tcp, 0, sizeof(*tcp));

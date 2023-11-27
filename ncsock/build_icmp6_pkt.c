@@ -20,6 +20,8 @@ u8 *build_icmp6_pkt(const struct in6_addr *saddr, const struct in6_addr *daddr, 
   u8 *ipv6;
 
   packet = (char *) malloc(sizeof(*icmpv6) + sizeof(*msg) + datalen);
+  if (!packet)
+    return NULL;
   icmpv6 = (struct icmp6_header *) packet;
   msg = (union icmpv6_msg *) (packet + sizeof(*icmpv6));
 

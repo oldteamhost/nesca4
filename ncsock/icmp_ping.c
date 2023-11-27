@@ -50,7 +50,7 @@ double icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int
     return -1;
 
   pthread_mutex_lock(&mutex);
-  unsigned char *buffer = (unsigned char *)calloc(4096, sizeof(unsigned char));
+  u8 *buffer = (u8 *)calloc(RECV_BUFFER_SIZE, sizeof(u8));
   pthread_mutex_unlock(&mutex);
 
   clock_gettime(CLOCK_MONOTONIC, &start_time);

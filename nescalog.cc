@@ -17,13 +17,16 @@ html_output hou;
 std::string
 nesca_prints::html_to_ansi_color(const std::string& html_color)
 {
-  if (html_color.size() != 7 || html_color[0] != '#') {return "";}
+  int r,g,b;
+
+  if (html_color.size() != 7 || html_color[0] != '#')
+    return NULL;
+
   std::istringstream stream(html_color.substr(1));
 
-  /* Преобразуем значения к диапазону [0, 255] */
-  int r = std::stoi(html_color.substr(1, 2), nullptr, 16);
-  int g = std::stoi(html_color.substr(3, 2), nullptr, 16);
-  int b = std::stoi(html_color.substr(5, 2), nullptr, 16);
+  r = std::stoi(html_color.substr(1, 2), nullptr, 16);
+  g = std::stoi(html_color.substr(3, 2), nullptr, 16);
+  b = std::stoi(html_color.substr(5, 2), nullptr, 16);
 
   return "\033[38;2;" + std::to_string(r) + ";" + std::to_string(g) + ";" + std::to_string(b) + "m";
 }
@@ -34,8 +37,7 @@ nesca_prints::main_nesca_out(const std::string& opt, const std::string& result, 
                             std::string type, std::string protocol)
 {
   std::string temp, temp_file;
-  char dots[3] =
-  {':', ':', ':'};
+  char dots[3] = {':', ':', ':'};
 
   if (opt.empty())  {dots[0] = ' '; }
   if (opt1.empty()) {dots[1] = ' ';}
@@ -97,7 +99,6 @@ nesca_prints::nlog_packet_trace(std::string action, std::string protocol, std::s
       std::string message, int ttl, int id, int win,
       int seq, int iplen)
 {
-  /*Ужас но подругому не сделать.*/
   const std::string temp = green_html + "-> " + reset_color +
       green_html + "  " + action + reset_color + green_html + "  " + protocol + "  " + reset_color +
       green_html + source_ip + ":" + std::to_string(source_port) + " > " + dest_ip + ":" +
@@ -122,12 +123,6 @@ nesca_prints::disable_colors(void)
   reset_color = "";
 }
 
-std::string
-nesca_prints::print_get_time(const char* time)
-{
-  const std::string temp = "[" + std::string(time) + "]";
-  return temp;
-}
 
 int
 nesca_prints::import_color_scheme(const std::string& file_name, std::map<std::string, std::string>& config_values)
@@ -149,68 +144,64 @@ nesca_prints::import_color_scheme(const std::string& file_name, std::map<std::st
 }
 
 void
-nesca_prints::golder_rod_on(void) {
-  fwrite(golder_rod.c_str(), sizeof(char), strlen(golder_rod.c_str()), stdout);
+nesca_prints::golder_rod_on(void)
+{
+  printf("%s", golder_rod.c_str());
 }
 
 void
-nesca_prints::sea_green_on(void) {
-  fwrite(sea_green.c_str(), sizeof(char), strlen(sea_green.c_str()), stdout);
+nesca_prints::sea_green_on(void)
+{
+  printf("%s", sea_green.c_str());
 }
 
 void
-nesca_prints::reset_colors(void) {
-  fwrite(reset_color.c_str(), sizeof(char), strlen(reset_color.c_str()), stdout);
+nesca_prints::gray_nesca_on(void)
+{
+  printf("%s", gray_nesca.c_str());
 }
 
 void
-nesca_prints::gray_nesca_on(void) {
-  fwrite(gray_nesca.c_str(), sizeof(char), strlen(gray_nesca.c_str()), stdout);
+nesca_prints::yellow_html_on(void)
+{
+  printf("%s", yellow_html.c_str());
 }
 
 void
-nesca_prints::yellow_html_on(void) {
-  fwrite(yellow_html.c_str(), sizeof(char), strlen(yellow_html.c_str()), stdout);
+nesca_prints::green_html_on(void)
+{
+  printf("%s", green_html.c_str());
 }
 
 void
-nesca_prints::green_html_on(void) {
-  fwrite(green_html.c_str(), sizeof(char), strlen(green_html.c_str()), stdout);
-}
-
-void
-nesca_prints::red_html_on(void) {
-  fwrite(red_html.c_str(), sizeof(char), strlen(red_html.c_str()), stdout);
+nesca_prints::red_html_on(void)
+{
+  printf("%s", red_html.c_str());
 }
 
 void
 nesca_prints::custom_color_on(const std::string& html_color)
 {
-  if (colors == true) {std::cout << html_to_ansi_color(html_color);}
+  if (colors == true)
+    std::cout << html_to_ansi_color(html_color);
 }
 
 int
 nesca_prints::processing_color_scheme(const std::map<std::string, std::string>& config_values)
 {
   for (const auto& kvp : config_values) {
-    if (kvp.first == "auth") {
+    if (kvp.first == "auth")
       gray_nesca = html_to_ansi_color(kvp.second);
-    }
-    else if (kvp.first == "title") {
+    else if (kvp.first == "title")
       golder_rod = html_to_ansi_color(kvp.second);
-    }
-    else if (kvp.first == "link") {
+    else if (kvp.first == "link")
       sea_green = html_to_ansi_color(kvp.second);
-    }
-    else if (kvp.first == "ok") {
+    else if (kvp.first == "ok")
       green_html = html_to_ansi_color(kvp.second);
-    }
-    else if (kvp.first == "error") {
+    else if (kvp.first == "error")
       red_html = html_to_ansi_color(kvp.second);
-    }
-    else if (kvp.first == "debug") {
+    else if (kvp.first == "debug")
       yellow_html = html_to_ansi_color(kvp.second);
-    }
   }
   return 0;
 }
@@ -218,25 +209,35 @@ nesca_prints::processing_color_scheme(const std::map<std::string, std::string>& 
 void
 nesca_prints::nlog_trivial(const std::string& message)
 {
-  std::string log = print_get_time(get_time()) + "[OK]:" + message;
-  fprintf(stdout, "%s%s", green_html.c_str(), log.c_str()); 
+  green_html_on();
+  std::cout << print_get_time(get_time()) + "[OK]:" + message;
+  reset_colors;
 }
 
-void
-nesca_prints::nlog_error(const std::string& message)
+void nesca_prints::nlog_error(const std::string& message)
 {
-  const std::string log = print_get_time(get_time()) + "[ERROR]:" + message;
-  fprintf(stdout, "%s%s", red_html.c_str(), log.c_str()); 
+  red_html_on();
+  std::cout << print_get_time(get_time()) + "[ERROR]:" + message;
+  reset_colors;
 }
 
-void
-nesca_prints::nlog_custom(const std::string& auth, std::string message, int color)
+void nesca_prints::nlog_custom(const std::string& auth, std::string message, int color)
 {
-  const std::string log = print_get_time(get_time()) + "[" + auth + "]:" + message;
+  switch (color)
+  {
+    case 0:
+      green_html_on();
+    case 1:
+      yellow_html_on();
+    case 2:
+      red_html_on();
+  }
 
-  if      (color == 0) {green_html_on();}
-  else if (color == 1) {yellow_html_on();}
-  else if (color == 2) {red_html_on();}
-
-  fwrite(log.c_str(), sizeof(char), strlen(log.c_str()), stdout);
+  std::cout << print_get_time(get_time()) + "[" + auth + "]:" + message;
+  reset_colors;
+}
+void nesca_prints::printcolorscheme(void)
+{
+   printf("-> " "%sauth" __RESET_COLOR "  %stitle" __RESET_COLOR "  %slink" __RESET_COLOR "  %sok" __RESET_COLOR "  %serror" __RESET_COLOR "  %sdebug\n",
+      gray_nesca.c_str(), golder_rod.c_str(), sea_green.c_str(), green_html.c_str(), red_html.c_str(), yellow_html.c_str());
 }

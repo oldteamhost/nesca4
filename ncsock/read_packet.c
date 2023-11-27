@@ -30,6 +30,8 @@ int read_packet(struct readfiler *rf, int recv_timeout_ms, u8 **buffer)
   time_t start_time, current_time;
 
   sock = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+  if (sock == -1)
+    return -1;
 
   struct timeval timeout;
   timeout.tv_sec = recv_timeout_ms / 1000;
