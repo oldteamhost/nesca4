@@ -12,3 +12,64 @@ PS: Перечислять все возможности тут я не буду
 
 For install, read file: INSTALL
 For patching read file: HACKING
+
+==========================================================================================
+A little guide on how to use nesca4:
+
+$ How to fast scan DNS, IP, IP range, CIDR, URLs?
+  sudo ./nesca4 google.com
+  sudo ./nesca4 64.233.164.101
+  sudo ./nesca4 90.55.109.0-90.55.109.255
+  sudo ./nesca4 90.55.109.0/24
+  sudo ./nesca4 https://yandex.ru
+
+$ How to scan multiple targets at once?
+    sudo ./nesca4 google.com,yandex.ru
+  NB: They should be separated by commas and no spaces.
+
+$ How to specify random IPs as a target
+  There is a -random-ip argument for that.
+    sudo ./nesca4 -random-ip 10000
+  NB: This is where I specified 10000 random IPs for the target.
+
+$ How to scan targets from a file?
+  ip.txt:
+    google.com
+    64.233.164.101
+    90.55.109.0/24
+
+  sudo ./nesca4 -import ip.txt
+
+$ How do you keep the results?
+You can use a nice html save for this, this is done via the -html or -l flag and the file path or name.
+  sudo ./nesca4 google.com,yandex.ru -html output.html
+
+$ How to scan specific ports (80,443,21)? - there's a -p argument for that:
+    sudo ./nesca4 google.com -p 80,443,21
+  NB: Are also indicated by a comma without a space
+
+$ How to change passwords for bruteforce?
+  All passwords are in the folder (passwd), it is most convenient to change them there.
+
+$ How to increase scanning speed?
+  To do this, you can use the -S argument, and specify a velocity strength, from 1 to 5 (standard 3).
+    sudo ./nesca4 google.com,yandex.ru -p 80,443,21 -S5
+  NB: You can use agument (-my-life-my-rulez) to enable maximum speed, but it will greatly affect accuracy.
+
+$ How else to speed things up?
+  You can sacrifice some data, and accuracy, to do so.
+  1. Disable DNS resolution, for this there is an argument -no-resolv
+  2. Disable ping scanning, I don't recommend it but you can via -no-ping
+
+$ How to show not only open ports?
+  There is an argument (-db) for this, which can show all other statuses.
+    sudo ./nesca4 google.com -p 3000 -db
+
+$ How to specify something in the package (payload)?
+  There's a -data-string argument for that.
+    sudo ./nesca4 google.com -data-string hello_google
+  NB: It is better to specify without spaces
+
+  You can also fill with random data via -data-len
+    sudo ./nesca4 google.com -data-len 1400
+  NB: Normally, data packets larger than 1400 characters don't make it.
