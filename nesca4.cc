@@ -1161,9 +1161,9 @@ help_menu(void)
   std::cout << "  -negatives <path>: Set custom path for negatives.\n";
   std::cout << "  -source-ip <ip>: Set custom source_ip.\n";
   std::cout << "  -source-port <port>: Set custom source_port.\n";
-  std::cout << "  -data-string <string>: Append a custom ASCII string to scan packets.\n";
+  std::cout << "  -data-string <string>: Append a custom ASCII string to packets.\n";
   std::cout << "  -data-len <num>: Append random data to sent packets.\n";
-  std::cout << "  -frag <mtu>: fragment packets for port scan.\n";
+  std::cout << "  -frag <mtu>: fragment all packets.\n";
   std::cout << "  -ttl <num>: Set custom ip_header_ttl.\n";
   np.golder_rod_on();
   std::cout << "PORT SCAN GROUPS:" << std::endl;
