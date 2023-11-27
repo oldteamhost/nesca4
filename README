@@ -8,13 +8,16 @@ VP   V8P Y88888P `8888Y'  `Y88P' YP   YP   by oldteam & lomaster.
 PS: Перечислять все возможности тут я не буду. Прочитать о том что умеет nesca4 и
 как это разрабатывалось читайте в resources/do_not_read.txt
 
+
+                                        Info
 ==========================================================================================
 
 For install, read file: INSTALL
 For patching read file: HACKING
 
+
+                        A little guide on how to use nesca4.
 ==========================================================================================
-A little guide on how to use nesca4:
 
 $ How to fast scan DNS, IP, IP range, CIDR, URLs?
   sudo ./nesca4 google.com
