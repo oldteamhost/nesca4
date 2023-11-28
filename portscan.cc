@@ -18,6 +18,7 @@
  * get_port_status - функция для получения статуса порта,
  * при сканированях SYN, NULL, XMAS, FIN, MAIMON, WINDOW, ACK.
 */
+
 int get_port_status(unsigned char* buffer, uint8_t scan_type)
 {
   const struct ip_header *iph = ext_iphdr(buffer);

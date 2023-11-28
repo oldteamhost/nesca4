@@ -10,7 +10,8 @@
 bool check_ansi_support(void)
 {
   const char* envValue = std::getenv("TERM");
-  if (envValue == nullptr) {return false;}
+  if (envValue == nullptr)
+    return false;
 
   return std::string(envValue).find("xterm") != std::string::npos;
 }
@@ -87,8 +88,12 @@ std::vector<int> parse_range(const std::string& range_string)
     }
     ++end;
   }
-  if (!found_dash) {return result;}
-  for (int i = start; i <= end; ++i) {result.push_back(i);}
+
+  if (!found_dash)
+    return result;
+
+  for (int i = start; i <= end; ++i)
+    result.push_back(i);
 
   return result;
 }
@@ -101,15 +106,17 @@ bool __check_root_perms()
 int write_temp(const std::string& data, const std::string& file_name)
 {
   const std::vector<std::string> temp = write_file(file_name);
-  for (auto& str : temp) {
-    if (str == data) {return -1;}
-  }
+  for (auto& str : temp)
+    if (str == data)
+      return -1;
+
   if (temp.size() > 2000){
     std::filesystem::path file_path(file_name);
     std::filesystem::remove(file_path);
   }
   const int write = write_line(file_name, data + "\n");
-  if (write != 0) {return -1;}
+  if (write != 0)
+    return -1;
 
   return 0;
 }

@@ -76,7 +76,7 @@ int main(int argc, char** argv)
 
   parse_args(argc, argv);
   pre_check();
-  checking_default_files();
+  importfile();
 
   /* set tcp flags */
   struct tcp_flags tf;
@@ -90,6 +90,11 @@ int main(int argc, char** argv)
     np.golder_rod_on();
     printf("-> syn: %d, ack: %d, rst: %d, fin: %d, psh: %d, urg: %d, cwr: %d, ece: %d\n",
             tf.syn, tf.ack, tf.rst, tf.fin, tf.psh, tf.urg, tf.cwr, tf.ece);
+    reset_colors;
+  }
+  if (argp.data_string.length() > 1400) {
+    np.golder_rod_on();
+    puts("-> NOTE: Usually packages that have a payload greater than 1400 are rejected.");
     reset_colors;
   }
 
@@ -141,7 +146,8 @@ int main(int argc, char** argv)
     resolv_hosts(temp_ips);
   }
   if (argp.random_ip) {
-    for (int i = 1; i <= argp.random_ip_count; i++) {
+    int i;
+    for (i = 1; i <= argp.random_ip_count; i++) {
       std::string random_temp = generate_ipv4();
       n.add_ip(random_temp);
     }
@@ -306,12 +312,13 @@ int main(int argc, char** argv)
   thread_pool pool(argp._threads);
 
   /*Сканирование по группам*/
-  int group_start = 0; int ip_count = 0; bool first = false;
+  int group_start = 0, ip_count = 0;
+  bool first = false;
 
   while (group_start < size) {
     auto start_time_scan = std::chrono::high_resolution_clock::now();
-    int group_end = (group_start + static_cast<int>(n.group_size)
-        < static_cast<int>(size)) ? group_start + static_cast<int>(n.group_size) : static_cast<int>(size);
+    int group_end = (group_start + static_cast<int>(n.group_size) <
+        static_cast<int>(size)) ? group_start + static_cast<int>(n.group_size) : static_cast<int>(size);
 
     n.create_group();
 
@@ -582,7 +589,7 @@ void process_port(const std::string& ip, std::vector<uint16_t> ports, int port_t
   int total_ports_to_process = ports.size();
   int port_count_on_this_ip = 0;
 
-  for (int port : ports) {
+  for (const auto& port : ports) {
     processing_tcp_scan_ports(ip, port, port_type);
 
     if (port_count_on_this_ip != total_ports_to_process - 1 && argp.json_save) {
@@ -600,9 +607,10 @@ void fix_time(double time)
 
 std::vector<std::string> resolv_hosts(std::vector<std::string> hosts)
 {
-  int temp;
   char ipbuf[1024];
   std::vector<std::string> result;
+  int temp;
+  char* clean;
 
   for (const auto& t : hosts) {
     temp = this_is(t.c_str());
@@ -621,7 +629,7 @@ std::vector<std::string> resolv_hosts(std::vector<std::string> hosts)
       }
     }
     if (temp == _URL_) {
-      char* clean = clean_url(t.c_str());
+      clean = clean_url(t.c_str());
       get_ip(clean, ipbuf, sizeof(ipbuf)); result.push_back(ipbuf);
       n.add_ip(ipbuf);
       n.set_dns(ipbuf, clean);
@@ -642,46 +650,23 @@ std::vector<std::string> resolv_hosts(std::vector<std::string> hosts)
   return result;
 }
 
-void check_files(const char* path, const char* path1)
+void importfile(void)
 {
-  if (!check_file(path)){
+  if (!argp.ip_scan_import)
+    return;
+
+  if (check_file(argp.path_ips)) {
     np.golder_rod_on();
-    std::cout << "-> FAILED Import file (" + std::string(path) + ") loaded " + std::to_string(get_count_lines(path)) + " entries\n";
+    std::cout << "-> Import file (" + std::string(argp.path_ips) + ") loaded " + std::to_string(get_count_lines(argp.path_ips)) + " entries\n";
     reset_colors;
   }
-  else if (!check_file(path1)){
-    np.golder_rod_on();
-    std::cout << "-> FAILED Import file (" + std::string(path1) + ") loaded " + std::to_string(get_count_lines(path1)) + " entries\n";
-    reset_colors;
-  }
-}
-
-void checking_default_files(void)
-{
-  /*Чек целей из файлов.*/
-  if (argp.ip_scan_import) {
-    if (check_file(argp.path_ips)) {
-      np.golder_rod_on();
-      std::cout << "-> Import file (" + std::string(argp.path_ips) + ") loaded " + std::to_string(get_count_lines(argp.path_ips)) + " entries\n";
-      reset_colors;
-    }
-    else {
-      np.golder_rod_on();
-      std::cout << "-> FAILED Import file (" + std::string(argp.path_ips) + ") loaded " + std::to_string(get_count_lines(argp.path_ips)) + " entries\n";
-      reset_colors;
-      exit(1);
-    }
-    std::vector<std::string> temp_ips = write_file(argp.path_ips);
-    resolv_hosts(temp_ips);
+  else {
+    np.nlog_error("Failed to import file, check path (" + std::string(argp.path_ips) + ")\n");
+    exit(1);
   }
 
-  /*Чек паролей и логин.*/
-  check_files(argp.path_ftp_login.c_str(),argp.path_ftp_pass.c_str());
-  check_files(argp.path_http_login.c_str(),argp.path_http_pass.c_str());
-  check_files(argp.path_rtsp_login.c_str(),argp.path_rtsp_pass.c_str());
-  check_files(argp.path_smtp_login.c_str(),argp.path_smtp_pass.c_str());
-  check_files(argp.path_hikvision_login.c_str(),argp.path_hikvision_pass.c_str());
-  check_files(argp.path_rvi_login.c_str(),argp.path_rvi_pass.c_str());
+  std::vector<std::string> temp_ips = write_file(argp.path_ips);
+  resolv_hosts(temp_ips);
 }
 
 void print_port_state(int status, int port, std::string service)
@@ -702,16 +687,19 @@ void print_port_state(int status, int port, std::string service)
 void ftp_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np)
 {
-  char version[256]; get_ftp_version(ip.c_str(), port, 1200, version, sizeof(version));
-  std::string ftp_version = version;
+  char version[256];
+  std::string ftpversion;
+  get_ftp_version(ip.c_str(), port, 1200, version, sizeof(version));
+  ftpversion = version;
 
   if (!argp.off_ftp_brute) {
-    np.yellow_html_on(); std::cout << "[>][FTP]:" + ip + " [BRUTEFORCE]\n";
+    np.yellow_html_on();
+    std::cout << "[>][FTP]:" + ip + ":" + std::to_string(port) + " [BRUTEFORCE]\n";
     reset_colors;
     brute_temp = threads_bruteforce(argp.ftp_logins, argp.ftp_passwords, "", ip, port, argp.brute_timeout_ms, FTP_BRUTEFORCE, argp.ftp_brute_log);
   }
 
-  result_print = np.main_nesca_out("BA", "ftp://" + brute_temp + result, 3, "D", "", ftp_version ,rtt_log, "", protocol);
+  result_print = np.main_nesca_out("BA", "ftp://" + brute_temp + result, 3, "D", "", ftpversion,rtt_log, "", protocol);
 
   std::cout << result_print << std::endl;
 }
@@ -724,7 +712,8 @@ void smtp_strategy::handle(const std::string& ip, const std::string& result, con
   std::string responce_220 = version;
 
   if (!argp.off_smtp_brute) {
-    np.yellow_html_on(); std::cout << "[>][SMTP]:" + ip + " [BRUTEFORCE]\n";
+    np.yellow_html_on();
+    std::cout << "[>][SMTP]:" + ip + ":" + std::to_string(port) + " [BRUTEFORCE]\n";
     reset_colors;
     brute_temp = threads_bruteforce(argp.smtp_logins, argp.smtp_passwords, "", ip, port, argp.brute_timeout_ms, SMTP_BRUTEFORCE, argp.smtp_brute_log);
   }
@@ -739,7 +728,8 @@ void hikvision_strategy::handle(const std::string& ip, const std::string& result
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np)
 {
   if (!argp.off_hikvision_brute){
-    np.yellow_html_on(); std::cout << "[>][HIKVISION]:" + ip + std::to_string(port) + " [BRUTEFORCE]\n";
+    np.yellow_html_on();
+    std::cout << "[>][HIKVISION]:" + ip + ":" + std::to_string(port) + " [BRUTEFORCE]\n";
     reset_colors;
     brute_temp = threads_brute_hikvision(ip, argp.hikvision_logins, argp.hikvision_passwords, argp.hikvision_brute_log, argp.brute_timeout_ms, argp.screenshots_save_path_cam);
   }
@@ -762,7 +752,8 @@ void rvi_strategy::handle(const std::string& ip, const std::string& result, cons
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np)
 {
   if (!argp.off_rvi_brute){
-    np.yellow_html_on(); std::cout << "[>][RVI]:" + ip + " [BRUTEFORCE]\n";
+    np.yellow_html_on();
+    std::cout << "[>][RVI(DVR)]:" + ip + ":" + std::to_string(port) + " [BRUTEFORCE]\n";
     reset_colors;
     brute_temp = threads_bruteforce(argp.rvi_logins, argp.rvi_passwords, "", ip, port, argp.brute_timeout_ms, RVI_BRUTEFORCE, argp.rvi_brute_log);
   }
@@ -783,7 +774,7 @@ void rtsp_strategy::handle(const std::string& ip, const std::string& result, con
                                           "/cam/realmonitor?channel=1&subtype=0","/live/main",
                                           "/av0_0", "/mpeg4/ch01/main/av_stream"};
     np.yellow_html_on();
-    std::cout << "[>][RTSP]:" + ip + " [BRUTEFORCE]\n";
+    std::cout << "[>][RTSP]:" + ip + ":" + std::to_string(port) + " [BRUTEFORCE]\n";
     reset_colors;
 
     for (auto& path : rtsp_paths) {
@@ -909,7 +900,8 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
 
   /*Брутфорс HTTP basic auth.*/
   if (!argp.off_http_brute && temp_check_http != "no" && !argp.no_get_path && brute != EOF) {
-    np.yellow_html_on(); std::cout << "[>][HTTP]:" + ip + " [BRUTEFORCE]\n";
+    np.yellow_html_on();
+    std::cout << "[>][HTTP]:" + ip + ":" + std::to_string(port) + " [BRUTEFORCE]\n";
     reset_colors;
 
     brute_temp = threads_bruteforce(argp.http_logins, argp.http_passwords, redirect, ip, port, argp.brute_timeout_ms, HTTP_BRUTEFORCE, argp.http_brute_log);
@@ -940,7 +932,7 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
 
   /*Получение /sitemap.xml*/
   if (argp.sitemap_xml){
-    np.gray_nesca_on(); std::cout << "[^][STEMAP]:"; 
+    np.gray_nesca_on(); std::cout << "[^][STEMAP]:";
     reset_colors;
     int sitemap = get_sitemap_xml(ip.c_str(), port, 1100);
     if (sitemap == -1) {
@@ -1087,10 +1079,8 @@ processing_tcp_scan_ports(std::string ip, int port, int result)
     print_port_state(PORT_NO_FILTER, port, sn.probe_service(port));
   }
 }
-// You live?
 
-void
-help_menu(void)
+void help_menu(void)
 {
   puts("d8b   db d88888b .d8888.  .o88b.  .d8b.         j88D ");
   puts("888o  88 88'     88'  YP d8P  Y8 d8' `8b       j8~88 "); 
@@ -1271,7 +1261,6 @@ pre_check(void)
   }
 
   char formatted_date[11];
-
   np.golder_rod_on();
   get_current_date(formatted_date, sizeof(formatted_date));
   std::cout << "-> Running NESCA [v" + std::string(_VERSION) + "] # " +
@@ -1285,7 +1274,7 @@ pre_check(void)
     help_menu();
 
   if (!check_root_perms()) {
-    np.nlog_error("RAW socket only sudo run!\n");
+    np.nlog_error("UNIX requires root permissions, to use raw sockets (sudo).\n");
     exit(1);
   }
 
