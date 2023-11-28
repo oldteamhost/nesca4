@@ -36,6 +36,7 @@
 #include "include/portscan.h"
 #include "ncsock/include/icmp.h"
 #include "ncsock/include/readpkt.h"
+#include "ncsock/include/strbase.h"
 #include "ncsock/include/tcp.h"
 #include "ncsock/include/utils.h"
 #include <arpa/inet.h>
@@ -427,48 +428,51 @@ int nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_m
   int source_port, res, sock, recvtime = 600;
   u8* buffer;
   u16 ttl;
+  double rtt_ping;
   u8 portstat = PORT_ERROR;
   const char* data;
   bool df = false;
 
+  if (argp.frag_mtu)
+    df = true;
+
   saddr = inet_addr(argp.source_ip);
   daddr = inet_addr(ip.c_str());
+  seq = generate_seq();
 
-  if (!argp.custom_source_port)
-    source_port = generate_rare_port();
-  else
+  if (argp.custom_source_port)
     source_port = argp._custom_source_port;
+  else
+    source_port = generate_rare_port();
 
   if (argp.custom_recv_timeout_ms)
     recvtime = argp.recv_timeout_ms;
   else {
-    double rtt_ping = n.get_rtt(ip);
-    if (rtt_ping != EOF)
+    rtt_ping = n.get_rtt(ip);
+    if (rtt_ping != -1)
       recvtime = calculate_timeout(rtt_ping, argp.speed_type);
   }
 
-  seq = generate_seq();
+  if (!argp.data_string.empty()) {
+    data = argp.data_string.c_str();
+    datalen = strlen(data);
+  }
 
   for (const auto& port : ports) {
     sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
     if (sock == -1)
       continue;
 
-    if (!argp.custom_ttl)
-      ttl = random_num(29, 255);
-    else
+    if (argp.custom_ttl)
       ttl = argp._custom_ttl;
-
-    if (!argp.data_string.empty()) {
-      data = argp.data_string.c_str();
-      datalen = strlen(data);
-    }
-    if (argp.frag_mtu)
-      df = true;
+    else
+      ttl = random_num(29, 255);
 
     res = send_tcp_packet(sock, saddr, daddr, ttl, df, 0, 0, source_port, port, seq, 0, 0, argp.tcpflags, 1024,
         0, 0, 0, data, datalen, argp.frag_mtu);
+    ls.lock();
     close(sock);
+    ls.unlock();
 
     if (res == -1) {
       ls.lock();
@@ -521,9 +525,9 @@ int nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_m
 /* Главная функция для пинг сканирования */
 bool nesca_ping(const char* ip)
 {
-  double rtt = -1;
+  double rtt;
   u8 ttl = random_num(29, 255);
-  u16 source_port = 3443;
+  u16 source_port = generate_rare_port();
   u32 datalen = 0;
   const char* data = "";
 
@@ -532,44 +536,37 @@ bool nesca_ping(const char* ip)
     datalen = strlen(argp.data_string.c_str());
   }
 
-  if (!argp.custom_source_port)
-    source_port = generate_rare_port();
-  else
+  if (argp.custom_source_port)
     source_port = argp._custom_source_port;
 
   if (argp.custom_ttl)
     ttl = argp._custom_ttl;
 
   if (argp.echo_ping) {
-    rtt = -1;
-    rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, 8, 0, 0, ttl, data, datalen, argp.frag_mtu);
-    if (rtt != EOF)
+    rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, ICMP_ECHO, 0, 1, ttl, data, datalen, argp.frag_mtu);
+    if (rtt != -1)
       goto ok;
   }
   if (argp.syn_ping) {
-    rtt = -1;
-    rtt = tcp_ping(SYN_PACKET, ip, argp.source_ip, argp.syn_dest_port, source_port, argp.ping_timeout,
-        ttl, data, datalen, argp.frag_mtu);
-    if (rtt != EOF)
+    rtt = tcp_ping(SYN_PACKET, ip, argp.source_ip, argp.syn_dest_port, source_port, argp.ping_timeout, ttl, data,
+        datalen, argp.frag_mtu);
+    if (rtt != -1)
       goto ok;
   }
   if (argp.ack_ping) {
-    rtt = -1;
-    rtt = tcp_ping(ACK_PACKET, ip, argp.source_ip, argp.syn_dest_port, source_port, argp.ping_timeout,
-        ttl, data, datalen, argp.frag_mtu);
-    if (rtt != EOF)
-      goto ok;
-  }
-  if (argp.timestamp_ping) {
-    rtt = -1;
-    rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, 15, 0, 0, ttl, data, datalen, argp.frag_mtu);
-    if (rtt != EOF)
+    rtt = tcp_ping(ACK_PACKET, ip, argp.source_ip, argp.syn_dest_port, source_port, argp.ping_timeout, ttl, data,
+        datalen, argp.frag_mtu);
+    if (rtt != -1)
       goto ok;
   }
   if (argp.info_ping) {
-    rtt = -1;
-    rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, 13, 0, 0, ttl, data, datalen, argp.frag_mtu);
-    if (rtt != EOF)
+    rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, ICMP_INFO_REQUEST, 0, 1, ttl, data, datalen, argp.frag_mtu);
+    if (rtt != -1)
+      goto ok;
+  }
+  if (argp.timestamp_ping) {
+    rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, ICMP_TIMESTAMP, 0, 1, ttl, data, datalen, argp.frag_mtu);
+    if (rtt != -1)
       goto ok;
   }
 
