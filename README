@@ -76,3 +76,90 @@ $ How to specify something in the package (payload)?
   You can also fill with random data via -data-len
     sudo ./nesca4 google.com -data-len 1400
   NB: Normally, data packets larger than 1400 characters don't make it.
+
+
+                                  Options Summary
+==========================================================================================
+d8b   db d88888b .d8888.  .o88b.  .d8b.         j88D 
+888o  88 88'     88'  YP d8P  Y8 d8' `8b       j8~88 
+88V8o 88 88ooooo `8bo.   8P      88ooo88      j8' 88 
+88 V8o88 88~~~~~   `Y8b. 8b      88~~~88      V88888D
+88  V888 88.     db   8D Y8b  d8 88   88          88 
+VP   V8P Y88888P `8888Y'  `Y88P' YP   YP          VP 
+
+[VERSION]:20231117
+[USAGE]:./nesca4 [target(s) 1,2,3] [flags]
+
+TARGET SPECIFICATION:
+  -import <inputfilename>: Set target(s) from file.
+  -random-ip <num hosts>: Choose random target(s)
+  -exclude <host1[,host2][,host3],...>: Exclude host(s).
+  -excludefile <exclude_file>: Exclude list from file
+PORT SCAN OPTIONS:
+  -fin, -xmas, -null: Use one of these scanning methods.
+  -ack, -windows -maimon: Use ack or window or maimon scan method.
+  -scanflags <flags>: Customize TCP scan flag (ACKSYN).
+  -p <port ranges>: Only scan specified port(s) 
+    Ex: -p 80; -p 22,80; -p 1-65535;
+  -delay, -d <ms>: Set delay for scan.
+  -scan-timeout <ms>: Edit timeout for getting packet on port.
+PING SCAN OPTIONS:
+  -TP <num>: Set max thread(s) for ping.
+  -ping-timeout <ms>: Set recv timeout for ping.
+  -PS, -PA <port>: On TCP ping SYN|ACK and edit dest port.
+  -PE, -PI, -PM: On ICMP ping ECHO|INFO|TIMESTAMP
+  -max-ping: Using all ping methods ICMP and TCP.
+  -no-ping: Skip ping scan.
+HOST RESOLUTION:
+  -TD <num>: Set max thread(s) for dns-resolution.
+  -resol-port <port>: Edit source port for dns-resolution.
+  -resol-delay <ms>: Set delay for dns-resolution.
+  -no-resolv: Skip dns-resolution.
+BRUTEFORCE OPTIONS:
+  -brute-login <ss,path>: Set path for <ss> logins.
+  -brute-pass <ss,path>: Set path for <ss> passwords.
+  -brute-timeout <ms>: Edit brute timout.
+  -no-brute <ss,2>: Disable <ss> bruteforce.
+  -brute-verbose <ss,2>: Display bruteforce <ss> all info.
+  -brute-log <ss,2>: Display bruteforce <ss> info.
+OTHER OPTIONS:
+  -negatives <path>: Set custom path for negatives.
+  -source-ip <ip>: Set custom source_ip.
+  -source-port <port>: Set custom source_port.
+  -data-string <string>: Append a custom ASCII string to packets.
+  -data-len <num>: Append random data to sent packets.
+  -frag <mtu>: fragment all packets.
+  -ttl <num>: Set custom ip_header_ttl.
+PORT SCAN GROUPS:
+  -max-group <num>: Edit max size group & threads for port scan.
+  -min-group <num>: Edit min size group & threads for port scan.
+  -rate-group <num>: Edit the value by which the group is incremented.
+DELISEARCH SCAN:
+  -find <target1[,target2][,target3],...>: Search for keywords on the host.
+SAVE SCREENSHOTS:
+  -screenshot, -s <folder>: Save screenshot on pages.
+  -ss-timeout <ms>: Set timeout on save screenshots.
+SPEED OPTIONS:
+  -speed, -S <1-5>: Set timing template (higher is faster).
+  -my-life-my-rulez: Using very MAX speed settings.
+SAVE OUTPUT:
+  -html, -l <path file>: Classic nesca save, write on html page.
+  -json <path file>: Save on json file.
+VERBOSE OUTPUT:
+  -db, -debug: On debug mode, save and display not even working hosts.
+  -er, -error: On display errors.
+PRINT OUTPUT:
+  -no-proc: Skip main processing.
+  -no-get-path: Disable getting paths.
+  -log-set <num>: Change the value of ips after which % will be output.
+  -http-response: Display HTTP response.
+  -sitemap: Get /sitemap.xml.
+  -robots: Get /robots.txt.
+COLOR:
+  -no-color: Disable all colors in nesca4.
+  -import-color <path>: Import color scheme from file.
+  -print-color <path>: Check color scheme.
+EXAMPLES:
+  ./nesca4 google.com -p 80,443
+  ./nesca4 72.230.205.0/24 -p 80,8080,81 -S5
+  ./nesca4 https://www.youtube.com
