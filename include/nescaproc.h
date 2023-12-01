@@ -5,16 +5,18 @@
  *   Сделано от души 2023.
 */
 
-/*Этот интерфейс создан для установки характеристики для HTTP портов.
- * Устанавливает характеристику по перенаправлению, или по HTTP заголовкам.*/
-
-#ifndef SCANNER_H
-#define SCANNER_H
+#ifndef NESCAPROC_H
+#define NESCAPROC_H
 
 #include <iostream>
 #include <string>
 #include <vector>
 #include <algorithm>
+
+#include "nescalog.h"
+#include "nescadata.h"
+#include "nescautils.h"
+#include "../config/nescaopts.h"
 
 #define CAMERA_AXIS                    "AXIS CAMERA"
 #define WEB_CAMERA_HIKVISION           "HIKVISION CAMERA"
@@ -77,42 +79,66 @@
 #define HTTP_BASIC_AUTH_BRUTE  999
 
 /*Получение характеристики.*/
-class checking_finds {
-public:
-
   /*Заголовок HTTP*/
-  std::vector<std::string> basic_auth_header = {"401 authorization", "401 unauthorized", "www-authenticate",
-                                  "401 unauthorized access denied", "401 unauthorised", "www-authenticate",
-                                  "digest realm", "basic realm", "401 Unauthorized"};
+std::vector<std::string>
+find_sentences_with_word(const std::string& word, const std::string& input_text);
 
-  /*Перенаплавления.*/
-  std::vector<std::string> axis_2400_path = {"/view/viewer_index.shtml", "/view/viewer_index.shtml?", "/check_user.cgi",
-              "/view/index2.shtml", "/index.shtml","/view/indexFrame.shtml","/indexFrame.html"};
+bool contains_word(const std::string& word, const std::string& sentence);
+std::string set_target_at_path(const std::string& path);
+std::string set_target_at_http_header(const std::string& buffer);
+std::string set_target_at_title(const std::string& buffer);
+int than_bruteforce(const std::string type);
+void print_port_state(int status, int port, std::string service, nesca_prints& np);
 
-  std::vector<std::string> network_camera_path ={"/ViewerFrame?Mode=", "/CgiStart?page=", "/admin/index.shtml?"};
+/*Для обработки портов класс на паттерне Strategy Pattern.*/
+class ports_strategy {
+public:
+  virtual ~ports_strategy() {}
+  virtual void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
+  const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn) = 0;
 
-  std::vector<std::string> axis_other_path = {"/view/viewer_index.shtml", "/view/viewer_index.shtml", "/check_user.cgi",
-                                        "/axis-cgi/mjpg/video.cgi", "/jpg/image.jpg?size=3", "/mjpg/video.mjpg",
-                                        "/view/viewer_index.shtml", "/view/viewer_index.shtml", "/check_user.cgi",
-                                        "/cgi-bin/guest/Video.cgi?", "/ISAPI/Security/userCheck", "/SnapshotJPEG",
-                                        "/axis-cgi/com/ptz.cgi?", "/mjpg/video.mjpg"};
-  bool /*Поиск слова в строчке.*/
-  contains_word(const std::string& word, const std::string& sentence);
-
-  std::vector<std::string>
-  find_sentences_with_word(const std::string& word, const std::string& input_text);
-
-  std::string /*Установка характеристики по перенаправлению.*/
-  set_target_at_path(const std::string& path);
-
-  std::string /*Установка характеристики по HTTP заголовку.*/
-  set_target_at_http_header(const std::string& buffer);
-
-  std::string /*Установка характеристики по HTTP названию*/
-  set_target_at_title(const std::string& buffer);
-
-  int /*Узнать метод брутфорса для определённого типа.*/
-  than_bruteforce(const std::string type);
+  std::string brute_temp, http_title, type_target, content_base64,
+    screenshot_base64_cam, screenshot_base64, result_print;
 };
+
+class ftp_strategy : public ports_strategy {
+public:
+  void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
+    const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn) override;};
+
+class hikvision_strategy : public ports_strategy {
+public:
+  void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
+    const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn) override;};
+
+class rvi_strategy : public ports_strategy {
+public:
+  void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
+    const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn) override;};
+
+class https_strategy : public ports_strategy {
+public:
+  void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
+    const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn) override;};
+
+class rtsp_strategy : public ports_strategy {
+public:
+  void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
+    const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn) override;};
+
+class smtp_strategy : public ports_strategy {
+public:
+  void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
+    const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn) override;};
+
+class http_strategy : public ports_strategy {
+public:
+  void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
+    const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn) override;};
+
+class else_strategy : public ports_strategy {
+public:
+  void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
+    const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn) override;};
 
 #endif

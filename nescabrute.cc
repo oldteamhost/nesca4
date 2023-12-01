@@ -5,10 +5,8 @@
  *   Сделано от души 2023.
 */
 
-#include "include/bruteforce.h"
-#include "include/other.h"
-#include "lib/HCNetSDK.h"
-#include "modules/include/hikvision.h"
+#include "include/nescabrute.h"
+#include "include/nescautils.h"
 #include "ncsock/include/bruteforce.h"
 #include "ncsock/include/socket.h"
 #include "ncsock/include/ftp.h"

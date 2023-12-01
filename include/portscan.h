@@ -32,8 +32,7 @@
 #include "../ncsock/include/ip.h"
 #include "../ncsock/include/tcp.h"
 #include "../ncsock/include/socket.h"
-#include "../include/other.h"
-#include "services.h"
+#include "../include/nescautils.h"
 
 #define PORT_OPEN             0
 #define PORT_CLOSED           1

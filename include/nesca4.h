@@ -55,18 +55,15 @@
 #include <unordered_map>
 #include <vector>
 
-#include "bruteforce.h"
-#include "files.h"
-#include "other.h"
-#include "scanner.h"
-#include "target.h"
+#include "nescabrute.h"
+#include "nescaproc.h"
+#include "nescadata.h"
 #include "html.h"
 #include "nescalog.h"
 #include "portscan.h"
-#include "services.h"
 #include "nescathread.h"
 
-#include "../modules/include/negatives.h"
+#include "../include/nescautils.h"
 
 #include "../config/nescaopts.h"
 #include "../ncbase/include/getopt.h"
@@ -90,7 +87,7 @@
 /*Угадайте?*/
 #define _VERSION "20231117"
 
-void help_menu(void);
+void usage(void);
 void version_menu(void);
 void init_bruteforce(void);
 void processing_tcp_scan_ports(std::string ip, int port, int result);
@@ -108,63 +105,6 @@ void get_dns_thread(std::string ip);
 int count_map_vector(const std::unordered_map<std::string, std::vector<int>>& map, const std::string& key);
 int traceroute(std::string ip, int jumps);
 std::vector<std::string> resolv_hosts(std::vector<std::string> hosts);
-
-/*Для обработки портов класс на паттерне Strategy Pattern.*/
-class ports_strategy {
-public:
-  virtual ~ports_strategy() {}
-  virtual void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
-  const std::string& protocol, int port, arguments_program& argp, nesca_prints& np) = 0;
-
-  std::string brute_temp;
-  std::string http_title;
-  std::string type_target;
-  std::string content_base64;
-  std::string screenshot_base64_cam;
-  std::string screenshot_base64;
-  std::string result_print;
-};
-
-/*Подклассы с обработкой.*/
-class ftp_strategy : public ports_strategy {
-public:
-  void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
-    const std::string& protocol, int port, arguments_program& argp, nesca_prints& np) override;};
-
-class hikvision_strategy : public ports_strategy {
-public:
-  void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
-    const std::string& protocol, int port, arguments_program& argp, nesca_prints& np) override;};
-
-class rvi_strategy : public ports_strategy {
-public:
-  void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
-    const std::string& protocol, int port, arguments_program& argp, nesca_prints& np) override;};
-
-class https_strategy : public ports_strategy {
-public:
-  void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
-    const std::string& protocol, int port, arguments_program& argp, nesca_prints& np) override;};
-
-class rtsp_strategy : public ports_strategy {
-public:
-  void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
-    const std::string& protocol, int port, arguments_program& argp, nesca_prints& np) override;};
-
-class smtp_strategy : public ports_strategy {
-public:
-  void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
-    const std::string& protocol, int port, arguments_program& argp, nesca_prints& np) override;};
-
-class http_strategy : public ports_strategy {
-public:
-  void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
-    const std::string& protocol, int port, arguments_program& argp, nesca_prints& np) override;};
-
-class else_strategy : public ports_strategy {
-public:
-  void handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
-    const std::string& protocol, int port, arguments_program& argp, nesca_prints& np) override;};
 
 const struct
 option long_options[] = {

@@ -19,10 +19,8 @@
 #include <string>
 #include <thread>
 #include <cstring>
-#include "../include/other.h"
 #include "../include/nescalog.h"
 #include "nescathread.h"
-#include "../modules/include/hikvision.h"
 #include "../config/compile.h"
 #include "../ncsock/include/bruteforce.h"
 

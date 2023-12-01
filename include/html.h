@@ -9,8 +9,7 @@
 #define HTML_H
 
 #include <iostream>
-#include "../include/other.h"
-#include "../include/files.h"
+#include "../include/nescautils.h"
 
 class html_output {
 private:

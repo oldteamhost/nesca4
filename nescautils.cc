@@ -5,7 +5,88 @@
  *   Сделано от души 2023.
 */
 
-#include "include/other.h"
+#include "include/nescautils.h"
+
+bool hikvision_screenshot(const std::string& ip, const long user_id, const NET_DVR_DEVICEINFO_V40 device, const std::string& path)
+{
+  for (int channel = 0; channel < device.struDeviceV30.byChanNum; channel++) {
+    std::string filename = path + ip + "_" + std::to_string(channel) + ".jpg";
+    char screenshotFilenameBuffer[256];
+    strcpy(screenshotFilenameBuffer, filename.c_str());
+
+    NET_DVR_JPEGPARA params = {0};
+    params.wPicQuality = 2;
+    params.wPicSize = 0;
+
+    if (NET_DVR_CaptureJPEGPicture(user_id, channel, &params, screenshotFilenameBuffer))
+      return true;
+  }
+
+  return false;
+}
+
+std::map<int,std::string> services_nesca::parse_services(const std::string& filename)
+{
+  std::map<int, std::string> result;
+  std::ifstream file(filename);
+
+  if (!file)
+    return result;
+
+  std::string line;
+
+  while (std::getline(file, line)) {
+    std::istringstream lineIss(line);
+    int key;
+    std::string value;
+    if (lineIss >> value >> key)
+      result[key] = value;
+  }
+
+  file.close();
+  return result;
+}
+
+std::string services_nesca::probe_service(int port)
+{
+  const std::string service = data[port];
+  if (service.empty())
+    return "N/A";
+
+  return data[port];
+}
+
+void services_nesca::init_services(void)
+{
+  data = parse_services("./resources/nesca-services");
+}
+
+std::unordered_map<std::string, std::string>
+get_negatives(const std::string& file_path)
+{
+  std::unordered_map<std::string, std::string> res;
+  std::string line, value, type;
+
+  std::ifstream file(file_path);
+  while (std::getline(file, line)) {
+    if (line.empty() || line.substr(0, 2) == "##")
+      continue;
+
+    std::stringstream ss(line);
+
+    if (std::getline(ss, value, '|') && std::getline(ss, type)) {
+      value = value.substr(value.find_first_not_of(' '));
+      value = value.substr(0, value.find_last_not_of(' ') + 1);
+
+      type = type.substr(type.find_first_not_of(' '));
+      type = type.substr(0, type.find_last_not_of(' ') + 1);
+      res[value] = type;
+    }
+  }
+
+  file.close();
+  return res;
+}
 
 bool check_ansi_support(void)
 {
@@ -140,4 +221,82 @@ std::string to_lower_case(std::string str)
 size_t find_char(const std::string& str, char ch)
 {
   return str.find(ch);
+}
+
+int get_count_lines(const char* path)
+{
+  int len = 0;
+
+  std::ifstream file(path);
+  std::string line;
+  while (std::getline(file, line))
+    ++len;
+
+  return len;
+}
+
+bool check_file(const char* path)
+{
+  std::ifstream file(path);
+  return file.good();
+}
+
+std::vector<std::string> write_file(const std::string& filename)
+{
+  std::vector<std::string> lines;
+  std::string line;
+
+  std::ifstream file(filename);
+  if (file.fail())
+    return {"-1"};
+
+  while (std::getline(file, line))
+    lines.push_back(line);
+
+  return lines;
+}
+
+int write_line(std::string path, std::string line)
+{
+  std::ofstream outfile;
+
+  outfile.open(path, std::ios_base::app);
+  if (!outfile.is_open())
+    return -1;
+
+  outfile << line;
+  outfile.close();
+
+  return 0;
+}
+
+int delete_line_from_file(const std::string& filename, const std::string& line_to_delete)
+{
+  std::vector<std::string> lines;
+  std::string line;
+
+  std::ifstream input_file(filename);
+  if (!input_file)
+    return -1;
+
+  while (std::getline(input_file, line))
+    lines.push_back(line);
+
+  input_file.close();
+
+  auto it = std::find(lines.begin(), lines.end(), line_to_delete);
+  if (it == lines.end())
+    return -1;
+
+  lines.erase(it);
+
+  std::ofstream output_file(filename);
+  if (!output_file)
+    return -1;
+
+  for (const auto& updated_line : lines)
+    output_file << updated_line << std::endl;
+
+  output_file.close();
+  return 0;
 }

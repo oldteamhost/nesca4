@@ -5,6 +5,9 @@
  *   Сделано от души 2023.
 */
 
+#ifndef NESCAOPTS_HEADER
+#define NESCAOPTS_HEADER
+
 #include <cstdint>
 #include <iostream>
 #include <vector>
@@ -73,6 +76,7 @@ public:
   bool robots_txt;
   bool sitemap_xml;
   std::string screenshots_save_path_cam = "";
+  std::unordered_map<std::string, std::string> nesca_negatives;
   bool xmas_scan;
   bool ack_scan;
   bool window_scan;
@@ -212,3 +216,5 @@ public:
   bool import_color_scheme;
   const char* path_color_scheme;
 };
+
+#endif

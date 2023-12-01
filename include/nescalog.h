@@ -16,8 +16,7 @@
 #include <map>
 
 #include "../include/html.h"
-#include "../include/other.h"
-#include "../include/files.h"
+#include "../include/nescautils.h"
 
 class nesca_prints {
   private:
