@@ -100,6 +100,7 @@ PORT SCAN OPTIONS:
     Ex: -p 80; -p 22,80; -p 1-65535;
   -delay, -d <ms>: Set delay for scan.
   -scan-timeout <ms>: Edit timeout for getting packet on port.
+  -no-scan: Disable port scan(skip).
 PING SCAN OPTIONS:
   -TP <num>: Set max thread(s) for ping.
   -ping-timeout <ms>: Set recv timeout for ping.
