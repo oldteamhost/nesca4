@@ -6,8 +6,8 @@ project(nesca4)
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
     "CMakeCache.txt;CMakeFiles;Makefile;cmake_install.cmake;resources/data")
 
-include_directories(lib)
-link_directories(lib/platform/linux)
+include_directories(library)
+link_directories(library/platform/linux)
 
 file(GLOB SRCS src/*.cc)
 file(GLOB MODULE_SRCS modules/*.cc)
