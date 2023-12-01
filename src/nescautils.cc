@@ -5,7 +5,7 @@
  *   Сделано от души 2023.
 */
 
-#include "include/nescautils.h"
+#include "../include/nescautils.h"
 
 bool hikvision_screenshot(const std::string& ip, const long user_id, const NET_DVR_DEVICEINFO_V40 device, const std::string& path)
 {

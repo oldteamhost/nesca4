@@ -5,13 +5,13 @@
  *   Сделано от души 2023.
 */
 
-#include "include/nescabrute.h"
-#include "include/nescautils.h"
-#include "ncsock/include/bruteforce.h"
-#include "ncsock/include/socket.h"
-#include "ncsock/include/ftp.h"
-#include "ncsock/include/base.h"
-#include "ncsock/include/strbase.h"
+#include "../include/nescabrute.h"
+#include "../include/nescautils.h"
+#include "../ncsock/include/bruteforce.h"
+#include "../ncsock/include/socket.h"
+#include "../ncsock/include/ftp.h"
+#include "../ncsock/include/base.h"
+#include "../ncsock/include/strbase.h"
 #include <mutex>
 #include <string>
 

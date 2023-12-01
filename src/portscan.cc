@@ -5,8 +5,8 @@
  *   Сделано от души 2023.
 */
 
-#include "include/portscan.h"
-#include "ncsock/include/readpkt.h"
+#include "../include/portscan.h"
+#include "../ncsock/include/readpkt.h"
 
 /*
  * Обработка пакета, писалась используя эти статьи:

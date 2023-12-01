@@ -5,7 +5,7 @@
  *   Сделано от души 2023.
 */
 
-#include "include/nescathread.h"
+#include "../include/nescathread.h"
 
 thread_pool::thread_pool(size_t numThreads) : stop(false)
 {

@@ -5,15 +5,15 @@
  *   Сделано от души 2023.
 */
 
-#include "include/nescaproc.h"
-#include "include/nescabrute.h"
-#include "include/nescalog.h"
-#include "ncsock/include/ftp.h"
-#include "ncsock/include/http.h"
-#include "ncsock/include/smtp.h"
-#include "ncbase/include/base64.h"
-#include "ncbase/include/binary.h"
-#include "include/portscan.h"
+#include "../include/nescaproc.h"
+#include "../include/nescabrute.h"
+#include "../include/nescalog.h"
+#include "../ncsock/include/ftp.h"
+#include "../ncsock/include/http.h"
+#include "../ncsock/include/smtp.h"
+#include "../ncbase/include/base64.h"
+#include "../ncbase/include/binary.h"
+#include "../include/portscan.h"
 
 std::vector<std::string> rtsp_paths = {"/Streaming/Channels/101", "/h264/ch01/main/av_stream",
                                       "/cam/realmonitor?channel=1&subtype=0","/live/main",

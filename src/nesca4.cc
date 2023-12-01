@@ -31,14 +31,14 @@
  *
 */
 
-#include "include/nesca4.h"
-#include "include/nescautils.h"
-#include "include/portscan.h"
-#include "ncsock/include/icmp.h"
-#include "ncsock/include/readpkt.h"
-#include "ncsock/include/strbase.h"
-#include "ncsock/include/tcp.h"
-#include "ncsock/include/utils.h"
+#include "../include/nesca4.h"
+#include "../include/nescautils.h"
+#include "../include/portscan.h"
+#include "../ncsock/include/icmp.h"
+#include "../ncsock/include/readpkt.h"
+#include "../ncsock/include/strbase.h"
+#include "../ncsock/include/tcp.h"
+#include "../ncsock/include/utils.h"
 #include <arpa/inet.h>
 #include <bits/getopt_core.h>
 #include <cstdio>

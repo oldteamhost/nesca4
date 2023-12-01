@@ -5,10 +5,10 @@
  *   Сделано от души 2023.
 */
 
-#include "include/nescalog.h"
-#include "ncbase/include/json.h"
-#include "ncsock/include/strbase.h"
-#include "ncsock/include/base.h"
+#include "../include/nescalog.h"
+#include "../ncbase/include/json.h"
+#include "../ncsock/include/strbase.h"
+#include "../ncsock/include/base.h"
 #include <cstdio>
 #include <cstring>
 
