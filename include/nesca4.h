@@ -58,7 +58,6 @@
 #include "nescabrute.h"
 #include "nescaproc.h"
 #include "nescadata.h"
-#include "html.h"
 #include "nescalog.h"
 #include "portscan.h"
 #include "nescathread.h"
