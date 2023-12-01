@@ -79,6 +79,7 @@ public:
   std::unordered_map<std::string, std::string> nesca_negatives;
   bool xmas_scan;
   bool ack_scan;
+  bool no_scan;
   bool window_scan;
 
   uint8_t tcpflags;

@@ -88,6 +88,7 @@
 
 void usage(void);
 void version_menu(void);
+void nescaend(int success, double res);
 void init_bruteforce(void);
 void processing_tcp_scan_ports(std::string ip, int port, int result);
 std::string format_percentage(double procents);
@@ -107,7 +108,8 @@ std::vector<std::string> resolv_hosts(std::vector<std::string> hosts);
 
 const struct
 option long_options[] = {
-  /*22, 46*/
+  /*22*/
+  {"no-scan", no_argument, 0, 46},
   {"print-color", required_argument, 0, 78},
   {"data-len", required_argument, 0, 79},
   {"scanflags", required_argument, 0, 21},

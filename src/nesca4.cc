@@ -269,6 +269,15 @@ int main(int argc, char** argv)
   auto duration_dns = std::chrono::duration_cast<std::chrono::microseconds>(end_time_dns - start_time_dns);
   argp.dns_duration = duration_dns.count() / 1000000.0;
 
+  if (argp.no_scan) {
+    for (const auto& ip : temp_vector)
+      std::cout << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", n.get_new_dns(ip), std::to_string(n.get_rtt(ip))+"ms","") << std::endl;
+
+    putchar('\n');
+    nescaend(count_success_ips, argp.ping_duration+argp.dns_duration);
+    return 0;
+  }
+
   n.group_size = GROUP_MIN_SIZE_DEFAULT;
 
   /*Установка настроек группы и потоков.*/
@@ -418,12 +427,16 @@ int main(int argc, char** argv)
   }
 
   double elapsed_result = argp.ping_duration+argp.dns_duration+argp.scan_duration+argp.proc_duration;
-
-  np.golder_rod_on();
-  std::cout << "-> NESCA finished " << count_success_ips << " up IPs (success) in " << std::fixed << std::setprecision(2) << elapsed_result << " seconds\n";
-  reset_colors;
+  nescaend(count_success_ips, elapsed_result);
 
   return 0;
+}
+
+void nescaend(int success, double res)
+{
+  np.golder_rod_on();
+  std::cout << "-> NESCA finished " << success << " up IPs (success) in " << std::fixed << std::setprecision(2) << res << " seconds\n";
+  reset_colors;
 }
 
 /* Главная функция для сканировния портов */
@@ -796,6 +809,7 @@ void usage(void)
   std::cout << "  -p <port ranges>: Only scan specified port(s) \n    Ex: -p 80; -p 22,80; -p 1-65535;\n";
   std::cout << "  -delay, -d <ms>: Set delay for scan.\n";
   std::cout << "  -scan-timeout <ms>: Edit timeout for getting packet on port.\n";
+  std::cout << "  -no-scan: Disable port scan(skip).\n";
   np.golder_rod_on();
   std::cout << "PING SCAN OPTIONS:" << std::endl;
   reset_colors;
@@ -1364,6 +1378,9 @@ void parse_args(int argc, char** argv)
         break;
       case 51:
         argp.get_response = true;
+        break;
+      case 46:
+        argp.no_scan = true;
         break;
       case 67:
         argp.robots_txt = true;
