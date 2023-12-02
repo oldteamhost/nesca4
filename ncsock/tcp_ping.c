@@ -28,9 +28,10 @@ double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
   int sock = -1, send = -1, read = -1;
   u32 seq;
   u8 flags;
-  bool df = false;
+  bool df = true;
+
   if (fragscan)
-    df = true;
+    df = false;
 
   u32 saddr = inet_addr(source_ip);
   u32 daddr = inet_addr(ip);

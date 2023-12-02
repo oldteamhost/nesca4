@@ -65,6 +65,8 @@ int main(int argc, char** argv)
 
   /* set tcp flags */
   struct tcp_flags tf;
+  memset(&tf, 0, sizeof(struct tcp_flags));
+
   if (!argp.custom_tcpflags)
     tf = set_flags(argp.type);
   else
@@ -75,6 +77,11 @@ int main(int argc, char** argv)
     np.golder_rod_on();
     printf("-> syn: %d, ack: %d, rst: %d, fin: %d, psh: %d, urg: %d, cwr: %d, ece: %d\n",
             tf.syn, tf.ack, tf.rst, tf.fin, tf.psh, tf.urg, tf.cwr, tf.ece);
+    reset_colors;
+  }
+  if (argp.frag_mtu > 16) {
+    np.golder_rod_on();
+    printf("-> NOTE: Note that if (ihl * 4) < (mtu) then fragmentation will not be performed, it is better to use mtu not more than 16.\n");
     reset_colors;
   }
   if (argp.data_string.length() > 1400) {
@@ -436,10 +443,10 @@ int nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_m
   double rtt_ping;
   u8 portstat = PORT_ERROR;
   const char* data;
-  bool df = false;
+  bool df = true;
 
   if (argp.frag_mtu)
-    df = true;
+    df = false;
 
   saddr = inet_addr(argp.source_ip);
   daddr = inet_addr(ip.c_str());

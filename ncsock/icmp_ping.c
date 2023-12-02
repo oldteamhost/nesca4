@@ -26,9 +26,10 @@ double icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int
   double response_time = -1;
   int sock, send, read;
   u32 saddr, daddr;
-  bool df = false;
+  bool df = true;
+
   if (fragscan)
-    df = true;
+    df = false;
 
   saddr = inet_addr(source_ip);
   daddr = inet_addr(dest_ip);

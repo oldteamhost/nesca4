@@ -25,7 +25,7 @@ int fill_ip_raw(struct ip_header *ip, int packetlen, const u8 *ipopt,
     memcpy((u8 *) ip + sizeof(struct ip_header), ipopt, ipoptlen);
 
   ip->check = 0;
-  ip->check = ip_cksum_add((unsigned short *) ip, sizeof(struct ip_header) + ipoptlen, 0);
+  ip->check = ip_cksum_add((u16*)ip, sizeof(struct ip_header) + ipoptlen, 0);
 
   return (sizeof(struct ip_header) + ipoptlen);
 }
