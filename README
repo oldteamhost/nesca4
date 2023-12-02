@@ -11,9 +11,12 @@ PS: Перечислять все возможности тут я не буду
 For install, read file: INSTALL
 For patching read file: HACKING
 
+All guides in (documents/)
+
 
                         A little guide on how to use nesca4.
 ==========================================================================================
+
 
 $ How to fast scan DNS, IP, IP range, CIDR, URLs?
   sudo ./nesca4 google.com
