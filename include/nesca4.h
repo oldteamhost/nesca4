@@ -97,11 +97,12 @@ std::vector<std::string> resolv_hosts(std::vector<std::string> hosts);
 
 const struct
 option long_options[] = {
-  /*22*/
+  /*22, 6*/
+  {"udp-ddos", no_argument, 0, 8},
   {"ddos-len", required_argument, 0, 10},
   {"TDD", required_argument, 0, 9},
   {"tcp-ddos", no_argument, 0, 15},
-  {"icmp-ddos", no_argument, 0, 16},
+  {"icmp-ddos", required_argument, 0, 16},
   {"no-scan", no_argument, 0, 46},
   {"print-color", required_argument, 0, 78},
   {"data-len", required_argument, 0, 79},

@@ -56,14 +56,14 @@ struct tcp_flags
 #define TH_URG 0x20
 #define TH_CWR 0x80
 #define TH_ECE 0x40
-  uint8_t syn; /* Synchronize sequence numbers. */
-  uint8_t ack; /* Acknowledgment field significant. */
-  uint8_t rst; /* Reset the connection. */
-  uint8_t fin; /* No more data from sender. */
-  uint8_t psh; /* Push Function. */
-  uint8_t urg; /* Urgent Pointer field significant. */
-  uint8_t cwr; /* Congestion Window reduced. */
-  uint8_t ece; /* Explicit Congestion notification echo. */
+  u8 syn; /* Synchronize sequence numbers. */
+  u8 ack; /* Acknowledgment field significant. */
+  u8 rst; /* Reset the connection. */
+  u8 fin; /* No more data from sender. */
+  u8 psh; /* Push Function. */
+  u8 urg; /* Urgent Pointer field significant. */
+  u8 cwr; /* Congestion Window reduced. */
+  u8 ece; /* Explicit Congestion notification echo. */
 };
 
 u8 *build_tcp(u16 sport, u16 dport, u32 seq, u32 ack, u8 reserved, u8 flags,
@@ -81,10 +81,6 @@ struct tcp_flags set_flags(uint8_t type);
 struct tcp_flags str_set_flags(const char *flags);
 u8 set_tcp_flags(struct tcp_flags *tf);
 
-int send_tcp_packet(int fd, const u32 saddr, const u32 daddr, int ttl, bool df,
-    u8 *ipops, int ipoptlen, u16 sport, u16 dport, u32 seq, u32 ack, u8 reserved, u8 flags, u16 window, u16 urp,
-    u8 *options, int optlen, const char *data, u16 datalen, int fragscan);
-
 #define SYN_PACKET            1
 #define XMAS_PACKET           2
 #define FIN_PACKET            3
@@ -92,6 +88,10 @@ int send_tcp_packet(int fd, const u32 saddr, const u32 daddr, int ttl, bool df,
 #define ACK_PACKET            5
 #define WINDOW_PACKET         6
 #define MAIMON_PACKET         7
+
+int send_tcp_packet(int fd, const u32 saddr, const u32 daddr, int ttl, bool df,
+    u8 *ipops, int ipoptlen, u16 sport, u16 dport, u32 seq, u32 ack, u8 reserved, u8 flags, u16 window, u16 urp,
+    u8 *options, int optlen, const char *data, u16 datalen, int fragscan);
 
 int fast_send_tcp(int fd, const char* saddr, const char* daddr, int ttl, u16 dport, u8 flags,
     const char* data, u16 datalen);

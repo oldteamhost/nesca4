@@ -1,12 +1,8 @@
 /*
- * NCSOCK & NESCA 4
- * by oldteam & lomaster
- * license GPL-2.0
+ * LIBNCSOCK & NESCA4
  *   Сделано от души 2023.
- * -----------------------------------------------------------
- * http.h - It contains, constants and functions
- * for working with http protocol.
- * -----------------------------------------------------------
+ * Copyright (c) [2023] [lomaster]
+ * SPDX-License-Identifier: BSD-3-Clause
 */
 
 #ifndef HTTP_H

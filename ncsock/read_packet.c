@@ -59,7 +59,7 @@ int read_packet(struct readfiler *rf, int recv_timeout_ms, u8 **buffer)
         close(sock);
         return -1;
       }
-      if (iph->protocol != rf->protocol)
+      if (iph->protocol != rf->protocol || iph->protocol != rf->second_protocol)
         continue;
 
       continue;

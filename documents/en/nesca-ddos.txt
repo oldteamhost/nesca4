@@ -1,9 +1,11 @@
 [oldteam & lomaster 2023]
-NESCA4 supports DDOS via the TCP and ICMP protocols.
+NESCA4 supports DDOS via the TCP, ICMP and UDP protocols.
 
 1. Usage:
-    -icmp-ddos       Flag that is used to enable ICMP ddos.
-    -tcp-ddos        Flag that is used to enable TCP ddos.
+    -icmp-ddos <type> Flag used to enable ICMP DDOS, and to specify the type of packets in the arguments.
+    -tcp-ddos        Flag that is used to enable TCP DDOS.
+    -udp-ddos        Flag that is used to enable UDP DDOS.
+
 
     -ddos-len <num>  Flag that is used to specify the number of packets, their number is specified in its arguments.
     -TDD <num>       Flag that is used to specify the maximum number of threads (packets at a time),
@@ -19,6 +21,9 @@ NESCA4 supports DDOS via the TCP and ICMP protocols.
 
   Example for TCP DDOS:
     sudo ./nesca4 google.com -tcp-ddos -ddos-len 10000 -data-len 1400 -p 80
+
+  Example for UDP DDOS:
+    sudo ./nesca4 google.com -udp-ddos -ddos-len 10000 -data-len 1400 -p 53
 
 2. Features:
   Specifying -data-len greater than 1400 is not recommended, the system starts rejecting packets.

@@ -19,8 +19,9 @@ __BEGIN_DECLS
 
 struct readfiler
 {
-  const char* dest_ip;
+  const char *dest_ip;
   u8          protocol;
+  u8          second_protocol;
 };
 
 int read_packet(struct readfiler *rf, int recv_timeout_ms, u8 **buffer);

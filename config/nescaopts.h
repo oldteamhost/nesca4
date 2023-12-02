@@ -15,6 +15,8 @@
 #include <set>
 #include "compile.h"
 
+#include "../ncsock/include/types.h"
+
 #define SPEED_TYPE_DEFAULT 3
 #define SCAN_PORTS_TYPE_DEFAULT 1
 #define DEFAULT_PORTS {80,443}
@@ -66,6 +68,7 @@ public:
 
   bool fin_scan;
   bool null_scan;
+  u8 icmp_ddos_type = 8;
 
 #ifdef HAVE_NODE_JS
   bool save_screenshots;
@@ -131,6 +134,7 @@ public:
   int dns_threads;
   int resol_source_port = DNS_RESOLV_SOURCE_PORT_DEFUALT;
   int resol_delay;
+  bool udp_ddos;
 
   bool ip_scan_import;
   const char* path_ips;
