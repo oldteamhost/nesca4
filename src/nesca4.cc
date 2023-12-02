@@ -28,6 +28,7 @@
 #include "../ncsock/include/tcp.h"
 #include "../ncsock/include/utils.h"
 #include <arpa/inet.h>
+#include <bits/getopt_core.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -275,7 +276,7 @@ int main(int argc, char** argv)
     return 0;
   }
 
-  if (argp.icmp_ddos || argp.tcp_ddos || argp.udp_ddos) {
+  if (argp.icmp_ddos || argp.tcp_ddos || argp.udp_ddos || argp.ip_ddos) {
     u32 saddr, daddr;
     saddr = inet_addr(argp.source_ip);
     u8 proto;
@@ -293,17 +294,20 @@ int main(int argc, char** argv)
       proto = IPPROTO_UDP;
       port = argp.ports[0];
     }
+    else if (argp.ip_ddos) {
+      proto = argp.ip_ddos_proto;
+      port = 0;
+    }
 
     std::vector<std::future<void>> futures_ddos;
     thread_pool ddos_pool(argp.ddos_threads);
 
     int ipc = 0;
-    double temprtt;
-    int totalsuccess = 0;;
+    int totalsuccess = 0;
+
     auto start_time_ddos = std::chrono::high_resolution_clock::now();
     for (const auto& ip : temp_vector) {
-      double newrtt;
-      temprtt = 0;
+      double temprtt;
       totalsuccess += argp.success_packet_ddos;
       argp.success_packet_ddos = 0;
       ipc++;
@@ -315,7 +319,7 @@ int main(int argc, char** argv)
       daddr = inet_addr(ip.c_str());
 
       for (int i = 1; i <= argp.ddos_packets; i++){
-        futures_ddos.emplace_back(ddos_pool.enqueue(nesca_ddos, proto, argp.icmp_ddos_type, daddr, saddr, port));
+        futures_ddos.emplace_back(ddos_pool.enqueue(nesca_ddos, proto, argp.icmp_ddos_type, daddr, saddr, port, argp.ip_ddos));
 
         if (futures_ddos.size() >= static_cast<long unsigned int>(argp.ddos_threads)) {
           for (auto& future : futures_ddos)
@@ -323,16 +327,17 @@ int main(int argc, char** argv)
 
           futures_ddos.clear();
         }
-
-        if (i % (argp.ddos_packets / 5) == 0) {
+        if (argp.ddos_packets < 20) {
           std::cout << np.main_nesca_out("REPORT", ip, 3, "packets", "out of",
-              std::to_string(argp.success_packet_ddos), std::to_string(argp.ddos_packets),"") << std::endl;
+              std::to_string(i), std::to_string(argp.ddos_packets),"") << std::endl;
+        }
+        else {
+          if (i % (argp.ddos_packets / 5) == 0) {
+            std::cout << np.main_nesca_out("REPORT", ip, 3, "packets", "out of",
+                std::to_string(i), std::to_string(argp.ddos_packets),"") << std::endl;
+          }
         }
       }
-      newrtt = icmp_ping(ip.c_str(), argp.source_ip, argp.ping_timeout, ICMP_ECHO, 0, 1, 64, NULL, 0, argp.frag_mtu);
-
-      std::cout << np.main_nesca_out("END", ip, 5, "Difference", "RTT",
-          std::to_string(newrtt - temprtt)+"ms", std::to_string(newrtt)+"ms","") << std::endl;
     }
     for (auto& future : futures_ddos)
       future.wait();
@@ -671,10 +676,10 @@ ok:
   return 1;
 }
 
-void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int port)
+void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int port, bool ip_ddos)
 {
   u32 seq, datalen = 0;
-  int source_port, res, sock;
+  int source_port, sock;
   u16 ttl;
   const char* data;
   bool df = true;
@@ -682,7 +687,8 @@ void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int p
   if (argp.frag_mtu)
     df = false;
 
-  seq = generate_seq();
+  if (argp.icmp_ddos || argp.tcp_ddos)
+    seq = generate_seq();
 
   if (proto == IPPROTO_TCP || proto == IPPROTO_UDP) {
     if (argp.custom_source_port)
@@ -706,22 +712,18 @@ void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int p
     return;
 
   if (proto == IPPROTO_TCP)
-    res = send_tcp_packet(sock, saddr, daddr, ttl, df, 0, 0, source_port, port, seq, 0, 0, argp.tcpflags, 1024,
+    send_tcp_packet(sock, saddr, daddr, ttl, df, 0, 0, source_port, port, seq, 0, 0, argp.tcpflags, 1024,
         0, 0, 0, data, datalen, argp.frag_mtu);
   else if (proto == IPPROTO_ICMP)
-    res = send_icmp_packet(sock, saddr, daddr, ttl, df, 0, 0, seq, 0, type, data, datalen, argp.frag_mtu);
+    send_icmp_packet(sock, saddr, daddr, ttl, df, 0, 0, seq, 0, type, data, datalen, argp.frag_mtu);
   else if (proto == IPPROTO_UDP)
-    res = send_udp_packet(sock, saddr, daddr, ttl, generate_ident(), NULL, 0, source_port, port, df, data, datalen, argp.frag_mtu);
+    send_udp_packet(sock, saddr, daddr, ttl, generate_ident(), NULL, 0, source_port, port, df, data, datalen, argp.frag_mtu);
+  else if (ip_ddos)
+    send_ip_empty(sock, saddr, daddr, ttl, proto, df, 0, 0, NULL, 0, argp.frag_mtu);
 
   ls.lock();
   close(sock);
   ls.unlock();
-
-  if (res != -1) {
-    ls.lock();
-    argp.success_packet_ddos++;
-    ls.unlock();
-  }
 }
 
 void process_port(const std::string& ip, std::vector<uint16_t> ports, int port_type)
@@ -975,13 +977,14 @@ void usage(void)
   std::cout << "  -frag <mtu>: fragment all packets.\n";
   std::cout << "  -ttl <num>: Set custom ip_header_ttl.\n";
   np.golder_rod_on();
-  std::cout << "STRESS TEST/DDOS:" << std::endl;
+  std::cout << "NETWORK TEST/DDOS:" << std::endl;
   reset_colors;
-  std::cout << "  -TDD: Set max thread(s) for DDOS.\n";
-  std::cout << "  -tcp-ddos: Set a TCP protocol for ddos, and enable ddos mode.\n";
-  std::cout << "  -icmp-ddos <type>: Set a ICMP protocol for ddos, and enable ddos mode. \n    Ex types: ECHO=8, INFO=15, TIMESTAMP=13\n";
-  std::cout << "  -udp-ddos: Set a UDP protocol for ddos, and enable ddos mode.\n";
-  std::cout << "  -ddos-len: Set the number of packages for the host.\n";
+  std::cout << "  -TDD: Set max thread(s) for testing.\n";
+  std::cout << "  -ip <proto>: Set a IP protocol for send, and enable test mode.\n";
+  std::cout << "  -icmp <type>: Set a ICMP protocol for send, and enable test mode. \n    Ex types: ECHO=8, INFO=15, TIMESTAMP=13\n";
+  std::cout << "  -tcp: Set a TCP protocol for send, and enable test mode.\n";
+  std::cout << "  -udp: Set a UDP protocol for send, and enable test mode.\n";
+  std::cout << "  -count: Set the number of packages for the host.\n";
   np.golder_rod_on();
   std::cout << "PORT SCAN GROUPS:" << std::endl;
   reset_colors;
@@ -1637,6 +1640,10 @@ void parse_args(int argc, char** argv)
         break;
       case 95:
         argp.no_proc = true;
+        break;
+      case 6:
+        argp.ip_ddos = true;
+        argp.ip_ddos_proto = atoi(optarg);
         break;
       case 97:
         argp.maimon_scan = true;

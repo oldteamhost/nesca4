@@ -75,6 +75,8 @@ int send_ip6_packet(int fd, const struct sockaddr_in6 *dst, const u8 *packet, u3
 
 /* done func */
 int send_ip_packet(int fd, const struct sockaddr_storage *dst, int fragscan, const u8 *packet, u32 plen);
+int send_ip_empty(int sock, u32 saddr, u32 daddr, u16 ttl, u8 proto, bool df, const u8 *ipopt, int ipoptlen,
+    const char* data, u16 datalen, int fragscan);
 
 __END_DECLS
 

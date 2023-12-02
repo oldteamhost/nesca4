@@ -16,7 +16,7 @@ int send_tcp_packet(int fd, const u32 saddr, const u32 daddr, int ttl, bool df,
 {
   struct sockaddr_storage dst;
   struct sockaddr_in *dst_in;
-  unsigned int packetlen;
+  u32 packetlen;
   int res = -1;
 
   u8 *packet = build_tcp_pkt(saddr, daddr, ttl, generate_random_u32(10, 9999), IP_TOS_DEFAULT, df,

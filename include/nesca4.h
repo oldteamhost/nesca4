@@ -84,7 +84,7 @@ void fix_time(double time);
 
 int nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_ms);
 bool nesca_ping(const char* ip);
-void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int port);
+void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int port, bool ip_ddos);
 
 void importfile(void);
 void parse_args(int argc, char** argv);
@@ -98,11 +98,12 @@ std::vector<std::string> resolv_hosts(std::vector<std::string> hosts);
 const struct
 option long_options[] = {
   /*22, 6*/
-  {"udp-ddos", no_argument, 0, 8},
-  {"ddos-len", required_argument, 0, 10},
+  {"ip", required_argument, 0, 6},
+  {"udp", no_argument, 0, 8},
+  {"count", required_argument, 0, 10},
   {"TDD", required_argument, 0, 9},
-  {"tcp-ddos", no_argument, 0, 15},
-  {"icmp-ddos", required_argument, 0, 16},
+  {"tcp", no_argument, 0, 15},
+  {"icmp", required_argument, 0, 16},
   {"no-scan", no_argument, 0, 46},
   {"print-color", required_argument, 0, 78},
   {"data-len", required_argument, 0, 79},

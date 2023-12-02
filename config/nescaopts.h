@@ -68,6 +68,8 @@ public:
 
   bool fin_scan;
   bool null_scan;
+  bool ip_ddos;
+  u8 ip_ddos_proto = 2;
   u8 icmp_ddos_type = 8;
 
 #ifdef HAVE_NODE_JS
