@@ -39,7 +39,7 @@ u8 *build_udp6_pkt(const struct in6_addr *source, const struct in6_addr *victim,
     u32 flowlabel, u8 hoplimit, u16 sport, u16 dport, const char *data, u16 datalen, u32 *plen);
 
 int send_udp_packet(int fd, const u32 saddr, const u32 daddr, int ttl, u16 ipid,
-  u8 *ipopt, int ipoptlen, u16 sport, u16 dport, const char *data, u16 datalen, int fragscan);
+  u8 *ipopt, int ipoptlen, u16 sport, u16 dport, bool df, const char *data, u16 datalen, int fragscan);
 
 __END_DECLS
 

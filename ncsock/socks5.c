@@ -1,8 +1,8 @@
 /*
- * NCSOCK & NESCA 4
- * by oldteam & lomaster
- * license GPL-2.0
+ * LIBNCSOCK & NESCA4
  *   Сделано от души 2023.
+ * Copyright (c) [2023] [lomaster]
+ * SPDX-License-Identifier: BSD-3-Clause
 */
 
 #include "include/socks5.h"
@@ -24,30 +24,18 @@ bool socks5_connect(socks_5_connection *connection)
   proxy_addr.sin_addr.s_addr = inet_addr(connection->proxy_host);
 
   if (connect(connection->socket, (struct sockaddr*)&proxy_addr, sizeof(proxy_addr)) == -1) {
-#ifdef PRINT_ERRORS
-    perror("socks_5_connection/proxy-connect");
-#endif
     return false;
   }
 
   if (!socks5_handshake(connection)) {
-#ifdef PRINT_ERRORS
-    perror("socks_5_connection/hand-shake");
-#endif
     return false;
   }
 
   if (!socks5_send_command(connection)) {
-#ifdef PRINT_ERRORS
-    perror("socks_5_connection/send-command");
-#endif
     return false;
   }
 
   if (!socks5_verify_response(connection)) {
-#ifdef PRINT_ERRORS
-    perror("socks_5_connection/response-command");
-#endif
     return false;
   }
 
@@ -72,24 +60,15 @@ bool socks5_handshake(socks_5_connection *connection)
 {
   unsigned char handshake[] = {0x05, 0x01, 0x00};
   if (send(connection->socket, handshake, sizeof(handshake), 0) == -1) {
-#ifdef PRINT_ERRORS
-    perror("socks_5_connection/send-handshake");
-#endif
     return false;
   }
 
   unsigned char handshake_response[2];
   if (recv(connection->socket, handshake_response, sizeof(handshake_response), 0) == -1) {
-#ifdef PRINT_ERRORS
-    perror("socks_5_connection/handshake-receive");
-#endif
       return false;
   }
 
   if (handshake_response[0] != 0x05 || handshake_response[1] != 0x00) {
-#ifdef PRINT_ERRORS
-    perror("socks_5_connection/handshake");
-#endif
     return false;
   }
 
@@ -115,9 +94,6 @@ bool socks5_send_command(socks_5_connection *connection)
   connect_command_len += sizeof(target_port);
 
   if (send(connection->socket, connect_command, connect_command_len, 0) == -1) {
-#ifdef PRINT_ERRORS
-    perror("socks_5_connection/connect-command");
-#endif
     return false;
   }
 
@@ -128,16 +104,10 @@ bool socks5_verify_response(socks_5_connection *connection)
 {
   unsigned char response[10];
   if (recv(connection->socket, response, sizeof(response), 0) == -1) {
-#ifdef PRINT_ERRORS
-    perror("socks_5_connection/response-receiving");
-#endif
     return false;
   }
 
   if (response[0] != 0x05 || response[1] != 0x00 || response[2] != 0x00) {
-#ifdef PRINT_ERRORS
-    perror("socks_5_connection/connection");
-#endif
     return false;
   }
 
@@ -171,23 +141,6 @@ double socks5_tcp_ping(const char* dest_ip, int port, const char* proxy_host, in
       gettimeofday(&end_time, NULL);
       if (bytes_received > 0) {
         response_time = (end_time.tv_sec - start_time.tv_sec) * 1000.0 + (end_time.tv_usec - start_time.tv_usec) / 1000.0;
-      }
-      if (bytes_received == -1){
-        if (errno == EWOULDBLOCK || errno == EAGAIN) {
-#ifdef PRINT_ERRORS
-          perror("socks5_tcp_ping/timeout");
-#endif
-        }
-        else {
-#ifdef PRINT_ERRORS
-          perror("socks5_tcp_ping/error-recv");
-#endif
-        }
-      }
-      else if (bytes_received == 0){
-#ifdef PRINT_ERRORS
-        perror("socks5_tcp_ping/connection-closed-by-remote-host");
-#endif
       }
 
       timeout.tv_sec = 0;

@@ -1,8 +1,8 @@
 /*
- * NCSOCK & NESCA 4
- * by oldteam & lomaster
- * license GPL-2.0
+ * LIBNCSOCK & NESCA4
  *   Сделано от души 2023.
+ * Copyright (c) [2023] [lomaster]
+ * SPDX-License-Identifier: BSD-3-Clause
 */
 
 #include "include/base.h"
@@ -127,78 +127,4 @@ int calculate_threads(int speed, int len)
 
   int result = (max_threads < len) ? max_threads : len;
   return result;
-}
-
-#include <stdlib.h>
-string_vector* create_string_vector()
-{
-  string_vector* vec = (string_vector*)malloc(sizeof(string_vector));
-  if (vec == NULL) {
-    printf("create_string_vector/memory-malloc!\n");
-    return NULL;
-  }
-
-  vec->data = NULL;
-  vec->size = 0;
-  vec->capacity = 0;
-  return vec;
-}
-
-void string_vector_add(string_vector* vec, const char* str)
-{
-  if (vec->size >= vec->capacity) {
-    vec->capacity = (vec->capacity == 0) ? 1 : vec->capacity * 2;
-    vec->data = (char**)realloc(vec->data, vec->capacity * sizeof(char*));
-    if (vec->data == NULL) {
-      printf("string_vector_add/memory-realloc!\n");
-      return;
-    }
-  }
-
-  vec->data[vec->size] = strdup(str);
-  vec->size++;
-}
-
-void string_vector_free(string_vector* vec)
-{
-  for (size_t i = 0; i < vec->size; i++) {
-    free(vec->data[i]);
-  }
-  free(vec->data);
-  vec->size = 0;
-  vec->capacity = 0;
-}
-
-int_vector* create_int_vector()
-{
-  int_vector* vec = (int_vector*)malloc(sizeof(int_vector));
-  if (vec == NULL) {
-    printf("create_int_vector/memory-malloc!\n");
-    return NULL;
-  }
-
-  vec->data = NULL;
-  vec->size = 0;
-  vec->capacity = 0;
-  return vec;
-}
-
-void int_vector_add(int_vector* vec, int value)
-{
-  if (vec->size >= vec->capacity) {
-    vec->capacity = (vec->capacity == 0) ? 1 : vec->capacity * 2;
-    vec->data = (int*)realloc(vec->data, vec->capacity * sizeof(int));
-    if (vec->data == NULL) {
-      printf("int_vector_add/memory-realloc!\n");
-    }
-  }
-
-  vec->data[vec->size] = value;
-  vec->size++;
-}
-
-void int_vector_free(int_vector* vec)
-{
-  free(vec->data);
-  free(vec);
 }

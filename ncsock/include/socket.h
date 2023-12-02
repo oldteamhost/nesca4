@@ -47,27 +47,6 @@ int
 session_packet(int sockfd, char* response_buffer, const char* message,
     int verbose, int timeout_ms);
 
-int /* Set flag timeout on socket, in ms. */
-set_socket_timeout(int sock, int timeout_ms, int on_send, int on_recv);
-
-int /* Set pool timeout. */
-set_socket_timeout_pro(int sock, int timeout_ms);
-
-int /* Set flag address reuse on socket. */
-set_socket_reuseaddr(int sock);
-
-int /* Set non_block flag on socket. */
-set_socket_nonblocking(int sock);
-
-int /* Set send buffer size, on socket. */
-set_socket_send_buffer_size(int sock, int buffer_size);
-
-int /* Set recv buffer size, on socket. */
-set_socket_receive_buffer_size(int sock, int buffer_size);
-
-int /* Send kernel custom ip header. */
-set_socket_hdrincl(int sock);
-
 #ifdef __cplusplus
 }
 #endif

@@ -20,7 +20,7 @@ extern "C" {
 #define CIDR  0
 #define IPv4  1
 #define RANGE 2
-#define _URL_   3
+#define _URL_ 3
 #define DNS   4
 int this_is(const char* node);
 const char* get_this_is(int type);
@@ -39,29 +39,6 @@ void get_current_date(char* formatted_date, size_t max_length);
 int calculate_timeout(double rtt, int speed);
 int calculate_threads(int speed, int len);
 int calculate_ping_timeout(int speed);
-
-/* vector on c */
-typedef struct
-{
-  char **data;
-  size_t size;
-  size_t capacity;
-} string_vector;
-
-typedef struct
-{
-  int *data;
-  size_t size;
-  size_t capacity;
-} int_vector;
-
-string_vector* create_string_vector();
-void string_vector_add(string_vector* vec, const char* str);
-void string_vector_free(string_vector* vec);
-
-int_vector* create_int_vector();
-void int_vector_add(int_vector* vec, int value);
-void int_vector_free(int_vector* vec);
 
 #ifdef __cplusplus
 }

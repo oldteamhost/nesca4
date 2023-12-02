@@ -1,11 +1,8 @@
 /*
- * NCSOCK & NESCA 4
- * by oldteam & lomaster
- * license GPL-2.0
+ * LIBNCSOCK & NESCA4
  *   Сделано от души 2023.
- * -----------------------------------------------------------
- * ftp.c - functions for working with ftp protocol.
- * -----------------------------------------------------------
+ * Copyright (c) [2023] [lomaster]
+ * SPDX-License-Identifier: BSD-3-Clause
 */
 
 #include "include/ftp.h"
@@ -73,10 +70,4 @@ ftp_auth(const char* ip, int port, const char* login, const char* pass,
 
   close(sockfd);
   return 0; /*successful auth*/
-}
-
-void get_ftp_version(const char* ip, const int port, const int timeout_ms, char* version_buffer, size_t buffer_size)
-{
-  session_run_buf(ip, port, timeout_ms, version_buffer, buffer_size);
-  remove_specials(version_buffer);
 }
