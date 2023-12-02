@@ -17,7 +17,6 @@ All guides in (documents/)
                         A little guide on how to use nesca4.
 ==========================================================================================
 
-
 $ How to fast scan DNS, IP, IP range, CIDR, URLs?
   sudo ./nesca4 google.com
   sudo ./nesca4 64.233.164.101
@@ -87,7 +86,7 @@ d8b   db d88888b .d8888.  .o88b.  .d8b.         j88D
 88  V888 88.     db   8D Y8b  d8 88   88          88 
 VP   V8P Y88888P `8888Y'  `Y88P' YP   YP          VP 
 
-[VERSION]:20231117
+[VERSION]:20231202
 [USAGE]:./nesca4 [target(s) 1,2,3] [flags]
 
 TARGET SPECIFICATION:
@@ -131,6 +130,10 @@ OTHER OPTIONS:
   -data-len <num>: Append random data to sent packets.
   -frag <mtu>: fragment all packets.
   -ttl <num>: Set custom ip_header_ttl.
+STRESS TEST/DDOS:
+  -TDD: Set max thread(s) for DDOS.
+  -tcp-ddos, -icmp-ddos: Set a protocol for ddos, and enable ddos mode.
+  -ddos-len: Set the number of packages for the host.
 PORT SCAN GROUPS:
   -max-group <num>: Edit max size group & threads for port scan.
   -min-group <num>: Edit min size group & threads for port scan.
