@@ -89,11 +89,16 @@ public:
   bool maimon_scan;
 
   std::string data_string;
+  int success_packet_ddos;
+
+  bool tcp_ddos;
+  bool icmp_ddos;
 
   bool timeout;
   int timeout_ms;
   bool custom_recv_timeout_ms;
   int recv_timeout_ms;
+  int ddos_threads = 500;
   bool custom_log_set;
   int log_set;
   int _threads;
@@ -111,6 +116,8 @@ public:
 
   bool ping_off;
   bool no_get_path;
+
+  int ddos_packets = 5000;
 
   bool get_response;
 

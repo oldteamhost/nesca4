@@ -1,0 +1,36 @@
+[oldteam & lomaster 2023]
+NESCA4 supports DDOS via the TCP and ICMP protocols.
+
+1. Usage:
+    -icmp-ddos       Flag that is used to enable ICMP ddos.
+    -tcp-ddos        Flag that is used to enable TCP ddos.
+
+    -ddos-len <num>  Flag that is used to specify the number of packets, their number is specified in its arguments.
+    -TDD <num>       Flag that is used to specify the maximum number of threads (packets at a time),
+                     the number is passed in its arguments.
+
+  But this is not enough to load the host, you need to increase the packet size.
+
+    -data-len <num>  Flag that allows to fill the packet with random characters,
+                the number of these characters is specified in its arguments.
+
+  Here is an example of a command for ICMP DDOS:
+    sudo ./nesca4 google.com -icmp-ddos -ddos-len 10000 -data-len 1400
+
+  Example for TCP DDOS:
+    sudo ./nesca4 google.com -tcp-ddos -ddos-len 10000 -data-len 1400 -p 80
+
+2. Features:
+  Specifying -data-len greater than 1400 is not recommended, the system starts rejecting packets.
+  If you specify multiple DDOS targets, NESCA4 will load them all, first sending the specified number
+  of packets to the first host, then to the second, and so on.
+
+  It is also worth saying that TCP DDOS will take into account the first specified port, let's say you
+  specified -p 80,443,21. DDOS will be exactly on port 80.
+
+  Also almost all other arguments for port scan, like -frag, or -ack, or -scanflags are supported for DDOS as well.
+
+3. Default values:
+  * By standard, -ddos-len is worth 5000 packets.
+  * By standard -TDD stands at 500 threads.
+  * By standard -data-len is set to 0, it is disabled.

