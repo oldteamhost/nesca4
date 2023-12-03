@@ -9,7 +9,7 @@ NESCA4 supports DDOS via TCP, ICMP, IP, and UDP protocols.
     -tcp             Flag used to enable TCP DDOS.
     -udp             Flag used to enable UDP DDOS.
 
-    -count <num>     Flag used to specify the number of packets whose number is specified in the arguments.
+    -reqnum <num>    Flag used to specify the number of packets whose number is specified in the arguments.
     -TDD <num>       Flag used to specify the maximum number of streams (packets at a time),
                      the number passed in the arguments.
 

@@ -984,7 +984,7 @@ void usage(void)
   std::cout << "  -icmp <type>: Set a ICMP protocol for send, and enable test mode. \n    Ex types: ECHO=8, INFO=15, TIMESTAMP=13\n";
   std::cout << "  -tcp: Set a TCP protocol for send, and enable test mode.\n";
   std::cout << "  -udp: Set a UDP protocol for send, and enable test mode.\n";
-  std::cout << "  -count: Set the number of packages for the host.\n";
+  std::cout << "  -reqnum: Set the number of packages for the host.\n";
   np.golder_rod_on();
   std::cout << "PORT SCAN GROUPS:" << std::endl;
   reset_colors;

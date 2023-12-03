@@ -100,7 +100,7 @@ option long_options[] = {
   /*22, 6*/
   {"ip", required_argument, 0, 6},
   {"udp", no_argument, 0, 8},
-  {"count", required_argument, 0, 10},
+  {"reqnum", required_argument, 0, 10},
   {"TDD", required_argument, 0, 9},
   {"tcp", no_argument, 0, 15},
   {"icmp", required_argument, 0, 16},
