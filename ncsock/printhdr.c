@@ -56,3 +56,30 @@ void print_udphdr(const struct udp_header *udphdr)
   printf("Length: %u bytes\n", ntohs(udphdr->ulen));
   printf("Checksum: 0x%04X\n", ntohs(udphdr->check));
 }
+
+void print_icmphdr(const struct icmp4_header *icmphdr)
+{
+  printf("Type: %u\n", ntohs(icmphdr->type));
+  printf("Code: %u\n", ntohs(icmphdr->code));
+  printf("Ident: %u\n", ntohs(icmphdr->id));
+  printf("Seq %u\n", ntohs(icmphdr->seq));
+  printf("Checksum: 0x%04X\n", ntohs(icmphdr->checksum));
+}
+
+void print_payload(const u8 *payload, int len)
+{
+  for (int i = 0; i < len; ++i)
+    printf("%02X ", payload[i]);
+  putchar('\n');
+}
+
+void print_payload_ascii(const u8 *payload, int len)
+{
+  for (int i = 0; i < len; ++i) {
+    if (payload[i] >= 32 && payload[i] <= 126)
+      printf("%c", payload[i]);
+    else
+      printf(".");
+  }
+  putchar('\n');
+}

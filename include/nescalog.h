@@ -16,6 +16,12 @@
 #include <map>
 
 #include "../include/nescautils.h"
+#include "../ncsock/include/ip.h"
+#include "../ncsock/include/tcp.h"
+#include "../ncsock/include/readpkt.h"
+#include "../ncsock/include/igmp.h"
+#include "../ncsock/libdnet/include/eth.h"
+#include "../ncsock/include/udp.h"
 
 class nesca_prints {
   private:
@@ -29,6 +35,12 @@ class nesca_prints {
 
   std::string
   html_to_ansi_color(const std::string& html_color);
+  void log_iphdr(struct ip_header *iphdr);
+  void log_tcphdr(const struct tcp_header *tcphdr);
+  void log_udphdr(struct udp_header *udphdr);
+  void log_icmphdr(struct icmp4_header *icmphdr);
+  void log_igmphdr(struct igmp_header *igmphdr);
+  void log_ethhdr(struct eth_hdr *ethhdr);
 
   public:
     bool html_save;
@@ -54,6 +66,8 @@ class nesca_prints {
     void nlog_packet_trace(std::string action, std::string protocol, std::string& source_ip,
         std::string& dest_ip, int source_port, int dest_port,
         std::string message, int ttl, int id, int win, int seq, int iplen);
+
+    void easy_packet_trace(u8 *buffer);
 
     void disable_colors(void);
     void golder_rod_on(void);

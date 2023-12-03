@@ -92,12 +92,12 @@ void pre_check(void);
 void process_port(const std::string& ip, std::vector<uint16_t> ports, int port_type);
 void get_dns_thread(std::string ip);
 int count_map_vector(const std::unordered_map<std::string, std::vector<int>>& map, const std::string& key);
-int traceroute(std::string ip, int jumps);
 std::vector<std::string> resolv_hosts(std::vector<std::string> hosts);
 
 const struct
 option long_options[] = {
-  /*22, 6*/
+  /*22*/
+  {"reply", required_argument, 0, 4},
   {"ip", required_argument, 0, 6},
   {"udp", no_argument, 0, 8},
   {"reqnum", required_argument, 0, 10},

@@ -22,7 +22,6 @@
 #include "../include/nescautils.h"
 #include "../include/portscan.h"
 #include "../ncsock/include/icmp.h"
-#include "../ncsock/include/igmp.h"
 #include "../ncsock/include/readpkt.h"
 #include "../ncsock/include/strbase.h"
 #include "../ncsock/include/tcp.h"
@@ -281,9 +280,11 @@ int main(int argc, char** argv)
     saddr = inet_addr(argp.source_ip);
     u8 proto;
     u16 port;
+    u8 type;
 
     if (argp.icmp_ddos) {
       proto = IPPROTO_ICMP;
+      type = argp.icmp_ddos_type;
       port = 0;
     }
     else if (argp.tcp_ddos) {
@@ -319,7 +320,7 @@ int main(int argc, char** argv)
       daddr = inet_addr(ip.c_str());
 
       for (int i = 1; i <= argp.ddos_packets; i++){
-        futures_ddos.emplace_back(ddos_pool.enqueue(nesca_ddos, proto, argp.icmp_ddos_type, daddr, saddr, port, argp.ip_ddos));
+        futures_ddos.emplace_back(ddos_pool.enqueue(nesca_ddos, proto, type, daddr, saddr, port, argp.ip_ddos));
 
         if (futures_ddos.size() >= static_cast<long unsigned int>(argp.ddos_threads)) {
           for (auto& future : futures_ddos)
@@ -585,7 +586,7 @@ int nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_m
     buffer = (u8*)calloc(RECV_BUFFER_SIZE, sizeof(u8));
     ls.unlock();
 
-    rf.dest_ip = ip.c_str();
+    rf.dest_ip = daddr;
     rf.protocol = IPPROTO_TCP;
 
     res = read_packet(&rf, recvtime, &buffer);
@@ -679,10 +680,22 @@ ok:
 void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int port, bool ip_ddos)
 {
   u32 seq, datalen = 0;
-  int source_port, sock;
+  int source_port, sock, res, recvtime;
+  struct in_addr addr_struct;
   u16 ttl;
+  u8 *buffer;
   const char* data;
   bool df = true;
+  double rtt_ping;
+
+  if (argp.custom_recv_timeout_ms)
+    recvtime = argp.recv_timeout_ms;
+  else {
+    addr_struct.s_addr = daddr;
+    rtt_ping = n.get_rtt(inet_ntoa(addr_struct));
+    if (rtt_ping != -1)
+      recvtime = calculate_timeout(rtt_ping, argp.speed_type);
+  }
 
   if (argp.frag_mtu)
     df = false;
@@ -712,8 +725,7 @@ void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int p
     return;
 
   if (proto == IPPROTO_TCP)
-    send_tcp_packet(sock, saddr, daddr, ttl, df, 0, 0, source_port, port, seq, 0, 0, argp.tcpflags, 1024,
-        0, 0, 0, data, datalen, argp.frag_mtu);
+    send_tcp_packet(sock, saddr, daddr, ttl, df, 0, 0, source_port, port, seq, 0, 0, argp.tcpflags, 1024, 0, 0, 0, data, datalen, argp.frag_mtu);
   else if (proto == IPPROTO_ICMP)
     send_icmp_packet(sock, saddr, daddr, ttl, df, 0, 0, seq, 0, type, data, datalen, argp.frag_mtu);
   else if (proto == IPPROTO_UDP)
@@ -723,6 +735,32 @@ void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int p
 
   ls.lock();
   close(sock);
+  ls.unlock();
+
+  if (!argp.reply_ddos)
+    return;
+
+  ls.lock();
+  buffer = (u8*)calloc(RECV_BUFFER_SIZE, sizeof(u8));
+  ls.unlock();
+
+  rf.dest_ip = daddr;
+  rf.protocol = argp.reply_ddos_proto;
+
+  res = read_packet(&rf, recvtime, &buffer);
+  if (res == -1) {
+    ls.lock();
+    np.nlog_error("The package was not accepted.\n");
+    ls.unlock();
+    return;
+  }
+
+  ls.lock();
+  np.easy_packet_trace(buffer);
+  ls.unlock();
+
+  ls.lock();
+  free(buffer);
   ls.unlock();
 }
 
@@ -985,6 +1023,7 @@ void usage(void)
   std::cout << "  -tcp: Set a TCP protocol for send, and enable test mode.\n";
   std::cout << "  -udp: Set a UDP protocol for send, and enable test mode.\n";
   std::cout << "  -reqnum: Set the number of packages for the host.\n";
+  std::cout << "  -reply: Read response packets from the specified protocol, (0 = no protocol binding).\n";
   np.golder_rod_on();
   std::cout << "PORT SCAN GROUPS:" << std::endl;
   reset_colors;
@@ -1577,6 +1616,10 @@ void parse_args(int argc, char** argv)
       case 59:
         argp.no_get_dns = true;
         break;
+      case 4:
+        argp.reply_ddos = true;
+        argp.reply_ddos_proto = atoi(optarg);
+        break;
       case 76:
         argp.negatives_path = std::string(optarg);
         break;
@@ -1625,6 +1668,8 @@ void parse_args(int argc, char** argv)
         break;
       case 8:
         argp.udp_ddos = true;
+        break;
+      case 3:
         break;
       case 92:
         argp.fin_scan = true;

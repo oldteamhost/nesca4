@@ -35,7 +35,7 @@ double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
 
   u32 saddr = inet_addr(source_ip);
   u32 daddr = inet_addr(ip);
-  rf.dest_ip = ip;
+  rf.dest_ip = daddr;
   rf.protocol = IPPROTO_TCP;
 
   seq = generate_seq();

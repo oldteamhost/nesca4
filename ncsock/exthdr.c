@@ -6,6 +6,7 @@
 */
 
 #include "include/icmp.h"
+#include "include/igmp.h"
 #include "include/readpkt.h"
 #include <netinet/if_ether.h>
 #include <netinet/in.h>
@@ -38,6 +39,13 @@ struct icmp4_header* ext_icmphdr(u8 *buf)
   return icmphdr;
 }
 
+struct igmp_header* ext_igmphdr(u8 *buf)
+{
+  struct igmp_header *igmphdr;
+  igmphdr = (struct igmp_header *)(buf + sizeof(struct ethhdr) + sizeof(struct ip_header));
+  return igmphdr;
+}
+
 int ext_payload(u8 *buf, u8 *rbuf)
 {
   int hdrsize, paylsize = -1;
@@ -58,8 +66,12 @@ int ext_payload(u8 *buf, u8 *rbuf)
       memcpy(rbuf, buf + sizeof(struct ethhdr) + sizeof(struct ip_header) + hdrsize, paylsize);
     }
     else if (iphdr->protocol == IPPROTO_ICMP) {
-      return 0; /* XXX */
+      struct icmp4_header *icmphdr = (struct icmp4_header*)(buf + sizeof(struct ethhdr) + sizeof(struct ip_header));
+      hdrsize = sizeof(struct icmp4_header);
+      paylsize = ntohs(iphdr->tot_len) - (sizeof(struct ip_header) + hdrsize);
+      memcpy(rbuf, buf + sizeof(struct ethhdr) + sizeof(struct ip_header), paylsize);
     }
   }
+
   return paylsize;
 }

@@ -9,8 +9,14 @@
 #include "../ncbase/include/json.h"
 #include "../ncsock/include/strbase.h"
 #include "../ncsock/include/base.h"
+#include "../ncsock/include/icmp.h"
+#include "../ncsock/include/igmp.h"
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
+#include <netinet/in.h>
+#include <stdio.h>
+#include <string>
 
 html_output hou;
 
@@ -29,6 +35,184 @@ nesca_prints::html_to_ansi_color(const std::string& html_color)
   b = std::stoi(html_color.substr(5, 2), nullptr, 16);
 
   return "\033[38;2;" + std::to_string(r) + ";" + std::to_string(g) + ";" + std::to_string(b) + "m";
+}
+
+void nesca_prints::log_tcphdr(const struct tcp_header *tcphdr)
+{
+  gray_nesca_on();
+  printf("[^][TCPHEADER]:");
+  reset_colors;
+
+  printf("%ssport:%s %s%u%s, %sdport:%s %s%u%s, %sseq:%s %s%u%s, %sack:%s %s%u%s, %s2x_off:%s %s%u bytes%s,",
+         green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), ntohs(tcphdr->th_sport), gray_nesca.c_str(),
+         green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), ntohs(tcphdr->th_dport), gray_nesca.c_str(),
+         green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), ntohl(tcphdr->th_seq), gray_nesca.c_str(),
+         green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), ntohl(tcphdr->th_ack), gray_nesca.c_str(),
+         green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), (unsigned int)(tcphdr->th_x2 * 4), gray_nesca.c_str());
+
+  printf("%s window:%s %u%s,", green_html.c_str(), golder_rod.c_str(), ntohs(tcphdr->th_win), gray_nesca.c_str());
+  printf("%s check:%s 0x%04X%s,", green_html.c_str(), golder_rod.c_str(), ntohs(tcphdr->th_sum), gray_nesca.c_str());
+  printf("%s urg:%s %u%s,", green_html.c_str(), golder_rod.c_str(), ntohs(tcphdr->th_urp), gray_nesca.c_str());
+
+  printf("%s flags: URG:%s%d %sACK:%s%d %sPSH:%s%d %sRST:%s%d %sSYN:%s%d %sFIN:%s%d %sCWR:%s%d %sECE:%s%d\n",
+         green_html.c_str(),
+         golder_rod.c_str(),
+         (tcphdr->th_flags & TH_URG) ? 1 : 0,
+         green_html.c_str(),
+         golder_rod.c_str(),
+         (tcphdr->th_flags & TH_ACK) ? 1 : 0,
+         green_html.c_str(),
+         golder_rod.c_str(),
+         (tcphdr->th_flags & TH_PSH) ? 1 : 0,
+         green_html.c_str(),
+         golder_rod.c_str(),
+         (tcphdr->th_flags & TH_RST) ? 1 : 0,
+         green_html.c_str(),
+         golder_rod.c_str(),
+         (tcphdr->th_flags & TH_SYN) ? 1 : 0,
+         green_html.c_str(),
+         golder_rod.c_str(),
+         (tcphdr->th_flags & TH_FIN) ? 1 : 0,
+         green_html.c_str(),
+         golder_rod.c_str(),
+         (tcphdr->th_flags & TH_CWR) ? 1 : 0,
+         green_html.c_str(),
+         golder_rod.c_str(),
+         (tcphdr->th_flags & TH_ECE) ? 1 : 0);
+}
+
+void nesca_prints::log_icmphdr(struct icmp4_header *icmphdr)
+{
+  gray_nesca_on();
+  printf("[^][ICMPHEADER]:");
+  reset_colors;
+  printf("%stype:%s %s%u%s, %scode:%s %s%u%s, %scheck:%s %s0x%04X%s, %sid:%s %s%u%s, %sseq:%s %s%u%s\n",
+    green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), (unsigned int)icmphdr->type, gray_nesca.c_str(),
+    green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), (unsigned int)icmphdr->code, gray_nesca.c_str(),
+    green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), ntohs(icmphdr->checksum), gray_nesca.c_str(),
+    green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), ntohs(icmphdr->id), gray_nesca.c_str(),
+    green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), ntohs(icmphdr->seq), gray_nesca.c_str());
+}
+
+void nesca_prints::log_igmphdr(struct igmp_header *igmphdr)
+{
+  gray_nesca_on();
+  printf("[^][IGMPHEADER]:");
+  reset_colors;
+  printf("%stype:%s %s%u%s, %scode:%s %s%u%s, %scheck:%s %s0x%04X%s, %svar:%s %s%u%s\n",
+    green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), (unsigned int)igmphdr->type, gray_nesca.c_str(),
+    green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), (unsigned int)igmphdr->code, gray_nesca.c_str(),
+    green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), ntohs(igmphdr->check), gray_nesca.c_str(),
+    green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), ntohl(igmphdr->var), gray_nesca.c_str());
+}
+
+void nesca_prints::log_iphdr(struct ip_header *iphdr)
+{
+  gray_nesca_on();
+  printf("[^][IPHEADER]:");
+  reset_colors;
+  printf("%sversion:%s %s%u%s, %sihl:%s %s%u bytes%s, %stos:%s %s%u%s, %stot_len:%s %s%u%s, %sid:%s %s%u%s, %sflags:%s %s%c%c%c%s, %sfrag_off:%s %s%u%s, %sttl:%s %s%u%s, %sproto:%s %s%u%s, %scheck:%s %s0x%04X%s, %ssaddr:%s %s%s%s, %sdaddr:%s %s%s%s\n",
+         green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), (unsigned int)iphdr->version, gray_nesca.c_str(),
+         green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), (unsigned int)(iphdr->ihl * 4), gray_nesca.c_str(),
+         green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), (unsigned int)iphdr->tos, gray_nesca.c_str(),
+         green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), ntohs(iphdr->tot_len), gray_nesca.c_str(),
+         green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), ntohs(iphdr->ident), gray_nesca.c_str(),
+         green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), (iphdr->frag_off & IP_RF) ? 'R' : '-',
+         (iphdr->frag_off & IP_DF) ? 'D' : '-', (iphdr->frag_off & IP_MF) ? 'M' : '-', gray_nesca.c_str(),
+         green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), (unsigned int)(iphdr->frag_off & IP_OFFMASK), gray_nesca.c_str(),
+         green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), (unsigned int)iphdr->ttl, gray_nesca.c_str(),
+         green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), (unsigned int)iphdr->protocol, gray_nesca.c_str(),
+         green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), ntohs(iphdr->check), gray_nesca.c_str(),
+         green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), inet_ntoa(*(struct in_addr*)&iphdr->saddr), gray_nesca.c_str(),
+         green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), inet_ntoa(*(struct in_addr*)&iphdr->daddr), gray_nesca.c_str());
+}
+
+void nesca_prints::log_udphdr(struct udp_header *udphdr)
+{
+  gray_nesca_on();
+  printf("[^][UDPHEADER]:");
+  reset_colors;
+  printf("%sSource Port:%s %s%u%s, %sDestination Port:%s %s%u%s, %sLength:%s %s%u bytes%s, %sChecksum:%s %s0x%04X%s\n",
+    green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), ntohs(udphdr->uh_sport), gray_nesca.c_str(),
+    green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), ntohs(udphdr->uh_dport), gray_nesca.c_str(),
+    green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), ntohs(udphdr->ulen), gray_nesca.c_str(),
+    green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), ntohs(udphdr->check), gray_nesca.c_str());
+}
+
+void nesca_prints::log_ethhdr(struct eth_hdr *ethhdr)
+{
+  gray_nesca_on();
+  printf("[^][ETHHEADER]:");
+  reset_colors;
+  printf("%sdaddr:%s %02X:%02X:%02X:%02X:%02X:%02X, %ssaddr:%s %02X:%02X:%02X:%02X:%02X:%02X, %stype:%s 0x%04X\n",
+    green_html.c_str(), golder_rod.c_str(),
+    ethhdr->eth_dst.data[0], ethhdr->eth_dst.data[1], ethhdr->eth_dst.data[2],
+    ethhdr->eth_dst.data[3], ethhdr->eth_dst.data[4], ethhdr->eth_dst.data[5],
+    green_html.c_str(), golder_rod.c_str(),
+    ethhdr->eth_src.data[0], ethhdr->eth_src.data[1], ethhdr->eth_src.data[2],
+    ethhdr->eth_src.data[3], ethhdr->eth_src.data[4], ethhdr->eth_src.data[5],
+    green_html.c_str(), golder_rod.c_str(),
+    ntohs(ethhdr->eth_type));
+}
+
+void nesca_prints::easy_packet_trace(u8 *buffer)
+{
+  u8* rbuffer;
+  int len;
+  struct tcp_header  *tcph;
+  struct udp_header  *udph;
+  struct icmp4_header *icmph;
+  struct igmp_header *igmph;
+  struct eth_hdr *ethh;
+
+  struct ip_header *iph = ext_iphdr(buffer);
+
+  printf("\n%s%s[TRACEROUTE]:%slen=%s%u %ssaddr=%s%s\n", gray_nesca.c_str(), print_get_time(get_time()).c_str(), green_html.c_str(), golder_rod.c_str(),
+      ntohs(iph->tot_len), green_html.c_str(), golder_rod.c_str(), inet_ntoa(*(struct in_addr*)&iph->saddr));
+
+  ethh = (struct eth_hdr *)buffer;
+  log_ethhdr(ethh);
+
+  log_iphdr(iph);
+
+  switch (iph->protocol) {
+    case IPPROTO_TCP: {
+      tcph = ext_tcphdr(buffer);
+      log_tcphdr(tcph);
+      break;
+    }
+    case IPPROTO_UDP:
+      udph = ext_udphdr(buffer);
+      log_udphdr(udph);
+      break;
+    case IPPROTO_ICMP:
+      icmph = ext_icmphdr(buffer);
+      log_icmphdr(icmph);
+      break;
+    case IPPROTO_IGMP:
+      igmph = ext_igmphdr(buffer);
+      log_igmphdr(igmph);
+      break;
+  }
+  rbuffer = (u8*)calloc(2048, sizeof(u8));
+  if (!rbuffer)
+    return;
+
+  len = ext_payload(buffer, rbuffer);
+
+  if (len > 0) {
+    gray_nesca_on();
+    std::cout << "[^][PAYLOAD]:";
+    golder_rod_on();
+    print_payload(rbuffer, len);
+    gray_nesca_on();
+    std::cout << "[^][PAYLOAD(ASCII)]:";
+    golder_rod_on();
+    print_payload_ascii(rbuffer, len);
+    reset_colors;
+  }
+
+  free(rbuffer);
 }
 
 std::string

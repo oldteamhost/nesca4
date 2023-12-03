@@ -23,7 +23,7 @@
 int read_packet(struct readfiler *rf, int recv_timeout_ms, u8 **buffer)
 {
   struct in_addr dest;
-  dest.s_addr = inet_addr(rf->dest_ip);
+  dest.s_addr = rf->dest_ip;
   unsigned char* read_buffer = *buffer;
   struct sockaddr_in source;
   int sock, read, elapsed_time;
@@ -59,8 +59,10 @@ int read_packet(struct readfiler *rf, int recv_timeout_ms, u8 **buffer)
         close(sock);
         return -1;
       }
-      if (iph->protocol != rf->protocol || iph->protocol != rf->second_protocol)
-        continue;
+
+      if (rf->protocol > 0)
+        if (iph->protocol != rf->protocol || iph->protocol != rf->second_protocol)
+          continue;
 
       continue;
     }

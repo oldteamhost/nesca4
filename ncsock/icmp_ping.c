@@ -34,7 +34,7 @@ double icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int
   saddr = inet_addr(source_ip);
   daddr = inet_addr(dest_ip);
 
-  rf.dest_ip = dest_ip;
+  rf.dest_ip = daddr;
   rf.protocol = IPPROTO_ICMP;
 
   sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);

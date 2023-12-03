@@ -60,6 +60,9 @@ public:
   bool find;
   bool custom_ttl;
   bool random_dns;
+  bool reply_ddos;
+  u8 reply_ddos_proto = 0;
+  bool traceroute;
   int random_dns_count;
   bool ns_track;
 
