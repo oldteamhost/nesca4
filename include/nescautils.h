@@ -44,6 +44,7 @@ class services_nesca {
 bool check_ansi_support(void);
 std::vector<int> write_ports(std::string mode);
 void logo(void);
+std::string gettypeddos(class arguments_program& argp);
 std::vector<int> parse_range(const std::string& range_string);
 bool __check_root_perms();
 std::string to_lower_case(std::string str);

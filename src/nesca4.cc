@@ -90,7 +90,7 @@ int main(int argc, char** argv)
     puts("-> NOTE: Usually packages that have a payload greater than 1400 are rejected.");
     reset_colors;
   }
-  if ((argp.tcp_ddos || argp.icmp_ddos) && argp.data_string.empty()) {
+  if ((argp.tcp_ddos || argp.icmp_ddos || argp.ip_ddos || argp.udp_ddos) && argp.data_string.empty()) {
     np.golder_rod_on();
     puts("-> NOTE: To enhance DDOS you need to use (-data-len) to add payload.");
     reset_colors;
@@ -281,6 +281,7 @@ int main(int argc, char** argv)
     u8 proto;
     u16 port;
     u8 type;
+    std::string resip;
 
     if (argp.icmp_ddos) {
       proto = IPPROTO_ICMP;
@@ -300,23 +301,27 @@ int main(int argc, char** argv)
       port = 0;
     }
 
+
     std::vector<std::future<void>> futures_ddos;
     thread_pool ddos_pool(argp.ddos_threads);
 
     int ipc = 0;
-    int totalsuccess = 0;
 
     auto start_time_ddos = std::chrono::high_resolution_clock::now();
     for (const auto& ip : temp_vector) {
+      if (argp.tcp_ddos || argp.udp_ddos)
+        resip = ip + ":" + std::to_string(port);
+      else
+        resip = ip;
+
       double temprtt;
-      totalsuccess += argp.success_packet_ddos;
-      argp.success_packet_ddos = 0;
       ipc++;
+
       if (ipc > 1)
         putchar('\n');
 
       temprtt = n.get_rtt(ip);
-      std::cout << np.main_nesca_out("RUN", ip, 5, "rDNS", "RTT", n.get_new_dns(ip), std::to_string(temprtt)+"ms","") << std::endl;
+      std::cout << np.main_nesca_out("NETWORK-TEST", ip, 5, "rDNS", "RTT", n.get_new_dns(ip), std::to_string(temprtt)+"ms","") << std::endl;
       daddr = inet_addr(ip.c_str());
 
       for (int i = 1; i <= argp.ddos_packets; i++){
@@ -329,13 +334,13 @@ int main(int argc, char** argv)
           futures_ddos.clear();
         }
         if (argp.ddos_packets < 20) {
-          std::cout << np.main_nesca_out("REPORT", ip, 3, "packets", "out of",
-              std::to_string(i), std::to_string(argp.ddos_packets),"") << std::endl;
+            std::cout << np.main_nesca_out("SENT", resip, 3, "packets", "type",
+                std::to_string(i), gettypeddos(argp),"") << std::endl;
         }
         else {
           if (i % (argp.ddos_packets / 5) == 0) {
-            std::cout << np.main_nesca_out("REPORT", ip, 3, "packets", "out of",
-                std::to_string(i), std::to_string(argp.ddos_packets),"") << std::endl;
+            std::cout << np.main_nesca_out("SENT", resip, 3, "packets", "type",
+                std::to_string(i), gettypeddos(argp),"") << std::endl;
           }
         }
       }
@@ -350,7 +355,7 @@ int main(int argc, char** argv)
     putchar('\n');
 
     np.golder_rod_on();
-    std::cout << "-> NESCA finished " << totalsuccess << " packets (success) in "
+    std::cout << "-> NESCA finished " << argp.success_packet_ddos << " packets (success) in "
       << std::fixed << std::setprecision(2) << duration_ddos.count() / 1000000.0 << " seconds\n";
     reset_colors;
 
@@ -680,7 +685,7 @@ ok:
 void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int port, bool ip_ddos)
 {
   u32 seq, datalen = 0;
-  int source_port, sock, res, recvtime;
+  int source_port, sock, res, recvtime, resread;
   struct in_addr addr_struct;
   u16 ttl;
   u8 *buffer;
@@ -725,13 +730,16 @@ void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int p
     return;
 
   if (proto == IPPROTO_TCP)
-    send_tcp_packet(sock, saddr, daddr, ttl, df, 0, 0, source_port, port, seq, 0, 0, argp.tcpflags, 1024, 0, 0, 0, data, datalen, argp.frag_mtu);
+    res = send_tcp_packet(sock, saddr, daddr, ttl, df, 0, 0, source_port, port, seq, 0, 0, argp.tcpflags, 1024, 0, 0, 0, data, datalen, argp.frag_mtu);
   else if (proto == IPPROTO_ICMP)
-    send_icmp_packet(sock, saddr, daddr, ttl, df, 0, 0, seq, 0, type, data, datalen, argp.frag_mtu);
+    res = send_icmp_packet(sock, saddr, daddr, ttl, df, 0, 0, seq, 0, type, data, datalen, argp.frag_mtu);
   else if (proto == IPPROTO_UDP)
-    send_udp_packet(sock, saddr, daddr, ttl, generate_ident(), NULL, 0, source_port, port, df, data, datalen, argp.frag_mtu);
+    res = send_udp_packet(sock, saddr, daddr, ttl, generate_ident(), NULL, 0, source_port, port, df, data, datalen, argp.frag_mtu);
   else if (ip_ddos)
-    send_ip_empty(sock, saddr, daddr, ttl, proto, df, 0, 0, NULL, 0, argp.frag_mtu);
+    res = send_ip_empty(sock, saddr, daddr, ttl, proto, df, 0, 0, NULL, 0, argp.frag_mtu);
+
+  if (res != -1)
+    argp.success_packet_ddos++;
 
   ls.lock();
   close(sock);
@@ -747,8 +755,8 @@ void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int p
   rf.dest_ip = daddr;
   rf.protocol = argp.reply_ddos_proto;
 
-  res = read_packet(&rf, recvtime, &buffer);
-  if (res == -1) {
+  resread = read_packet(&rf, recvtime, &buffer);
+  if (resread == -1) {
     ls.lock();
     np.nlog_error("The package was not accepted.\n");
     ls.unlock();
