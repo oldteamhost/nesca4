@@ -1277,7 +1277,7 @@ void version_menu(void)
   std::cout << print_get_time(get_time());
   std::cout << "[NB]:";
   np.golder_rod_on();
-  std::cout << "Don`t read \"do_not_read.txt\"" << std::endl;
+  std::cout << "Don`t read \"do_not_read/\"" << std::endl;
   reset_colors;
   std::cout << std::endl;
   exit(0);
