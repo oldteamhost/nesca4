@@ -2,6 +2,7 @@ admin
 anonymous
 ftp
 root
+root123
 user
 12345
 administrator

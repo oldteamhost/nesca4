@@ -1,8 +1,14 @@
 admin
-ftp
+admin123
 root
+root123
+1111
+11111
+administrator
+anonymous
+qwerty123
+qwerty
 user
 12345
-administrator
 1234
-123
+123123

