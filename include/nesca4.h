@@ -72,7 +72,7 @@
 #include "../ncsock/include/base.h"
 
 /*Угадайте?*/
-#define _VERSION "20231202"
+#define _VERSION "20231205"
 
 void usage(void);
 void version_menu(void);
