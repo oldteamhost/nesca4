@@ -71,6 +71,7 @@ public:
   int _custom_source_port;
 
   bool ip_ddos;
+  bool hidden_eth;
   u8 ip_ddos_proto = 2;
   u8 icmp_ddos_type = 8;
 

@@ -97,9 +97,9 @@ int main(int argc, char** argv)
     puts("-> NOTE: To enhance DDOS you need to use (-data-len) to add payload.");
     reset_colors;
   }
-  if (argp.reply_ddos) {
+  if (argp.reply_ddos && !argp.hidden_eth) {
     np.golder_rod_on();
-    puts("-> NOTE: Try not to show the ETH HEADER field to strangers, it is not IP but MAC addresses, including yours.");
+    puts("-> NOTE: Try not to show the ETH HEADER field to outsiders, or use (-hide-eth).");
     reset_colors;
   }
 
@@ -783,7 +783,7 @@ void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int p
   }
 
   ls.lock();
-  np.easy_packet_trace(buffer);
+  np.easy_packet_trace(buffer, argp.hidden_eth);
   ls.unlock();
 
   ls.lock();
@@ -1751,6 +1751,9 @@ void parse_args(int argc, char** argv)
         break;
       case 95:
         argp.no_proc = true;
+        break;
+      case 64:
+        argp.hidden_eth = true;
         break;
       case 6:
         argp.ip_ddos = true;

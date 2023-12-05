@@ -97,6 +97,7 @@ std::vector<std::string> resolv_hosts(std::vector<std::string> hosts);
 
 const struct
 option long_options[] = {
+  {"hide-eth", no_argument, 0, 64},
   {"http-timeout", required_argument, 0, 22},
   {"psh", no_argument, 0, 3},
   {"reply", required_argument, 0, 4},

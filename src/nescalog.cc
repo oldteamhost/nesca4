@@ -155,7 +155,7 @@ void nesca_prints::log_ethhdr(struct eth_hdr *ethhdr)
     ntohs(ethhdr->eth_type));
 }
 
-void nesca_prints::easy_packet_trace(u8 *buffer)
+void nesca_prints::easy_packet_trace(u8 *buffer, bool hidden_eth)
 {
   u8* rbuffer;
   int len = -1;
@@ -171,7 +171,8 @@ void nesca_prints::easy_packet_trace(u8 *buffer)
       ntohs(iph->tot_len), green_html.c_str(), golder_rod.c_str(), inet_ntoa(*(struct in_addr*)&iph->saddr));
 
   ethh = (struct eth_hdr *)buffer;
-  log_ethhdr(ethh);
+  if (!hidden_eth)
+    log_ethhdr(ethh);
 
   log_iphdr(iph);
 

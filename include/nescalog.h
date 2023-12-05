@@ -67,7 +67,7 @@ class nesca_prints {
         std::string& dest_ip, int source_port, int dest_port,
         std::string message, int ttl, int id, int win, int seq, int iplen);
 
-    void easy_packet_trace(u8 *buffer);
+    void easy_packet_trace(u8 *buffer, bool hidden_eth);
 
     void disable_colors(void);
     void golder_rod_on(void);
