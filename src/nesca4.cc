@@ -721,6 +721,7 @@ check:
   }
 }
 
+/* Главная функция для DDOS и NETWORK TEST */
 void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int port, bool ip_ddos)
 {
   u32 seq, datalen = 0;
@@ -811,6 +812,7 @@ void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int p
   ls.unlock();
 }
 
+/* Главная функция для HTTP запроса */
 #define HTTP_BUFLEN 65535
 void nesca_http(const std::string& ip, const u16 port, const int timeout_ms)
 {
@@ -850,6 +852,83 @@ void nesca_http(const std::string& ip, const u16 port, const int timeout_ms)
   ls.lock();
   n.add_html(ip, res);
   ls.unlock();
+}
+
+/* Главная функция для обработки. */
+void processing_tcp_scan_ports(std::string ip, int port, int result)
+{
+  argp.result_success_ports++;
+  argp.result_success_ip++;
+  std::stringstream stream;
+  stream << std::fixed << std::setprecision(2) << n.get_rtt(ip);
+  std::string rtt_log = stream.str(); std::string protocol = sn.probe_service(port);
+  std::string result1 = ip + ":" + std::to_string(port);
+
+  /*Класс с обработками.*/
+  std::unique_ptr<ports_strategy> ports_strategy_;
+
+  /*Открытый порт.*/
+  if (result == PORT_OPEN) {
+    print_port_state(PORT_OPEN, port, sn.probe_service(port), np);
+    if (argp.no_proc)
+      return;
+
+    if (sn.probe_service(port) == "HTTP")
+      ports_strategy_ = std::make_unique<http_strategy>();
+    else if (port == 20 || port == 21)
+      ports_strategy_ = std::make_unique<ftp_strategy>();
+    else if (port == 554)
+      ports_strategy_ = std::make_unique<rtsp_strategy>();
+    else if (port == 37777)
+      ports_strategy_ = std::make_unique<rvi_strategy>();
+    else if (port == 8000)
+      ports_strategy_ = std::make_unique<hikvision_strategy>();
+    else if (port == 443)
+      ports_strategy_ = std::make_unique<https_strategy>();
+    else if (port == 25)
+      ports_strategy_ = std::make_unique<smtp_strategy>();
+    else
+      ports_strategy_ = std::make_unique<else_strategy>();
+
+    /*Запуск стратегий.*/
+    if (ports_strategy_)
+      ports_strategy_->handle(ip, result1, rtt_log, protocol, port, argp, np, n, sn);
+
+    if (argp.json_save) {
+      nesca_port_details npd;
+      npd.port = port;
+      npd.protocol = protocol.c_str();
+      npd.http_title = ports_strategy_->http_title.c_str();
+      npd.screenshot = ports_strategy_->screenshot_base64.c_str();
+      npd.content = "";
+      npd.passwd = ports_strategy_->brute_temp.c_str();
+      npd.type_target = ports_strategy_->type_target.c_str();
+      nesca_json_save_port(argp.json_save_path, &npd);
+    }
+  }
+  /*Ошибочный порт.*/
+  else if (result == PORT_ERROR) {
+    if (argp.print_errors)
+      print_port_state(PORT_ERROR, port, sn.probe_service(port), np);
+  }
+  /*Закрытый порт.*/
+  else if (result == PORT_CLOSED) {
+    if (argp.debug)
+      print_port_state(PORT_CLOSED, port, sn.probe_service(port), np);
+  }
+  /*Фильтруемый порт.*/
+  else if (result == PORT_FILTER) {
+    if (argp.debug)
+      print_port_state(PORT_FILTER, port, sn.probe_service(port), np);
+  }
+  /*Открыт или фильтруеться.*/
+  else if (result == PORT_OPEN_OR_FILTER) {
+    print_port_state(PORT_OPEN_OR_FILTER, port, sn.probe_service(port), np);
+  }
+  /*Не фильтруеться.*/
+  else if (result == PORT_NO_FILTER) {
+    print_port_state(PORT_NO_FILTER, port, sn.probe_service(port), np);
+  }
 }
 
 void process_port(const std::string& ip, std::vector<uint16_t> ports, int port_type)
@@ -937,90 +1016,6 @@ void importfile(void)
   resolv_hosts(temp_ips);
 }
 
-void
-processing_tcp_scan_ports(std::string ip, int port, int result)
-{
-  argp.result_success_ports++;
-  argp.result_success_ip++;
-  std::stringstream stream;
-  stream << std::fixed << std::setprecision(2) << n.get_rtt(ip);
-  std::string rtt_log = stream.str(); std::string protocol = sn.probe_service(port);
-  std::string result1 = ip + ":" + std::to_string(port);
-
-  /*Класс с обработками.*/
-  std::unique_ptr<ports_strategy> ports_strategy_;
-
-  /*Открытый порт.*/
-  if (result == PORT_OPEN) {
-    print_port_state(PORT_OPEN, port, sn.probe_service(port), np);
-    if (argp.no_proc)
-      return;
-
-    if (sn.probe_service(port) == "HTTP") {
-      ports_strategy_ = std::make_unique<http_strategy>();
-    }
-    else if (port == 20 || port == 21) {
-      ports_strategy_ = std::make_unique<ftp_strategy>();
-    }
-    else if (port == 554) {
-      ports_strategy_ = std::make_unique<rtsp_strategy>();
-    }
-    else if (port == 37777) {
-      ports_strategy_ = std::make_unique<rvi_strategy>();
-    }
-    else if (port == 8000) {
-      ports_strategy_ = std::make_unique<hikvision_strategy>();
-    }
-    else if (port == 443) {
-      ports_strategy_ = std::make_unique<https_strategy>();
-    }
-    else if (port == 25) {
-      ports_strategy_ = std::make_unique<smtp_strategy>();
-    }
-    else {
-      ports_strategy_ = std::make_unique<else_strategy>();
-    }
-    /*Запуск стратегий.*/
-    if (ports_strategy_)
-      ports_strategy_->handle(ip, result1, rtt_log, protocol, port, argp, np, n, sn);
-
-    if (argp.json_save) {
-      nesca_port_details npd;
-      npd.port = port;
-      npd.protocol = protocol.c_str();
-      npd.http_title = ports_strategy_->http_title.c_str();
-      npd.screenshot = ports_strategy_->screenshot_base64.c_str();
-      npd.content = "";
-      npd.passwd = ports_strategy_->brute_temp.c_str();
-      npd.type_target = ports_strategy_->type_target.c_str();
-      nesca_json_save_port(argp.json_save_path, &npd);
-    }
-  }
-
-  /*Ошибочный порт.*/
-  else if (result == PORT_ERROR) {
-    if (argp.print_errors)
-      print_port_state(PORT_ERROR, port, sn.probe_service(port), np);
-  }
-  /*Закрытый порт.*/
-  else if (result == PORT_CLOSED) {
-    if (argp.debug)
-      print_port_state(PORT_CLOSED, port, sn.probe_service(port), np);
-  }
-  /*Фильтруемый порт.*/
-  else if (result == PORT_FILTER) {
-    if (argp.debug)
-      print_port_state(PORT_FILTER, port, sn.probe_service(port), np);
-  }
-  /*Открыт или фильтруеться.*/
-  else if (result == PORT_OPEN_OR_FILTER) {
-    print_port_state(PORT_OPEN_OR_FILTER, port, sn.probe_service(port), np);
-  }
-  /*Не фильтруеться.*/
-  else if (result == PORT_NO_FILTER) {
-    print_port_state(PORT_NO_FILTER, port, sn.probe_service(port), np);
-  }
-}
 
 void usage(void)
 {
