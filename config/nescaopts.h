@@ -65,6 +65,7 @@ public:
   bool traceroute;
   int random_dns_count;
   bool ns_track;
+  int http_threads;
 
   int _custom_ttl;
   int _custom_source_port;
@@ -118,7 +119,6 @@ public:
   bool save_camera_screens;
 
   bool ping_off;
-  bool no_get_path;
 
   int ddos_packets = 5000;
 
@@ -129,6 +129,8 @@ public:
   bool random_ip;
   bool no_get_dns;
   bool json_save;
+  bool custom_http_threads;
+  int http_timeout = 1100;
   int random_ip_count;
   const char* json_save_path;
   int dns_threads;

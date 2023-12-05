@@ -358,7 +358,8 @@ int main(int argc, char** argv)
   /*Иницилизация брутфорса.*/
   init_bruteforce();
 
-  n.group_size = GROUP_MIN_SIZE_DEFAULT;
+  if (!argp.custom_g_min)
+    n.group_size = GROUP_MIN_SIZE_DEFAULT;
 
   /*Установка настроек группы и потоков.*/
   if (!argp.custom_g_rate){
@@ -386,7 +387,7 @@ int main(int argc, char** argv)
   if (argp.my_life_my_rulez)
     n.group_rate = 1000;
 
-  /*Потоки для сканирования портов.*/
+  /* Потоки для сканирования портов. */
   argp._threads = n.max_group_size;
 
   long long size = temp_vector.size();
@@ -453,8 +454,10 @@ int main(int argc, char** argv)
 
     auto start_time_proc = std::chrono::high_resolution_clock::now();
 
+    /* Расчет потоков */
+    argp.http_threads = calculate_threads(argp.speed_type, n.current_group.size());
     std::vector<std::future<void>> futures_http;
-    thread_pool http_pool(1000);
+    thread_pool http_pool(argp.http_threads);
 
     if (!argp.no_proc) {
       for (const auto& ip : n.current_group) {
@@ -468,8 +471,8 @@ int main(int argc, char** argv)
         if (!http_port)
           continue;
 
-        futures_http.emplace_back(http_pool.enqueue(nesca_http, ip, http_port, 1100));
-        if (futures_http.size() >= static_cast<long unsigned int>(1000)) {
+        futures_http.emplace_back(http_pool.enqueue(nesca_http, ip, http_port, argp.http_timeout));
+        if (futures_http.size() >= static_cast<long unsigned int>(argp.http_threads)) {
           for (auto& future : futures_http)
             future.get();
 
@@ -514,7 +517,6 @@ int main(int argc, char** argv)
         }
       }
     }
-    
 
     n.clean_ports();
     n.clean_group();
@@ -806,14 +808,12 @@ void nesca_http(const std::string& ip, const u16 port, const int timeout_ms)
 
   send_http_request(ip.c_str(), port, timeout_ms, &hh, resbuf, HTTP_BUFLEN);
 
-  if (argp.no_get_path != true) {
-    get_redirect(resbuf, redirect, 4096);
-    redirectres = redirect;
+  get_redirect(resbuf, redirect, 4096);
+  redirectres = redirect;
 
-    ls.lock();
-    n.add_redirect(ip, redirect);
-    ls.unlock();
-  }
+  ls.lock();
+  n.add_redirect(ip, redirect);
+  ls.unlock();
 
   if (!redirectres.empty()) {
     hh.path = redirectres.c_str();
@@ -1089,15 +1089,21 @@ void usage(void)
   std::cout << "  -reqnum: Set the number of packages for the host.\n";
   std::cout << "  -reply: Read response packets from the specified protocol, (0 = no protocol binding).\n";
   np.golder_rod_on();
+  std::cout << "PROCCESSING SCAN:" << std::endl;
+  reset_colors;
+  std::cout << "  -TH: Set max thread(s) for HTTP requests.\n";
+  std::cout << "  -http-timeout: Edit timeout for recv HTTP requests.\n";
+  std::cout << "  -find <target1[,target2][,target3],...>: Search for keywords on the host.\n";
+  std::cout << "  -http-response: Display HTTP response.\n";
+  std::cout << "  -sitemap: Get /sitemap.xml.\n";
+  std::cout << "  -robots: Get /robots.txt.\n";
+  std::cout << "  -no-proc: Skip main processing.\n";
+  np.golder_rod_on();
   std::cout << "PORT SCAN GROUPS:" << std::endl;
   reset_colors;
   std::cout << "  -max-group <num>: Edit max size group & threads for port scan.\n";
   std::cout << "  -min-group <num>: Edit min size group & threads for port scan.\n";
   std::cout << "  -rate-group <num>: Edit the value by which the group is incremented.\n";
-  np.golder_rod_on();
-  std::cout << "DELISEARCH SCAN:" << std::endl;
-  reset_colors;
-  std::cout << "  -find <target1[,target2][,target3],...>: Search for keywords on the host.\n";
 #ifdef HAVE_NODE_JS
   np.golder_rod_on();
   std::cout << "SAVE SCREENSHOTS:" << std::endl;
@@ -1120,15 +1126,7 @@ void usage(void)
   reset_colors;
   std::cout << "  -db, -debug: On debug mode, save and display not even working hosts.\n";
   std::cout << "  -er, -error: On display errors.\n";
-  np.golder_rod_on();
-  std::cout << "PRINT OUTPUT:" << std::endl;
-  reset_colors;
-  std::cout << "  -no-proc: Skip main processing.\n";
-  std::cout << "  -no-get-path: Disable getting paths.\n";
   std::cout << "  -log-set <num>: Change the value of ips after which % will be output.\n";
-  std::cout << "  -http-response: Display HTTP response.\n";
-  std::cout << "  -sitemap: Get /sitemap.xml.\n";
-  std::cout << "  -robots: Get /robots.txt.\n";
   np.golder_rod_on();
   std::cout << "COLOR:" << std::endl;
   reset_colors;
@@ -1624,7 +1622,8 @@ void parse_args(int argc, char** argv)
         argp.resol_delay = atoi(optarg);
         break;
       case 50:
-        argp.no_get_path = true;
+        argp.custom_http_threads = true;
+        argp.http_threads = atoi(optarg);
         break;
       case 51:
         argp.get_response = true;
@@ -1730,6 +1729,9 @@ void parse_args(int argc, char** argv)
         break;
       case 8:
         argp.udp_ddos = true;
+        break;
+      case 22:
+        argp.http_timeout = atoi(optarg);
         break;
       case 3:
         argp.type = PSH_SCAN;

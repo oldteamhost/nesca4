@@ -97,7 +97,7 @@ std::vector<std::string> resolv_hosts(std::vector<std::string> hosts);
 
 const struct
 option long_options[] = {
-  /*22*/
+  {"http-timeout", required_argument, 0, 22},
   {"psh", no_argument, 0, 3},
   {"reply", required_argument, 0, 4},
   {"ip", required_argument, 0, 6},
@@ -130,7 +130,7 @@ option long_options[] = {
   {"TP", required_argument, 0, 57},
   {"debug", no_argument, 0, 27},
   {"er", no_argument, 0, 28},
-  {"no-get-path", no_argument, 0, 50},
+  {"TH", required_argument, 0, 50},
   {"import-color", required_argument, 0, 54},
   {"null", no_argument, 0, 91},
   {"fin", no_argument, 0, 92},

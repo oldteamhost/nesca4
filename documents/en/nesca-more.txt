@@ -1,0 +1,45 @@
+[oldteam & lomaster 2023].
+NESCA4 a very underrated opportunity -find.
+
+0. Algorithm:
+  NESCA4 when processing HTTP ports, gets their html code along with HTTP headers, then using this information redirects,
+  and using it gets the page header.
+
+  And the -find flag allows you to find the keyword from all this data, which you pass to it in the arguments.
+  And in response, it will output the full line on which it found your keyword.
+
+  You can specify more than one keyword.
+
+1. Usage:
+    -find <target1[,target2][,target3],...>
+
+  Getting the response code:
+  ----------------------------------------------------
+  sudo ./nesca4 google.com -p 80 -find HTTP/
+
+  The output will be:
+  [FOUND]:HTTP/1.1 200 OK
+  ----------------------------------------------------
+
+  Getting the host:
+  ----------------------------------------------------
+  sudo ./nesca4 google.com -p 80 -find Server:
+
+  The output will be:
+  [FOUND]:Server: gws
+  ----------------------------------------------------
+
+  Getting the date:
+  ----------------------------------------------------
+  sudo ./nesca4 google.com -p 80 -find Date:
+
+  The output will be:
+  [FOUND]:Date: Tue, 05 Dec 2023 14:03:21 GMT
+  ----------------------------------------------------
+
+  You can also do it all together:
+  ----------------------------------------------------
+  sudo ./nesca4 google.com -p 80 -find HTTP/,Server:,Date:
+  ----------------------------------------------------
+
+  And these are just basic examples, there are tons more uses for it.

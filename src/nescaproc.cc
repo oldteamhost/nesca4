@@ -336,9 +336,7 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
 
   get_http_title(htmlpro.c_str(), title, HTTP_BUFFER_SIZE);
 
-  if (argp.no_get_path != true) {
-    redirect = nd.get_redirect(ip);
-  }
+  redirect = nd.get_redirect(ip);
 
   /*http title это из класса.*/
   http_title = title;
@@ -384,7 +382,7 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   brute = than_bruteforce(type_target);
 
   /*Брутфорс HTTP basic auth.*/
-  if (!argp.off_http_brute && type_target != "fuck" && !argp.no_get_path && brute != EOF) {
+  if (!argp.off_http_brute && type_target != "fuck" && brute != EOF) {
     printbrute(ip, port, "HTTP", np);
     brute_temp = threads_bruteforce(argp.http_logins, argp.http_passwords, redirect,
         ip, port, argp.brute_timeout_ms, HTTP_BRUTEFORCE, argp.http_brute_log);
