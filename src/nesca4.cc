@@ -952,40 +952,32 @@ processing_tcp_scan_ports(std::string ip, int port, int result)
 
   /*Открытый порт.*/
   if (result == PORT_OPEN) {
-    if (argp.no_proc) {
-      print_port_state(PORT_OPEN, port, sn.probe_service(port), np);
+    print_port_state(PORT_OPEN, port, sn.probe_service(port), np);
+    if (argp.no_proc)
       return;
-    }
+
     if (sn.probe_service(port) == "HTTP") {
-      print_port_state(PORT_OPEN, port, "HTTP", np);
       ports_strategy_ = std::make_unique<http_strategy>();
     }
     else if (port == 20 || port == 21) {
-      print_port_state(PORT_OPEN, port, "FTP", np);
       ports_strategy_ = std::make_unique<ftp_strategy>();
     }
     else if (port == 554) {
-      print_port_state(PORT_OPEN, port, "RTSP", np);
       ports_strategy_ = std::make_unique<rtsp_strategy>();
     }
     else if (port == 37777) {
-      print_port_state(PORT_OPEN, port, "RVI", np);
       ports_strategy_ = std::make_unique<rvi_strategy>();
     }
     else if (port == 8000) {
-      print_port_state(PORT_OPEN, port, "HIKVISION", np);
       ports_strategy_ = std::make_unique<hikvision_strategy>();
     }
     else if (port == 443) {
-      print_port_state(PORT_OPEN, port, "HTTPS", np);
       ports_strategy_ = std::make_unique<https_strategy>();
     }
     else if (port == 25) {
-      print_port_state(PORT_OPEN, port, "SMTP", np);
       ports_strategy_ = std::make_unique<smtp_strategy>();
     }
     else {
-      print_port_state(PORT_OPEN, port, sn.probe_service(port), np);
       ports_strategy_ = std::make_unique<else_strategy>();
     }
     /*Запуск стратегий.*/
@@ -1021,12 +1013,13 @@ processing_tcp_scan_ports(std::string ip, int port, int result)
       print_port_state(PORT_FILTER, port, sn.probe_service(port), np);
   }
   /*Открыт или фильтруеться.*/
-  else if (result == PORT_OPEN_OR_FILTER)
+  else if (result == PORT_OPEN_OR_FILTER) {
     print_port_state(PORT_OPEN_OR_FILTER, port, sn.probe_service(port), np);
-
+  }
   /*Не фильтруеться.*/
-  else if (result == PORT_NO_FILTER)
+  else if (result == PORT_NO_FILTER) {
     print_port_state(PORT_NO_FILTER, port, sn.probe_service(port), np);
+  }
 }
 
 void usage(void)

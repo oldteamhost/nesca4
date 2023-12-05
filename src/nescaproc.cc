@@ -490,5 +490,4 @@ void else_strategy::handle(const std::string& ip, const std::string& result, con
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn)
 {
   std::string result_print = np.main_nesca_out("BA", result, 3, "", "", "", "",rtt_log, "", protocol);
-  print_port_state(PORT_OPEN, port, sn.probe_service(port), np);
 }
