@@ -483,7 +483,6 @@ int main(int argc, char** argv)
     }
 
     for (const auto& ip : n.current_group) {
-      write_line("kek.txt", ip + "\n");
       if (n.find_port_status(ip, PORT_OPEN)
         || argp.debug || n.find_port_status(ip, PORT_OPEN_OR_FILTER)
         || n.find_port_status(ip, PORT_NO_FILTER)) {
