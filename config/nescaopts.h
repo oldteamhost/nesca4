@@ -53,6 +53,11 @@ public:
   int count_success_ips;
 
   bool custom_g_rate;
+
+  bool rvi_preset;
+  bool hikvision_preset;
+  bool axis_preset;
+
   std::vector<std::string> exclude;
   bool custom_g_max;
   bool custom_g_min;

@@ -103,6 +103,26 @@ int main(int argc, char** argv)
     reset_colors;
   }
 
+  if (argp.hikvision_preset) {
+    argp.ports = {8000};
+    argp.ping_off = true;
+    argp.no_get_dns = true;
+    argp.speed_type = 5;
+  }
+
+  if (argp.rvi_preset) {
+    argp.ports = {37777};
+    argp.ping_off = true;
+    argp.no_get_dns = true;
+    argp.speed_type = 5;
+  }
+
+  if (argp.axis_preset) {
+    argp.ports = write_ports("http");
+    argp.no_get_dns = true;
+    argp.speed_type = 4;
+  }
+
   /*Определение цели.*/
   if (optind < argc) {
     std::vector<std::string> temp_ips;
@@ -1068,7 +1088,7 @@ void usage(void)
   reset_colors;
   std::cout << "  -brute-login <ss,path>: Set path for <ss> logins.\n";
   std::cout << "  -brute-pass <ss,path>: Set path for <ss> passwords.\n";
-  std::cout << "  -brute-timeout <ms>: Edit brute timout.\n";
+  std::cout << "  -brute-delay <ms>: Edit brute timout.\n";
   std::cout << "  -no-brute <ss,2>: Disable <ss> bruteforce.\n";
   std::cout << "  -brute-verbose <ss,2>: Display bruteforce <ss> all info.\n";
   std::cout << "  -brute-log <ss,2>: Display bruteforce <ss> info.\n";
@@ -1108,6 +1128,12 @@ void usage(void)
   std::cout << "  -max-group <num>: Edit max size group & threads for port scan.\n";
   std::cout << "  -min-group <num>: Edit min size group & threads for port scan.\n";
   std::cout << "  -rate-group <num>: Edit the value by which the group is incremented.\n";
+  np.golder_rod_on();
+  std::cout << "PRESET SPECIFICATION:" << std::endl;
+  reset_colors;
+  std::cout << "  -p-axis: Set the setting to search and hack AXIS cameras.\n";
+  std::cout << "  -p-hikvision: Set the setting to search and hack HIKVISION cameras.\n";
+  std::cout << "  -p-rvi: Set the setting to search and hack RVI cameras.\n";
 #ifdef HAVE_NODE_JS
   np.golder_rod_on();
   std::cout << "SAVE SCREENSHOTS:" << std::endl;
@@ -1752,8 +1778,17 @@ void parse_args(int argc, char** argv)
       case 95:
         argp.no_proc = true;
         break;
+      case 56:
+        argp.rvi_preset = true;
+        break;
       case 64:
         argp.hidden_eth = true;
+        break;
+      case 58:
+        argp.hikvision_preset = true;
+        break;
+      case 42:
+        argp.axis_preset = true;
         break;
       case 6:
         argp.ip_ddos = true;

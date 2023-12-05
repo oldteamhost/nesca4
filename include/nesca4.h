@@ -97,6 +97,10 @@ std::vector<std::string> resolv_hosts(std::vector<std::string> hosts);
 
 const struct
 option long_options[] = {
+  {"p-axis", no_argument, 0, 42},
+  {"p-rvi", no_argument, 0, 56},
+  {"p-hikvision", no_argument, 0, 58},
+
   {"hide-eth", no_argument, 0, 64},
   {"http-timeout", required_argument, 0, 22},
   {"psh", no_argument, 0, 3},
@@ -126,7 +130,7 @@ option long_options[] = {
   {"brute-verbose", required_argument, 0, 31},
   {"thread-on-port", no_argument, 0, 48},
   {"no-brute", required_argument, 0, 44},
-  {"brute-timeout", required_argument, 0, 47},
+  {"brute-delay", required_argument, 0, 47},
   {"negatives", required_argument, 0, 76},
   {"TP", required_argument, 0, 57},
   {"debug", no_argument, 0, 27},
