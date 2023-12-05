@@ -381,8 +381,12 @@ int main(int argc, char** argv)
         break;
     }
   }
-  if (!argp.custom_g_max)
-    n.max_group_size = temp_vector.size();
+  if (!argp.custom_g_max) {
+    if (temp_vector.size() < 3000)
+      n.max_group_size = temp_vector.size();
+    else
+      n.max_group_size = 3000;
+  }
 
   if (argp.my_life_my_rulez)
     n.group_rate = 1000;
@@ -792,7 +796,7 @@ void nesca_http(const std::string& ip, const u16 port, const int timeout_ms)
 {
   std::string res, redirectres;
   char resbuf[HTTP_BUFLEN];
-  char redirect[4096];
+  char redirect[40960];
 
   http_header hh;
   hh.user_agent = "ncsock";
@@ -808,7 +812,7 @@ void nesca_http(const std::string& ip, const u16 port, const int timeout_ms)
 
   send_http_request(ip.c_str(), port, timeout_ms, &hh, resbuf, HTTP_BUFLEN);
 
-  get_redirect(resbuf, redirect, 4096);
+  get_redirect(resbuf, redirect, 40960);
   redirectres = redirect;
 
   ls.lock();

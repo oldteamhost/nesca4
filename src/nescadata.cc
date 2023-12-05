@@ -187,7 +187,8 @@ std::string NESCADATA::get_new_dns(const std::string& ip)
 {
   _nescadata_* data = get_data_block(ip);
   if (data)
-    return data->new_dns;
+    if (!data->new_dns.empty())
+      return data->new_dns;
 
   return "n/a";
 }
