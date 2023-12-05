@@ -88,6 +88,7 @@ u8 set_tcp_flags(struct tcp_flags *tf);
 #define ACK_PACKET            5
 #define WINDOW_PACKET         6
 #define MAIMON_PACKET         7
+#define PSH_PACKET            8
 
 int send_tcp_packet(int fd, const u32 saddr, const u32 daddr, int ttl, bool df,
     u8 *ipops, int ipoptlen, u16 sport, u16 dport, u32 seq, u32 ack, u8 reserved, u8 flags, u16 window, u16 urp,

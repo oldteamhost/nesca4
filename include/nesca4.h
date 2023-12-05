@@ -83,8 +83,9 @@ std::string format_percentage(double procents);
 void fix_time(double time);
 
 int nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_ms);
-bool nesca_ping(const char* ip);
+void nesca_ping(const char* ip);
 void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int port, bool ip_ddos);
+void nesca_http(const std::string& ip, const u16 port, const int timeout_ms);
 
 void importfile(void);
 void parse_args(int argc, char** argv);
@@ -97,6 +98,7 @@ std::vector<std::string> resolv_hosts(std::vector<std::string> hosts);
 const struct
 option long_options[] = {
   /*22*/
+  {"psh", no_argument, 0, 3},
   {"reply", required_argument, 0, 4},
   {"ip", required_argument, 0, 6},
   {"udp", no_argument, 0, 8},

@@ -69,8 +69,6 @@ public:
   int _custom_ttl;
   int _custom_source_port;
 
-  bool fin_scan;
-  bool null_scan;
   bool ip_ddos;
   u8 ip_ddos_proto = 2;
   u8 icmp_ddos_type = 8;
@@ -85,16 +83,13 @@ public:
   bool sitemap_xml;
   std::string screenshots_save_path_cam = "";
   std::unordered_map<std::string, std::string> nesca_negatives;
-  bool xmas_scan;
-  bool ack_scan;
+  std::vector<std::string> new_ping_ip;
   bool no_scan;
-  bool window_scan;
 
   uint8_t tcpflags;
   bool custom_tcpflags;
   const char* custom_res_tcpflags;
 
-  bool maimon_scan;
 
   std::string data_string;
   int success_packet_ddos;

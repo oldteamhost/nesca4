@@ -55,6 +55,13 @@ set_flags(uint8_t packet_preset)
       tpf.urg = 0;
       tpf.ack = 1;
       break;
+    case PSH_PACKET:
+      tpf.syn = 0;
+      tpf.fin = 0;
+      tpf.psh = 1;
+      tpf.urg = 0;
+      tpf.ack = 0;
+      break;
   }
   return tpf;
 }

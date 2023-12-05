@@ -48,6 +48,7 @@
 #define ACK_SCAN              5
 #define WINDOW_SCAN           6
 #define MAIMON_SCAN           7
+#define PSH_SCAN              8
 
 std::string get_type(uint8_t type);
 int get_port_status(unsigned char* buffer, uint8_t scan_type);

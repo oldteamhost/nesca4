@@ -28,6 +28,7 @@
 #include "../ncsock/include/utils.h"
 #include <arpa/inet.h>
 #include <bits/getopt_core.h>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -36,6 +37,7 @@
 #include <string>
 #include <unistd.h>
 #include <string.h>
+#include <vector>
 
 nesca_prints np;
 html_output ho;
@@ -93,6 +95,11 @@ int main(int argc, char** argv)
   if ((argp.tcp_ddos || argp.icmp_ddos || argp.ip_ddos || argp.udp_ddos) && argp.data_string.empty()) {
     np.golder_rod_on();
     puts("-> NOTE: To enhance DDOS you need to use (-data-len) to add payload.");
+    reset_colors;
+  }
+  if (argp.reply_ddos) {
+    np.golder_rod_on();
+    puts("-> NOTE: Try not to show the ETH HEADER field to strangers, it is not IP but MAC addresses, including yours.");
     reset_colors;
   }
 
@@ -178,47 +185,33 @@ int main(int argc, char** argv)
   n.negatives_hosts(argp.exclude);
 
   /*Пинг сканирования*/
-  std::vector<std::string> result_main;
   if (!argp.ping_off) {
+    int complete = 0;
+    std::vector<std::future<void>> futures_ping;
     thread_pool ping_pool(argp.threads_ping);
-    int threads_ping = argp.threads_ping;
-    std::vector<std::future<std::pair<bool, std::string>>> futures;
-    auto result_iter = temp_vector.begin();
-    int ip_count_ping = 0;
 
-    while (result_iter != temp_vector.end()) {
-      int remaining_tasks = std::distance(result_iter, temp_vector.end());
-      int tasks_to_execute = (threads_ping < remaining_tasks) ? threads_ping : remaining_tasks;
-      for (int i = 0; i < tasks_to_execute; ++i) {
-        std::string ip = *result_iter;
-        futures.push_back(ping_pool.enqueue([ip]() -> std::pair<bool, std::string> {
-          bool ping = nesca_ping(ip.c_str());
-          return std::make_pair(ping, ip);
-        }));
-        ++result_iter;
-      }
-      for (auto& future : futures) {
-        auto result = future.get();
-        if (result.first) {
-          result_main.push_back(result.second);
-        }
+    for (const auto& ip : temp_vector) {
+      futures_ping.emplace_back(ping_pool.enqueue(nesca_ping, ip.c_str())); complete++;
+      if (futures_ping.size() >= static_cast<long unsigned int>(argp.threads_ping)) {
+        for (auto& future : futures_ping)
+          future.get();
+        futures_ping.clear();
       }
 
-      futures.clear();
-
-      for (auto& future : futures) {future.wait();}
-      ip_count_ping += tasks_to_execute;
-
-      if (ip_count_ping % argp.ping_log == 0) {
-        double procents = (static_cast<double>(ip_count_ping) / temp_vector.size()) * 100;
+      if (complete % 2000 == 0) {
+        double procents = (static_cast<double>(complete) / temp_vector.size()) * 100;
         std::string _result = format_percentage(procents);
-        std::cout << np.main_nesca_out("#", "Ping "+std::to_string(ip_count_ping)+" out of "+
+        std::cout << np.main_nesca_out("#", "Ping "+std::to_string(complete)+" out of "+
         std::to_string(temp_vector.size()) + " IPs", 6, "", "", _result+"%", "", "") << std::endl;
       }
     }
+    for (auto& future : futures_ping)
+      future.wait();
+    futures_ping.clear();
 
-    temp_vector = result_main;
+    temp_vector = argp.new_ping_ip;
     n.update_data_from_ips(temp_vector);
+    n.sort_ips_rtt();
   }
 
   int count_success_ips = temp_vector.size();
@@ -275,6 +268,7 @@ int main(int argc, char** argv)
     return 0;
   }
 
+  /* DDOS или NETWORK TEST режим */
   if (argp.icmp_ddos || argp.tcp_ddos || argp.udp_ddos || argp.ip_ddos) {
     u32 saddr, daddr;
     saddr = inet_addr(argp.source_ip);
@@ -300,7 +294,6 @@ int main(int argc, char** argv)
       proto = argp.ip_ddos_proto;
       port = 0;
     }
-
 
     std::vector<std::future<void>> futures_ddos;
     thread_pool ddos_pool(argp.ddos_threads);
@@ -406,17 +399,14 @@ int main(int argc, char** argv)
   thread_pool pool(argp._threads);
 
   /*Сканирование по группам*/
-  int group_start = 0, ip_count = 0;
+  int ip_count = 0;
   bool first = false;
 
-  while (group_start < size) {
+  while (ip_count < size) {
     auto start_time_scan = std::chrono::high_resolution_clock::now();
-    int group_end = (group_start + static_cast<int>(n.group_size) <
-        static_cast<int>(size)) ? group_start + static_cast<int>(n.group_size) : static_cast<int>(size);
-
     n.create_group();
+    n.increase_group();
 
-    /*Сканирование текущей группы*/
     for (const auto& ip : n.current_group) {
       int log_set;
       ip_count++;
@@ -424,7 +414,7 @@ int main(int argc, char** argv)
       if (argp.custom_log_set)
         log_set = argp.log_set;
       else
-        log_set = n.group_size;
+        log_set = n.group_rate * 3;
 
       if (ip_count % log_set == 0 && !first) {
         first = true;
@@ -457,20 +447,46 @@ int main(int argc, char** argv)
 
     futures.clear();
 
-    /*Увелечение группы.*/
-    n.increase_group();
-    group_start = group_end;
-
     auto end_time_scan = std::chrono::high_resolution_clock::now();
     auto duration_scan = std::chrono::duration_cast<std::chrono::microseconds>(end_time_scan - start_time_scan);
     argp.scan_duration += duration_scan.count() / 1000000.0;
+
     auto start_time_proc = std::chrono::high_resolution_clock::now();
 
-    /*Обработка результатов для текущей группы*/
+    std::vector<std::future<void>> futures_http;
+    thread_pool http_pool(1000);
+
+    if (!argp.no_proc) {
+      for (const auto& ip : n.current_group) {
+        u16 http_port = 0;
+        std::vector<u16> openports = n.get_port_list(ip, PORT_OPEN);
+
+        for (const auto& port : openports) {
+          if (sn.probe_service(port) == "HTTP")
+            http_port = port;
+        }
+        if (!http_port)
+          continue;
+
+        futures_http.emplace_back(http_pool.enqueue(nesca_http, ip, http_port, 1100));
+        if (futures_http.size() >= static_cast<long unsigned int>(1000)) {
+          for (auto& future : futures_http)
+            future.get();
+
+          futures_http.clear();
+        }
+        for (auto& future : futures_http)
+          future.wait();
+
+        futures_http.clear();
+      }
+    }
+
     for (const auto& ip : n.current_group) {
+      write_line("kek.txt", ip + "\n");
       if (n.find_port_status(ip, PORT_OPEN)
         || argp.debug || n.find_port_status(ip, PORT_OPEN_OR_FILTER)
-        || n.find_port_status(ip, PORT_NO_FILTER)){
+        || n.find_port_status(ip, PORT_NO_FILTER)) {
 
         std::cout << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", n.get_new_dns(ip), std::to_string(n.get_rtt(ip))+"ms","") << std::endl;
 
@@ -481,6 +497,7 @@ int main(int argc, char** argv)
           nhd.dns_name = n.get_new_dns(ip).c_str();
           nesca_json_save_host(argp.json_save_path, &nhd);
         }
+
 
         process_port(ip, n.get_port_list(ip, PORT_OPEN), PORT_OPEN);
         process_port(ip, n.get_port_list(ip, PORT_FILTER), PORT_FILTER);
@@ -498,6 +515,7 @@ int main(int argc, char** argv)
         }
       }
     }
+    
 
     n.clean_ports();
     n.clean_group();
@@ -629,7 +647,7 @@ int nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_m
 }
 
 /* Главная функция для пинг сканирования */
-bool nesca_ping(const char* ip)
+void nesca_ping(const char* ip)
 {
   double rtt;
   u8 ttl = random_num(29, 255);
@@ -650,36 +668,32 @@ bool nesca_ping(const char* ip)
 
   if (argp.echo_ping) {
     rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, ICMP_ECHO, 0, 1, ttl, data, datalen, argp.frag_mtu);
-    if (rtt != -1)
-      goto ok;
+    goto check;
   }
   if (argp.syn_ping) {
-    rtt = tcp_ping(SYN_PACKET, ip, argp.source_ip, argp.syn_dest_port, source_port, argp.ping_timeout, ttl, data,
-        datalen, argp.frag_mtu);
-    if (rtt != -1)
-      goto ok;
+    rtt = tcp_ping(SYN_PACKET, ip, argp.source_ip, argp.syn_dest_port, source_port, argp.ping_timeout, ttl, data, datalen, argp.frag_mtu);
+    goto check;
   }
   if (argp.ack_ping) {
-    rtt = tcp_ping(ACK_PACKET, ip, argp.source_ip, argp.syn_dest_port, source_port, argp.ping_timeout, ttl, data,
-        datalen, argp.frag_mtu);
-    if (rtt != -1)
-      goto ok;
+    rtt = tcp_ping(ACK_PACKET, ip, argp.source_ip, argp.syn_dest_port, source_port, argp.ping_timeout, ttl, data, datalen, argp.frag_mtu);
+    goto check;
   }
   if (argp.info_ping) {
     rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, ICMP_INFO_REQUEST, 0, 1, ttl, data, datalen, argp.frag_mtu);
-    if (rtt != -1)
-      goto ok;
+    goto check;
   }
   if (argp.timestamp_ping) {
     rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, ICMP_TIMESTAMP, 0, 1, ttl, data, datalen, argp.frag_mtu);
-    if (rtt != -1)
-      goto ok;
+    goto check;
   }
 
-  return 0;
-ok:
-  n.set_rtt(ip, rtt);
-  return 1;
+check:
+  if (rtt != -1) {
+    ls.lock();
+    n.set_rtt(ip, rtt);
+    argp.new_ping_ip.push_back(ip);
+    ls.unlock();
+  }
 }
 
 void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int port, bool ip_ddos)
@@ -769,6 +783,49 @@ void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int p
 
   ls.lock();
   free(buffer);
+  ls.unlock();
+}
+
+#define HTTP_BUFLEN 65535
+void nesca_http(const std::string& ip, const u16 port, const int timeout_ms)
+{
+  std::string res, redirectres;
+  char resbuf[HTTP_BUFLEN];
+  char redirect[4096];
+
+  http_header hh;
+  hh.user_agent = "ncsock";
+  hh.content_len = 0;
+  hh.content_type = NULL;
+  hh.method = "GET";
+  hh.path = "/";
+  hh.auth_header = NULL;
+  hh.dest_host = ip.c_str();
+
+  if (!n.get_dns(ip).empty())
+    hh.dest_host = n.get_dns(ip).c_str();
+
+  send_http_request(ip.c_str(), port, timeout_ms, &hh, resbuf, HTTP_BUFLEN);
+
+  if (argp.no_get_path != true) {
+    get_redirect(resbuf, redirect, 4096);
+    redirectres = redirect;
+
+    ls.lock();
+    n.add_redirect(ip, redirect);
+    ls.unlock();
+  }
+
+  if (!redirectres.empty()) {
+    hh.path = redirectres.c_str();
+    memset(resbuf, 0, HTTP_BUFLEN);
+    send_http_request(ip.c_str(), port, timeout_ms, &hh, resbuf, HTTP_BUFLEN);
+  }
+
+  res = resbuf;
+
+  ls.lock();
+  n.add_html(ip, res);
   ls.unlock();
 }
 
@@ -980,7 +1037,7 @@ void usage(void)
   np.golder_rod_on();
   std::cout << "PORT SCAN OPTIONS:" << std::endl;
   reset_colors;
-  std::cout << "  -fin, -xmas, -null: Use one of these scanning methods.\n";
+  std::cout << "  -fin, -xmas, -null, -psh: Use one of these scanning methods.\n";
   std::cout << "  -ack, -windows -maimon: Use ack or window or maimon scan method.\n";
   std::cout << "  -scanflags <flags>: Customize TCP scan flag (ACKSYN).\n";
   std::cout << "  -p <port ranges>: Only scan specified port(s) \n    Ex: -p 80; -p 22,80; -p 1-65535;\n";
@@ -1661,7 +1718,6 @@ void parse_args(int argc, char** argv)
         argp.max_ping = true;
         break;
       case 89:
-        argp.ack_scan = true;
         argp.type = ACK_SCAN;
         break;
       case 9:
@@ -1671,24 +1727,21 @@ void parse_args(int argc, char** argv)
         argp.ping_log = atoi(optarg);
         break;
       case 91:
-        argp.null_scan = true;
         argp.type = NULL_SCAN;
         break;
       case 8:
         argp.udp_ddos = true;
         break;
       case 3:
+        argp.type = PSH_SCAN;
         break;
       case 92:
-        argp.fin_scan = true;
         argp.type = FIN_SCAN;
         break;
       case 93:
-        argp.xmas_scan = true;
         argp.type = XMAS_SCAN;
         break;
       case 94:
-        argp.window_scan = true;
         argp.type = WINDOW_SCAN;
         break;
       case 95:
@@ -1699,7 +1752,6 @@ void parse_args(int argc, char** argv)
         argp.ip_ddos_proto = atoi(optarg);
         break;
       case 97:
-        argp.maimon_scan = true;
         argp.type = MAIMON_SCAN;
         break;
       case 101:

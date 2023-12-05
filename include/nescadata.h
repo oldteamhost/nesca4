@@ -33,6 +33,8 @@ struct _nescadata_
   bool rtt_init;       /* Иногда ping может просто skip-утся поэтому нужен флаг для отслежки этого */
   std::string dns;     /* DNS который указал пользователь при вызове ./nesca4 google.com */
   std::string new_dns; /* DNS который получила nesca */
+  std::string html;    /* Результат send_http_request() */
+  std::string redirect;/* Перенаправление */
 
   /* Собственно сюда идут все порты во время сканирования */
   std::vector<_portlist_> ports;
@@ -41,15 +43,25 @@ struct _nescadata_
 class NESCADATA {
   private:
     std::vector<_nescadata_> all_data;
+    std::vector<std::string> temp_ips_group;
     _nescadata_* get_data_block(const std::string& ip);
+    void delete_data_block(const std::string& ip);
   public:
+    void add_html(const std::string& ip, const std::string& html);
+    std::string get_html(const std::string& ip);
+    void sort_ips_rtt(void);
+
+    void add_redirect(const std::string& ip, const std::string& redirect);
+    std::string get_redirect(const std::string& ip);
+
+    short get_port_state(const std::string& ip, uint16_t port);
+    bool find_port_status(const std::string& ip, short state);
+
     void update_data_from_ips(const std::vector<std::string>& updated_ips);
     void set_new_dns(const std::string& ip, const std::string& new_dns);
     std::vector<uint16_t> get_port_list(const std::string& ip, short state);
     void add_port(const std::string& ip, uint16_t port, short state);
     void set_dns(const std::string& ip, const std::string& dns);
-    short get_port_state(const std::string& ip, uint16_t port);
-    bool find_port_status(const std::string& ip, short state);
     void negatives_hosts(const std::vector<std::string> ips);
     void set_rtt(const std::string& ip, double rtt);
     void add_ip(const std::string& ip);
@@ -61,7 +73,7 @@ class NESCADATA {
     void clean_ports(void);
 
     std::vector<std::string> current_group;
-    int group_size, group_rate, max_group_size;
+    int group_size = 0, group_rate = 0, max_group_size = 0;
     void create_group(void);
     void increase_group(void);
     void clean_group(void);

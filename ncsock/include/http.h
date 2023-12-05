@@ -39,7 +39,7 @@ static const char
 base64_dict[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 int send_http_request(const char* ip, const int port, const int timeout_ms,
-      const struct http_header* header, char* response_buffer, size_t buffer_size);
+      struct http_header* header, char* response_buffer, size_t buffer_size);
 
 char* set_basic_auth(const char* user, const char* pass);
 

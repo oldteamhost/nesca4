@@ -158,7 +158,7 @@ void nesca_prints::log_ethhdr(struct eth_hdr *ethhdr)
 void nesca_prints::easy_packet_trace(u8 *buffer)
 {
   u8* rbuffer;
-  int len;
+  int len = -1;
   struct tcp_header  *tcph;
   struct udp_header  *udph;
   struct icmp4_header *icmph;
@@ -198,7 +198,9 @@ void nesca_prints::easy_packet_trace(u8 *buffer)
   if (!rbuffer)
     return;
 
+  /*
   len = ext_payload(buffer, rbuffer);
+  */
 
   if (len > 0) {
     gray_nesca_on();

@@ -14,6 +14,7 @@
 #include "../ncbase/include/base64.h"
 #include "../ncbase/include/binary.h"
 #include "../include/portscan.h"
+#include <cstring>
 
 std::vector<std::string> rtsp_paths = {"/Streaming/Channels/101", "/h264/ch01/main/av_stream",
                                       "/cam/realmonitor?channel=1&subtype=0","/live/main",
@@ -296,30 +297,15 @@ void rtsp_strategy::handle(const std::string& ip, const std::string& result, con
   std::cout << result_print << std::endl;
 }
 
+#define HTTP_BUFFER_SIZE 655354
 void http_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn)
 {
   int brute, robots_txt, sitemap;
-  std::string httpcheck, httpcheck1, httpcheck2, redirect;
-  char title[2048];
-  char buffer[2048];
-  char response_buffer[4096];
+  std::string httpcheck, httpcheck1, httpcheck2, redirect, htmlpro;
+  char title[HTTP_BUFFER_SIZE];
 
-  http_header hh;
-  hh.user_agent = "ncsock";
-  hh.content_len = 0;
-  hh.content_type = "";
-  hh.method = "GET";
-  hh.path = "/";
-  hh.dest_host = nd.get_dns(ip).c_str();
-
-  if (std::string(hh.dest_host) == "n/a")
-    hh.dest_host = ip.c_str();
-
-  hh.auth_header = NULL;
-
-  /* Получение заголовков и кода страницы. */
-  send_http_request(ip.c_str(), 80, 1200, &hh, response_buffer, sizeof(response_buffer));
+  htmlpro = nd.get_html(ip);
 
 #ifdef HAVE_NODE_JS
   if (argp.save_screenshots) {
@@ -348,21 +334,11 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   }
 #endif
 
-  /*Получение перенаправления.*/
+  get_http_title(htmlpro.c_str(), title, HTTP_BUFFER_SIZE);
+
   if (argp.no_get_path != true) {
-    get_redirect(response_buffer, buffer, sizeof(buffer));
-    redirect = buffer;
+    redirect = nd.get_redirect(ip);
   }
-
-  /*Второй запрос HTTP по перенаправлению*/
-  if (!redirect.empty()) {
-    hh.path = redirect.c_str();
-    memset(response_buffer, 0, sizeof(response_buffer));
-    send_http_request(ip.c_str(), 80, 1100, &hh, response_buffer, sizeof(response_buffer));
-  }
-
-  /*Получение заголовка.*/
-  get_http_title(response_buffer, title, sizeof(title));
 
   /*http title это из класса.*/
   http_title = title;
@@ -379,7 +355,7 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
       }
     }
     else if (second == "2" || second == "code" || second == "header") {
-      if(contains_word(first, response_buffer)) {
+      if(contains_word(first, htmlpro.c_str())) {
         if (argp.debug){np.nlog_custom("WARNING", "Skip negative: "+first+"\n", 2);}
         return;
       }
@@ -395,7 +371,7 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   /*Получение характеристики.*/
   type_target = "n/a";
   httpcheck = set_target_at_path(redirect);
-  httpcheck1 = set_target_at_http_header(response_buffer);
+  httpcheck1 = set_target_at_http_header(htmlpro.c_str());
   httpcheck2 = set_target_at_title(title);
 
   if (httpcheck != "fuck")
@@ -471,13 +447,13 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   /*Вывод ответа http.*/
   if (argp.get_response) {
     np.yellow_html_on();
-    std::cout << response_buffer << std::endl;
+    std::cout << htmlpro << std::endl;
     reset_colors;
   }
 
   if (argp.find) {
     for (const auto& target : argp.find_target){
-      std::vector<std::string> finds = find_sentences_with_word(target, response_buffer);
+      std::vector<std::string> finds = find_sentences_with_word(target, htmlpro);
       if (!finds.empty()) {
         for (const auto& find : finds){
           np.gray_nesca_on();

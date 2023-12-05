@@ -7,13 +7,13 @@
 
 #include "../include/nescadata.h"
 #include <cmath>
+#include <cstdio>
 #include <vector>
 #include <unordered_set>
 
 _nescadata_* NESCADATA::get_data_block(const std::string& ip)
 {
-  auto it = std::find_if(all_data.begin(), all_data.end(),
-      [&ip](const _nescadata_& data) {
+  auto it = std::find_if(all_data.begin(), all_data.end(), [&ip](const _nescadata_& data) {
     return data.ip == ip;
   });
   if (it != all_data.end())
@@ -27,6 +27,36 @@ void NESCADATA::set_new_dns(const std::string& ip, const std::string& new_dns)
   _nescadata_* data = get_data_block(ip);
   if (data)
     data->new_dns = new_dns;
+}
+
+void NESCADATA::add_redirect(const std::string& ip, const std::string& redirect)
+{
+  _nescadata_* data = get_data_block(ip);
+  if (data)
+    data->redirect = redirect;
+}
+
+std::string NESCADATA::get_redirect(const std::string& ip)
+{
+  _nescadata_* data = get_data_block(ip);
+  if (data)
+    return data->redirect;
+  return "n/a";
+}
+
+void NESCADATA::add_html(const std::string& ip, const std::string& html)
+{
+  _nescadata_* data = get_data_block(ip);
+  if (data)
+    data->html = html;
+}
+
+std::string NESCADATA::get_html(const std::string& ip)
+{
+  _nescadata_* data = get_data_block(ip);
+  if (data)
+    return data->html;
+  return "n/a";
 }
 
 void NESCADATA::clean_ports(void)
@@ -88,7 +118,7 @@ void NESCADATA::update_data_from_ips(const std::vector<std::string>& updated_ips
 {
   std::vector<_nescadata_> new_all_data;
   for (const std::string& ip : updated_ips) {
-    _nescadata_* data = get_data_block(ip);
+    _nescadata_ *data = get_data_block(ip);
     if (data)
       new_all_data.push_back(*data);
   }
@@ -171,6 +201,13 @@ std::string NESCADATA::get_dns(const std::string& ip)
   return "n/a";
 }
 
+void NESCADATA::delete_data_block(const std::string& ip)
+{
+  all_data.erase(std::remove_if(all_data.begin(), all_data.end(), [&ip](const _nescadata_& data) {
+    return data.ip == ip;
+  }), all_data.end());
+}
+
 double NESCADATA::get_rtt(const std::string& ip)
 {
   _nescadata_* data = get_data_block(ip);
@@ -180,17 +217,27 @@ double NESCADATA::get_rtt(const std::string& ip)
   return -1;
 }
 
-void NESCADATA::create_group(void)
+void NESCADATA::sort_ips_rtt(void)
 {
   std::vector<std::string> temp_ips = get_all_ips();
+
   std::sort(temp_ips.begin(), temp_ips.end(), [this](const std::string& a, const std::string& b) {
     double rtt_a = get_rtt(a), rtt_b = get_rtt(b);
     return rtt_a < rtt_b;
   });
 
-  for (int i = 1; i <= group_size && !temp_ips.empty(); i++) {
-    current_group.push_back(std::move(temp_ips[0]));
-    temp_ips.erase(temp_ips.begin());
+  update_data_from_ips(temp_ips);
+}
+
+void NESCADATA::create_group(void)
+{
+  std::vector<std::string> temp_ips = get_all_ips();
+
+  for (int i = 0; i < group_size && i < (int)temp_ips.size(); i++) {
+    if (std::find(temp_ips_group.begin(), temp_ips_group.end(), temp_ips[i]) == temp_ips_group.end()) {
+      temp_ips_group.push_back(temp_ips[i]);
+      current_group.push_back(temp_ips[i]);
+    }
   }
 }
 

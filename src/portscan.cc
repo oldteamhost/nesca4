@@ -37,6 +37,7 @@ int get_port_status(unsigned char* buffer, uint8_t scan_type)
 
       return PORT_OPEN_OR_FILTER;
     }
+    case PSH_SCAN:
     case FIN_SCAN:
     case XMAS_SCAN:
     case NULL_SCAN: {

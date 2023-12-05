@@ -9,29 +9,26 @@
 
 char* clean_url(const char* url)
 {
-  const char *https_prefix = "https://";
-  const char *http_prefix = "http:///";
-  const char *http_prefix_alt = "http://";
-  char *modified_url;
-  u64 url_length;
+  char* dns = NULL;
+  const char* http_prefix = "http://";
+  const char* https_prefix = "https://";
+  size_t dnslen;
+  char* slash_pos;
 
   if (strncmp(url, https_prefix, strlen(https_prefix)) == 0)
     url += strlen(https_prefix);
   else if (strncmp(url, http_prefix, strlen(http_prefix)) == 0)
     url += strlen(http_prefix);
-  else if (strncmp(url, http_prefix_alt, strlen(http_prefix_alt)) == 0)
-    url += strlen(http_prefix_alt);
 
-  url_length = strlen(url);
-
-  if (url_length > 0 && url[url_length - 1] == '/') {
-    modified_url = (char*)malloc(url_length);
-    strncpy(modified_url, url, url_length - 1);
-    modified_url[url_length - 1] = '\0';
-
-    return modified_url;
+  slash_pos = strchr(url, '/');
+  if (slash_pos != NULL) {
+    dnslen = slash_pos - url;
+    dns = malloc(dnslen + 1);
+    strncpy(dns, url, dnslen);
+    dns[dnslen] = '\0';
   }
+  else
+    dns = strdup(url);
 
-  return strdup(url);
+  return dns;
 }
-
