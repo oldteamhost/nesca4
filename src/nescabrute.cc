@@ -53,7 +53,7 @@ threads_bruteforce(const std::vector<std::string>& login, std::vector<std::strin
         }
 
         combinations++;
-        if (combinations % 20 == 0) {
+        if (combinations % 50 == 0) {
           int procents = (combinations * 100) / total;
           std::cout << np1.main_nesca_out("#", "BRUTE "+std::to_string(combinations)+" out of "+std::to_string(total) +" passwd", 6, "", "", std::to_string(procents)+"%", "", "") << std::endl;
         }
@@ -151,13 +151,22 @@ threads_brute_hikvision(const std::string ip, const std::vector<std::string> log
   std::vector<std::string> results;
   std::vector<std::future<void>> futures;
   thread_pool pool(100);
+  int combinations = 0;
+  int total = logins.size() * passwords.size();
+  int procents;
 
   for (const auto& login : logins) {
     for (const auto& password : passwords) {
-      delayy(brute_timeout_ms);
-      futures.push_back(pool.enqueue([ip, login, password, brute_log, path, &results]() {
-        std::string temp = brute_hikvision(ip, login, password, brute_log, path);
+      if (combinations % 50 == 0) {
+        procents = (combinations * 100) / total;
+        std::cout << np1.main_nesca_out("#", "BRUTE "+std::to_string(combinations)+" out of "+
+          std::to_string(total) +" passwd", 6, "", "", std::to_string(procents)+"%", "", "") << std::endl;
+      }
+      combinations++;
 
+      delayy(brute_timeout_ms);
+      futures.push_back(pool.enqueue([ip, login, password, brute_log, path, &results, combinations, total]() {
+        std::string temp = brute_hikvision(ip, login, password, brute_log, path);
         fuck.lock();
         if (!temp.empty())
           results.push_back(temp);
