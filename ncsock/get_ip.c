@@ -7,7 +7,7 @@
 
 #include "include/dns.h"
 
-void get_ip(const char* dns, char* ip_buffer, size_t buffer_size)
+int get_ip(const char* dns, char* ip_buffer, size_t buffer_size)
 {
   struct addrinfo hints;
   memset(&hints, 0, sizeof(hints));
@@ -18,7 +18,7 @@ void get_ip(const char* dns, char* ip_buffer, size_t buffer_size)
   int res = getaddrinfo(dns, NULL, &hints, &addrinfo_result);
   if (res != 0) {
     strncpy(ip_buffer, "n/a", buffer_size);
-    return;
+    return -1;
   }
 
   struct sockaddr_in* addr = (struct sockaddr_in*)addrinfo_result->ai_addr;
@@ -28,4 +28,5 @@ void get_ip(const char* dns, char* ip_buffer, size_t buffer_size)
   ip_buffer[buffer_size - 1] = '\0';
 
   freeaddrinfo(addrinfo_result);
+  return 0;
 }

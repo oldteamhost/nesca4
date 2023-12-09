@@ -335,11 +335,12 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
 #endif
 
   get_http_title(htmlpro.c_str(), title, HTTP_BUFFER_SIZE);
-
   redirect = nd.get_redirect(ip);
 
   /*http title это из класса.*/
   http_title = title;
+  if (http_title.empty())
+    http_title = "n/a";
 
   /*Сравнение списка negatives*/
   for (const auto& n : argp.nesca_negatives) {
@@ -389,7 +390,7 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   }
 
   result_print = np.main_nesca_out("BA", "http://" + brute_temp + ip + ":" + std::to_string(port),
-      3, "T", "F", title, type_target, rtt_log, "", protocol);
+      3, "T", "D", http_title, type_target, rtt_log, "", protocol);
 
   /*Вывод основного.*/
   std::cout << result_print << std::endl;
@@ -434,13 +435,8 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   }
 
   /*Вывод перенаправления.*/
-  if (!redirect.empty()){
-    np.gray_nesca_on();
-    std::cout << "[^][REDIRT]:";
-    np.yellow_html_on();
-    std::cout << redirect + "\n";
-    reset_colors;
-  }
+  if (!redirect.empty())
+    np.nlog_redirect(redirect);
 
   /*Вывод ответа http.*/
   if (argp.get_response) {

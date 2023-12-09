@@ -58,6 +58,8 @@ class nesca_prints {
         const std::string& result1, const std::string& result2, const std::string& rtt,
         std::string type = "n/", std::string protocol = "a");
 
+    void nlog_redirect(const std::string& redirect);
+
     void nlog_trivial(const std::string& message);
     void nlog_error(const std::string& message);
     void nlog_result(const std::string& message);
@@ -138,9 +140,12 @@ public:
 
   int html_pre_init(const std::string& filepath);
 
-  int html_add_result(const std::string& filepath, const std::string& time, const std::string& href, const std::string& text,
-    const std::string& opt, const std::string& res, const std::string& opt1, const std::string& res1,
-    const std::string& opt2, const std::string& res2, const std::string& opt3, const std::string& res3);
+int html_add_result(const std::string& filepath, const std::string& time, const std::string& href, const std::string& text,
+    const std::string& opt, const std::string& rtt, const std::string& opt1, const std::string& feature,
+    const std::string& opt2, const std::string& title, const std::string& opt3, const std::string& res3);
+
+int html_add_plus(const std::string& filepath, const std::string& time, const std::string& href,
+    const std::string& plusopt, const std::string& opt);
 };
 
 #endif

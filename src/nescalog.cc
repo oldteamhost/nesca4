@@ -251,7 +251,8 @@ nesca_prints::main_nesca_out(const std::string& opt, const std::string& result, 
     temp_file = "[>][" + opt + "]" + dots[0] +
       result + " " + opt1 + dots[1] + " " + result1 + " " + opt2 + dots[2] + " " + result2;
 
-    if (html_save) {hou.html_add_result(html_file_path,get_time(), result, result, "RTT", rtt+"ms", opt2, result2, opt1, result1, "SERVICE", protocol);}
+    if (html_save)
+      hou.html_add_result(html_file_path,get_time(), result, result, "RTT", rtt+"ms", opt2, result2, opt1, result1, "SERVICE", protocol);
   }
   else if (mode == 4) {
     temp = gray_nesca + print_get_time(get_time()) + "[" + opt + "]" + dots[0] + reset_color +
@@ -431,18 +432,14 @@ void nesca_prints::printcolorscheme(void)
 
 int html_output::html_main_init(const std::string& filepath)
 {
-  int write = -1;
-
-  write = write_line(filepath, style_nesca3);
-  if (write != 0)
-    return -1;
+  html_add_result(filepath, "EXAMPLE", "http://oldteamhost.ru", "URL(result)", "RTT", "response (ms)", "D", "description", "T", "page title", "SERVICE", "protocol");
+  write_line(filepath, style_nesca3);
 
   return 0;
 }
 
 int html_output::html_pre_init(const std::string& filepath)
 {
-  int write = -1;
   char formatted_date[11];
   std::string data_html;
 
@@ -459,40 +456,60 @@ int html_output::html_pre_init(const std::string& filepath)
   <br><br>
   )";
 
-  write = write_line(filepath, data_html);
-  if (write != 0)
-    return -1;
+  return (write_line(filepath, data_html));
+}
 
-  return 0;
+void nesca_prints::nlog_redirect(const std::string& redirect)
+{
+  gray_nesca_on();
+  std::cout << "[^][REDIRT]:";
+  yellow_html_on();
+  std::cout << redirect + "\n";
+  reset_colors;
+
+  /*
+  if (html_save)
+    hou.html_add_plus(html_file_path, "Redirect", redirect, "", "");
+  */
 }
 
 int html_output::html_add_result(const std::string& filepath, const std::string& time, const std::string& href, const std::string& text,
-    const std::string& opt, const std::string& res, const std::string& opt1, const std::string& res1,
-    const std::string& opt2, const std::string& res2, const std::string& opt3, const std::string& res3)
+    const std::string& opt, const std::string& rtt, const std::string& opt1, const std::string& feature,
+    const std::string& opt2, const std::string& title, const std::string& opt3, const std::string& res3)
 {
-  int write = -1;
   std::string data_html;
   char dots[4] = {':', ':', ':', ':'};
 
-  if (res.empty())  {dots[0] = ' ';}
-  if (res1.empty()) {dots[1] = ' ';}
-  if (res2.empty()) {dots[2] = ' ';}
-  if (res2.empty()) {dots[3] = ' ';}
+  if (rtt.empty())  {dots[0] = ' ';}
+  if (title.empty()) {dots[1] = ' ';}
+  if (feature.empty()) {dots[2] = ' ';}
+  if (res3.empty()) {dots[3] = ' ';}
 
-  data_html = R"(
-  <div id="ipd" style="color:#707070;text-decoration: none;">
+  data_html =
+  R"( <div id="ipd" style="color:#707070;text-decoration: none;">
   [)" + time + R"(]
   <span id="hostSpan"><a href=")" + href + R"(" target="_blank">
   <font color=MediumSeaGreen>)" + text + R"(</font></a>;</span>
-  <span id="recvSpan">)" + opt3 + dots[0] + R"( <font color=SteelBlue>)" + res3 + R"(</font> </span>
-  <span id="recvSpan">)" + opt + dots[1] + R"( <font color=SteelBlue>)" + res + R"(</font> </span>
-  <span id="recvSpan">)" + opt1 + dots[2] + R"( <font color=GoldenRod>)" + res1 + R"(</font></span>)" 
-  + opt2 + dots[3] + R"( <font color=GoldenRod>)" + res2 + R"(</font>
+  <span id="recvSpan">)" + opt3 + dots[3] + R"( <font color=SteelBlue>)" + res3 + R"(</font> </span>
+  <span id="recvSpan">)" + opt + dots[0] + R"( <font color=SteelBlue>)" + rtt + R"(</font> </span>
+  <span id="recvSpan">)" + opt1 + dots[2] + R"( <font color=GoldenRod>)" + feature + R"(</font></span>)"
+  + opt2 + dots[1] + R"( <font color=GoldenRod>)" + title + R"(</font>
   </div>)";
 
-  write = write_line(filepath, data_html);
-  if (write != 0)
-    return -1;
+  return (write_line(filepath, data_html));
+}
 
-  return 0;
+int html_output::html_add_plus(const std::string& filepath, const std::string& time, const std::string& href,
+    const std::string& plusopt, const std::string& opt)
+{
+  std::string data_html;
+
+  data_html =
+  R"( <div id="ipd" style="color:#707070;text-decoration: none;">
+  [^)" + time + R"(]
+  <span id="hostSpan"><font color=MediumSeaGreen>)" + href + R"(</font></a>;</span>
+  <span id="recvSpan">)" + opt + R"( <font color=GoldenRod>)" + plusopt + R"(</font></span>
+  </div>)";
+
+  return (write_line(filepath, data_html));
 }

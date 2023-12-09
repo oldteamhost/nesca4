@@ -956,7 +956,7 @@ std::vector<std::string> resolv_hosts(std::vector<std::string> hosts)
 {
   char ipbuf[1024];
   std::vector<std::string> result;
-  int temp;
+  int temp, res;
   char* clean;
 
   for (const auto& t : hosts) {
@@ -977,15 +977,25 @@ std::vector<std::string> resolv_hosts(std::vector<std::string> hosts)
     }
     if (temp == _URL_) {
       clean = clean_url(t.c_str());
-      get_ip(clean, ipbuf, sizeof(ipbuf)); result.push_back(ipbuf);
+      if (!clean)
+        continue;
+      res = get_ip(clean, ipbuf, sizeof(ipbuf));
+      if (res == -1)
+        np.nlog_error("Failed to resolve \"" + std::string(clean)+ "\"\n");
+      else
+        result.push_back(ipbuf);
+
       n.add_ip(ipbuf);
       n.set_dns(ipbuf, clean);
-      if (clean)
-        free(clean);
+      free(clean);
       memset(ipbuf, 0, 1024);
     }
     if (temp == DNS) {
-      get_ip(t.c_str(), ipbuf, sizeof(ipbuf)); result.push_back(ipbuf);
+      res = get_ip(t.c_str(), ipbuf, sizeof(ipbuf));
+      if (res == -1)
+        np.nlog_error("Failed to resolve \"" + std::string(t.c_str())+ "\"\n");
+      else
+        result.push_back(ipbuf);
       n.add_ip(ipbuf);
       n.set_dns(ipbuf, t);
     }
