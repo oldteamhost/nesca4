@@ -5,11 +5,8 @@ d8b   db d88888b .d8888.  .o88b.  .d8b.    NESCA4 - Многопоточный l
 88  V888 88.     db   8D Y8b  d8 88   88   Был сделан с вдохновением от nesca3 & nmap.
 VP   V8P Y88888P `8888Y'  `Y88P' YP   YP   by oldteam & lomaster.
 
-PS: Перечислять все возможности тут я не буду. Прочитать о том что умеет nesca4 и
-как это разрабатывалось читайте в do_not_read/
+1. Guides see in (do_not_read/)
+2. Install in the (INSTALL)
+3. Patching see (HACKING)
 
-PS: I will not list all the features here. To read about what nesca4 can do and
-how it was developed can be found in do_not_read/
-
-For install, read file: INSTALL
-For patching read file: HACKING
+lomaster.
