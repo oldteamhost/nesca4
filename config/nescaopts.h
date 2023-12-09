@@ -174,7 +174,6 @@ public:
   double ping_duration;
   double dns_duration;
   double scan_duration;
-  double proc_duration;
 
   bool thread_on_port;
   bool info_version;

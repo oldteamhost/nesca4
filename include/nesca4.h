@@ -69,10 +69,13 @@ void processing_tcp_scan_ports(std::string ip, int port, int result);
 std::string format_percentage(double procents);
 void fix_time(double time);
 
-int nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_ms);
+void nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_ms);
 void nesca_ping(const char* ip);
 void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int port, bool ip_ddos);
 void nesca_http(const std::string& ip, const u16 port, const int timeout_ms);
+
+template<typename Func, typename... Args> void
+nesca_group_execute(int threads, std::vector<std::string> group, Func&& func, Args&&... args);
 
 void importfile(void);
 void parse_args(int argc, char** argv);

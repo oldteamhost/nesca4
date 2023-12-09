@@ -235,11 +235,14 @@ void NESCADATA::create_group(void)
 {
   std::vector<std::string> temp_ips = get_all_ips();
 
-  for (int i = 0; i < group_size && i < (int)temp_ips.size(); i++) {
-    if (std::find(temp_ips_group.begin(), temp_ips_group.end(), temp_ips[i]) == temp_ips_group.end()) {
-      temp_ips_group.push_back(temp_ips[i]);
-      current_group.push_back(temp_ips[i]);
+  for (const auto& temp_ip : temp_ips) {
+    if (std::find(temp_ips_group.begin(), temp_ips_group.end(), temp_ip) == temp_ips_group.end()) {
+      temp_ips_group.push_back(temp_ip);
+      current_group.push_back(temp_ip);
     }
+
+    if ((int)current_group.size() >= group_size)
+      break;
   }
 }
 

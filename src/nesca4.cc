@@ -403,7 +403,7 @@ int main(int argc, char** argv)
   argp._threads = n.max_group_size;
 
   long long size = temp_vector.size();
-  std::vector<std::future<int>> futures;
+  std::vector<std::future<void>> futures;
 
   if (argp.json_save)
     nesca_json_start_array(argp.json_save_path);
@@ -414,80 +414,37 @@ int main(int argc, char** argv)
   /*Сканирование по группам*/
   int ip_count = 0;
 
+  auto start_time_scan = std::chrono::high_resolution_clock::now();
+
   while (ip_count < size) {
-    auto start_time_scan = std::chrono::high_resolution_clock::now();
     n.create_group();
-    n.increase_group();
+    nesca_group_execute(argp._threads, n.current_group, nesca_scan, argp.ports, argp.timeout_ms);
+    ip_count = n.group_size;
 
     if (size >= 10 && ip_count != 0) {
-      double procents = (static_cast<double>(ip_count) / size) * 100;
+      double procents = (static_cast<double>(n.current_group.size()) / size) * 100;
       std::string result = format_percentage(procents);
-
-      std::cout << np.main_nesca_out("#", "Scan & Proc "+std::to_string(n.current_group.size() + ip_count)+" out of "+
+      std::cout << np.main_nesca_out("#", "Scan & Proc "+std::to_string(n.current_group.size())+" out of "+
       std::to_string(size) + " IPs", 6, "", "", result + " (wating...)", "", "") << std::endl;
-      std::cout << std::endl;
+      putchar('\n');
     }
-
-    for (const auto& ip : n.current_group) {
-      ip_count++;
-
-      auto fut = pool.enqueue(nesca_scan, ip, argp.ports, argp.timeout_ms);
-      futures.push_back(std::move(fut));
-
-      if (futures.size() >= static_cast<std::vector<std::future<int>>::size_type>(argp._threads)) {
-        futures.front().get();
-        futures.erase(futures.begin());
-      }
-    }
-    for (auto& fut : futures)
-      fut.wait();
-    for (auto& fut : futures)
-      fut.get();
-
-    futures.clear();
-
-    auto end_time_scan = std::chrono::high_resolution_clock::now();
-    auto duration_scan = std::chrono::duration_cast<std::chrono::microseconds>(end_time_scan - start_time_scan);
-    argp.scan_duration += duration_scan.count() / 1000000.0;
-
-    auto start_time_proc = std::chrono::high_resolution_clock::now();
-
-    /* Расчет потоков */
-    argp.http_threads = calculate_threads(argp.speed_type, n.current_group.size());
-    std::vector<std::future<void>> futures_http;
-    thread_pool http_pool(argp.http_threads);
 
     if (!argp.no_proc) {
+      argp.http_threads = calculate_threads(argp.speed_type, n.current_group.size());
+      std::vector<std::string> http_ips;
       for (const auto& ip : n.current_group) {
-        u16 http_port = 0;
         std::vector<u16> openports = n.get_port_list(ip, PORT_OPEN);
-
         for (const auto& port : openports) {
           if (sn.probe_service(port) == "HTTP")
-            http_port = port;
+            http_ips.push_back(ip);
         }
-        if (!http_port)
-          continue;
-
-        futures_http.emplace_back(http_pool.enqueue(nesca_http, ip, http_port, argp.http_timeout));
-        if (futures_http.size() >= static_cast<long unsigned int>(argp.http_threads)) {
-          for (auto& future : futures_http)
-            future.get();
-
-          futures_http.clear();
-        }
-        for (auto& future : futures_http)
-          future.wait();
-
-        futures_http.clear();
       }
+      nesca_group_execute(argp.http_threads, n.current_group, nesca_http, 80, argp.http_timeout);
     }
 
     for (const auto& ip : n.current_group) {
-      if (n.find_port_status(ip, PORT_OPEN)
-        || argp.debug || n.find_port_status(ip, PORT_OPEN_OR_FILTER)
-        || n.find_port_status(ip, PORT_NO_FILTER)) {
-
+      write_line("kek.txt", ip + "\n");
+      if (n.find_port_status(ip, PORT_OPEN) || argp.debug || n.find_port_status(ip, PORT_OPEN_OR_FILTER) || n.find_port_status(ip, PORT_NO_FILTER)) {
         std::cout << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", n.get_new_dns(ip), std::to_string(n.get_rtt(ip))+"ms","") << std::endl;
 
         if (argp.json_save) {
@@ -498,7 +455,6 @@ int main(int argc, char** argv)
           nesca_json_save_host(argp.json_save_path, &nhd);
         }
 
-
         process_port(ip, n.get_port_list(ip, PORT_OPEN), PORT_OPEN);
         process_port(ip, n.get_port_list(ip, PORT_FILTER), PORT_FILTER);
         process_port(ip, n.get_port_list(ip, PORT_OPEN_OR_FILTER), PORT_OPEN_OR_FILTER);
@@ -506,7 +462,7 @@ int main(int argc, char** argv)
         process_port(ip, n.get_port_list(ip, PORT_CLOSED), PORT_CLOSED);
         process_port(ip, n.get_port_list(ip, PORT_ERROR), PORT_ERROR);
 
-        std::cout << std::endl;
+        putchar('\n');
 
         if (argp.json_save) {
           nesca_json_close_info(argp.json_save_path);
@@ -516,13 +472,15 @@ int main(int argc, char** argv)
       }
     }
 
+    n.increase_group();
+
     n.clean_ports();
     n.clean_group();
-
-    auto end_time_proc = std::chrono::high_resolution_clock::now();
-    auto duration_proc = std::chrono::duration_cast<std::chrono::microseconds>(end_time_proc - start_time_proc);
-    argp.proc_duration += duration_proc.count() / 1000000.0;
   }
+
+  auto end_time_scan = std::chrono::high_resolution_clock::now();
+  auto duration_scan = std::chrono::duration_cast<std::chrono::microseconds>(end_time_scan - start_time_scan);
+  argp.scan_duration += duration_scan.count() / 1000000.0;
 
   if (argp.json_save) {
     nesca_json_fix_file(argp.json_save_path);
@@ -530,7 +488,7 @@ int main(int argc, char** argv)
     nesca_json_close_array(argp.json_save_path);
   }
 
-  double elapsed_result = argp.ping_duration+argp.dns_duration+argp.scan_duration+argp.proc_duration;
+  double elapsed_result = argp.ping_duration+argp.dns_duration+argp.scan_duration;
   nescaend(count_success_ips, elapsed_result);
 
   return 0;
@@ -543,8 +501,27 @@ void nescaend(int success, double res)
   reset_colors;
 }
 
+/* Главная функция по запуску потоков */
+template<typename Func, typename... Args> void
+nesca_group_execute(int threads, std::vector<std::string> group, Func&& func, Args&&... args)
+{
+  thread_pool pool(threads);
+  std::vector<std::future<void>> futures;
+
+  for (const auto& t : group) {
+    futures.emplace_back(pool.enqueue(std::forward<Func>(func), t, std::forward<Args>(args)...));
+    if (futures.size() >= static_cast<size_t>(threads)) {
+      for (auto& future : futures)
+        future.get();
+      futures.clear();
+    }
+  }
+  for (auto& future : futures)
+    future.get();
+}
+
 /* Главная функция для сканировния портов */
-int nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_ms)
+void nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_ms)
 {
   u32 seq, saddr, daddr, datalen = 0;
   int source_port, res, sock, recvtime = 600;
@@ -641,8 +618,6 @@ int nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_m
       argp.count_success_ports++;
     ls.unlock();
   }
-
-  return 0;
 }
 
 /* Главная функция для пинг сканирования */
