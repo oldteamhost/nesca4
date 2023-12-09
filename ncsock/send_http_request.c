@@ -72,13 +72,15 @@ int send_http_request(const char* ip, const int port, const int timeout_ms,
   if (IS_NULL_OR_EMPTY(header->path))
     header->path = "/";
 
+  if (header->path != NULL && header->path[0] == '.')
+    memmove((void*)header->path, (void*)(header->path + 1), strlen(header->path));
+
   for (const char *ptr = header->path; *ptr != '\0'; ++ptr) {
     if (*ptr == '/') {
       ++count;
       if (count == 4) {
-        if (*(ptr + 1) != '\0') {
+        if (*(ptr + 1) != '\0')
           aee = true;
-        }
         break;
       }
     }

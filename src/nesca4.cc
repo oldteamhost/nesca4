@@ -385,19 +385,19 @@ int main(int argc, char** argv)
   if (!argp.custom_g_rate){
     switch (argp.speed_type) {
       case 5:
-        n.group_rate = 100;
+        n.group_rate = 200;
         break;
       case 4:
-        n.group_rate = 50;
+        n.group_rate = 100;
         break;
       case 3:
-        n.group_rate = 20;
+        n.group_rate = 50;
         break;
       case 2:
-        n.group_rate = 10;
+        n.group_rate = 20;
         break;
       case 1:
-        n.group_rate = 5;
+        n.group_rate = 10;
         break;
     }
   }

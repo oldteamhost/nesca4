@@ -172,6 +172,7 @@ std::string set_target_at_http_header(const std::string& buffer)
   if (contains_word("apache2", buffer)){return APACHE2;}
   if (contains_word("cloudflare", buffer)){return CLOUD_FLARE;}
   if (contains_word("www.rvi-cctv.ru", buffer)){return WEB_CAMERA_RVI;}
+  if (contains_word("m not a robot", buffer)){return CAPTCHA;}
 
   return "fuck";
 }
@@ -253,7 +254,6 @@ void hikvision_strategy::handle(const std::string& ip, const std::string& result
   }
 
   result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "",rtt_log, "", protocol);
-
   std::cout << result_print << std::endl;
 }
 
@@ -348,20 +348,23 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
     const std::string& second = n.second;
 
     if (second == "1" || second == "title") {
-      if(contains_word(first, title)) {
-        if (argp.debug){np.nlog_custom("WARNING", "Skip negative: "+first+"\n", 2);}
+      if (contains_word(first, title)) {
+        if (argp.debug)
+          np.nlog_custom("WARNING", "Skip negative: "+first+"\n", 2);
         return;
       }
     }
     else if (second == "2" || second == "code" || second == "header") {
-      if(contains_word(first, htmlpro.c_str())) {
-        if (argp.debug){np.nlog_custom("WARNING", "Skip negative: "+first+"\n", 2);}
+      if (contains_word(first, htmlpro.c_str())) {
+        if (argp.debug)
+          np.nlog_custom("WARNING", "Skip negative: "+first+"\n", 2);
         return;
       }
     }
     else if (second == "3" || second == "path" || second == "redirect") {
-      if(contains_word(first, redirect)) {
-        if (argp.debug){np.nlog_custom("WARNING", "Skip negative: "+first+"\n", 2);}
+      if (contains_word(first, redirect)) {
+        if (argp.debug)
+          np.nlog_custom("WARNING", "Skip negative: "+first+"\n", 2);
         return;
       }
     }
@@ -469,15 +472,20 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
 
 void print_port_state(int status, int port, std::string service, nesca_prints& np)
 {
-  std::string result_txt = "\n[&][REPORT]:" + std::to_string(port) + "/tcp STATE: "; np.gray_nesca_on();
-  fprintf(stdout, "[&][REPORT]:"); np.green_html_on();
+  np.gray_nesca_on();
+  fprintf(stdout, "[&][REPORT]:");
+  np.green_html_on();
+
   std::cout << std::to_string(port) << "/tcp";  np.gray_nesca_on();
   fprintf(stdout, " STATE: ");
-  std::string status_port = return_port_status(status); np.golder_rod_on();
+  std::string status_port = return_port_status(status);
+
+  np.golder_rod_on();
   fprintf(stdout, "%s", status_port.c_str());
   reset_colors;
-  result_txt += status_port; result_txt += " SERVICE: " + service;
-  np.gray_nesca_on(); fprintf(stdout, " SERVICE: "); np.green_html_on();
+
+  np.gray_nesca_on();
+  fprintf(stdout, " SERVICE: "); np.green_html_on();
   fprintf(stdout, "%s\n", service.c_str());
   reset_colors;
 }

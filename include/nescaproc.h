@@ -75,6 +75,7 @@
 #define NGNIX                          "Ngnix"
 #define INVALID_URL                    "Invalid URL"
 #define CAMERA_AXIS_Q6055_E            "AXIS-Q6055-E"
+#define CAPTCHA                        "Captcha"
 
 #define HTTP_BASIC_AUTH_BRUTE  999
 
