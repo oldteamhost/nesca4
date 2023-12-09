@@ -221,8 +221,8 @@ int main(int argc, char** argv)
       if (complete % 2000 == 0) {
         double procents = (static_cast<double>(complete) / temp_vector.size()) * 100;
         std::string _result = format_percentage(procents);
-        std::cout << np.main_nesca_out("#", "Ping "+std::to_string(complete)+" out of "+
-        std::to_string(temp_vector.size()) + " IPs", 6, "", "", _result+"%", "", "") << std::endl;
+        std::cout << np.main_nesca_out("#", "Pinging " + std::to_string(complete)+" out of "+
+        std::to_string(temp_vector.size()) + " IPs", 6, "", "", _result, "", "") << std::endl;
       }
     }
     for (auto& future : futures_ping)
@@ -425,37 +425,23 @@ int main(int argc, char** argv)
 
   /*Сканирование по группам*/
   int ip_count = 0;
-  bool first = false;
 
   while (ip_count < size) {
     auto start_time_scan = std::chrono::high_resolution_clock::now();
     n.create_group();
     n.increase_group();
 
+    if (size >= 10 && ip_count != 0) {
+      double procents = (static_cast<double>(ip_count) / size) * 100;
+      std::string result = format_percentage(procents);
+
+      std::cout << np.main_nesca_out("#", "Scan & Proc "+std::to_string(n.current_group.size() + ip_count)+" out of "+
+      std::to_string(size) + " IPs", 6, "", "", result + " (wating...)", "", "") << std::endl;
+      std::cout << std::endl;
+    }
+
     for (const auto& ip : n.current_group) {
-      int log_set;
       ip_count++;
-
-      if (argp.custom_log_set)
-        log_set = argp.log_set;
-      else
-        log_set = n.group_rate * 3;
-
-      if (ip_count % log_set == 0 && !first) {
-        first = true;
-        std::cout << std::endl;
-      }
-
-      if (ip_count % log_set == 0) {
-        double procents = (static_cast<double>(ip_count) / size) * 100;
-        std::string result = format_percentage(procents);
-
-        std::cout << np.main_nesca_out("#", "SCAN "+std::to_string(ip_count)+" out of "+
-        std::to_string(size) + " IPs", 6, "", "", result+"%", "", "") << std::endl;
-
-        std::cout << np.main_nesca_out("# rate", "GROUP "+std::to_string(n.group_size)+" out of "+
-        std::to_string(n.max_group_size), 6, "", "", std::to_string(n.group_rate), "", "") << std::endl << std::endl;
-      }
 
       auto fut = pool.enqueue(nesca_scan, ip, argp.ports, argp.timeout_ms);
       futures.push_back(std::move(fut));
