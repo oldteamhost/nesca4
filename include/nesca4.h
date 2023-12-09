@@ -1,21 +1,8 @@
 /*
- *
- *  d8b   db d88888b .d8888.  .o88b.  .d8b.    NESCA4 - Многопоточный linux сканер портов,
- *  888o  88 88'     88'  YP d8P  Y8 d8' `8b   с точностью nmap-а, обработкой nesca3 брутфорсом
- *  88V8o 88 88ooooo `8bo.   8P      88ooo88   самых популярных протоколов и сканированием DNS.
- *  88 V8o88 88~~~~~   `Y8b. 8b      88~~~88
- *  88  V888 88.     db   8D Y8b  d8 88   88   Был сделан с вдохновением от nesca3 & nmap.
- *  VP   V8P Y88888P `8888Y'  `Y88P' YP   YP   by oldteam & lomaster.
- *
- *  license GPL-3.0                            Github - [https://github.com/oldteamhost/nesca4]
- *  Сделано от души 2023.                      Telegram - [https://t.me/+Ft1ABe8P8Tc1YzZi]
- *
- *  PS: Перечислять все возможности тут я не буду.
- *  Прочитать о том что умеет nesca4 и как это разрабатывалось
- *  читайте в resources/do_not_read.txt
- *
- *  Вся работа с сетью находится в ncsock/
- *    ^ (даже брутфорс: RVI, HTTP, FTP, SMTP, RTSP)
+ *          NESCA4
+ *   Сделано от души 2023.
+ * Copyright (c) [2023] [lomaster]
+ * SPDX-License-Identifier: BSD-3-Clause
  *
 */
 

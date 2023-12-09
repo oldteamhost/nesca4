@@ -1,7 +1,8 @@
 /*
- * SCREENSHOT.JS 
+ * SCREENSHOT.JS
  * by oldteam & lomaster
- * license GPL-3.0
+ * Copyright (c) [2023] [lomaster]
+ * SPDX-License-Identifier: BSD-3-Clause
  *   Сделано от души 2023.
  *
  * Утилита на nodejs для создания скриншота WEB страницы.
