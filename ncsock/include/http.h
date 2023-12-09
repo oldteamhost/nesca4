@@ -53,10 +53,9 @@ int get_sitemap_xml(const char* ip, const int port, const int timeout_ms);
 
 void get_redirect(const char* http_content, char* redirect_buffer, size_t buffer_size);
 void get_http_title(const char* http_header, char* title_buffer, size_t buffer_size);
+char* parse_parent_location(const char* html);
 int parse_http_response_code(const char* http_content);
-
 char* parse_url_from_js(const char* html);
-
         #define DEFAULT_LOCATION 0
         #define CONTENT_LOCATION 1
 char* parse_location(const char* http_header, int type_location);

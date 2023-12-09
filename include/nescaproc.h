@@ -76,6 +76,10 @@
 #define INVALID_URL                    "Invalid URL"
 #define CAMERA_AXIS_Q6055_E            "AXIS-Q6055-E"
 #define CAPTCHA                        "Captcha"
+#define ERROR_403                      "403 error"
+#define UNKNOWN_ERROR                  "Unknown error"
+#define NOT_FOUND_404                  "404 not found"
+#define EMPTY_REQUEST                  "Empty request"
 
 #define HTTP_BASIC_AUTH_BRUTE  999
 

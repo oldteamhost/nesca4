@@ -848,6 +848,8 @@ void nesca_http(const std::string& ip, const u16 port, const int timeout_ms)
   }
 
   res = resbuf;
+  if (res.empty())
+    res = "empty";
 
   ls.lock();
   n.add_html(ip, res);

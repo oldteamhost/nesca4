@@ -173,6 +173,9 @@ std::string set_target_at_http_header(const std::string& buffer)
   if (contains_word("cloudflare", buffer)){return CLOUD_FLARE;}
   if (contains_word("www.rvi-cctv.ru", buffer)){return WEB_CAMERA_RVI;}
   if (contains_word("m not a robot", buffer)){return CAPTCHA;}
+  if (contains_word("403 error", buffer)){return ERROR_403;}
+  if (contains_word("not found", buffer)){return NOT_FOUND_404;}
+  if (contains_word("empty", buffer)){return EMPTY_REQUEST;}
 
   return "fuck";
 }

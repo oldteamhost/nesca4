@@ -41,5 +41,13 @@ void get_redirect(const char* http_content, char* redirect_buffer, size_t buffer
     return;
   }
 
+  char* parent_location = parse_parent_location(http_content);
+  if (parent_location != NULL) {
+    strncpy(redirect_buffer, parent_location, buffer_size - 1);
+    redirect_buffer[buffer_size - 1] = '\0';
+    free(parent_location);
+    return;
+  }
+
   redirect_buffer[0] = '\0';
 }

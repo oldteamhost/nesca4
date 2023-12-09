@@ -3,5 +3,3 @@
 ## TYPE: 1 (HTTP_TITLE)
 ## TYPE: 2 (CODE & HTTP_HEADER)
 ## TYPE: 3 (REDIRECT)
-
-404 not found | 1
