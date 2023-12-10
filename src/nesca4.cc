@@ -8,9 +8,12 @@
 
 #include "../include/nesca4.h"
 #include "../include/nescautils.h"
+#include "../include/nescahttp.h"
 #include "../include/portscan.h"
 #include "../ncsock/include/icmp.h"
 #include "../ncsock/include/readpkt.h"
+#include "../include/nescaddos.h"
+#include "../include/nescaping.h"
 #include "../ncsock/include/strbase.h"
 #include "../ncsock/include/tcp.h"
 #include "../ncsock/include/utils.h"
@@ -20,7 +23,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <mutex>
 #include <netinet/in.h>
+#include <set>
 #include <stdlib.h>
 #include <string>
 #include <unistd.h>
@@ -32,10 +37,14 @@ html_output ho;
 services_nesca sn;
 arguments_program argp;
 readfiler rf;
+
+#define HTTP_BUFLEN 65535
+
 NESCADATA n;
 
 const char* run;
 std::mutex ls;
+struct datastring pd;
 const char* short_options = "s:hl:vd:T:p:aS:";
 
 int main(int argc, char** argv)
@@ -53,6 +62,7 @@ int main(int argc, char** argv)
   parse_args(argc, argv);
   pre_check();
   importfile();
+  pd = initdata(argp.data_string);
 
   /* set tcp flags */
   struct tcp_flags tf;
@@ -194,29 +204,8 @@ int main(int argc, char** argv)
 
   /*Пинг сканирования*/
   if (!argp.ping_off) {
-    int complete = 0;
-    std::vector<std::future<void>> futures_ping;
-    thread_pool ping_pool(argp.threads_ping);
-
-    for (const auto& ip : temp_vector) {
-      futures_ping.emplace_back(ping_pool.enqueue(nesca_ping, ip.c_str())); complete++;
-      if (futures_ping.size() >= static_cast<long unsigned int>(argp.threads_ping)) {
-        for (auto& future : futures_ping)
-          future.get();
-        futures_ping.clear();
-      }
-
-      if (complete % 2000 == 0) {
-        double procents = (static_cast<double>(complete) / temp_vector.size()) * 100;
-        std::string _result = format_percentage(procents);
-        std::cout << np.main_nesca_out("#", "Pinging " + std::to_string(complete)+" out of "+
-        std::to_string(temp_vector.size()) + " IPs", 6, "", "", _result, "", "") << std::endl;
-      }
-    }
-    for (auto& future : futures_ping)
-      future.wait();
-    futures_ping.clear();
-
+    struct nescalog_opts nlo = initlog(temp_vector.size(), get_log(temp_vector.size()), "Ping");
+    nesca_group_execute(&nlo, argp.threads_ping, temp_vector, nesca_ping);
     temp_vector = argp.new_ping_ip;
     n.update_data_from_ips(temp_vector);
     n.sort_ips_rtt();
@@ -237,30 +226,8 @@ int main(int argc, char** argv)
 
   /* DNS сканирование */
   if (!argp.no_get_dns) {
-    int complete = 0;
-    int total = temp_vector.size();
-    std::vector<std::future<void>> futures_dns;
-    thread_pool dns_pool(argp.dns_threads);
-
-    for (const auto& ip : temp_vector) {
-      futures_dns.emplace_back(dns_pool.enqueue(get_dns_thread, ip)); complete++;
-      if (futures_dns.size() >= static_cast<long unsigned int>(argp.dns_threads)) {
-        for (auto& future : futures_dns)
-          future.get();
-
-        futures_dns.clear();
-      }
-
-      if (complete % 300 == 0) {
-        double procents = (static_cast<double>(complete) / total) * 100;
-        std::cout << np.main_nesca_out("#", "Resolv "+std::to_string(complete)+" out of "+
-        std::to_string(total) + " IPs", 6, "", "", std::to_string(procents)+"%", "", "") << std::endl;
-      }
-    }
-    for (auto& future : futures_dns)
-      future.wait();
-
-    futures_dns.clear();
+    struct nescalog_opts nlo = initlog(temp_vector.size(), get_log(temp_vector.size()), "Resolv");
+    nesca_group_execute(&nlo, argp.dns_threads, temp_vector, get_dns_thread);
   }
 
   auto end_time_dns = std::chrono::high_resolution_clock::now();
@@ -270,7 +237,6 @@ int main(int argc, char** argv)
   if (argp.no_scan) {
     for (const auto& ip : temp_vector)
       std::cout << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", n.get_new_dns(ip), std::to_string(n.get_rtt(ip))+"ms","") << std::endl;
-
     putchar('\n');
     nescaend(count_success_ips, argp.ping_duration+argp.dns_duration);
     return 0;
@@ -413,13 +379,12 @@ int main(int argc, char** argv)
 
   /*Сканирование по группам*/
   int ip_count = 0;
-
   auto start_time_scan = std::chrono::high_resolution_clock::now();
 
   while (ip_count < size) {
     n.create_group();
 
-    nesca_group_execute(argp._threads, n.current_group, nesca_scan, argp.ports, argp.timeout_ms);
+    nesca_group_execute(NULL, argp._threads, n.current_group, nesca_scan, argp.ports, argp.timeout_ms);
     for (int i = 0; i < (int)n.current_group.size(); i++)
       ip_count++;
 
@@ -441,9 +406,9 @@ int main(int argc, char** argv)
             http_ips.push_back(ip);
         }
       }
-      nesca_group_execute(argp.http_threads, n.current_group, nesca_http, 80, argp.http_timeout);
+      struct nescalog_opts nlo = initlog(n.current_group.size(), get_log(n.current_group.size()), "HTTP");
+      nesca_group_execute(&nlo, argp.http_threads, n.current_group, nesca_http, 80, argp.http_timeout);
     }
-
     for (const auto& ip : n.current_group) {
       if (n.find_port_status(ip, PORT_OPEN) || argp.debug || n.find_port_status(ip, PORT_OPEN_OR_FILTER) || n.find_port_status(ip, PORT_NO_FILTER)) {
         std::cout << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", n.get_new_dns(ip), std::to_string(n.get_rtt(ip))+"ms","") << std::endl;
@@ -495,6 +460,28 @@ int main(int argc, char** argv)
   return 0;
 }
 
+struct nescalog_opts initlog(int total, int set, const std::string &name)
+{
+  nescalog_opts nlo{};
+
+  nlo.total = total;
+  nlo.set = set;
+  nlo.name = name;
+
+  return nlo;
+}
+
+void nesca_log(struct nescalog_opts *nlo, int complete)
+{
+  double procents;
+  int set = nlo->set, total = nlo->total;
+  if (complete % set == 0) {
+    procents = (static_cast<double>(complete) / total) * 100;
+    std::cout << np.main_nesca_out("/", nlo->name + " " + std::to_string(complete)+" out of "+
+    std::to_string(total) + " Targets", 6, "", "", format_percentage(procents), "", "") << std::endl;
+  }
+}
+
 void nescaend(int success, double res)
 {
   np.golder_rod_on();
@@ -504,10 +491,11 @@ void nescaend(int success, double res)
 
 /* Главная функция по запуску потоков */
 template<typename Func, typename... Args> void
-nesca_group_execute(int threads, std::vector<std::string> group, Func&& func, Args&&... args)
+nesca_group_execute(struct nescalog_opts *nlo, int threads, std::vector<std::string> group, Func&& func, Args&&... args)
 {
   thread_pool pool(threads);
   std::vector<std::future<void>> futures;
+  int complete = 0;
 
   for (const auto& t : group) {
     futures.emplace_back(pool.enqueue(std::forward<Func>(func), t, std::forward<Args>(args)...));
@@ -515,6 +503,10 @@ nesca_group_execute(int threads, std::vector<std::string> group, Func&& func, Ar
       for (auto& future : futures)
         future.get();
       futures.clear();
+    }
+    if (nlo) {
+      complete++;
+      nesca_log(nlo, complete);
     }
   }
   for (auto& future : futures)
@@ -622,188 +614,22 @@ void nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_
 }
 
 /* Главная функция для пинг сканирования */
-void nesca_ping(const char* ip)
+void nesca_ping(const std::string& ip)
 {
-  double rtt;
-  u8 ttl = random_num(29, 255);
-  u16 source_port = generate_rare_port();
-  u32 datalen = 0;
-  const char* data = "";
-
-  if (!argp.data_string.empty()) {
-    data = argp.data_string.c_str();
-    datalen = strlen(argp.data_string.c_str());
-  }
-
-  if (argp.custom_source_port)
-    source_port = argp._custom_source_port;
-
-  if (argp.custom_ttl)
-    ttl = argp._custom_ttl;
-
-  if (argp.echo_ping) {
-    rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, ICMP_ECHO, 0, 1, ttl, data, datalen, argp.frag_mtu);
-    goto check;
-  }
-  if (argp.syn_ping) {
-    rtt = tcp_ping(SYN_PACKET, ip, argp.source_ip, argp.syn_dest_port, source_port, argp.ping_timeout, ttl, data, datalen, argp.frag_mtu);
-    goto check;
-  }
-  if (argp.ack_ping) {
-    rtt = tcp_ping(ACK_PACKET, ip, argp.source_ip, argp.syn_dest_port, source_port, argp.ping_timeout, ttl, data, datalen, argp.frag_mtu);
-    goto check;
-  }
-  if (argp.info_ping) {
-    rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, ICMP_INFO_REQUEST, 0, 1, ttl, data, datalen, argp.frag_mtu);
-    goto check;
-  }
-  if (argp.timestamp_ping) {
-    rtt = icmp_ping(ip, argp.source_ip, argp.ping_timeout, ICMP_TIMESTAMP, 0, 1, ttl, data, datalen, argp.frag_mtu);
-    goto check;
-  }
-
-check:
-  if (rtt != -1) {
-    ls.lock();
-    n.set_rtt(ip, rtt);
-    argp.new_ping_ip.push_back(ip);
-    ls.unlock();
-  }
+  send_ping(&pd, n, argp, ip);
 }
 
 /* Главная функция для DDOS и NETWORK TEST */
 void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int port, bool ip_ddos)
 {
-  u32 seq, datalen = 0;
-  int source_port, sock, res, recvtime, resread;
-  struct in_addr addr_struct;
-  u16 ttl;
-  u8 *buffer;
-  const char* data;
-  bool df = true;
-  double rtt_ping;
-
-  if (argp.custom_recv_timeout_ms)
-    recvtime = argp.recv_timeout_ms;
-  else {
-    addr_struct.s_addr = daddr;
-    rtt_ping = n.get_rtt(inet_ntoa(addr_struct));
-    if (rtt_ping != -1)
-      recvtime = calculate_timeout(rtt_ping, argp.speed_type);
-  }
-
-  if (argp.frag_mtu)
-    df = false;
-
-  if (argp.icmp_ddos || argp.tcp_ddos)
-    seq = generate_seq();
-
-  if (proto == IPPROTO_TCP || proto == IPPROTO_UDP) {
-    if (argp.custom_source_port)
-      source_port = argp._custom_source_port;
-    else
-      source_port = generate_rare_port();
-  }
-
-  if (!argp.data_string.empty()) {
-    data = argp.data_string.c_str();
-    datalen = strlen(data);
-  }
-
-  if (argp.custom_ttl)
-    ttl = argp._custom_ttl;
-  else
-    ttl = random_num(29, 255);
-
-  sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
-  if (sock == -1)
-    return;
-
-  if (proto == IPPROTO_TCP)
-    res = send_tcp_packet(sock, saddr, daddr, ttl, df, 0, 0, source_port, port, seq, 0, 0, argp.tcpflags, 1024, 0, 0, 0, data, datalen, argp.frag_mtu);
-  else if (proto == IPPROTO_ICMP)
-    res = send_icmp_packet(sock, saddr, daddr, ttl, df, 0, 0, seq, 0, type, data, datalen, argp.frag_mtu);
-  else if (proto == IPPROTO_UDP)
-    res = send_udp_packet(sock, saddr, daddr, ttl, generate_ident(), NULL, 0, source_port, port, df, data, datalen, argp.frag_mtu);
-  else if (ip_ddos)
-    res = send_ip_empty(sock, saddr, daddr, ttl, proto, df, 0, 0, NULL, 0, argp.frag_mtu);
-
-  if (res != -1)
-    argp.success_packet_ddos++;
-
-  ls.lock();
-  close(sock);
-  ls.unlock();
-
-  if (!argp.reply_ddos)
-    return;
-
-  ls.lock();
-  buffer = (u8*)calloc(RECV_BUFFER_SIZE, sizeof(u8));
-  ls.unlock();
-
-  rf.dest_ip = daddr;
-  rf.protocol = argp.reply_ddos_proto;
-
-  resread = read_packet(&rf, recvtime, &buffer);
-  if (resread == -1) {
-    ls.lock();
-    np.nlog_error("The package was not accepted.\n");
-    ls.unlock();
-    return;
-  }
-
-  ls.lock();
-  np.easy_packet_trace(buffer, argp.hidden_eth);
-  ls.unlock();
-
-  ls.lock();
-  free(buffer);
-  ls.unlock();
+  send_ddos(&pd, np, n, argp, proto, type, daddr, saddr, port, ip_ddos);
 }
 
 /* Главная функция для HTTP запроса */
-#define HTTP_BUFLEN 65535
 void nesca_http(const std::string& ip, const u16 port, const int timeout_ms)
 {
-  std::string res, redirectres;
-  char resbuf[HTTP_BUFLEN];
-  char redirect[40960];
-
-  http_header hh;
-  hh.user_agent = "ncsock";
-  hh.content_len = 0;
-  hh.content_type = NULL;
-  hh.method = "GET";
-  hh.path = "/";
-  hh.auth_header = NULL;
-  hh.dest_host = ip.c_str();
-
-  if (!n.get_dns(ip).empty())
-    hh.dest_host = n.get_dns(ip).c_str();
-
-  send_http_request(ip.c_str(), port, timeout_ms, &hh, resbuf, HTTP_BUFLEN);
-
-  get_redirect(resbuf, redirect, 40960);
-  redirectres = redirect;
-
-  ls.lock();
-  n.add_redirect(ip, redirect);
-  ls.unlock();
-
-  if (!redirectres.empty()) {
-    hh.path = redirectres.c_str();
-    memset(resbuf, 0, HTTP_BUFLEN);
-    send_http_request(ip.c_str(), port, timeout_ms, &hh, resbuf, HTTP_BUFLEN);
-  }
-
-  res = resbuf;
-  if (res.empty())
-    res = "empty";
-
-  ls.lock();
-  n.add_html(ip, res);
-  ls.unlock();
+  struct http_header hh = initheader("/", ip, "oldteam", "GET");
+  send_http(&hh, n, ip, port, timeout_ms);
 }
 
 /* Главная функция для обработки. */

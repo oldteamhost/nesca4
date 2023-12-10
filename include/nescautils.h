@@ -42,6 +42,7 @@ class services_nesca {
     std::string probe_service(int port);
 };
 
+int get_log(int total);
 bool check_ansi_support(void);
 std::vector<int> write_ports(std::string mode);
 void logo(void);

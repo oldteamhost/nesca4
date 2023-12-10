@@ -26,6 +26,17 @@ bool hikvision_screenshot(const std::string& ip, const long user_id, const NET_D
   return false;
 }
 
+int get_log(int total)
+{
+  int res;
+  if (total < 20)
+    res = 5;
+  else
+    res = total / 5;
+
+  return res;
+}
+
 std::map<int,std::string> services_nesca::parse_services(const std::string& filename)
 {
   std::map<int, std::string> result;

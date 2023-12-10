@@ -21,6 +21,14 @@
 #include <unordered_map>
 #include <algorithm>
 
+struct datastring
+{
+  const char *data;
+  uint32_t datalen;
+};
+
+struct datastring initdata(const std::string &data);
+
 struct _portlist_
 {
   uint16_t port;

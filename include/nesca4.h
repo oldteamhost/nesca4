@@ -59,7 +59,7 @@
 #include "../ncsock/include/base.h"
 
 /*Угадайте?*/
-#define _VERSION "20231205"
+#define _VERSION "20231210"
 
 void usage(void);
 void version_menu(void);
@@ -70,12 +70,21 @@ std::string format_percentage(double procents);
 void fix_time(double time);
 
 void nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_ms);
-void nesca_ping(const char* ip);
+void nesca_ping(const std::string& ip);
 void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int port, bool ip_ddos);
 void nesca_http(const std::string& ip, const u16 port, const int timeout_ms);
 
+struct nescalog_opts
+{
+  int total, set;
+  std::string name;
+};
+
+struct nescalog_opts initlog(int total, int set, const std::string &name);
+void nesca_log(struct nescalog_opts *nlo, int complete);
+
 template<typename Func, typename... Args> void
-nesca_group_execute(int threads, std::vector<std::string> group, Func&& func, Args&&... args);
+nesca_group_execute(struct nescalog_opts *nlo, int threads, std::vector<std::string> group, Func&& func, Args&&... args);
 
 void importfile(void);
 void parse_args(int argc, char** argv);

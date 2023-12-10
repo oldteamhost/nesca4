@@ -18,6 +18,9 @@ extern "C" {
 #include <stdint.h>
 #include "mt19937.h"
 
+#define IS_NULL_OR_EMPTY(str) \
+  ((str == NULL) || (*str == '\0'))
+
 int find_word(const char* buffer, const char* word);
 char* clean_url(const char* url);
 void remove_specials(char* buffer);
