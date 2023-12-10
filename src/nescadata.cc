@@ -230,6 +230,7 @@ void NESCADATA::sort_ips_rtt(void)
 
   update_data_from_ips(temp_ips);
 }
+#include "../include/nescautils.h"
 
 void NESCADATA::create_group(void)
 {
@@ -239,6 +240,7 @@ void NESCADATA::create_group(void)
     if (std::find(temp_ips_group.begin(), temp_ips_group.end(), temp_ip) == temp_ips_group.end()) {
       temp_ips_group.push_back(temp_ip);
       current_group.push_back(temp_ip);
+      write_line("kek.txt", temp_ip + "\n");
     }
 
     if ((int)current_group.size() >= group_size)

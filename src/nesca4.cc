@@ -418,13 +418,15 @@ int main(int argc, char** argv)
 
   while (ip_count < size) {
     n.create_group();
+
     nesca_group_execute(argp._threads, n.current_group, nesca_scan, argp.ports, argp.timeout_ms);
-    ip_count = n.group_size;
+    for (int i = 0; i < (int)n.current_group.size(); i++)
+      ip_count++;
 
     if (size >= 10 && ip_count != 0) {
       double procents = (static_cast<double>(n.current_group.size()) / size) * 100;
       std::string result = format_percentage(procents);
-      std::cout << np.main_nesca_out("#", "Scan & Proc "+std::to_string(n.current_group.size())+" out of "+
+      std::cout << np.main_nesca_out("#", "Scan & Proc "+std::to_string(ip_count)+" out of "+
       std::to_string(size) + " IPs", 6, "", "", result + " (wating...)", "", "") << std::endl;
       putchar('\n');
     }
@@ -443,7 +445,6 @@ int main(int argc, char** argv)
     }
 
     for (const auto& ip : n.current_group) {
-      write_line("kek.txt", ip + "\n");
       if (n.find_port_status(ip, PORT_OPEN) || argp.debug || n.find_port_status(ip, PORT_OPEN_OR_FILTER) || n.find_port_status(ip, PORT_NO_FILTER)) {
         std::cout << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", n.get_new_dns(ip), std::to_string(n.get_rtt(ip))+"ms","") << std::endl;
 
@@ -472,10 +473,10 @@ int main(int argc, char** argv)
       }
     }
 
-    n.increase_group();
-
     n.clean_ports();
     n.clean_group();
+
+    n.increase_group();
   }
 
   auto end_time_scan = std::chrono::high_resolution_clock::now();
