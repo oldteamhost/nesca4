@@ -29,6 +29,7 @@ int get_sitemap_xml(const char* ip, const int port, const int timeout_ms)
   int result = send_http_request(ip, port, timeout_ms, &hh, response_buffer, 4096);
   if (result == -1) {
     free(response_buffer);
+    return -1;
   }
 
   int code = parse_http_response_code(response_buffer);
