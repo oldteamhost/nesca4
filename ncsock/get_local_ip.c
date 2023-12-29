@@ -20,16 +20,12 @@ char* get_local_ip(void)
   struct sockaddr_in *sa;
   char *localip = NULL;
 
-  if (getifaddrs(&ifap) == -1) {
-    perror("getifaddrs");
+  if (getifaddrs(&ifap) == -1)
     return NULL;
-  }
 
   for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-    if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET) {
+    if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET)
       continue;
-    }
-
     sa = (struct sockaddr_in *) ifa->ifa_addr;
     if (!(ifa->ifa_flags & IFF_LOOPBACK)) {
       localip = (char*)malloc(INET_ADDRSTRLEN);

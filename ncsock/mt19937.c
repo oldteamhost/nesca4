@@ -21,8 +21,8 @@ void mt19937_seed(u32 seed)
 
 u32 mt19937_random(void)
 {
+  int i;
   if (mti >= MT19937_N) {
-    int i;
     for (i = 0; i < MT19937_N - MT19937_M; i++) {
       u32 y = (mt[i] & MT19937_UPPER_MASK) | (mt[i + 1] & MT19937_LOWER_MASK);
       mt[i] = mt[i + MT19937_M] ^ (y >> 1) ^ ((y & 1) * 0x9908B0DF);
@@ -49,19 +49,17 @@ u32 generate_seed_u32(void)
 {
 #include <time.h>
   struct timespec ts;
-  if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
+  if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
     return -1;
-  }
-  u32 seed = (u32)(ts.tv_sec * 1000000000ULL + ts.tv_nsec);
 
+  u32 seed = (u32)(ts.tv_sec * 1000000000ULL + ts.tv_nsec);
   return seed;
 }
 
 u32 generate_random_u32(u32 min, u32 max)
 {
-  if (min > max) {
+  if (min > max)
     return -1;
-  }
 
   mt19937_seed(generate_seed_u32());
   u32 range = max - min + 1;

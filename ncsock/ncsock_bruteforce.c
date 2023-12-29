@@ -13,66 +13,57 @@
 #include "include/base.h"
 #include <time.h>
 
-#define CLEAR_RESULT___() \
-  auth = -1;
-
 int
 ncsock_bruteforce(struct bruteforce_opts *bo)
 {
-  int auth = -1; delayy(bo->delay_ms);
+  int auth = -1;
+  delayy(bo->delay_ms);
+
   switch (bo->proto)
   {
     case RTSP_BRUTEFORCE:
     case HTTP_BRUTEFORCE:
     {
       auth = basic_http_auth(bo->dest_ip, bo->dest_port, 1200, bo->http_path, bo->login, bo->pass);
-      if (auth == -1) {
+      if (auth == -1)
         return -1;
-      }
-      CLEAR_RESULT___();
+      auth = -1;
       auth = basic_http_auth(bo->dest_ip, bo->dest_port, 1200, bo->http_path, bo->login, bo->pass);
-      if (auth == -1) {
+      if (auth == -1)
         return -1;
-      }
       break;
     }
     case FTP_BRUTEFORCE:
     {
       auth = ftp_auth(bo->dest_ip, bo->dest_port, bo->login, bo->pass, 0, 1200);
-      if (auth == -1) {
+      if (auth == -1)
         return -1;
-      }
-      CLEAR_RESULT___();
+      auth = -1;
       auth = ftp_auth(bo->dest_ip, bo->dest_port, bo->login, bo->pass, 0, 1200);
-      if (auth == -1) {
+      if (auth == -1)
         return -1;
-      }
       break;
     }
     case SMTP_BRUTEFORCE:
     {
       auth = smtp_auth(bo->dest_ip, bo->dest_port, bo->login, bo->pass, 0, 1200);
-      if (auth == -1) {
+      if (auth == -1)
         return -1;
-      }
-      CLEAR_RESULT___();
+      auth = -1;
       auth = smtp_auth(bo->dest_ip, bo->dest_port, bo->login, bo->pass, 0, 1200);
-      if (auth == -1) {
+      if (auth == -1)
         return -1;
-      }
       break;
     }
     case RVI_BRUTEFORCE:
     {
       auth = rvi_auth(bo->dest_ip, bo->dest_port, bo->login, bo->pass, 0, 1200);
-      if (auth == -1) {
+      if (auth == -1)
         return -1;
-      }
-      CLEAR_RESULT___();
+      auth = -1;
       auth = rvi_auth(bo->dest_ip, bo->dest_port, bo->login, bo->pass, 0, 1200);
-      if (auth == -1) {
+      if (auth == -1)
         return -1;
-      }
       break;
     }
   }

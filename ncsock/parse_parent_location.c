@@ -14,23 +14,22 @@ char* parse_parent_location(const char* html)
   const char* end_str = "\"";
   const char* end_str2 = "\'";
   char* result = NULL;
-  const char *start_pos;
-  const char *end_pos;
-  size_t length;
+  const char *start_pos = NULL;
+  const char *end_pos = NULL;
+  size_t length = 0;
 
   start_pos = strstr(html, search_str);
-  if (start_pos == NULL)
+  if (!start_pos)
     start_pos = strstr(html, search_str2);
-
-  if (start_pos != NULL) {
+  if (start_pos) {
     start_pos += strlen(search_str);
     end_pos = strstr(start_pos, end_str);
-    if (end_pos == NULL)
+    if (!end_pos)
       end_pos = strstr(start_pos, end_str2);
-    if (end_pos != NULL) {
+    if (end_pos) {
       length = end_pos - start_pos;
       result = (char*)malloc(length + 1);
-      if (result != NULL) {
+      if (result) {
         strncpy(result, start_pos, length);
         result[length] = '\0';
       }

@@ -25,20 +25,16 @@ int send_http_request(const char* ip, const int port, const int timeout_ms,
   server_addr.sin_family = AF_INET;
   server_addr.sin_port = htons(port);
   inet_pton(AF_INET, ip, &server_addr.sin_addr);
-
   timeout.tv_sec = timeout_ms / 1000;
   timeout.tv_usec = (timeout_ms % 1000) * 1000;
 
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
   if (sockfd < 0)
     return -1;
-
   if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout)) == -1)
     goto fail;
-
   if (setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (const char *)&timeout, sizeof(timeout)) == -1)
     goto fail;
-
   if (connect(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0)
     goto fail;
 
@@ -74,9 +70,8 @@ int send_http_request(const char* ip, const int port, const int timeout_ms,
       break;
     response_length += bytes_received;
   }
-
-  response_buffer[response_length] = '\0';
   close(sockfd);
+  response_buffer[response_length] = '\0';
 
   return response_length;
 fail:

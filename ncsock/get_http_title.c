@@ -21,10 +21,8 @@ void get_http_title(const char* http_header, char* title_buffer, size_t buffer_s
   while ((title_start = strstr(current_position, title_tag_open)) != NULL) {
     title_start += strlen(title_tag_open);
     title_end = strstr(title_start, title_tag_close);
-
     if (title_end != NULL) {
       title_length = title_end - title_start;
-
       strncpy(title_buffer, title_start, title_length);
       title_buffer[title_length] = '\0';
       remove_specials(title_buffer);
@@ -32,7 +30,6 @@ void get_http_title(const char* http_header, char* title_buffer, size_t buffer_s
     }
     current_position = title_start + 1;
   }
-
   if (title_start == NULL || title_end == NULL)
     strncpy(title_buffer, "n/a", buffer_size);
 }

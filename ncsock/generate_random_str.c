@@ -15,7 +15,7 @@ char* generate_random_str(int len, const char* dictionary)
 
   mt19937_seed(generate_seed());
   result = (char*)malloc(len + 1);
-  if (result == NULL)
+  if (!result)
     return NULL;
 
   dict_len = strlen(dictionary);

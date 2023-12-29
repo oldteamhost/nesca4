@@ -22,31 +22,28 @@ double icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int
   pthread_mutex_init(&mutex, NULL);
 
   struct timespec start_time, end_time;
+  struct icmp4_header *icmphdr;
   struct readfiler rf;
   double response_time = -1;
   int sock, send, read;
   u32 saddr, daddr;
   bool df = true;
 
-  if (fragscan)
-    df = false;
-
   saddr = inet_addr(source_ip);
   daddr = inet_addr(dest_ip);
-
   rf.dest_ip = daddr;
   rf.protocol = IPPROTO_ICMP;
+
+  if (fragscan)
+    df = false;
 
   sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
   if (sock == -1)
     return -1;
-
   send = send_icmp_packet(sock, saddr, daddr, ttl, df, 0, 0, seq, code, type, data, datalen, fragscan);
-
   pthread_mutex_lock(&mutex);
   close(sock);
   pthread_mutex_unlock(&mutex);
-
   if (send == -1)
     return -1;
 
@@ -63,7 +60,7 @@ double icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int
     return -1;
   }
   clock_gettime(CLOCK_MONOTONIC, &end_time);
-  struct icmp4_header *icmphdr = ext_icmphdr(buffer);
+  icmphdr = ext_icmphdr(buffer);
 
   pthread_mutex_lock(&mutex);
   free(buffer);

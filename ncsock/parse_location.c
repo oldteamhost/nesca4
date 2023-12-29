@@ -11,8 +11,9 @@
 #include <stdbool.h>
 char* case_insensitive_strstr(const char* haystack, const char* needle)
 {
+  bool match;
   while (*haystack) {
-    bool match = true;
+    match = true;
     for (size_t i = 0; needle[i]; i++) {
       if (tolower(haystack[i]) != tolower(needle[i])) {
         match = false;
@@ -23,36 +24,40 @@ char* case_insensitive_strstr(const char* haystack, const char* needle)
       return (char*)haystack;
     haystack++;
   }
-
   return NULL;
 }
 
 char* parse_location(const char* http_header, int type_location)
 {
-  char* location_str;
-  if (type_location == DEFAULT_LOCATION){
+  int len = 0;
+  char* location_str = NULL;
+  char* end_str = NULL;
+  char* res = NULL;
+  char* src = NULL;
+  char* dest = NULL;
+  char* location_it = NULL;
+  char* end_it = NULL;
+
+  if (type_location == DEFAULT_LOCATION)
     location_str = "Location:";
-  }
-  else if (type_location == CONTENT_LOCATION) {
+  else if (type_location == CONTENT_LOCATION)
     location_str = "Content-Location:";
-  }
 
-  char* end_str = "\r\n";
-  char* result = NULL;
+  end_str = "\r\n";
+  res = NULL;
 
-  char* location_it = case_insensitive_strstr(http_header, location_str);
-  if (location_it != NULL) {
+  location_it = case_insensitive_strstr(http_header, location_str);
+  if (location_it) {
     location_it += strlen(location_str);
-    char* end_it = strstr(location_it, end_str);
-    if (end_it != NULL) {
-      int length = end_it - location_it;
-      result = (char*)malloc(length + 1);
-      if (result != NULL) {
-        strncpy(result, location_it, length);
-        result[length] = '\0';
-
-        char* src = result;
-        char* dest = result;
+    end_it = strstr(location_it, end_str);
+    if (end_it) {
+      len = end_it - location_it;
+      res = (char*)malloc(len + 1);
+      if (res != NULL) {
+        strncpy(res, location_it, len);
+        res[len] = '\0';
+        src = res;
+        dest = res;
         while (*src) {
           if (!isspace((unsigned char)*src)) {
             *dest = *src;
@@ -65,6 +70,6 @@ char* parse_location(const char* http_header, int type_location)
     }
   }
 
-  return result;
+  return res;
 }
 

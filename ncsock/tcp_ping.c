@@ -23,6 +23,7 @@ double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
 
   double response_time = -1;
   struct timespec start_time, end_time;
+  struct tcp_header *tcph;
   struct tcp_flags tf;
   struct readfiler rf;
   int sock = -1, send = -1, read = -1;
@@ -45,14 +46,12 @@ double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
   sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
   if (sock == -1)
     return -1;
-
-  send = send_tcp_packet(sock, saddr, daddr, ttl, df, 0, 0, source_port, dest_port, seq, 0, 0, flags, 1024, 0, 0, 0, data, datalen, fragscan);
-
+  send = send_tcp_packet(sock, saddr, daddr, ttl, df, 0, 0, source_port, dest_port,
+      seq, 0, 0, flags, 1024, 0, 0, 0, data, datalen, fragscan);
   pthread_mutex_lock(&mutex);
   close(sock);
   pthread_mutex_unlock(&mutex);
-
-  if (send == EOF)
+  if (send == -1)
     return -1;
 
   pthread_mutex_lock(&mutex);
@@ -60,7 +59,6 @@ double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
   pthread_mutex_unlock(&mutex);
 
   clock_gettime(CLOCK_MONOTONIC, &start_time);
-
   read = read_packet(&rf, timeout_ms, &buffer);
   if (read == -1) {
     pthread_mutex_lock(&mutex);
@@ -68,9 +66,8 @@ double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
     pthread_mutex_unlock(&mutex);
     return -1;
   }
-
   clock_gettime(CLOCK_MONOTONIC, &end_time);
-  struct tcp_header *tcph = ext_tcphdr(buffer);
+  tcph = ext_tcphdr(buffer);
 
   pthread_mutex_lock(&mutex);
   free(buffer);

@@ -11,22 +11,23 @@ char* parse_url_from_js(const char* html)
 {
   char* search_str = "window.location.href = \"";
   char* end_str = "\"";
-  char* result = NULL;
+  char* res = NULL;
   char* start_pos = strstr(html, search_str);
+  char* end_pos = NULL;
+  int len = 0;
 
-  if (start_pos != NULL) {
+  if (start_pos) {
     start_pos += strlen(search_str);
-    char* end_pos = strstr(start_pos, end_str);
-
-    if (end_pos != NULL) {
-      int length = end_pos - start_pos;
-      result = (char*)malloc(length + 1);
-
-      if (result != NULL) {
-        strncpy(result, start_pos, length);
-        result[length] = '\0';
+    end_pos = strstr(start_pos, end_str);
+    if (end_pos) {
+      len = end_pos - start_pos;
+      res = (char*)malloc(len + 1);
+      if (res) {
+        strncpy(res , start_pos, len);
+        res[len] = '\0';
       }
     }
   }
-  return result;
+
+  return res;
 }

@@ -6,18 +6,22 @@
 */
 
 #include "include/http.h"
+#include "include/types.h"
 
 char *_base64_encode(const unsigned char *input, size_t length)
 {
-  char *encoded_data = (char *)malloc(((length + 2) / 3) * 4 + 1);
+  char *encoded_data;
+  size_t i = 0, j = 0;
+  u8 a, b, c;
+
+  encoded_data = (char *)malloc(((length + 2) / 3) * 4 + 1);
   if (!encoded_data)
     return NULL;
 
-  size_t i = 0, j = 0;
   while (i < length) {
-    unsigned char a = i < length ? input[i++] : 0;
-    unsigned char b = i < length ? input[i++] : 0;
-    unsigned char c = i < length ? input[i++] : 0;
+    a = i < length ? input[i++] : 0;
+    b = i < length ? input[i++] : 0;
+    c = i < length ? input[i++] : 0;
 
     encoded_data[j++] = base64_dict[a >> 2];
     encoded_data[j++] = base64_dict[((a & 3) << 4) | (b >> 4)];

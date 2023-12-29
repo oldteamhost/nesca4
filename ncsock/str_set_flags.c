@@ -12,8 +12,8 @@ struct tcp_flags str_set_flags(const char *flags)
 {
   int i;
   struct tcp_flags res;
-
   memset(&res, 0, sizeof(struct tcp_flags));
+
   for (i = 0; flags[i] != '\0'; ++i) {
     switch (flags[i])
     {
@@ -49,7 +49,7 @@ struct tcp_flags str_set_flags(const char *flags)
       case 'E':
         res.ece = 1;
         break;
-      }
+    }
   }
   return res;
 }

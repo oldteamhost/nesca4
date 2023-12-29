@@ -14,6 +14,5 @@ unsigned int generate_seed(void)
   if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
     return -1;
 
-  unsigned int seed = (unsigned int)(ts.tv_sec * 1000000000ULL + ts.tv_nsec);
-  return seed;
+  return ((u32)(ts.tv_sec * 1000000000ULL + ts.tv_nsec));
 }

@@ -9,8 +9,8 @@
 
 int parse_http_response_code(const char* http_content)
 {
-  int code = -1;
   const char* status;
+  int code = -1;
 
   status = strstr(http_content, "HTTP/1.");
   if (status != NULL)

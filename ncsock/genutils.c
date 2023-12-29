@@ -29,14 +29,14 @@ const char* generate_ipv4(void)
   return ip;
 }
 
-u32 random_num(unsigned int min, unsigned int max)
+u32 random_num(u32 min, u32 max)
 {
   if (min > max)
     return -1;
 
   mt19937_seed(generate_seed());
-  unsigned int range = max - min + 1;
-  unsigned int random_value = min + (unsigned int)(mt19937_random() % range);
+  u32 range = max - min + 1;
+  u32 random_value = min + (u32)(mt19937_random() % range);
 
   return random_value;
 }
@@ -44,5 +44,5 @@ u32 random_num(unsigned int min, unsigned int max)
 u32 generate_ident(void)
 {
   mt19937_seed(generate_seed());
-  return (uint16_t)(mt19937_random() % 229444421);
+  return (u16)(mt19937_random() % 229444421);
 }

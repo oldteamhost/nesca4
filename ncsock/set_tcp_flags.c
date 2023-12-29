@@ -9,10 +9,9 @@
 
 u8 set_tcp_flags(struct tcp_flags *tf)
 {
+  u8 flags = 0;
   if (!tf)
     return -1;
-
-  u8 flags = 0;
 
   if (tf->syn)
     flags |= TH_SYN;

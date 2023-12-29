@@ -6,16 +6,16 @@
 */
 
 #include "include/http.h"
+#include "include/types.h"
 
 char* set_basic_auth(const char* user, const char* pass)
 {
-#include <string.h>
-  int combined_length = strlen(user) + 1 + strlen(pass) + 1;
-  char combined[combined_length];
-  sprintf(combined, "%s:%s", user, pass);
-  unsigned char *combined_bytes = (unsigned char *)combined;
-  size_t combined_length_bytes = strlen(combined);
-  char *base64_encoded = _base64_encode(combined_bytes, combined_length_bytes);
+  char combined[strlen(user) + 1 + strlen(pass) + 1];
+  int len = 0;
+  u8 *bytes = NULL;
 
-  return base64_encoded;
+  sprintf(combined, "%s:%s", user, pass);
+  bytes = (u8*)combined;
+
+  return (_base64_encode(bytes, strlen(combined)));
 }

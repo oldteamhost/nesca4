@@ -24,10 +24,9 @@ int find_word(const char* buffer, const char* word)
   strcpy(word_lower, word);
   to_lower(word_lower);
 
-  for (i = 0; i <= buffer_length - word_length; i++) {
+  for (i = 0; i <= buffer_length - word_length; i++)
     if (strncmp(buffer_lower + i, word_lower, word_length) == 0)
       return i;
-  }
 
   return -1;
 }

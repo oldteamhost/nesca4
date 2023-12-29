@@ -21,8 +21,10 @@ int send_udp_packet(int fd, const u32 saddr, const u32 daddr, int ttl, u16 ipid,
   struct sockaddr_in *dst_in;
   unsigned int packetlen;
   int res = -1;
-  u8 *packet = build_udp_pkt(saddr, daddr, ttl, ipid, IP_TOS_DEFAULT, df, ipopt, ipoptlen, sport, dport, data, datalen, &packetlen);
+  u8 *packet;
 
+  packet = build_udp_pkt(saddr, daddr, ttl, ipid, IP_TOS_DEFAULT, df, ipopt,
+      ipoptlen, sport, dport, data, datalen, &packetlen);
   if (!packet)
     return -1;
 
