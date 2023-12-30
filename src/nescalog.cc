@@ -433,9 +433,9 @@ void nesca_prints::printcolorscheme(void)
 
 int html_output::html_main_init(const std::string& filepath)
 {
-  html_add_result(filepath, "EXAMPLE", "http://oldteamhost.ru", "URL(result)", "RTT", "response (ms)", "D", "description", "T", "page title", "SERVICE", "protocol");
+  html_add_result(filepath, "EX", "http://oldteamhost.ru", "URL(result)", "RTT",
+      "response (ms)", "D", "description", "T", "page title", "SERVICE", "protocol");
   write_line(filepath, style_nesca3);
-
   return 0;
 }
 
@@ -479,6 +479,7 @@ int html_output::html_add_result(const std::string& filepath, const std::string&
     const std::string& opt2, const std::string& title, const std::string& opt3, const std::string& res3)
 {
   std::string data_html;
+  std::string top_html;
   char dots[4] = {':', ':', ':', ':'};
 
   if (rtt.empty())  {dots[0] = ' ';}
@@ -486,11 +487,13 @@ int html_output::html_add_result(const std::string& filepath, const std::string&
   if (feature.empty()) {dots[2] = ' ';}
   if (res3.empty()) {dots[3] = ' ';}
 
+  top_html = "MediumSeaGreen";
+
   data_html =
   R"( <div id="ipd" style="color:#707070;text-decoration: none;">
   [)" + time + R"(]
   <span id="hostSpan"><a href=")" + href + R"(" target="_blank">
-  <font color=MediumSeaGreen>)" + text + R"(</font></a>;</span>
+  <font color=)" + top_html + R"(>)" + text + R"(</font></a>;</span>
   <span id="recvSpan">)" + opt3 + dots[3] + R"( <font color=SteelBlue>)" + res3 + R"(</font> </span>
   <span id="recvSpan">)" + opt + dots[0] + R"( <font color=SteelBlue>)" + rtt + R"(</font> </span>
   <span id="recvSpan">)" + opt1 + dots[2] + R"( <font color=GoldenRod>)" + feature + R"(</font></span>)"

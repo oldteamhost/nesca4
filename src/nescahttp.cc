@@ -51,7 +51,6 @@ char* updsend_http(struct http_header *hh, const std::string& ip,
 
   if (hh->path != NULL && hh->path[0] == '.')
     memmove((void*)hh->path, (void*)(hh->path + 1), strlen(hh->path));
-
   for (ptr = hh->path; *ptr != '\0'; ++ptr) {
     if (*ptr == '/') {
       ++len;
@@ -74,7 +73,6 @@ char* updsend_http(struct http_header *hh, const std::string& ip,
     }
     else
       strcpy(path, hh->path);
-
     respath = path;
   }
   else {
@@ -138,14 +136,12 @@ void send_http(struct http_header *hh, NESCADATA &nd, const std::string& ip,
     fuck.lock();
       nd.add_redirect(ip, redirect);
     fuck.unlock();
-
     hh->path = redirect;
     newbuf = updsend_http(hh, ip.c_str(), port, timeout_ms);
   }
 
   if (newbuf) {
     res = std::string(newbuf);
-
     fuck.lock();
       delete[] newbuf;
     fuck.unlock();

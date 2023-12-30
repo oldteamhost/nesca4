@@ -59,7 +59,7 @@
 #include "../ncsock/include/base.h"
 
 /*Угадайте?*/
-#define _VERSION "20231210"
+#define _VERSION "20231230"
 
 void usage(void);
 void version_menu(void);
@@ -69,6 +69,8 @@ void processing_tcp_scan_ports(std::string ip, int port, int result);
 std::string format_percentage(double procents);
 void fix_time(double time);
 
+void PRENESCASCAN(void);
+void NESCASCAN(std::vector<std::string>& temp_vector);
 void nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_ms);
 void nesca_ping(const std::string& ip);
 void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int port, bool ip_ddos);
@@ -92,13 +94,15 @@ void pre_check(void);
 void process_port(const std::string& ip, std::vector<uint16_t> ports, int port_type);
 void get_dns_thread(std::string ip);
 int count_map_vector(const std::unordered_map<std::string, std::vector<int>>& map, const std::string& key);
-std::vector<std::string> resolv_hosts(std::vector<std::string> hosts);
+std::vector<std::string> resolvhosts(bool datablocks, std::vector<std::string> hosts);
 
 const struct
 option long_options[] = {
-  {"p-axis", no_argument, 0, 42},
-  {"p-rvi", no_argument, 0, 56},
-  {"p-hikvision", no_argument, 0, 58},
+  //{"p-axis", no_argument, 0, 42},
+  //{"p-rvi", no_argument, 0, 56},
+  {"gdel", required_argument, 0, 58},
+  //{"p-hikvision", no_argument, 0, 38},
+  //{"log-set", required_argument, 0, 24},
 
   {"hide-eth", no_argument, 0, 64},
   {"http-timeout", required_argument, 0, 22},
@@ -144,7 +148,6 @@ option long_options[] = {
   {"no-ping", no_argument, 0, 29},
   {"no-proc", no_argument, 0, 95},
   {"no-color", no_argument, 0, 26},
-  {"log-set", required_argument, 0, 24},
   {"packet-trace", no_argument, 0, 96},
   {"no-resolv", no_argument, 0, 59},
   {"help", no_argument, 0, 'h'},
@@ -170,9 +173,10 @@ option long_options[] = {
   {"ss-timeout", required_argument, 0, 41},
   {"ns-track", no_argument, 0, 39},
 #endif
-  {"max-group", required_argument, 0, 38},
-  {"min-group", required_argument, 0, 60},
-  {"rate-group", required_argument, 0, 61},
+
+  {"maxg-ping", required_argument, 0, 60},
+  {"maxg-scan", required_argument, 0, 61},
+
   {"exclude", required_argument, 0, 62},
   {"excludefile", required_argument, 0, 63},
   {"max-ping", no_argument, 0, 88},

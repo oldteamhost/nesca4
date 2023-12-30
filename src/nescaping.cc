@@ -60,7 +60,12 @@ check:
   if (rtt != -1) {
     ls.lock();
     nd.set_rtt(ip, rtt);
-    argp.new_ping_ip.push_back(ip);
+    nd.success_ping_ip.push_back(ip);
+    ls.unlock();
+  }
+  else {
+    ls.lock();
+    nd.failed_ping_ip.push_back(ip);
     ls.unlock();
   }
 }

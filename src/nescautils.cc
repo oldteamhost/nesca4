@@ -29,7 +29,7 @@ bool hikvision_screenshot(const std::string& ip, const long user_id, const NET_D
 int get_log(int total)
 {
   int res;
-  if (total < 20)
+  if (total < 10)
     res = 5;
   else
     res = total / 5;

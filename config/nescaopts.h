@@ -21,7 +21,6 @@
 #define SPEED_TYPE_DEFAULT 3
 #define SCAN_PORTS_TYPE_DEFAULT 1
 #define DEFAULT_PORTS {80,443}
-#define GROUP_MIN_SIZE_DEFAULT 5
 #define SYN_PING_DEFAULT_DEST_PORT 80
 #define ACK_PING_DEFAULT_DEST_PORT 80
 #define PING_LOG_DEFAULT 20
@@ -53,15 +52,7 @@ public:
   int speed_type = SPEED_TYPE_DEFAULT;
   int count_success_ips;
 
-  bool custom_g_rate;
-
-  bool rvi_preset;
-  bool hikvision_preset;
-  bool axis_preset;
-
   std::vector<std::string> exclude;
-  bool custom_g_max;
-  bool custom_g_min;
   bool custom_source_port;
   bool find;
   bool custom_ttl;
@@ -110,8 +101,6 @@ public:
   bool custom_recv_timeout_ms;
   int recv_timeout_ms;
   int ddos_threads = 500;
-  bool custom_log_set;
-  int log_set;
   int _threads;
 
   std::vector<int> ports = DEFAULT_PORTS;
@@ -161,6 +150,12 @@ public:
   bool timestamp_ping;
   bool max_ping;
 
+  int maxg_ping = 3000;
+  int maxg_scan = 2000;
+
+  int group_del = 5;
+
+
   int ack_dest_port = ACK_PING_DEFAULT_DEST_PORT;
   int syn_dest_port = SYN_PING_DEFAULT_DEST_PORT;
 
@@ -177,6 +172,7 @@ public:
 
   bool thread_on_port;
   bool info_version;
+  std::vector<std::string> success_ping_ip;
 
   std::vector<std::string> ftp_logins;
   std::vector<std::string> ftp_passwords;

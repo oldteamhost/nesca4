@@ -7,8 +7,11 @@
 */
 
 #include "../include/nescadata.h"
+#include "../ncsock/include/types.h"
+
 #include <cmath>
 #include <cstdio>
+#include <cstring>
 #include <vector>
 #include <unordered_set>
 
@@ -108,6 +111,37 @@ void NESCADATA::negatives_hosts(const std::vector<std::string> ips)
   }
 }
 
+void print_nescadata_(const _nescadata_& data)
+{
+  std::cout << "ip address: " << data.ip << std::endl;
+  puts ("--------------------------------------------");
+  std::cout << "old dns: " << data.dns << std::endl;
+  std::cout << "new dns: " << data.new_dns << std::endl;
+  std::cout << "rtt flag: " << std::boolalpha << data.rtt_init << std::endl;
+  std::cout << "rtt: " << data.rtt << std::endl;
+  if (!data.html.empty())
+    std::cout << "html code: true" << std::endl;
+  else
+    std::cout << "html code: false" << std::endl;
+  std::cout << "redirect: " << data.redirect << std::endl;
+  std::cout << "ports:" << std::endl;
+  for (const auto& port : data.ports)
+    std::cout << "  port: " << port.port << ", state: " << port.state << std::endl;
+  puts ("--------------------------------------------");
+}
+
+void NESCADATA::print_datablock(const std::string &ip)
+{
+  _nescadata_* data = get_data_block(ip);
+  print_nescadata_(*data);
+}
+
+void NESCADATA::printall_datablock(void)
+{
+  for (const auto& data : all_data)
+    print_nescadata_(data);
+}
+
 void NESCADATA::add_port(const std::string& ip, uint16_t port, short state)
 {
   _nescadata_* data = get_data_block(ip);
@@ -129,10 +163,13 @@ std::vector<std::string> NESCADATA::get_all_ips(void)
 void NESCADATA::update_data_from_ips(const std::vector<std::string>& updated_ips)
 {
   std::vector<_nescadata_> new_all_data;
-  for (const std::string& ip : updated_ips) {
-    _nescadata_ *data = get_data_block(ip);
-    if (data)
-      new_all_data.push_back(*data);
+
+  if (updated_ips.empty())
+    return;
+
+  for (const _nescadata_& data : all_data) {
+    if (std::find(updated_ips.begin(), updated_ips.end(), data.ip) == updated_ips.end())
+      new_all_data.push_back(data);
   }
   all_data = new_all_data;
 }
@@ -156,48 +193,59 @@ void NESCADATA::set_rtt(const std::string& ip, double rtt)
 bool NESCADATA::find_port_status(const std::string& ip, short state)
 {
   _nescadata_* data = get_data_block(ip);
-  if (data) {
+  if (data)
     for (const _portlist_& entry : data->ports)
       if (entry.state == state)
         return true;
-  }
+
   return false;
 }
 
 void NESCADATA::add_ip(const std::string& ip)
 {
-  _nescadata_ new_data;
-  strncpy(new_data.ip, ip.c_str(), sizeof(new_data.ip) - 1);
-  new_data.ip[sizeof(new_data.ip) - 1] = '\0';
-  all_data.push_back(new_data);
+  _nescadata_ newdata;
+  newdata.dns = "";
+  newdata.rtt_init = false;
+  newdata.rtt = 0.0;
+  newdata.html = "";
+  newdata.ports = {};
+  newdata.new_dns = "";
+  newdata.redirect = "";
+
+  strncpy(newdata.ip, ip.c_str(), sizeof(newdata.ip) - 1);
+  newdata.ip[sizeof(newdata.ip) - 1] = '\0';
+  all_data.push_back(newdata);
 }
 
-std::vector<uint16_t> NESCADATA::get_port_list(const std::string& ip, short state)
+std::vector<u16> NESCADATA::get_port_list(const std::string& ip, short state)
 {
-  std::vector<uint16_t> port_list;
   _nescadata_* data = get_data_block(ip);
-  if (data) {
+  std::vector<u16> port_list;
+
+  if (data)
     for (const _portlist_& entry : data->ports)
       if (entry.state == state)
         port_list.push_back(entry.port);
-  }
+
   return port_list;
 }
 
 short NESCADATA::get_port_state(const std::string& ip, uint16_t port)
 {
   _nescadata_* data = get_data_block(ip);
-  if (data) {
+
+  if (data)
     for (const _portlist_& entry : data->ports)
       if (entry.port == port)
         return entry.state;
-  }
+
   return -1;
 }
 
 std::string NESCADATA::get_new_dns(const std::string& ip)
 {
   _nescadata_* data = get_data_block(ip);
+
   if (data)
     if (!data->new_dns.empty())
       return data->new_dns;
@@ -216,7 +264,7 @@ std::string NESCADATA::get_dns(const std::string& ip)
 
 void NESCADATA::delete_data_block(const std::string& ip)
 {
-  all_data.erase(std::remove_if(all_data.begin(), all_data.end(), [&ip](const _nescadata_& data) {
+  all_data.erase(std::remove_if(all_data.begin(), all_data.end(), [&ip](const _nescadata_& data){
     return data.ip == ip;
   }), all_data.end());
 }
@@ -224,79 +272,48 @@ void NESCADATA::delete_data_block(const std::string& ip)
 double NESCADATA::get_rtt(const std::string& ip)
 {
   _nescadata_* data = get_data_block(ip);
+
   if (data && data->rtt_init == true)
     return data->rtt;
 
   return -1;
 }
 
-void NESCADATA::sort_ips_rtt(void)
+void NESCADATA::sort_ips_rtt(std::vector<std::string>& ips)
 {
-  std::vector<std::string> temp_ips = get_all_ips();
-
-  std::sort(temp_ips.begin(), temp_ips.end(), [this](const std::string& a, const std::string& b) {
+  std::sort(ips.begin(), ips.end(), [this](const std::string& a, const std::string& b) {
     double rtt_a = get_rtt(a), rtt_b = get_rtt(b);
     return rtt_a < rtt_b;
   });
-
-  update_data_from_ips(temp_ips);
 }
+
 #include "../include/nescautils.h"
-
-void NESCADATA::create_group(void)
-{
-  std::vector<std::string> temp_ips = get_all_ips();
-
-  for (const auto& temp_ip : temp_ips) {
-    if (std::find(temp_ips_group.begin(), temp_ips_group.end(), temp_ip) == temp_ips_group.end()) {
-      temp_ips_group.push_back(temp_ip);
-      current_group.push_back(temp_ip);
-    }
-
-    if ((int)current_group.size() >= group_size)
-      break;
-  }
-}
-
-void NESCADATA::increase_group(void)
-{
-  group_size += group_rate;
-}
-
-void NESCADATA::clean_group(void)
-{
-  current_group.clear();
-}
 
 std::vector<std::string> range_to_ips(const std::vector<std::string>& ip_ranges)
 {
-  unsigned int start_ip = 0;
-  unsigned int end_ip = 0;
+  u32 start_ip = 0;
+  u32 end_ip = 0;
   std::vector<std::string> result;
+  std::stringstream ss;
+  std::string start_octet_str, end_octet_str;
 
   for (const auto& range : ip_ranges) {
     std::istringstream iss(range);
     std::string start_ip_str, end_ip_str;
     std::getline(iss, start_ip_str, '-');
     std::getline(iss, end_ip_str);
-
     std::istringstream start_ss(start_ip_str), end_ss(end_ip_str);
-
     for (int i = 3; i >= 0; --i) {
-      std::string start_octet_str, end_octet_str;
       std::getline(start_ss, start_octet_str, '.');
       std::getline(end_ss, end_octet_str, '.');
-
       start_ip |= (std::stoi(start_octet_str) << (i * 8));
       end_ip |= (std::stoi(end_octet_str) << (i * 8));
     }
-
-    for (unsigned int i = start_ip; i <= end_ip; ++i) {
-      std::stringstream ss;
-      ss << ((i >> 24) & 0xFF) << '.' << ((i >> 16) & 0xFF) << '.' << ((i >> 8) & 0xFF) << '.' << (i & 0xFF);
+    for (u32 i = start_ip; i <= end_ip; ++i) {
+      ss << ((i >> 24) & 0xFF) << '.' << ((i >> 16) & 0xFF)
+        << '.' << ((i >> 8) & 0xFF) << '.' << (i & 0xFF);
       result.push_back(ss.str());
     }
-
     start_ip = 0;
     end_ip = 0;
   }
@@ -317,10 +334,8 @@ std::vector<std::string> cidr_to_ips(const std::vector<std::string>& cidr_list)
     std::string octetString;
     std::stringstream networkAddressStream(networkAddress);
 
-    while (std::getline(networkAddressStream, octetString, '.')) {
+    while (std::getline(networkAddressStream, octetString, '.'))
       octets.push_back(std::strtoull(octetString.c_str(), nullptr, 10));
-    }
-
     for (auto octet : octets)
       ipAddress = (ipAddress << 8) | octet;
 
@@ -344,6 +359,7 @@ std::vector<std::string> convert_dns_to_ip(const std::vector<std::string>& dns_v
   struct addrinfo hints, *res;
   int status;
   char ip_str[INET_ADDRSTRLEN];
+  struct sockaddr_in *addr;
 
   for (const auto& dns : dns_vector) {
     memset(&hints, 0, sizeof(hints));
@@ -354,7 +370,7 @@ std::vector<std::string> convert_dns_to_ip(const std::vector<std::string>& dns_v
     if (status != 0)
       continue;
 
-    struct sockaddr_in* addr = (struct sockaddr_in*) res->ai_addr;
+    addr = (struct sockaddr_in*) res->ai_addr;
     inet_ntop(AF_INET, &(addr->sin_addr), ip_str, INET_ADDRSTRLEN);
     ip_vector.push_back(ip_str);
     freeaddrinfo(res);
@@ -380,11 +396,13 @@ std::vector<std::string> split_string_string(const std::string& str, char delimi
   std::vector<std::string> result;
   size_t pos = 0, found;
   std::string token;
+
   while ((found = str.find_first_of(delimiter, pos)) != std::string::npos) {
     token = str.substr(pos, found - pos);
     result.push_back(token);
     pos = found + 1;
   }
+
   result.push_back(str.substr(pos));
   return result;
 }
