@@ -786,8 +786,8 @@ void usage(void)
   reset_colors;
   std::cout << "  -fin, -xmas, -null, -psh: Use one of these scanning methods.\n";
   std::cout << "  -ack, -windows -maimon: Use ack or window or maimon scan method.\n";
-  std::cout << "  -scanflags <flags>: Customize TCP scan flag (ACKSYN).\n";
-  std::cout << "  -p <port ranges>: Only scan specified port(s) \n    Ex: -p 80; -p 22,80; -p 1-65535;\n";
+  std::cout << "  -scanflags <flags>: Customize TCP scan flag. \n    Ex: ack & syn = (AS);\n";
+  std::cout << "  -p <port ranges>: Only scan specified port(s). \n    Ex: -p 80; -p 22,80; -p 1-65535;\n";
   std::cout << "  -delay, -d <ms>: Set delay for scan.\n";
   std::cout << "  -scan-timeout <ms>: Edit timeout for getting packet on port.\n";
   std::cout << "  -no-scan: Disable port scan(skip).\n";
