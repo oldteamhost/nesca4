@@ -16,7 +16,8 @@
 #include <unistd.h>
 
 double icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int type,
-    int code, int seq, int ttl, const char *data, u16 datalen, int fragscan)
+    int code, int seq, int ttl, u8 *ipops, int ipoptlen, const char *data, u16 datalen,
+    int fragscan)
 {
   pthread_mutex_t mutex;
   pthread_mutex_init(&mutex, NULL);
@@ -40,7 +41,8 @@ double icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int
   sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
   if (sock == -1)
     return -1;
-  send = send_icmp_packet(sock, saddr, daddr, ttl, df, 0, 0, seq, code, type, data, datalen, fragscan);
+  send = send_icmp_packet(sock, saddr, daddr, ttl, df, ipops, ipoptlen, seq,
+      code, type, data, datalen, fragscan);
   pthread_mutex_lock(&mutex);
   close(sock);
   pthread_mutex_unlock(&mutex);

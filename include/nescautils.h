@@ -21,6 +21,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <random>
+#include <assert.h>
 #include <cstdio>
 #include <vector>
 #include <filesystem>

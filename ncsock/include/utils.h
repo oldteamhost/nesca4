@@ -9,11 +9,23 @@
 #define UTILS_HEADER
 
 #include <sys/cdefs.h>
+#include <stdio.h>
+#include <assert.h>
+#include <string.h>
+#include <ctype.h>
+#include <arpa/inet.h>
+#include <stdlib.h>
+#include "types.h"
 
 __BEGIN_DECLS
 
 char* get_active_interface_name(void);
 char* get_local_ip(void);
+int parse_ipopts(const char *txt, u8 *data, int datalen, int* firsthopoff,
+    int* lasthopoff, char *errstr, size_t errstrlen);
+void parse_tcpopts(u8 *optp, int len, char *result,
+    int bufsize);
+u8 *hexbin(char *str, size_t *outlen);
 
 __END_DECLS
 

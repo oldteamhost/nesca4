@@ -55,7 +55,6 @@ public:
   std::vector<std::string> exclude;
   bool custom_source_port;
   bool find;
-  bool custom_ttl;
   bool random_dns;
   bool reply_ddos;
   u8 reply_ddos_proto = 0;
@@ -64,7 +63,6 @@ public:
   bool ns_track;
   int http_threads;
 
-  int _custom_ttl;
   int _custom_source_port;
 
   bool ip_ddos;
@@ -89,8 +87,6 @@ public:
   bool custom_tcpflags;
   const char* custom_res_tcpflags;
 
-
-  std::string data_string;
   int success_packet_ddos;
 
   bool tcp_ddos;

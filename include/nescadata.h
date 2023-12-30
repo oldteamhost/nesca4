@@ -54,6 +54,15 @@ class NESCADATA {
     std::vector<std::string> success_ping_ip;
     std::vector<std::string> failed_ping_ip;
 
+    u8 ip_options[256];
+    int ipopts_first_hop_offset = 0;
+    int ipopts_last_hop_offset = 0;
+    int ipoptslen;
+
+    u16 windowlen = 0;
+    u32 ack = 0;
+    u16 ttl = 0;
+
     /* add data */
     void add_redirect(const std::string& ip, const std::string& redirect);
     void add_html(const std::string& ip, const std::string& html);
@@ -97,7 +106,5 @@ struct datastring
   const char *data;
   u32 datalen;
 };
-
-struct datastring initdata(const std::string &data);
 
 #endif

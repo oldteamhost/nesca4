@@ -74,24 +74,29 @@ void send_ddos(struct datastring *ds, nesca_prints &np, NESCADATA &nd, arguments
       source_port = generate_rare_port();
   }
 
-  if (argp.custom_ttl)
-    ttl = argp._custom_ttl;
-  else
+  if (nd.ttl == 0)
     ttl = random_num(29, 255);
+  else
+    ttl = nd.ttl;
 
   sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
   if (sock == -1)
     return;
 
   if (proto == IPPROTO_TCP)
-    res = send_tcp_packet(sock, saddr, daddr, ttl, df, 0, 0, source_port, port, seq, 0, 0, argp.tcpflags,
+    res = send_tcp_packet(sock, saddr, daddr, ttl, df, nd.ip_options, nd.ipoptslen,
+        source_port, port, seq, 0, 0, argp.tcpflags,
         1024, 0, 0, 0, ds->data, ds->datalen, argp.frag_mtu);
   else if (proto == IPPROTO_ICMP)
-    res = send_icmp_packet(sock, saddr, daddr, ttl, df, 0, 0, seq, 0, type, ds->data, ds->datalen, argp.frag_mtu);
+    res = send_icmp_packet(sock, saddr, daddr, ttl, df, nd.ip_options, nd.ipoptslen, seq, 0,
+        type, ds->data, ds->datalen, argp.frag_mtu);
   else if (proto == IPPROTO_UDP)
-    res = send_udp_packet(sock, saddr, daddr, ttl, generate_ident(), NULL, 0, source_port, port, df, ds->data, ds->datalen, argp.frag_mtu);
+    res = send_udp_packet(sock, saddr, daddr, ttl, generate_ident(), nd.ip_options, nd.ipoptslen,
+        source_port, port, df, ds->data, ds->datalen, argp.frag_mtu);
   else if (ip_ddos)
-    res = send_ip_empty(sock, saddr, daddr, ttl, proto, df, 0, 0, NULL, 0, argp.frag_mtu);
+    res = send_ip_empty(sock, saddr, daddr, ttl, proto, df, nd.ip_options, nd.ipoptslen,
+        NULL, 0, argp.frag_mtu);
+
 
   if (res != -1)
     argp.success_packet_ddos++;

@@ -15,17 +15,6 @@
 #include <vector>
 #include <unordered_set>
 
-struct datastring initdata(const std::string &data)
-{
-  datastring ds;
-  memset(&ds, 0, sizeof(struct datastring));
-
-  ds.data = data.c_str();
-  ds.datalen = strlen(ds.data);
-
-  return ds;
-}
-
 _nescadata_* NESCADATA::get_data_block(const std::string& ip)
 {
   auto it = std::find_if(all_data.begin(), all_data.end(), [&ip](const _nescadata_& data) {

@@ -24,35 +24,41 @@ void send_ping(struct datastring *pd, NESCADATA &nd, arguments_program &argp, co
   u16 source;
   u16 seq;
 
-  ttl = random_num(29, 255);
   source = generate_rare_port();
   seq = generate_seq();
 
   if (argp.custom_source_port)
     source = argp._custom_source_port;
-  if (argp.custom_ttl)
-    ttl = argp._custom_ttl;
+  if (nd.ttl == 0)
+    ttl = random_num(29, 255);
+  else
+    ttl = nd.ttl;
 
   ipc = ip.c_str();
 
   if (argp.echo_ping) {
-    rtt = icmp_ping(ipc, argp.source_ip, argp.ping_timeout, ICMP_ECHO, 0, seq, ttl, pd->data, pd->datalen, argp.frag_mtu);
+    rtt = icmp_ping(ipc, argp.source_ip, argp.ping_timeout, ICMP_ECHO, 0, seq, ttl,
+        nd.ip_options, nd.ipoptslen, pd->data, pd->datalen, argp.frag_mtu);
     goto check;
   }
   if (argp.syn_ping) {
-    rtt = tcp_ping(SYN_PACKET, ipc, argp.source_ip, argp.syn_dest_port, source, argp.ping_timeout, ttl, pd->data, pd->datalen, argp.frag_mtu);
+    rtt = tcp_ping(SYN_PACKET, ipc, argp.source_ip, argp.syn_dest_port, source,
+        nd.windowlen, nd.ack, argp.ping_timeout, ttl, nd.ip_options, nd.ipoptslen, pd->data, pd->datalen, argp.frag_mtu);
     goto check;
   }
   if (argp.ack_ping) {
-    rtt = tcp_ping(ACK_PACKET, ipc, argp.source_ip, argp.syn_dest_port, source, argp.ping_timeout, ttl, pd->data, pd->datalen, argp.frag_mtu);
+    rtt = tcp_ping(ACK_PACKET, ipc, argp.source_ip, argp.syn_dest_port, source,
+        nd.windowlen, nd.ack, argp.ping_timeout, ttl, nd.ip_options, nd.ipoptslen, pd->data, pd->datalen, argp.frag_mtu);
     goto check;
   }
   if (argp.info_ping) {
-    rtt = icmp_ping(ipc, argp.source_ip, argp.ping_timeout, ICMP_INFO_REQUEST, 0, seq, ttl, pd->data, pd->datalen, argp.frag_mtu);
+    rtt = icmp_ping(ipc, argp.source_ip, argp.ping_timeout, ICMP_INFO_REQUEST, 0, seq, ttl,
+        nd.ip_options, nd.ipoptslen, pd->data, pd->datalen, argp.frag_mtu);
     goto check;
   }
   if (argp.timestamp_ping) {
-    rtt = icmp_ping(ipc, argp.source_ip, argp.ping_timeout, ICMP_TIMESTAMP, 0, seq, ttl, pd->data, pd->datalen, argp.frag_mtu);
+    rtt = icmp_ping(ipc, argp.source_ip, argp.ping_timeout, ICMP_TIMESTAMP, 0, seq, ttl,
+        nd.ip_options, nd.ipoptslen, pd->data, pd->datalen, argp.frag_mtu);
     goto check;
   }
 

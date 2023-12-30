@@ -12,6 +12,7 @@
 #include "../include/portscan.h"
 #include "../ncsock/include/icmp.h"
 #include "../ncsock/include/readpkt.h"
+#include "../ncsock/include/utils.h"
 #include "../include/nescaddos.h"
 #include "../include/nescaping.h"
 #include "../ncsock/include/strbase.h"
@@ -49,23 +50,24 @@ const char* short_options = "s:hl:vd:T:p:aS:n";
 
 int main(int argc, char** argv)
 {
+  char* templocalip = NULL;
+  struct tcp_flags tf;
+
   run = argv[0];
+  memset(&tf, 0, sizeof(struct tcp_flags));
 
   if (argc <= 1)
-    usage();
+    usage(run);
 
-  char* templocalip = get_local_ip();
-  std::string __temp = templocalip;
-  argp.source_ip = __temp.c_str();
-  free(templocalip);
+  templocalip = get_local_ip();
+  argp.source_ip = std::move(templocalip);
+
   parse_args(argc, argv);
   pre_check();
   importfile();
 
   /* SET TCP FLAGS */
 
-  struct tcp_flags tf;
-  memset(&tf, 0, sizeof(struct tcp_flags));
   if (!argp.custom_tcpflags)
     tf = set_flags(argp.type);
   else
@@ -87,8 +89,8 @@ int main(int argc, char** argv)
   /* WARNINGS */
 
   if (argp.no_scan && argp.ping_off) {
-    np.nlog_error("(-no-ping) is not available with (-no-scan)\n");
-    exit(0);
+    np.nlog_error("-no-ping is not available with (-no-scan)\n");
+    exit(1);
   }
   if (argp.custom_tcpflags){
     np.golder_rod_on();
@@ -101,12 +103,12 @@ int main(int argc, char** argv)
     printf("-> NOTE: Note that if (ihl * 4) < (mtu) then fragmentation will not be performed, it is better to use mtu not more than 16.\n");
     reset_colors;
   }
-  if (argp.data_string.length() > 1400) {
+  if (pd.datalen > 1400) {
     np.golder_rod_on();
     puts("-> NOTE: Usually packages that have a payload greater than 1400 are rejected.");
     reset_colors;
   }
-  if ((argp.tcp_ddos || argp.icmp_ddos || argp.ip_ddos || argp.udp_ddos) && argp.data_string.empty()) {
+  if ((argp.tcp_ddos || argp.icmp_ddos || argp.ip_ddos || argp.udp_ddos) && pd.datalen <= 0) {
     np.golder_rod_on();
     puts("-> NOTE: To enhance DDOS you need to use (-data-len) to add payload.");
     reset_colors;
@@ -474,13 +476,12 @@ void NESCASCAN(std::vector<std::string>& temp_vector)
 /* Главная функция для сканировния портов */
 void nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_ms)
 {
-  u32 seq, saddr, daddr, datalen = 0;
+  u32 seq, saddr, daddr;
   int source_port, res, sock, recvtime = 600;
   u8* buffer;
   u16 ttl;
   double rtt_ping;
   u8 portstat = PORT_ERROR;
-  const char* data;
   bool df = true;
 
   if (argp.frag_mtu)
@@ -503,22 +504,19 @@ void nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_
       recvtime = calculate_timeout(rtt_ping, argp.speed_type);
   }
 
-  if (!argp.data_string.empty()) {
-    data = argp.data_string.c_str();
-    datalen = strlen(data);
-  }
-
   for (const auto& port : ports) {
     sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
     if (sock == -1)
       continue;
 
-    if (argp.custom_ttl)
-      ttl = argp._custom_ttl;
-    else
+    if (n.ttl == 0)
       ttl = random_num(29, 255);
+    else
+      ttl = n.ttl;
 
-    res = send_tcp_packet(sock, saddr, daddr, ttl, df, 0, 0, source_port, port, seq, 0, 0, argp.tcpflags, 1024, 0, 0, 0, data, datalen, argp.frag_mtu);
+    res = send_tcp_packet(sock, saddr, daddr, ttl, df, n.ip_options,
+        n.ipoptslen, source_port, port, seq, n.ack, 0, argp.tcpflags, n.windowlen,
+        0, 0, 0, pd.data, pd.datalen, argp.frag_mtu);
 
     ls.lock();
     close(sock);
@@ -753,7 +751,7 @@ void importfile(void)
 }
 
 
-void usage(void)
+void usage(const char* exec)
 {
   puts("d8b   db d88888b .d8888.  .o88b.  .d8b.         j88D ");
   puts("888o  88 88'     88'  YP d8P  Y8 d8' `8b       j8~88 "); 
@@ -771,7 +769,7 @@ void usage(void)
   np.gray_nesca_on();
   std::cout << "[USAGE]:";
   np.green_html_on();
-  std::cout << run << " [target(s) 1,2,3] [flags]" << std::endl;
+  std::cout << exec << " <host1[,host2]],...> <flags>" << std::endl;
   np.gray_nesca_on();
 
   np.golder_rod_on();
@@ -781,16 +779,18 @@ void usage(void)
   std::cout << "  -random-ip <num hosts>: Choose random target(s)\n";
   std::cout << "  -exclude <host1[,host2][,host3],...>: Exclude host(s).\n";
   std::cout << "  -excludefile <exclude_file>: Exclude list from file\n";
+
   np.golder_rod_on();
   std::cout << "PORT SCAN OPTIONS:" << std::endl;
   reset_colors;
   std::cout << "  -fin, -xmas, -null, -psh: Use one of these scanning methods.\n";
   std::cout << "  -ack, -windows -maimon: Use ack or window or maimon scan method.\n";
-  std::cout << "  -scanflags <flags>: Customize TCP scan flag. \n    Ex: ack & syn = (AS);\n";
+  std::cout << "  -scanflags <flags>: Customize TCP scan flag. \n    Ex: (ACKSYN) > AS;\n";
   std::cout << "  -p <port ranges>: Only scan specified port(s). \n    Ex: -p 80; -p 22,80; -p 1-65535;\n";
   std::cout << "  -delay, -d <ms>: Set delay for scan.\n";
   std::cout << "  -scan-timeout <ms>: Edit timeout for getting packet on port.\n";
   std::cout << "  -no-scan: Disable port scan(skip).\n";
+
   np.golder_rod_on();
   std::cout << "PING SCAN OPTIONS:" << std::endl;
   reset_colors;
@@ -800,6 +800,7 @@ void usage(void)
   std::cout << "  -PE, -PI, -PM: On ICMP ping ECHO|INFO|TIMESTAMP\n";
   std::cout << "  -max-ping: Using all ping methods ICMP and TCP.\n";
   std::cout << "  -no-ping: Skip ping scan.\n";
+
   np.golder_rod_on();
   std::cout << "HOST RESOLUTION:" << std::endl;
   reset_colors;
@@ -807,6 +808,7 @@ void usage(void)
   std::cout << "  -resol-port <port>: Edit source port for dns-resolution.\n";
   std::cout << "  -resol-delay <ms>: Set delay for dns-resolution.\n";
   std::cout << "  -no-resolv, -n: Skip dns-resolution.\n";
+
   np.golder_rod_on();
   std::cout << "BRUTEFORCE OPTIONS:" << std::endl;
   reset_colors;
@@ -816,36 +818,44 @@ void usage(void)
   std::cout << "  -no-brute <ss,2>: Disable <ss> bruteforce.\n";
   std::cout << "  -brute-verbose <ss,2>: Display bruteforce <ss> all info.\n";
   std::cout << "  -brute-log <ss,2>: Display bruteforce <ss> info.\n";
+
   np.golder_rod_on();
-  std::cout << "OTHER OPTIONS:" << std::endl;
+  std::cout << "FIREWALL/IDS EVASION AND SPOOFING:" << std::endl;
   reset_colors;
-  std::cout << "  -negatives <path>: Set custom path for negatives.\n";
-  std::cout << "  -source-ip <ip>: Set custom source_ip.\n";
-  std::cout << "  -source-port <port>: Set custom source_port.\n";
-  std::cout << "  -data-string <string>: Append a custom ASCII string to packets.\n";
-  std::cout << "  -data-len <num>: Append random data to sent packets.\n";
-  std::cout << "  -frag <mtu>: fragment all packets.\n";
+  std::cout << "  -data <hex>: Append a custom data to payload\n";
+  std::cout << "  -data-string <string>: Append a custom ASCII string to payload.\n";
+  std::cout << "  -data-len <num>: Append random data to payload.\n";
+  std::cout << "  -saddr <ip>: Set custom source_ip.\n";
+  std::cout << "  -sport <port>: Set custom source_port.\n";
+  std::cout << "  -ipopt <R|S [route]|L [route]|T|U |[HEX]>: Adding ip option in packets.\n";
+  std::cout << "  -frag <mtu>: Fragment all packets.\n";
+  std::cout << "  -window <num>: Set custom window size.\n";
+  std::cout << "  -ack <num>: Set custom ACK number.\n";
   std::cout << "  -ttl <num>: Set custom ip_header_ttl.\n";
+
   np.golder_rod_on();
   std::cout << "NETWORK TEST/DDOS:" << std::endl;
   reset_colors;
   std::cout << "  -TDD: Set max thread(s) for testing.\n";
   std::cout << "  -ip <proto>: Set a IP protocol for send, and enable test mode.\n";
-  std::cout << "  -icmp <type>: Set a ICMP protocol for send, and enable test mode. \n    Ex types: ECHO=8, INFO=15, TIMESTAMP=13\n";
+  std::cout << "  -icmp <type>: Set a ICMP protocol for send, and enable test mode. \n    Ex: ECHO=8; INFO=15; TIMESTAMP=13;\n";
   std::cout << "  -tcp: Set a TCP protocol for send, and enable test mode.\n";
   std::cout << "  -udp: Set a UDP protocol for send, and enable test mode.\n";
-  std::cout << "  -reqnum: Set the number of packages for the host.\n";
-  std::cout << "  -reply: Read response packets from the specified protocol, (0 = no protocol binding).\n";
+  std::cout << "  -reqnum <num>: Set the number of packages for the host.\n";
+  std::cout << "  -reply <proto>: Read response packets from the specified protocol(auto 0).\n";
+
   np.golder_rod_on();
   std::cout << "PROCCESSING SCAN:" << std::endl;
   reset_colors;
-  std::cout << "  -TH: Set max thread(s) for HTTP requests.\n";
-  std::cout << "  -http-timeout: Edit timeout for recv HTTP requests.\n";
+  std::cout << "  -TH <num>: Set max thread(s) for HTTP requests.\n";
+  std::cout << "  -http-timeout <num>: Edit timeout for recv HTTP requests.\n";
   std::cout << "  -find <target1[,target2][,target3],...>: Search for keywords on the host.\n";
   std::cout << "  -http-response: Display HTTP response.\n";
+  std::cout << "  -negatives <path>: Set custom path for negatives.\n";
   std::cout << "  -sitemap: Get /sitemap.xml.\n";
   std::cout << "  -robots: Get /robots.txt.\n";
   std::cout << "  -no-proc: Skip main processing.\n";
+
   np.golder_rod_on();
   std::cout << "SPEED OPTIONS:" << std::endl;
   reset_colors;
@@ -854,6 +864,7 @@ void usage(void)
   std::cout << "  -maxg-ping <num>: Edit max len group for ping scan (default 3000).\n";
   std::cout << "  -maxg-scan <num>: Edit max len group for scan (default 2000).\n";
   std::cout << "  -my-life-my-rulez: Using very MAX speed settings.\n";
+
   np.golder_rod_on();
   std::cout << "OUTPUT:" << std::endl;
   reset_colors;
@@ -864,6 +875,7 @@ void usage(void)
   std::cout << "  -no-color: Disable all colors in nesca4.\n";
   std::cout << "  -import-color <path>: Import color scheme from file.\n";
   std::cout << "  -print-color <path>: Check color scheme.\n";
+
 #ifdef HAVE_NODE_JS
   np.golder_rod_on();
   std::cout << "SAVE SCREENSHOTS:" << std::endl;
@@ -871,6 +883,7 @@ void usage(void)
   std::cout << "  -screenshot, -s <folder>: Save screenshot on pages.\n";
   std::cout << "  -ss-timeout <ms>: Set timeout on save screenshots.\n";
 #endif
+
   np.golder_rod_on();
   std::cout << "EXAMPLES:" << std::endl;
   reset_colors;
@@ -927,8 +940,6 @@ pre_check(void)
     np.disable_colors();
   }
 
-  pd = initdata(argp.data_string);
-
   if (argp.import_color_scheme) {
     np.import_color_scheme(argp.path_color_scheme, np.config_values);
     np.processing_color_scheme(np.config_values);
@@ -945,7 +956,7 @@ pre_check(void)
     version_menu();
 
   if (argp.print_help_menu)
-    usage();
+    usage(run);
 
   if (!check_root_perms()) {
     np.nlog_error("UNIX requires root permissions, to use raw sockets (sudo).\n");
@@ -1039,7 +1050,7 @@ std::string randomstr(int len)
   const std::string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   const int chlen = characters.length(); /* член */
 
-  std::srand(static_cast<unsigned int>(std::time(0)));
+  std::srand(static_cast<u32>(std::time(0)));
   for (i = 0; i < len; ++i) {
     char _char = characters[std::rand() % chlen];
     res += _char;
@@ -1270,10 +1281,11 @@ void parse_args(int argc, char** argv)
         argp.custom_tcpflags = true;
         argp.custom_res_tcpflags = optarg;
         break;
-      case 79:
-      {
+      case 79: {
         u32 datalen = atoi(optarg);
-        argp.data_string = randomstr(datalen);
+        std::string temp = randomstr(datalen);
+        pd.data = temp.c_str();
+        pd.datalen = strlen(pd.data);
         break;
       }
       case 23:
@@ -1286,8 +1298,6 @@ void parse_args(int argc, char** argv)
       case 16:
         argp.icmp_ddos = true;
         argp.icmp_ddos_type = atoi(optarg);
-        break;
-      case 24:
         break;
       case 25:
         argp.print_errors = true;
@@ -1316,11 +1326,25 @@ void parse_args(int argc, char** argv)
         argp._custom_source_port = atoi(optarg);
         break;
       case 37:
-        argp.custom_ttl = true;
-        argp._custom_ttl = atoi(optarg);
+        if (atoi(optarg) > 255) {
+          np.nlog_error("The ttl is too big (1-255)\n");
+          exit(1);
+        }
+        n.ttl = atoi(optarg);
         break;
-      case 38:
+      case 38: {
+        u8 *buf = NULL;
+        size_t len = 0;
+
+        buf = hexbin(optarg, &len);
+        if (buf == NULL)
+          np.nlog_error("Invalid hex string specification\n");
+        else {
+          pd.data = reinterpret_cast<const char*>(buf);;
+          pd.datalen = len;
+        }
         break;
+      }
 #ifdef HAVE_NODE_JS
       case 's':
         argp.save_screenshots = true;
@@ -1333,9 +1357,11 @@ void parse_args(int argc, char** argv)
         argp.ns_track = true;
         break;
 #endif
-      case 45:
-        argp.data_string = optarg;
+      case 56: {
+        pd.data = optarg;
+        pd.datalen = strlen(optarg);
         break;
+      }
       case 58:
         argp.group_del = atoi(optarg);
         break;
@@ -1473,6 +1499,13 @@ void parse_args(int argc, char** argv)
       case 3:
         argp.type = PSH_SCAN;
         break;
+      case 24:
+        if (atoi(optarg) > 65535) {
+          np.nlog_error("The window size is too big (0-65535)\n");
+          exit(1);
+        }
+        n.windowlen = atoi(optarg);
+        break;
       case 92:
         argp.type = FIN_SCAN;
         break;
@@ -1485,13 +1518,17 @@ void parse_args(int argc, char** argv)
       case 95:
         argp.no_proc = true;
         break;
-      case 56:
-        break;
       case 64:
         argp.hidden_eth = true;
         break;
       case 42:
+        n.ack = atoi(optarg);
         break;
+      case 59: {
+        n.ipoptslen = parse_ipopts(optarg, n.ip_options, sizeof(n.ip_options), &n.ipopts_first_hop_offset,
+            &n.ipopts_last_hop_offset, NULL, 0);
+        break;
+      }
       case 6:
         argp.ip_ddos = true;
         argp.ip_ddos_proto = atoi(optarg);
@@ -1504,7 +1541,7 @@ void parse_args(int argc, char** argv)
         argp.recv_timeout_ms = atoi(optarg);
         break;
       default:
-        usage();
+        usage(run);
       }
     }
 }

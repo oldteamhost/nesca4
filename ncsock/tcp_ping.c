@@ -16,7 +16,8 @@
 #include <unistd.h>
 
 double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
-    int source_port, int timeout_ms, int ttl, const char *data, u16 datalen, int fragscan)
+    int source_port, u16 window, u32 ack, int timeout_ms, int ttl, u8 *ipops, int ipoptlen,
+    const char *data, u16 datalen, int fragscan)
 {
   pthread_mutex_t mutex;
   pthread_mutex_init(&mutex, NULL);
@@ -46,8 +47,10 @@ double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
   sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
   if (sock == -1)
     return -1;
-  send = send_tcp_packet(sock, saddr, daddr, ttl, df, 0, 0, source_port, dest_port,
-      seq, 0, 0, flags, 1024, 0, 0, 0, data, datalen, fragscan);
+  send = send_tcp_packet(sock, saddr, daddr, ttl, df, ipops, ipoptlen,
+      source_port, dest_port, seq, ack, 0, flags, window, 0, 0, 0, data,
+      datalen, fragscan);
+
   pthread_mutex_lock(&mutex);
   close(sock);
   pthread_mutex_unlock(&mutex);

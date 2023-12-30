@@ -61,7 +61,7 @@
 /*Угадайте?*/
 #define _VERSION "20231230"
 
-void usage(void);
+void usage(const char* exec);
 void version_menu(void);
 void nescaend(int success, double res);
 void init_bruteforce(void);
@@ -98,12 +98,11 @@ std::vector<std::string> resolvhosts(bool datablocks, std::vector<std::string> h
 
 const struct
 option long_options[] = {
-  //{"p-axis", no_argument, 0, 42},
-  //{"p-rvi", no_argument, 0, 56},
+  {"ack", required_argument, 0, 42},
   {"gdel", required_argument, 0, 58},
-  //{"psh", no_argument, 0, 59},
-  //{"p-hikvision", no_argument, 0, 38},
-  //{"log-set", required_argument, 0, 24},
+  {"ipopt", required_argument, 0, 59},
+  {"data", required_argument, 0, 38},
+  {"window", required_argument, 0, 24},
 
   {"hide-eth", no_argument, 0, 64},
   {"http-timeout", required_argument, 0, 22},
@@ -126,7 +125,7 @@ option long_options[] = {
   {"find", required_argument, 0, 19},
   {"random-ip", required_argument, 0, 5},
   {"brute-login", required_argument, 0, 12},
-  {"data-string", required_argument, 0, 45},
+  {"data-string", required_argument, 0, 56},
   {"brute-pass", required_argument, 0, 11},
   {"ping-log", required_argument, 0, 90},
   {"my-life-my-rulez", no_argument, 0, 53},
@@ -164,7 +163,7 @@ option long_options[] = {
   {"PI", no_argument, 0, 86},
   {"json", required_argument, 0, 43},
   {"PM", no_argument, 0, 87},
-  {"source-port", required_argument, 0, 36},
+  {"sport", required_argument, 0, 36},
   {"ttl", required_argument, 0, 37},
   {"robots", no_argument, 0, 67},
   {"hikshots", required_argument, 0, 35},
@@ -182,7 +181,7 @@ option long_options[] = {
   {"excludefile", required_argument, 0, 63},
   {"max-ping", no_argument, 0, 88},
   {"random-dns", required_argument, 0, 32},
-  {"source-ip", required_argument, 0, 34},
+  {"saddr", required_argument, 0, 34},
   {"ack", no_argument, 0, 89},
   {"window", no_argument, 0, 94},
   {"maimon", no_argument, 0, 97},

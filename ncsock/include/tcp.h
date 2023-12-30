@@ -98,7 +98,8 @@ int fast_send_tcp(int fd, const char* saddr, const char* daddr, int ttl, u16 dpo
     const char* data, u16 datalen);
 
 double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
-    int source_port, int timeout_ms, int ttl, const char *data, u16 datalen, int fragscan);
+    int source_port, u16 window, u32 ack, int timeout_ms, int ttl, u8 *ipops,
+    int ipoptlen, const char *data, u16 datalen, int fragscan);
 
 __END_DECLS
 
