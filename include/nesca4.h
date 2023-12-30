@@ -101,6 +101,7 @@ option long_options[] = {
   //{"p-axis", no_argument, 0, 42},
   //{"p-rvi", no_argument, 0, 56},
   {"gdel", required_argument, 0, 58},
+  //{"psh", no_argument, 0, 59},
   //{"p-hikvision", no_argument, 0, 38},
   //{"log-set", required_argument, 0, 24},
 
@@ -149,7 +150,7 @@ option long_options[] = {
   {"no-proc", no_argument, 0, 95},
   {"no-color", no_argument, 0, 26},
   {"packet-trace", no_argument, 0, 96},
-  {"no-resolv", no_argument, 0, 59},
+  {"no-resolv", no_argument, 0, 'n'},
   {"help", no_argument, 0, 'h'},
   {"version", no_argument, 0, 'v'},
   {"ports", no_argument, 0, 'p'},

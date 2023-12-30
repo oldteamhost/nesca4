@@ -45,7 +45,7 @@ NESCADATA n;
 const char* run;
 std::mutex ls;
 struct datastring pd;
-const char* short_options = "s:hl:vd:T:p:aS:";
+const char* short_options = "s:hl:vd:T:p:aS:n";
 
 int main(int argc, char** argv)
 {
@@ -806,7 +806,7 @@ void usage(void)
   std::cout << "  -TD <num>: Set max thread(s) for dns-resolution.\n";
   std::cout << "  -resol-port <port>: Edit source port for dns-resolution.\n";
   std::cout << "  -resol-delay <ms>: Set delay for dns-resolution.\n";
-  std::cout << "  -no-resolv: Skip dns-resolution.\n";
+  std::cout << "  -no-resolv, -n: Skip dns-resolution.\n";
   np.golder_rod_on();
   std::cout << "BRUTEFORCE OPTIONS:" << std::endl;
   reset_colors;
@@ -1413,7 +1413,7 @@ void parse_args(int argc, char** argv)
         argp.custom_threads = true;
         argp.threads_ping = atoi(optarg);
         break;
-      case 59:
+      case 'n':
         argp.no_get_dns = true;
         break;
       case 4:
