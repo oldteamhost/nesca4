@@ -21,7 +21,6 @@
 
 #include "include/addr.h"
 #include "include/ip.h"
-#include "include/arp.h"
 
 #ifndef MAXHOSTNAMELEN
 # define MAXHOSTNAMELEN 256
@@ -293,7 +292,7 @@ addr_ston(const struct sockaddr *sa, struct addr *a)
 # endif
 #endif
 	case AF_UNSPEC:
-	case ARP_HRD_ETH:	/* XXX- Linux arp(7) */
+	case 0x0001:	/* XXX- Linux arp(7) */
 		a->addr_type = ADDR_TYPE_ETH;
 		a->addr_bits = ETH_ADDR_BITS;
 		memcpy(&a->addr_eth, sa->sa_data, ETH_ADDR_LEN);

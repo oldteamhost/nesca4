@@ -31,11 +31,11 @@ const char* generate_ipv4(void)
 
 u32 random_num(u32 min, u32 max)
 {
+  u32 range = max - min + 1;
   if (min > max)
     return -1;
 
   mt19937_seed(generate_seed());
-  u32 range = max - min + 1;
   u32 random_value = min + (u32)(mt19937_random() % range);
 
   return random_value;
@@ -45,4 +45,10 @@ u32 generate_ident(void)
 {
   mt19937_seed(generate_seed());
   return (u16)(mt19937_random() % 229444421);
+}
+
+u16 generate_checksum(void)
+{
+  mt19937_seed(generate_seed());
+  return (u16)(1+ (mt19937_random() % 0xFFFF-1));
 }

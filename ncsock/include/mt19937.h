@@ -9,6 +9,7 @@
 #define MT19937_H
 
 #include "types.h"
+#include <stdio.h>
 #include <sys/cdefs.h>
 
 #define MT19937_N 624

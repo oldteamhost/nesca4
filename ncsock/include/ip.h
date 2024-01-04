@@ -50,6 +50,11 @@ struct ip_header
   u32 daddr;     /* dest ip address */
 };
 
+typedef struct ip_addreth_addr
+{
+  u8 data[_IP_ADDR_LEN];
+} ip_addreth_t;
+
 #include "types.h"
 
 /* create packet */

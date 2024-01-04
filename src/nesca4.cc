@@ -7,12 +7,15 @@
 */
 
 #include "../include/nesca4.h"
+#include "../include/nescatesting.h"
 #include "../include/nescautils.h"
 #include "../include/nescahttp.h"
 #include "../include/portscan.h"
 #include "../ncsock/include/icmp.h"
 #include "../ncsock/include/readpkt.h"
 #include "../ncsock/include/utils.h"
+#include "../ncsock/include/arp.h"
+#include "../ncsock/include/eth.h"
 #include "../include/nescaddos.h"
 #include "../include/nescaping.h"
 #include "../ncsock/include/strbase.h"
@@ -50,6 +53,46 @@ const char* short_options = "s:hl:vd:T:p:aS:n";
 
 int main(int argc, char** argv)
 {
+  /*
+    eth_addr_t src;
+    const char* srcmac = "40:b0:76:47:8f:9a";
+    char* temp = NULL;
+    eth_t *s;
+    ip_addreth_t daddr, saddr;
+
+    maceth(srcmac, &src);
+    inet_pton(AF_INET, "195.168.1.35", saddr.data);
+    inet_pton(AF_INET, "142.250.150.113", daddr.data);
+
+    temp = get_active_interface_name();
+    s = eth_open(temp);
+
+    send_arpreq_packet(s, src, saddr, daddr, ARP_OP_REQUEST);
+
+    eth_close(s);
+    if (temp)
+      free(temp);
+    return 0;
+
+  _interdata_ id;
+  id.characters = 0;
+  id.lines = 0;
+  id.path = "";
+
+  _preprocessor_ prepr;
+  _scanner_ scane;
+  _interpreter_ inter;
+
+  _importfile_ filetemp("nescacfg", &id);
+  filetemp.loadfile();
+
+  prepr.preprocessor(&id);
+  scane.scanner(&id);
+  inter.interpreter(&id, true);
+
+  return 0;
+  */
+
   char* templocalip = NULL;
   struct tcp_flags tf;
 
