@@ -12,7 +12,7 @@
 #endif
 
 u8 *build_igmp_pkt(const u32 saddr, const u32 daddr, u16 ttl, u16 ipid, u8 tos, bool df,
-    u8 *ipopt, int ipoptlen, u8 type, u8 code, const char *data, u16 datalen, u32 *packetlen)
+    u8 *ipopt, int ipoptlen, u8 type, u8 code, const char *data, u16 datalen, u32 *packetlen, bool badsum)
 {
   struct igmp_header igmp;
   u32 *datastart = (u32 *)igmp.data;
@@ -43,6 +43,9 @@ u8 *build_igmp_pkt(const u32 saddr, const u32 daddr, u16 ttl, u16 ipid, u8 tos, 
 
   igmp.check = 0;
   igmp.check = in_cksum((unsigned short *) pkt, igmplen);
+
+  if (badsum)
+    --igmp.check;
 
   return build_ip_pkt(saddr, daddr, IPPROTO_IGMP, ttl, ipid, tos, df, ipopt, ipoptlen, pkt, igmplen, packetlen);
 }

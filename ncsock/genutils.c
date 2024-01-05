@@ -52,3 +52,17 @@ u16 generate_checksum(void)
   mt19937_seed(generate_seed());
   return (u16)(1+ (mt19937_random() % 0xFFFF-1));
 }
+
+#include <limits.h>
+u32 random_u32(void)
+{
+  return generate_random_u32(0, UINT_MAX);
+}
+u16 random_u16(void)
+{
+  return (u16)generate_random_u32(0, USHRT_MAX);
+}
+u8 random_u8(void)
+{
+  return (u8)generate_random_u32(0, UCHAR_MAX);
+}

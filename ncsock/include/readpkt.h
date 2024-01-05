@@ -10,10 +10,13 @@
 #include "igmp.h"
 #include "types.h"
 #include "ip.h"
+#include "eth.h"
+#include "arp.h"
 #include "tcp.h"
 #include "udp.h"
 #include "icmp.h"
 #include <sys/cdefs.h>
+#include <sys/socket.h>
 
 #define RECV_BUFFER_SIZE 65535
 
@@ -21,7 +24,7 @@ __BEGIN_DECLS
 
 struct readfiler
 {
-  u32 dest_ip;
+  struct sockaddr_storage *ip;
   u8  protocol;
   u8  second_protocol;
 };

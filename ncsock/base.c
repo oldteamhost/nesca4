@@ -7,6 +7,7 @@
 
 #include "include/base.h"
 #include <stdio.h>
+#include <sys/socket.h>
 #include <time.h>
 #include <stdlib.h>
 #include "include/dns.h"
@@ -16,6 +17,7 @@ int this_is(const char* node)
   int len, mask;
   char* cidr_symbol;
   char* ip_range_delimiter;
+  int tempend = 0;
 
   len = strlen(node);
 
@@ -33,10 +35,13 @@ int this_is(const char* node)
   if (ip_range_delimiter != NULL)
     if (ip_range_delimiter != node && ip_range_delimiter[1] != '\0')
       return RANGE;
-  if (dns_or_ip(node) == THIS_IS_DNS)
+  tempend = dns_or_ip(node);
+  if (tempend == THIS_IS_DNS)
     return DNS;
-  else
+  else if (tempend == AF_INET)
     return IPv4;
+  else if (tempend == AF_INET6)
+    return IPv6;
 
   return -1;
 }

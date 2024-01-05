@@ -13,7 +13,7 @@
 #endif
 
 u8 *build_icmp_pkt(const u32 saddr, const u32 daddr, int ttl, u16 ipid, u8 tos, bool df, u8 *ipopt,
-    int ipoptlen, u16 seq, u16 id, u8 ptype, u8 pcode, const char *data, u16 datalen, u32 *plen)
+    int ipoptlen, u16 seq, u16 id, u8 ptype, u8 pcode, const char *data, u16 datalen, u32 *plen, bool badsum)
 {
   struct icmp4_header icmphdr;
 
@@ -53,6 +53,9 @@ u8 *build_icmp_pkt(const u32 saddr, const u32 daddr, int ttl, u16 ipid, u8 tos, 
   icmphdr.seq = htons(seq);
   icmphdr.checksum = 0;
   icmphdr.checksum = in_cksum((unsigned short *) ping, icmplen);
+
+  if (badsum)
+    --icmphdr.checksum;
 
   return build_ip_pkt(saddr, daddr, IPPROTO_ICMP, ttl, ipid, tos, df, ipopt, ipoptlen, ping, icmplen, plen);
 }

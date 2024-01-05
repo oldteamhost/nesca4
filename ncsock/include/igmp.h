@@ -24,10 +24,10 @@ struct igmp_header
 __BEGIN_DECLS
 
 u8 *build_igmp_pkt(const u32 saddr, const u32 daddr, u16 ttl, u16 ipid, u8 tos, bool df,
-    u8 *ipopt, int ipoptlen, u8 type, u8 code, const char *data, u16 datalen, u32 *packetlen);
+    u8 *ipopt, int ipoptlen, u8 type, u8 code, const char *data, u16 datalen, u32 *packetlen, bool badsum);
 
 int send_igmp_packet(int fd, const u32 saddr, const u32 daddr, int ttl, bool df, u8 *ipops, int ipoptlen,
-    u16 ident, u8 tos, u8 type, u8 code, const char *data, u16 datalen, int fragscan);
+    u16 ident, u8 tos, u8 type, u8 code, const char *data, u16 datalen, int fragscan, bool badsum);
 
 __END_DECLS
 

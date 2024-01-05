@@ -73,6 +73,18 @@ struct sctp_chunk_header_init
   sctp_pack_chip->itsn = htonl(__itsn);                                                  \
 } while (0)
 
+struct sctp_chunk_header_cookie_echo
+{
+  struct sctp_chunk_header chunkhdr;
+};
+
+#define sctp_pack_chunkhdr_cookie_echo(hdr, type, flags, length)  \
+do {                                                              \
+  struct sctp_chunk_header_cookie_echo *sctp_pack_chip =          \
+      (struct sctp_chunk_header_cookie_echo*)(hdr);               \
+  sctp_pack_chunk_header(sctp_pack_chip, type, flags, length);    \
+} while (0)
+
 u8 *build_sctp(u16 sport, u16 dport, u32 vtag, const char *chunks,
     int chunkslen, const char *data, u16 datalen, u32 *packetlen,
     bool adler32sum, bool badsum);

@@ -201,8 +201,7 @@ void NESCADATA::add_ip(const std::string& ip)
   newdata.new_dns = "";
   newdata.redirect = "";
 
-  strncpy(newdata.ip, ip.c_str(), sizeof(newdata.ip) - 1);
-  newdata.ip[sizeof(newdata.ip) - 1] = '\0';
+  newdata.ip = ip;
   all_data.push_back(newdata);
 }
 

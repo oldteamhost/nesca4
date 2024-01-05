@@ -10,14 +10,12 @@
 #include "../include/nescatesting.h"
 #include "../include/nescautils.h"
 #include "../include/nescahttp.h"
-#include "../include/portscan.h"
+#include "../include/nescaengine.h"
 #include "../ncsock/include/icmp.h"
 #include "../ncsock/include/readpkt.h"
 #include "../ncsock/include/utils.h"
 #include "../ncsock/include/arp.h"
 #include "../ncsock/include/eth.h"
-#include "../include/nescaddos.h"
-#include "../include/nescaping.h"
 #include "../ncsock/include/strbase.h"
 #include "../ncsock/include/tcp.h"
 #include "../ncsock/include/utils.h"
@@ -32,6 +30,7 @@
 #include <set>
 #include <stdlib.h>
 #include <string>
+#include <sys/socket.h>
 #include <unistd.h>
 #include <string.h>
 #include <vector>
@@ -48,8 +47,8 @@ NESCADATA n;
 
 const char* run;
 std::mutex ls;
-struct datastring pd;
 const char* short_options = "s:hl:vd:T:p:aS:n";
+
 
 int main(int argc, char** argv)
 {
@@ -73,25 +72,11 @@ int main(int argc, char** argv)
     if (temp)
       free(temp);
     return 0;
-
-  _interdata_ id;
-  id.characters = 0;
-  id.lines = 0;
-  id.path = "";
-
-  _preprocessor_ prepr;
-  _scanner_ scane;
-  _interpreter_ inter;
-
-  _importfile_ filetemp("nescacfg", &id);
-  filetemp.loadfile();
-
-  prepr.preprocessor(&id);
-  scane.scanner(&id);
-  inter.interpreter(&id, true);
-
   return 0;
   */
+
+  n.pd.data = "";
+  n.pd.datalen = 0;
 
   char* templocalip = NULL;
   struct tcp_flags tf;
@@ -103,19 +88,43 @@ int main(int argc, char** argv)
     usage(run);
 
   templocalip = get_local_ip();
-  argp.source_ip = std::move(templocalip);
+  n.src = inet_addr(templocalip);
+  free(templocalip);
+
+  get_active_interface_name(n.dev, 512);
+  get_gateway_ip(n.gateway_ip, sizeof(n.gateway_ip));
+  get_local_mac(n.dev, n.srcmac);
 
   parse_args(argc, argv);
+
+  if (!argp.scriptpath.empty()) {
+    _interdata_ id;
+    id.characters = 0;
+    id.lines = 0;
+    id.path = "";
+    _preprocessor_ prepr;
+    _scanner_ scane;
+    _interpreter_ inter;
+    _importfile_ filetemp(argp.scriptpath, &id);
+    filetemp.loadfile();
+    prepr.preprocessor(&id);
+    scane.scanner(&id);
+    inter.interpreter(&id, argp.no_verbose_script);
+    exit(0);
+  }
+
   pre_check();
   importfile();
 
   /* SET TCP FLAGS */
 
-  if (!argp.custom_tcpflags)
-    tf = set_flags(argp.type);
-  else
-    tf = str_set_flags(argp.custom_res_tcpflags);
-  argp.tcpflags = set_tcp_flags(&tf);
+  if (argp.type != SCTP_INIT_SCAN && argp.type != SCTP_COOKIE_SCAN) {
+    if (!argp.custom_tcpflags)
+      tf = set_flags(argp.type);
+    else
+      tf = str_set_flags(argp.custom_res_tcpflags);
+    n.tcpflags = set_tcp_flags(&tf);
+  }
 
   /* GET HOSTS */
 
@@ -141,24 +150,14 @@ int main(int argc, char** argv)
             tf.syn, tf.ack, tf.rst, tf.fin, tf.psh, tf.urg, tf.cwr, tf.ece);
     reset_colors;
   }
-  if (argp.frag_mtu > 16) {
+  if (n.frag_mtu > 16) {
     np.golder_rod_on();
     printf("-> NOTE: Note that if (ihl * 4) < (mtu) then fragmentation will not be performed, it is better to use mtu not more than 16.\n");
     reset_colors;
   }
-  if (pd.datalen > 1400) {
+  if (n.pd.datalen > 1400) {
     np.golder_rod_on();
     puts("-> NOTE: Usually packages that have a payload greater than 1400 are rejected.");
-    reset_colors;
-  }
-  if ((argp.tcp_ddos || argp.icmp_ddos || argp.ip_ddos || argp.udp_ddos) && pd.datalen <= 0) {
-    np.golder_rod_on();
-    puts("-> NOTE: To enhance DDOS you need to use (-data-len) to add payload.");
-    reset_colors;
-  }
-  if (argp.reply_ddos && !argp.hidden_eth) {
-    np.golder_rod_on();
-    puts("-> NOTE: Try not to show the ETH HEADER field to outsiders, or use (-hide-eth).");
     reset_colors;
   }
   if (temp_vector.size() > 50000 && argp.speed_type != 5) {
@@ -173,11 +172,11 @@ int main(int argc, char** argv)
   if (!argp.custom_threads) {
     if (argp.my_life_my_rulez) {
       argp.threads_ping = temp_vector.size();
-      argp.ping_timeout = 250;
+      n.ping_timeout = 250;
     }
     else {
       argp.threads_ping = calculate_threads(argp.speed_type, temp_vector.size());
-      argp.ping_timeout = calculate_ping_timeout(argp.speed_type);
+      n.ping_timeout = calculate_ping_timeout(argp.speed_type);
     }
   }
   if (!argp.custom_ping) {
@@ -187,6 +186,8 @@ int main(int argc, char** argv)
       argp.echo_ping = true;
       argp.info_ping = true;
       argp.timestamp_ping = true;
+      argp.sctp_ping_init = true;
+      argp.udp_ping = true;
     }
     switch (argp.speed_type)
     {
@@ -215,76 +216,6 @@ int main(int argc, char** argv)
 
   n.remove_duplicates();
   n.negatives_hosts(argp.exclude);
-
-  /* NESCA NETWORK TEST */
-
-  if (argp.icmp_ddos || argp.tcp_ddos || argp.udp_ddos || argp.ip_ddos) {
-    u32 saddr, daddr;
-    saddr = inet_addr(argp.source_ip);
-    u8 proto;
-    u16 port;
-    u8 type;
-    std::string resip;
-    if (argp.icmp_ddos) {
-      proto = IPPROTO_ICMP;
-      type = argp.icmp_ddos_type;
-      port = 0;
-    }
-    else if (argp.tcp_ddos) {
-      proto = IPPROTO_TCP;
-      port = argp.ports[0];
-    }
-    else if (argp.udp_ddos) {
-      proto = IPPROTO_UDP;
-      port = argp.ports[0];
-    }
-    else if (argp.ip_ddos) {
-      proto = argp.ip_ddos_proto;
-      port = 0;
-    }
-    std::vector<std::future<void>> futures_ddos;
-    thread_pool ddos_pool(argp.ddos_threads);
-    int ipc = 0;
-    auto start_time_ddos = std::chrono::high_resolution_clock::now();
-    for (const auto& ip : temp_vector) {
-      if (argp.tcp_ddos || argp.udp_ddos)
-        resip = ip + ":" + std::to_string(port);
-      else
-        resip = ip;
-      ipc++;
-      if (ipc > 1)
-        putchar('\n');
-      std::cout << np.main_nesca_out("NETWORK-TEST", ip, 5, "", "", "", "","") << std::endl;
-      daddr = inet_addr(ip.c_str());
-
-      for (int i = 1; i <= argp.ddos_packets; i++){
-        futures_ddos.emplace_back(ddos_pool.enqueue(nesca_ddos, proto, type, daddr, saddr, port, argp.ip_ddos));
-        if (futures_ddos.size() >= static_cast<long unsigned int>(argp.ddos_threads)) {
-          for (auto& future : futures_ddos)
-            future.get();
-          futures_ddos.clear();
-        }
-        if (argp.ddos_packets < 20)
-            std::cout << np.main_nesca_out("SENT", resip, 3, "packets", "type",
-                std::to_string(i), gettypeddos(argp),"") << std::endl;
-        else
-          if (i % (argp.ddos_packets / 5) == 0)
-            std::cout << np.main_nesca_out("SENT", resip, 3, "packets", "type",
-                std::to_string(i), gettypeddos(argp),"") << std::endl;
-      }
-    }
-    for (auto& future : futures_ddos)
-      future.wait();
-    futures_ddos.clear();
-    auto end_time_ddos = std::chrono::high_resolution_clock::now();
-    auto duration_ddos = std::chrono::duration_cast<std::chrono::microseconds>(end_time_ddos - start_time_ddos);
-    putchar('\n');
-    np.golder_rod_on();
-    std::cout << "-> NESCA finished " << argp.success_packet_ddos << " packets (success) in "
-      << std::fixed << std::setprecision(2) << duration_ddos.count() / 1000000.0 << " seconds\n";
-    reset_colors;
-    return 0;
-  }
 
   /* NESCA SCAN */
 
@@ -519,25 +450,15 @@ void NESCASCAN(std::vector<std::string>& temp_vector)
 /* Главная функция для сканировния портов */
 void nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_ms)
 {
-  u32 seq, saddr, daddr;
-  int source_port, res, sock, recvtime = 600;
-  u8* buffer;
-  u16 ttl;
+  int res, sock, recvtime = 600;
+  u8* packet;
   double rtt_ping;
+  double temptime;
   u8 portstat = PORT_ERROR;
-  bool df = true;
+  struct sockaddr_in ip4;
 
-  if (argp.frag_mtu)
-    df = false;
-
-  saddr = inet_addr(argp.source_ip);
-  daddr = inet_addr(ip.c_str());
-  seq = generate_seq();
-
-  if (argp.custom_source_port)
-    source_port = argp._custom_source_port;
-  else
-    source_port = generate_rare_port();
+  ip4.sin_family = AF_INET;
+  ip4.sin_addr.s_addr = inet_addr(ip.c_str());
 
   if (argp.custom_recv_timeout_ms)
     recvtime = argp.recv_timeout_ms;
@@ -548,18 +469,11 @@ void nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_
   }
 
   for (const auto& port : ports) {
-    sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+    sock = nescasocket();
     if (sock == -1)
       continue;
 
-    if (n.ttl == 0)
-      ttl = random_num(29, 255);
-    else
-      ttl = n.ttl;
-
-    res = send_tcp_packet(sock, saddr, daddr, ttl, df, n.ip_options,
-        n.ipoptslen, source_port, port, seq, n.ack, 0, argp.tcpflags, n.windowlen,
-        0, 0, 0, pd.data, pd.datalen, argp.frag_mtu);
+    res = sendprobe(sock, &n, ip4.sin_addr.s_addr, port, argp.type);
 
     ls.lock();
     close(sock);
@@ -573,21 +487,13 @@ void nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_
       continue;
     }
 
-    ls.lock();
-    buffer = (u8*)calloc(RECV_BUFFER_SIZE, sizeof(u8));
-    ls.unlock();
-
-    rf.dest_ip = daddr;
-    rf.protocol = IPPROTO_TCP;
-
-    res = read_packet(&rf, recvtime, &buffer);
-
-    if (res == -1) {
+    packet = recvpacket(&n, ip4.sin_addr.s_addr, argp.type, recvtime, &temptime);
+    if (!packet) {
       ls.lock();
-      free(buffer);
+      free(packet);
       ls.unlock();
 
-      if (argp.type != SYN_SCAN && argp.type != ACK_SCAN && argp.type != WINDOW_SCAN) {
+      if (argp.type != TCP_SYN_SCAN && argp.type != TCP_ACK_SCAN && argp.type != TCP_WINDOW_SCAN) {
         ls.lock();
         n.add_port(ip, port, PORT_OPEN_OR_FILTER);
         ls.unlock();
@@ -601,10 +507,10 @@ void nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_
       continue;
     }
 
-    portstat = get_port_status(buffer, argp.type);
+    portstat = readscan(ip4.sin_addr.s_addr, packet, argp.type);
 
     ls.lock();
-    free(buffer);
+    free(packet);
     n.add_port(ip, port, portstat);
     if (portstat)
       argp.count_success_ports++;
@@ -614,12 +520,44 @@ void nesca_scan(const std::string& ip, std::vector<int>ports, const int timeout_
 
 void nesca_ping(const std::string& ip)
 {
-  send_ping(&pd, n, argp, ip);
-}
+  double rtt = -1;
+  u32 dst;
 
-void nesca_ddos(u8 proto, u8 type, const u32 daddr, const u32 saddr, const int port, bool ip_ddos)
-{
-  send_ddos(&pd, np, n, argp, proto, type, daddr, saddr, port, ip_ddos);
+  dst = inet_addr(ip.c_str());
+  goto start;
+
+check:
+  if (rtt != -1) {
+    ls.lock();
+    n.set_rtt(ip, rtt);
+    n.success_ping_ip.push_back(ip);
+    ls.unlock();
+    return;
+  }
+  else {
+    ls.lock();
+    n.failed_ping_ip.push_back(ip);
+    ls.unlock();
+    return;
+  }
+
+start:
+  if (argp.ack_ping && rtt == -1)
+    rtt = nescaping(&n, dst, TCP_PING_ACK);
+  if (argp.echo_ping && rtt == -1)
+    rtt = nescaping(&n, dst, ICMP_PING_ECHO);
+  if (argp.syn_ping && rtt == -1)
+    rtt = nescaping(&n, dst, TCP_PING_SYN);
+  if (argp.info_ping && rtt == -1)
+    rtt = nescaping(&n, dst, ICMP_PING_INFO);
+  if (argp.timestamp_ping && rtt == -1)
+    rtt = nescaping(&n, dst, ICMP_PING_TIME);
+  if (argp.sctp_ping_init && rtt == -1)
+    rtt = nescaping(&n, dst, SCTP_INIT_PING);
+  if (argp.udp_ping && rtt == -1)
+    rtt = nescaping(&n, dst, UDP_PING);
+
+  goto check;
 }
 
 void nesca_http(const std::string& ip, const u16 port, const int timeout_ms)
@@ -640,7 +578,7 @@ void processing_tcp_scan_ports(std::string ip, int port, int result)
   std::unique_ptr<ports_strategy> ports_strategy_;
 
   if (result == PORT_OPEN) {
-    print_port_state(PORT_OPEN, port, sn.probe_service(port), np);
+    print_port_state(PORT_OPEN, port, argp.type, sn.probe_service(port), np);
     if (argp.no_proc)
       return;
     if (sn.probe_service(port) == "HTTP")
@@ -675,21 +613,21 @@ void processing_tcp_scan_ports(std::string ip, int port, int result)
   }
   else if (result == PORT_ERROR) {
     if (argp.print_errors)
-      print_port_state(PORT_ERROR, port, sn.probe_service(port), np);
+      print_port_state(PORT_ERROR, port, argp.type, sn.probe_service(port), np);
   }
   else if (result == PORT_CLOSED) {
     if (argp.debug)
-      print_port_state(PORT_CLOSED, port, sn.probe_service(port), np);
+      print_port_state(PORT_CLOSED, port, argp.type, sn.probe_service(port), np);
   }
   else if (result == PORT_FILTER) {
     if (argp.debug)
-      print_port_state(PORT_FILTER, port, sn.probe_service(port), np);
+      print_port_state(PORT_FILTER, port, argp.type, sn.probe_service(port), np);
   }
   else if (result == PORT_OPEN_OR_FILTER) {
-    print_port_state(PORT_OPEN_OR_FILTER, port, sn.probe_service(port), np);
+    print_port_state(PORT_OPEN_OR_FILTER, port, argp.type, sn.probe_service(port), np);
   }
   else if (result == PORT_NO_FILTER) {
-    print_port_state(PORT_NO_FILTER, port, sn.probe_service(port), np);
+    print_port_state(PORT_NO_FILTER, port, argp.type, sn.probe_service(port), np);
   }
 }
 
@@ -726,6 +664,16 @@ std::vector<std::string> resolvhosts(bool datablocks, std::vector<std::string> h
   for (const auto& t : hosts) {
     if (t.empty())
       continue;
+    if (t == "localhost") {
+      ret.push_back("127.0.0.1");
+      n.add_ip("127.0.0.1");
+    }
+    else if (t == "route" || t == "gateway") {
+      ret.push_back(n.gateway_ip);
+      n.add_ip(n.gateway_ip);
+    }
+    else {
+
     temp = this_is(t.c_str());
     if (temp == CIDR) {
       std::vector<std::string> temp = cidr_to_ips({t});
@@ -758,6 +706,7 @@ std::vector<std::string> resolvhosts(bool datablocks, std::vector<std::string> h
     }
     else
       result[t] = "";
+    }
   }
   if (datablocks) {
     for (const auto& node : result) {
@@ -812,7 +761,7 @@ void usage(const char* exec)
   np.gray_nesca_on();
   std::cout << "[USAGE]:";
   np.green_html_on();
-  std::cout << exec << " <host1[,host2]],...> <flags>" << std::endl;
+  std::cout << exec << " <hosts> <flags>" << std::endl;
   np.gray_nesca_on();
 
   np.golder_rod_on();
@@ -828,7 +777,9 @@ void usage(const char* exec)
   reset_colors;
   std::cout << "  -fin, -xmas, -null, -psh: Use one of these scanning methods.\n";
   std::cout << "  -ack, -windows -maimon: Use ack or window or maimon scan method.\n";
-  std::cout << "  -scanflags <flags>: Customize TCP scan flag. \n    Ex: (ACKSYN) > AS;\n";
+  std::cout << "  -scanflags <flags>: Customize TCP scan flag. Ex: (ACKSYN) > AS;\n";
+  std::cout << "  -sctp-init, -sctp-cookie: Use SCTP INIT/COOKIE-ECHO scan method.\n";
+  std::cout << "  -udp: On UDP scan method and udp ports.\n";
   std::cout << "  -p <port ranges>: Only scan specified port(s). \n    Ex: -p 80; -p 22,80; -p 1-65535;\n";
   std::cout << "  -delay, -d <ms>: Set delay for scan.\n";
   std::cout << "  -scan-timeout <ms>: Edit timeout for getting packet on port.\n";
@@ -837,11 +788,11 @@ void usage(const char* exec)
   np.golder_rod_on();
   std::cout << "PING SCAN OPTIONS:" << std::endl;
   reset_colors;
+  std::cout << "  -PS, -PA, -PY, -PU <port>: Use SYN|ACK|UDP|SCTP ping.\n";
+  std::cout << "  -PE, -PI, -PM: Use ICMP ping ECHO|INFO|TIMESTAMP\n";
   std::cout << "  -TP <num>: Set max thread(s) for ping.\n";
+  std::cout << "  -max-ping: Using all ping methods.\n";
   std::cout << "  -ping-timeout <ms>: Set recv timeout for ping.\n";
-  std::cout << "  -PS, -PA <port>: On TCP ping SYN|ACK and edit dest port.\n";
-  std::cout << "  -PE, -PI, -PM: On ICMP ping ECHO|INFO|TIMESTAMP\n";
-  std::cout << "  -max-ping: Using all ping methods ICMP and TCP.\n";
   std::cout << "  -no-ping: Skip ping scan.\n";
 
   np.golder_rod_on();
@@ -873,19 +824,9 @@ void usage(const char* exec)
   std::cout << "  -ipopt <R|S [route]|L [route]|T|U |[HEX]>: Adding ip option in packets.\n";
   std::cout << "  -frag <mtu>: Fragment all packets.\n";
   std::cout << "  -window <num>: Set custom window size.\n";
+  std::cout << "  -badsum: Send packets with a bogus checksum.\n";
   std::cout << "  -ack <num>: Set custom ACK number.\n";
   std::cout << "  -ttl <num>: Set custom ip_header_ttl.\n";
-
-  np.golder_rod_on();
-  std::cout << "NETWORK TEST/DDOS:" << std::endl;
-  reset_colors;
-  std::cout << "  -TDD: Set max thread(s) for testing.\n";
-  std::cout << "  -ip <proto>: Set a IP protocol for send, and enable test mode.\n";
-  std::cout << "  -icmp <type>: Set a ICMP protocol for send, and enable test mode. \n    Ex: ECHO=8; INFO=15; TIMESTAMP=13;\n";
-  std::cout << "  -tcp: Set a TCP protocol for send, and enable test mode.\n";
-  std::cout << "  -udp: Set a UDP protocol for send, and enable test mode.\n";
-  std::cout << "  -reqnum <num>: Set the number of packages for the host.\n";
-  std::cout << "  -reply <proto>: Read response packets from the specified protocol(auto 0).\n";
 
   np.golder_rod_on();
   std::cout << "PROCCESSING SCAN:" << std::endl;
@@ -919,6 +860,12 @@ void usage(const char* exec)
   std::cout << "  -import-color <path>: Import color scheme from file.\n";
   std::cout << "  -print-color <path>: Check color scheme.\n";
 
+  np.golder_rod_on();
+  std::cout << "NETWORK TEST/SCRIPT:" << std::endl;
+  reset_colors;
+  std::cout << "  -script <path>: Running nesca interpreter.\n";
+  std::cout << "  -no-verbose: Disable interpreter verbose.\n";
+
 #ifdef HAVE_NODE_JS
   np.golder_rod_on();
   std::cout << "SAVE SCREENSHOTS:" << std::endl;
@@ -938,18 +885,18 @@ void usage(const char* exec)
 
 void init_bruteforce(void)
 {
-  argp.ftp_logins          = write_file(argp.path_ftp_login);
-  argp.ftp_passwords       = write_file(argp.path_ftp_pass);
-  argp.rtsp_logins         = write_file(argp.path_rtsp_login);
-  argp.rtsp_passwords      = write_file(argp.path_rtsp_pass);
-  argp.http_logins         = write_file(argp.path_http_login);
-  argp.http_passwords      = write_file(argp.path_http_pass);
-  argp.hikvision_logins    = write_file(argp.path_hikvision_login);
-  argp.hikvision_passwords = write_file(argp.path_hikvision_pass);
-  argp.smtp_logins         = write_file(argp.path_smtp_login);
-  argp.smtp_passwords      = write_file(argp.path_smtp_pass);
-  argp.rvi_logins          = write_file(argp.path_rvi_login);
-  argp.rvi_passwords       = write_file(argp.path_rvi_pass);
+  n.ftp_logins          = write_file(argp.path_ftp_login);
+  n.ftp_passwords       = write_file(argp.path_ftp_pass);
+  n.rtsp_logins         = write_file(argp.path_rtsp_login);
+  n.rtsp_passwords      = write_file(argp.path_rtsp_pass);
+  n.http_logins         = write_file(argp.path_http_login);
+  n.http_passwords      = write_file(argp.path_http_pass);
+  n.hikvision_logins    = write_file(argp.path_hikvision_login);
+  n.hikvision_passwords = write_file(argp.path_hikvision_pass);
+  n.smtp_logins         = write_file(argp.path_smtp_login);
+  n.smtp_passwords      = write_file(argp.path_smtp_pass);
+  n.rvi_logins          = write_file(argp.path_rvi_login);
+  n.rvi_passwords       = write_file(argp.path_rvi_pass);
 }
 
 std::string format_percentage(double procents)
@@ -1123,12 +1070,10 @@ void parse_args(int argc, char** argv)
         argp.ports = write_ports(argp.ports_temp);
         if (argp.ports[0] == EOF) {
           size_t pos1 = argp.ports_temp.find("-");
-          if (pos1 != std::string::npos) {
+          if (pos1 != std::string::npos)
             argp.ports = parse_range(optarg);
-          }
-          else {
+          else
             argp.ports = split_string_int(optarg, ',');
-          }
         }
         break;
       }
@@ -1138,24 +1083,18 @@ void parse_args(int argc, char** argv)
         what[1] = to_lower_case(what[1]);
 
         const char* what_convert = what[0].c_str();
-        if (what[1] == "ftp") {
+        if (what[1] == "ftp")
           argp.path_ftp_login = what_convert;
-        }
-        else if (what[1] == "rtsp") {
+        else if (what[1] == "rtsp")
           argp.path_rtsp_login = what_convert;
-        }
-        else if (what[1] == "http") {
+        else if (what[1] == "http")
           argp.path_http_login = what_convert;
-        }
-        else if (what[1] == "smtp") {
+        else if (what[1] == "smtp")
           argp.path_smtp_login = what_convert;
-        }
-        else if (what[1] == "hikvision") {
+        else if (what[1] == "hikvision")
           argp.path_hikvision_login = what_convert;
-        }
-        else if (what[1] == "rvi") {
+        else if (what[1] == "rvi")
           argp.path_rvi_login = what_convert;
-        }
         else if (what[1] == "all") {
           argp.path_rvi_login = what_convert;
           argp.path_ftp_login = what_convert;
@@ -1172,24 +1111,18 @@ void parse_args(int argc, char** argv)
         what[1] = to_lower_case(what[1]);
 
         const char* what_convert = what[0].c_str();
-        if (what[1] == "ftp") {
+        if (what[1] == "ftp")
           argp.path_ftp_pass = what_convert;
-        }
-        else if (what[1] == "rtsp") {
+        else if (what[1] == "rtsp")
           argp.path_rtsp_pass = what_convert;
-        }
-        else if (what[1] == "http") {
+        else if (what[1] == "http")
           argp.path_http_pass = what_convert;
-        }
-        else if (what[1] == "smtp") {
+        else if (what[1] == "smtp")
           argp.path_smtp_pass = what_convert;
-        }
-        else if (what[1] == "hikvision") {
+        else if (what[1] == "hikvision")
           argp.path_hikvision_pass = what_convert;
-        }
-        else if (what[1] == "rvi") {
+        else if (what[1] == "rvi")
           argp.path_rvi_pass = what_convert;
-        }
         else if (what[1] == "all") {
           argp.path_rvi_pass = what_convert;
           argp.path_ftp_pass = what_convert;
@@ -1204,24 +1137,18 @@ void parse_args(int argc, char** argv)
         std::vector<std::string> what = split_string_string(optarg, ',');
         for (int i = 0; i < static_cast<int>(what.size()); i++) {
           what[i] = to_lower_case(what[i]);
-          if (what[i] == "ftp") {
+          if (what[i] == "ftp")
             argp.ftp_brute_log = true;
-          }
-          else if (what[i] == "rtsp") {
+          else if (what[i] == "rtsp")
             argp.rtsp_brute_log = true;
-          }
-          else if (what[i] == "http") {
+          else if (what[i] == "http")
             argp.http_brute_log = true;
-          }
-          else if (what[i] == "hikvision") {
+          else if (what[i] == "hikvision")
             argp.hikvision_brute_log = true;
-          }
-          else if (what[i] == "smtp") {
+          else if (what[i] == "smtp")
             argp.smtp_brute_log = true;
-          }
-          else if (what[i] == "rvi") {
+          else if (what[i] == "rvi")
             argp.rvi_brute_log = true;
-          }
           else if (what[i] == "all") {
             argp.ftp_brute_log = true;
             argp.smtp_brute_log = true;
@@ -1237,18 +1164,14 @@ void parse_args(int argc, char** argv)
         std::vector<std::string> what = split_string_string(optarg, ',');
         for (int i = 0; i < static_cast<int>(what.size()); i++) {
           what[i] = to_lower_case(what[i]);
-          if (what[i] == "ftp") {
+          if (what[i] == "ftp")
             argp.ftp_brute_verbose = true;
-          }
-          else if (what[i] == "rtsp") {
+          else if (what[i] == "rtsp")
             argp.rtsp_brute_verbose = true;
-          }
-          else if (what[i] == "http") {
+          else if (what[i] == "http")
             argp.http_brute_verbose = true;
-          }
-          else if (what[i] == "smtp") {
+          else if (what[i] == "smtp")
             argp.smtp_brute_verbose = true;
-          }
           else if (what[i] == "all") {
             argp.ftp_brute_verbose = true;
             argp.smtp_brute_verbose = true;
@@ -1260,27 +1183,20 @@ void parse_args(int argc, char** argv)
       }
       case 44: {
         std::vector<std::string> what = split_string_string(optarg, ',');
-
         for (int i = 0; i < static_cast<int>(what.size()); i++) {
           what[i] = to_lower_case(what[i]);
-          if (what[i] == "ftp") {
+          if (what[i] == "ftp")
             argp.off_ftp_brute = true;
-          }
-          else if (what[i] == "rtsp") {
+          else if (what[i] == "rtsp")
             argp.off_rtsp_brute = true;
-          }
-          else if (what[i] == "http") {
+          else if (what[i] == "http")
             argp.off_http_brute = true;
-          }
-          else if (what[i] == "hikvision") {
+          else if (what[i] == "hikvision")
             argp.off_hikvision_brute = true;
-          }
-          else if (what[i] == "smtp") {
+          else if (what[i] == "smtp")
             argp.off_smtp_brute = true;
-          }
-          else if (what[i] == "rvi") {
+          else if (what[i] == "rvi")
             argp.off_rvi_brute = true;
-          }
           else if (what[i] == "all") {
             argp.off_ftp_brute = true;
             argp.off_rvi_brute = true;
@@ -1314,8 +1230,8 @@ void parse_args(int argc, char** argv)
         argp.find_target = split_string_string(optarg, ',');
         break;
       case 20:
-        argp.frag_mtu = atoi(optarg);
-        if (argp.frag_mtu >! 0 && argp.frag_mtu % 8 != 0) {
+        n.frag_mtu = atoi(optarg);
+        if (n.frag_mtu >! 0 && n.frag_mtu % 8 != 0) {
           np.nlog_error("Data payload MTU must be > 0 and multiple of 8: (8,16,32,64)\n");
           exit(1);
         }
@@ -1327,8 +1243,8 @@ void parse_args(int argc, char** argv)
       case 79: {
         u32 datalen = atoi(optarg);
         std::string temp = randomstr(datalen);
-        pd.data = temp.c_str();
-        pd.datalen = strlen(pd.data);
+        n.pd.data = temp.c_str();
+        n.pd.datalen = strlen(n.pd.data);
         break;
       }
       case 23:
@@ -1336,11 +1252,8 @@ void parse_args(int argc, char** argv)
         argp.path_ips = optarg;
         break;
       case 15:
-        argp.tcp_ddos = true;
         break;
       case 16:
-        argp.icmp_ddos = true;
-        argp.icmp_ddos_type = atoi(optarg);
         break;
       case 25:
         argp.print_errors = true;
@@ -1358,7 +1271,12 @@ void parse_args(int argc, char** argv)
         argp.ping_off = true;
         break;
       case 34:
-        argp.source_ip = optarg;
+        n.src = inet_addr(optarg);
+        break;
+      case 13:
+        argp.custom_ping = true;
+        argp.sctp_ping_init = true;
+        n.sctpport = atoi(optarg);
         break;
       case 35:
         argp.save_camera_screens = true;
@@ -1366,7 +1284,8 @@ void parse_args(int argc, char** argv)
         break;
       case 36:
         argp.custom_source_port = true;
-        argp._custom_source_port = atoi(optarg);
+        n.sport = atoi(optarg);
+        n.customsport = true;
         break;
       case 37:
         if (atoi(optarg) > 255) {
@@ -1374,6 +1293,7 @@ void parse_args(int argc, char** argv)
           exit(1);
         }
         n.ttl = atoi(optarg);
+        n.customttl = true;
         break;
       case 38: {
         u8 *buf = NULL;
@@ -1383,8 +1303,8 @@ void parse_args(int argc, char** argv)
         if (buf == NULL)
           np.nlog_error("Invalid hex string specification\n");
         else {
-          pd.data = reinterpret_cast<const char*>(buf);;
-          pd.datalen = len;
+          n.pd.data = reinterpret_cast<const char*>(buf);;
+          n.pd.datalen = len;
         }
         break;
       }
@@ -1401,8 +1321,8 @@ void parse_args(int argc, char** argv)
         break;
 #endif
       case 56: {
-        pd.data = optarg;
-        pd.datalen = strlen(optarg);
+        n.pd.data = optarg;
+        n.pd.datalen = strlen(optarg);
         break;
       }
       case 58:
@@ -1415,7 +1335,7 @@ void parse_args(int argc, char** argv)
         argp.maxg_scan = atoi(optarg);
         break;
       case 49:
-        argp.ping_timeout = atoi(optarg);
+        n.ping_timeout = atoi(optarg);
         break;
       case 33:
         argp.resol_source_port = atoi(optarg);
@@ -1462,7 +1382,6 @@ void parse_args(int argc, char** argv)
         argp.speed_type = 5;
         break;
       case 10:
-        argp.ddos_packets = atoi(optarg);
         break;
       case 78:
         np.import_color_scheme(optarg, np.config_values);
@@ -1485,22 +1404,22 @@ void parse_args(int argc, char** argv)
       case 'n':
         argp.no_get_dns = true;
         break;
-      case 4:
-        argp.reply_ddos = true;
-        argp.reply_ddos_proto = atoi(optarg);
+      case 4: {
+        argp.scriptpath = std::string(optarg);
         break;
+      }
       case 76:
         argp.negatives_path = std::string(optarg);
         break;
       case 80:
         argp.custom_ping = true;
         argp.syn_ping = true;
-        argp.syn_dest_port = atoi(optarg);
+        n.syn_dest_port = atoi(optarg);
         break;
       case 81:
         argp.custom_ping = true;
         argp.ack_ping = true;
-        argp.ack_dest_port = atoi(optarg);
+        n.ack_dest_port = atoi(optarg);
         break;
       case 43:
         argp.json_save = true;
@@ -1522,25 +1441,25 @@ void parse_args(int argc, char** argv)
         argp.max_ping = true;
         break;
       case 89:
-        argp.type = ACK_SCAN;
+        argp.type = TCP_ACK_SCAN;
         break;
       case 9:
-        argp.ddos_threads = atoi(optarg);
         break;
       case 90:
         argp.ping_log = atoi(optarg);
         break;
       case 91:
-        argp.type = NULL_SCAN;
+        argp.type = TCP_NULL_SCAN;
         break;
       case 8:
-        argp.udp_ddos = true;
+        //argp.custom_ping = true;
+        //argp.arp_ping = true;
         break;
       case 22:
         argp.http_timeout = atoi(optarg);
         break;
       case 3:
-        argp.type = PSH_SCAN;
+        argp.type = TCP_PSH_SCAN;
         break;
       case 24:
         if (atoi(optarg) > 65535) {
@@ -1550,22 +1469,38 @@ void parse_args(int argc, char** argv)
         n.windowlen = atoi(optarg);
         break;
       case 92:
-        argp.type = FIN_SCAN;
+        argp.type = TCP_FIN_SCAN;
         break;
       case 93:
-        argp.type = XMAS_SCAN;
+        argp.type = TCP_XMAS_SCAN;
+        break;
+      case 14:
+        argp.type = SCTP_INIT_SCAN;
+        break;
+      case 17:
+        argp.type = SCTP_COOKIE_SCAN;
         break;
       case 94:
-        argp.type = WINDOW_SCAN;
+        argp.type = TCP_WINDOW_SCAN;
         break;
       case 95:
         argp.no_proc = true;
         break;
       case 64:
-        argp.hidden_eth = true;
         break;
       case 42:
         n.ack = atoi(optarg);
+        break;
+      case 18:
+        argp.custom_ping = true;
+        argp.udp_ping = true;
+        n.udpport = atoi(optarg);
+        break;
+      case 65:
+        n.badsum = true;
+        break;
+      case 55:
+        argp.type = UDP_SCAN;
         break;
       case 59: {
         n.ipoptslen = parse_ipopts(optarg, n.ip_options, sizeof(n.ip_options), &n.ipopts_first_hop_offset,
@@ -1573,11 +1508,10 @@ void parse_args(int argc, char** argv)
         break;
       }
       case 6:
-        argp.ip_ddos = true;
-        argp.ip_ddos_proto = atoi(optarg);
+        argp.no_verbose_script = false;
         break;
       case 97:
-        argp.type = MAIMON_SCAN;
+        argp.type = TCP_MAIMON_SCAN;
         break;
       case 101:
         argp.custom_recv_timeout_ms = true;

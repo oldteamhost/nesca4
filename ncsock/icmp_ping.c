@@ -17,7 +17,7 @@
 
 double icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int type,
     int code, int seq, int ttl, u8 *ipops, int ipoptlen, const char *data, u16 datalen,
-    int fragscan)
+    int fragscan, bool badsum)
 {
   pthread_mutex_t mutex;
   pthread_mutex_init(&mutex, NULL);
@@ -29,10 +29,15 @@ double icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int
   int sock, send, read;
   u32 saddr, daddr;
   bool df = true;
+  struct sockaddr_in dst;
 
   saddr = inet_addr(source_ip);
   daddr = inet_addr(dest_ip);
-  rf.dest_ip = daddr;
+
+  dst.sin_family = AF_INET;
+  dst.sin_addr.s_addr = daddr;
+
+  rf.ip = (struct sockaddr_storage*)&dst;
   rf.protocol = IPPROTO_ICMP;
 
   if (fragscan)
@@ -42,7 +47,7 @@ double icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int
   if (sock == -1)
     return -1;
   send = send_icmp_packet(sock, saddr, daddr, ttl, df, ipops, ipoptlen, seq,
-      code, type, data, datalen, fragscan);
+      code, type, data, datalen, fragscan, badsum);
   pthread_mutex_lock(&mutex);
   close(sock);
   pthread_mutex_unlock(&mutex);

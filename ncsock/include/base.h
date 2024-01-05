@@ -22,6 +22,7 @@ extern "C" {
 #define RANGE 2
 #define _URL_ 3
 #define DNS   4
+#define IPv6  5
 int this_is(const char* node);
 const char* get_this_is(int type);
 

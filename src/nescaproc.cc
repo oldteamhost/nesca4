@@ -14,7 +14,6 @@
 #include "../ncsock/include/smtp.h"
 #include "../ncbase/include/base64.h"
 #include "../ncbase/include/binary.h"
-#include "../include/portscan.h"
 #include <cstring>
 
 std::vector<std::string> rtsp_paths = {"/Streaming/Channels/101", "/h264/ch01/main/av_stream",
@@ -224,7 +223,7 @@ void ftp_strategy::handle(const std::string& ip, const std::string& result, cons
 
   if (!argp.off_ftp_brute) {
     printbrute(ip, port, "FTP", np);
-    brute_temp = threads_bruteforce(argp.ftp_logins, argp.ftp_passwords, "", ip, port, argp.brute_timeout_ms, FTP_BRUTEFORCE, argp.ftp_brute_log);
+    brute_temp = threads_bruteforce(nd.ftp_logins, nd.ftp_passwords, "", ip, port, argp.brute_timeout_ms, FTP_BRUTEFORCE, argp.ftp_brute_log);
   }
 
   result_print = np.main_nesca_out("BA", "ftp://" + brute_temp + result, 3, "D", "", version, rtt_log, "", protocol);
@@ -240,7 +239,7 @@ void smtp_strategy::handle(const std::string& ip, const std::string& result, con
 
   if (!argp.off_smtp_brute) {
     printbrute(ip, port, "SMTP", np);
-    brute_temp = threads_bruteforce(argp.smtp_logins, argp.smtp_passwords, "", ip, port, argp.brute_timeout_ms, SMTP_BRUTEFORCE, argp.smtp_brute_log);
+    brute_temp = threads_bruteforce(nd.smtp_logins, nd.smtp_passwords, "", ip, port, argp.brute_timeout_ms, SMTP_BRUTEFORCE, argp.smtp_brute_log);
   }
 
   result_print = np.main_nesca_out("BA", "smtp://" + brute_temp + result, 3, "D", "", version, "",rtt_log, "", protocol);
@@ -253,7 +252,7 @@ void hikvision_strategy::handle(const std::string& ip, const std::string& result
 {
   if (!argp.off_hikvision_brute){
     printbrute(ip, port, "HIKVISION", np);
-    brute_temp = threads_brute_hikvision(ip, argp.hikvision_logins, argp.hikvision_passwords,
+    brute_temp = threads_brute_hikvision(ip, nd.hikvision_logins, nd.hikvision_passwords,
         argp.hikvision_brute_log, argp.brute_timeout_ms, argp.screenshots_save_path_cam);
   }
 
@@ -275,7 +274,7 @@ void rvi_strategy::handle(const std::string& ip, const std::string& result, cons
 {
   if (!argp.off_rvi_brute) {
     printbrute(ip, port, "RVI(DVR)", np);
-    brute_temp = threads_bruteforce(argp.rvi_logins, argp.rvi_passwords, "", ip, port, argp.brute_timeout_ms, RVI_BRUTEFORCE, argp.rvi_brute_log);
+    brute_temp = threads_bruteforce(nd.rvi_logins, nd.rvi_passwords, "", ip, port, argp.brute_timeout_ms, RVI_BRUTEFORCE, argp.rvi_brute_log);
   }
 
   result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "", rtt_log, "", protocol);
@@ -291,7 +290,7 @@ void rtsp_strategy::handle(const std::string& ip, const std::string& result, con
     printbrute(ip, port, "RTSP", np);
 
     for (const auto& path : rtsp_paths) {
-      brute_temp = threads_bruteforce(argp.rtsp_logins, argp.rtsp_passwords, path, ip, port, argp.brute_timeout_ms, RTSP_BRUTEFORCE, argp.rtsp_brute_log);
+      brute_temp = threads_bruteforce(nd.rtsp_logins, nd.rtsp_passwords, path, ip, port, argp.brute_timeout_ms, RTSP_BRUTEFORCE, argp.rtsp_brute_log);
       if (!brute_temp.empty())
           pathget = path;
     }
@@ -392,7 +391,7 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   /*Брутфорс HTTP basic auth.*/
   if (!argp.off_http_brute && type_target != "fuck" && brute != EOF) {
     printbrute(ip, port, "HTTP", np);
-    brute_temp = threads_bruteforce(argp.http_logins, argp.http_passwords, redirect,
+    brute_temp = threads_bruteforce(nd.http_logins, nd.http_passwords, redirect,
         ip, port, argp.brute_timeout_ms, HTTP_BRUTEFORCE, argp.http_brute_log);
   }
 
@@ -474,13 +473,53 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   }
 }
 
-void print_port_state(int status, int port, std::string service, nesca_prints& np)
+#include "../include/nescaengine.h"
+std::string return_port_status(uint8_t type)
 {
+  switch (type)
+  {
+    case PORT_OPEN:            return "open";
+    case PORT_CLOSED:          return "closed";
+    case PORT_FILTER:          return "filtered";
+    case PORT_OPEN_OR_FILTER:  return "open/filtered";
+    case PORT_NO_FILTER:       return "unfiltered";
+  }
+  return "error";
+}
+
+std::string get_type(uint8_t type)
+{
+  switch (type)
+  {
+    case TCP_SYN_SCAN:    return "SYN_SCAN";
+    case TCP_ACK_SCAN:    return "ACK_SCAN";
+    case TCP_XMAS_SCAN:   return "XMAS_SCAN";
+    case TCP_FIN_SCAN:    return "FIN_SCAN";
+    case TCP_WINDOW_SCAN: return "WINDOW_SCAN";
+    case TCP_NULL_SCAN:   return "NULL_SCAN";
+    case TCP_MAIMON_SCAN: return "MAIMON_SCAN";
+    case TCP_PSH_SCAN:    return "PSH_SCAN";
+  }
+
+  return "-1";
+}
+
+void print_port_state(int status, int port, u8 type, std::string service, nesca_prints& np)
+{
+  std::string ex;
+
+  if (type == UDP_SCAN)
+    ex = "udp";
+  else if (type == SCTP_COOKIE_SCAN || type == SCTP_INIT_SCAN)
+    ex = "sctp";
+  else
+    ex = "tcp";
+
   np.gray_nesca_on();
   fprintf(stdout, "[&][REPORT]:");
   np.green_html_on();
 
-  std::cout << std::to_string(port) << "/tcp";  np.gray_nesca_on();
+  std::cout << std::to_string(port) << "/" << ex;  np.gray_nesca_on();
   fprintf(stdout, " STATE: ");
   std::string status_port = return_port_status(status);
 

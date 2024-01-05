@@ -8,7 +8,7 @@
 #include "include/igmp.h"
 
 int send_igmp_packet(int fd, const u32 saddr, const u32 daddr, int ttl, bool df, u8 *ipops, int ipoptlen,
-    u16 ident, u8 tos, u8 type, u8 code, const char *data, u16 datalen, int fragscan)
+    u16 ident, u8 tos, u8 type, u8 code, const char *data, u16 datalen, int fragscan, bool badsum)
 {
   struct sockaddr_storage dst;
   struct sockaddr_in *dst_in;
@@ -16,7 +16,7 @@ int send_igmp_packet(int fd, const u32 saddr, const u32 daddr, int ttl, bool df,
   int res = -1;
 
   u8 *packet = build_igmp_pkt(saddr, daddr, ttl, ident, tos, df, ipops, ipoptlen,
-      type, code, data, datalen, &packetlen);
+      type, code, data, datalen, &packetlen, badsum);
 
   if (!packet)
     return -1;

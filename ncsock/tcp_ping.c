@@ -17,12 +17,13 @@
 
 double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
     int source_port, u16 window, u32 ack, int timeout_ms, int ttl, u8 *ipops, int ipoptlen,
-    const char *data, u16 datalen, int fragscan)
+    const char *data, u16 datalen, int fragscan, bool badsum)
 {
   pthread_mutex_t mutex;
   pthread_mutex_init(&mutex, NULL);
 
   double response_time = -1;
+  struct sockaddr_in dst;
   struct timespec start_time, end_time;
   struct tcp_header *tcph;
   struct tcp_flags tf;
@@ -37,7 +38,11 @@ double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
 
   u32 saddr = inet_addr(source_ip);
   u32 daddr = inet_addr(ip);
-  rf.dest_ip = daddr;
+
+  dst.sin_family = AF_INET;
+  dst.sin_addr.s_addr = daddr;
+
+  rf.ip = (struct sockaddr_storage*)&dst;
   rf.protocol = IPPROTO_TCP;
 
   seq = generate_seq();
@@ -49,7 +54,7 @@ double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
     return -1;
   send = send_tcp_packet(sock, saddr, daddr, ttl, df, ipops, ipoptlen,
       source_port, dest_port, seq, ack, 0, flags, window, 0, 0, 0, data,
-      datalen, fragscan);
+      datalen, fragscan, badsum);
 
   pthread_mutex_lock(&mutex);
   close(sock);

@@ -34,7 +34,6 @@
 #include "nescaproc.h"
 #include "nescadata.h"
 #include "nescalog.h"
-#include "portscan.h"
 #include "nescathread.h"
 
 #include "../include/nescautils.h"
@@ -98,22 +97,31 @@ std::vector<std::string> resolvhosts(bool datablocks, std::vector<std::string> h
 
 const struct
 option long_options[] = {
+  {"udp", no_argument, 0, 55},
+  {"badsum", no_argument, 0, 65},
+  {"PU", required_argument, 0, 18},
+  {"PY", required_argument, 0, 13},
+  {"sctp-init", no_argument, 0, 14},
+  {"sctp-cookie", no_argument, 0, 17},
   {"ack", required_argument, 0, 42},
   {"gdel", required_argument, 0, 58},
   {"ipopt", required_argument, 0, 59},
   {"data", required_argument, 0, 38},
   {"window", required_argument, 0, 24},
-
-  {"hide-eth", no_argument, 0, 64},
   {"http-timeout", required_argument, 0, 22},
   {"psh", no_argument, 0, 3},
-  {"reply", required_argument, 0, 4},
-  {"ip", required_argument, 0, 6},
-  {"udp", no_argument, 0, 8},
-  {"reqnum", required_argument, 0, 10},
-  {"TDD", required_argument, 0, 9},
+  {"script", required_argument, 0, 4},
+  {"no-verbose", no_argument, 0, 6},
+
+  {"PR", no_argument, 0, 8},
+  /*
+  {"hide-eth", no_argument, 0, 64},
   {"tcp", no_argument, 0, 15},
   {"icmp", required_argument, 0, 16},
+  {"reqnum", required_argument, 0, 10},
+  {"TDD", required_argument, 0, 9},
+  */
+
   {"no-scan", no_argument, 0, 46},
   {"print-color", required_argument, 0, 78},
   {"data-len", required_argument, 0, 79},

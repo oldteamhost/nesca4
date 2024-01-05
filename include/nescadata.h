@@ -28,40 +28,82 @@ struct _portlist_
   short state;
 };
 
+struct payload
+{
+  const char *data;
+  u32 datalen;
+};
+
 struct _nescadata_
 {
-  char ip[16];           /* IP адрес не может быть больше 16 байт */
+  std::string ip;
   double rtt;            /* Время ответа хоста, после ping-а */
-  bool rtt_init;         /* Иногда ping может просто skip-утся поэтому нужен флаг для отслежки этого */
-  std::string dns;       /* DNS который указал пользователь при вызове ./nesca4 google.com */
+  bool rtt_init;         /* Иногда ping может просто skip-утся поэтому
+                            нужен флаг для отслежки этого */
+  std::string dns;       /* DNS который указал пользователь при
+                            вызове ./nesca4 google.com */
   std::string new_dns;   /* DNS который получила nesca */
   std::string html;      /* Результат send_http_request() */
   std::string redirect;  /* Перенаправление */
 
-  /* Собственно сюда идут все порты
-   * во время сканирования */
+  /* Сами порты */
   std::vector<_portlist_> ports;
 };
 
 class NESCADATA {
   private:
-
     std::vector<_nescadata_> all_data;
     std::vector<std::string> temp_ips_group;
     _nescadata_* get_data_block(const std::string& ip);
     void         delete_data_block(const std::string& ip);
+
   public:
     std::vector<std::string> success_ping_ip;
     std::vector<std::string> failed_ping_ip;
+    struct payload pd;
+
+    char gateway_ip[16];
+    char srcmac[18];
+    const char* source_ip;
+    char dev[512];
+    u32 src;
+
+    int ping_timeout = 600;
+    int ack_dest_port = 80;
+    int syn_dest_port = 80;
+    int sctpport = 80;
+    int udpport = 80;
+    int frag_mtu = 0;
+    int sport = -1;
+
+    bool badsum = false;
+    bool customttl = false;
+    bool customsport = false;
 
     u8 ip_options[256];
-    int ipopts_first_hop_offset = 0;
-    int ipopts_last_hop_offset = 0;
-    int ipoptslen;
+    int ipopts_first_hop_offset = 0,
+        ipopts_last_hop_offset = 0, ipoptslen;
+
+    u8 tcpflags;
+
+    std::vector<std::string> ftp_logins;
+    std::vector<std::string> ftp_passwords;
+    std::vector<std::string> rtsp_logins;
+    std::vector<std::string> rtsp_passwords;
+    std::vector<std::string> sftp_logins;
+    std::vector<std::string> sftp_passwords;
+    std::vector<std::string> http_logins;
+    std::vector<std::string> http_passwords;
+    std::vector<std::string> hikvision_logins;
+    std::vector<std::string> hikvision_passwords;
+    std::vector<std::string> smtp_logins;
+    std::vector<std::string> smtp_passwords;
+    std::vector<std::string> rvi_logins;
+    std::vector<std::string> rvi_passwords;
 
     u16 windowlen = 0;
     u32 ack = 0;
-    u16 ttl = 0;
+    u16 ttl = 64;
 
     /* add data */
     void add_redirect(const std::string& ip, const std::string& redirect);
@@ -100,11 +142,5 @@ std::vector<std::string> range_to_ips(const std::vector<std::string>& ip_ranges)
 std::vector<std::string> convert_dns_to_ip(const std::vector<std::string>& dns_vector);
 std::vector<int> split_string_int(const std::string& str, char delimiter);
 std::vector<std::string> split_string_string(const std::string& str, char delimiter);
-
-struct datastring
-{
-  const char *data;
-  u32 datalen;
-};
 
 #endif

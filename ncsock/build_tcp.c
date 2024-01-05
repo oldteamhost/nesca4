@@ -8,7 +8,8 @@
 #include "include/tcp.h"
 
 u8 *build_tcp(u16 sport, u16 dport, u32 seq, u32 ack, u8 reserved, u8 flags,
-    u16 window, u16 urp, const u8 *tcpopt, int tcpoptlen, const char *data, u16 datalen, u32 *packetlen)
+    u16 window, u16 urp, const u8 *tcpopt, int tcpoptlen, const char *data,
+    u16 datalen, u32 *packetlen)
 {
   struct tcp_header *tcp;
   u8 *packet;

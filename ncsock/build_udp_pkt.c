@@ -41,16 +41,18 @@ u8 *build_udp(u16 sport, u16 dport, const char *data, u16 datalen, u32 *packetle
 
 u8 *build_udp_pkt(const u32 saddr, const u32 daddr,
     int ttl, u16 ipid, u8 tos, bool df, u8 *ipopt, int ipoptlen, u16 sport, u16 dport,
-    const char *data, u16 datalen, u32 *packetlen)
+    const char *data, u16 datalen, u32 *plen, bool badsum)
 {
   struct udp_header *udp;
   u32 udplen;
-  u8 *ip;
+  u8 *packet;
 
   udp = (struct udp_header*) build_udp(sport, dport, data, datalen, &udplen);
   udp->check = ip4_pseudoheader_check(saddr, daddr, IPPROTO_UDP, udplen, udp);
-  ip = build_ip_pkt(saddr, daddr, IPPROTO_UDP, ttl, ipid, tos, df, ipopt, ipoptlen, (char *) udp, udplen, packetlen);
-  free(udp);
+  if (badsum)
+    udp->check = 0xffff;
+  packet = build_ip_pkt(saddr, daddr, IPPROTO_UDP, ttl, ipid, tos, df, ipopt, ipoptlen, (char *) udp, udplen, plen);
 
-  return ip;
+  free(udp);
+  return packet;
 }

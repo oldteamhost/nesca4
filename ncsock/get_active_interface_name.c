@@ -11,7 +11,7 @@
 #include <string.h>
 
 #define MAX_INTERFACE_NAME_LEN 512
-char* get_active_interface_name(void)
+char* get_active_interface_name(char* buffer, size_t len)
 {
   DIR *dir;
   struct dirent *entry;
@@ -32,7 +32,12 @@ char* get_active_interface_name(void)
           if (strcmp(operstate, "up\n") == 0) {
             closedir(dir);
             fclose(operstate_file);
-            return strdup(entry->d_name);
+
+            if (strlen(entry->d_name) < len) {
+              strcpy(buffer, entry->d_name);
+              return buffer;
+            }
+            return NULL;
           }
         }
         fclose(operstate_file);

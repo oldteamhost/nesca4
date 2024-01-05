@@ -11,7 +11,7 @@
 #include <stdlib.h>
 
 u8 *build_icmp6_pkt(const struct in6_addr *saddr, const struct in6_addr *daddr, u8 tc, u32 flowlabel,
-    u8 hoplimit, u16 seq, u16 id, u8 ptype, u8 pcode, const char *data, u16 datalen, u32 *plen)
+    u8 hoplimit, u16 seq, u16 id, u8 ptype, u8 pcode, const char *data, u16 datalen, u32 *plen, bool badsum)
 {
   char *packet;
   struct icmp6_header *icmpv6;
@@ -42,8 +42,11 @@ u8 *build_icmp6_pkt(const struct in6_addr *saddr, const struct in6_addr *daddr, 
   icmpv6->checksum = 0;
   icmpv6->checksum = ip6_pseudoheader_check(saddr, daddr, IPPROTO_ICMPV6, icmplen, icmpv6);
 
-  ipv6 = build_ip6_pkt(saddr, daddr, tc, flowlabel, IPPROTO_ICMPV6, hoplimit,
-                        packet, icmplen, plen);
+  if (badsum)
+    icmpv6->checksum--;
+
+  ipv6 = build_ip6_pkt(saddr, daddr, tc, flowlabel, IPPROTO_ICMPV6,
+      hoplimit, packet, icmplen, plen);
 
   free(packet);
   return ipv6;

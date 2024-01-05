@@ -94,7 +94,7 @@ std::string set_target_at_path(const std::string& path);
 std::string set_target_at_http_header(const std::string& buffer);
 std::string set_target_at_title(const std::string& buffer);
 int than_bruteforce(const std::string type);
-void print_port_state(int status, int port, std::string service, nesca_prints& np);
+void print_port_state(int status, int port, u8 type, std::string service, nesca_prints& np);
 
 /*Для обработки портов класс на паттерне Strategy Pattern.*/
 class ports_strategy {

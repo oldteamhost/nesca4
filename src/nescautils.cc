@@ -312,17 +312,3 @@ int delete_line_from_file(const std::string& filename, const std::string& line_t
   output_file.close();
   return 0;
 }
-#include "../config/nescaopts.h"
-std::string gettypeddos(class arguments_program& argp)
-{
-  if (argp.ip_ddos)
-    return "ip-empty";
-  if (argp.tcp_ddos)
-    return "tcp";
-  if (argp.icmp_ddos)
-    return "icmp";
-  if (argp.udp_ddos)
-    return "udp";
-
-  return "n/a";
-}

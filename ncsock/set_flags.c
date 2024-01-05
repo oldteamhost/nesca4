@@ -8,7 +8,7 @@
 #include "include/tcp.h"
 
 struct tcp_flags
-set_flags(uint8_t packet_preset)
+set_flags(u8 packet_preset)
 {
   struct tcp_flags tpf;
   memset(&tpf, 0, sizeof(struct tcp_flags));

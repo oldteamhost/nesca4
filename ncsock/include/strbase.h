@@ -45,6 +45,9 @@ u16 generate_checksum(void);
 u16 generate_rare_port(void);
 u32 generate_seq(void);
 const char* generate_ipv4(void);
+u32 random_u32(void);
+u16 random_u16(void);
+u8 random_u8(void);
 
 #ifdef __cplusplus
 }

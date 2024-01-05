@@ -22,7 +22,9 @@ extern "C" {
 #include <unistd.h>
 
 void get_dns(const char* ip, int port, char* dns_buffer, size_t buffer_size);
+void get_dns_ipv6(const char* ip, int port, char* dns_buffer, size_t buffer_size);
 int get_ip(const char* dns, char* ip_buffer, size_t buffer_size);
+int get_ip_ipv6(const char* dns, char* ip_buffer, size_t buffer_size);
 
 #define THIS_IS_DNS 0
 #define THIS_IS_IP4 1

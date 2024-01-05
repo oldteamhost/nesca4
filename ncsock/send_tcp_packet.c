@@ -12,16 +12,17 @@ extern int send_ip_packet(int fd, const struct sockaddr_storage *dst,
 
 int send_tcp_packet(int fd, const u32 saddr, const u32 daddr, int ttl, bool df,
     u8 *ipops, int ipoptlen, u16 sport, u16 dport, u32 seq, u32 ack, u8 reserved, u8 flags, u16 window, u16 urp,
-    u8 *options, int optlen, const char *data, u16 datalen, int fragscan)
+    u8 *options, int optlen, const char *data, u16 datalen, int fragscan, bool badsum)
 {
   struct sockaddr_storage dst;
   struct sockaddr_in *dst_in;
   u32 packetlen;
   int res = -1;
+  u8 *packet;
 
-  u8 *packet = build_tcp_pkt(saddr, daddr, ttl, generate_random_u32(10, 9999), IP_TOS_DEFAULT, df,
-    ipops, ipoptlen, sport, dport, seq, ack, reserved, flags, window, urp, options, optlen, data, datalen, &packetlen);
-
+  packet = build_tcp_pkt(saddr, daddr, ttl, generate_random_u32(10, 9999), IP_TOS_DEFAULT, df,
+    ipops, ipoptlen, sport, dport, seq, ack, reserved, flags, window, urp, options, optlen, data, datalen,
+    &packetlen, badsum);
   if (!packet)
     return -1;
 

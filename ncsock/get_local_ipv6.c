@@ -14,25 +14,25 @@
 #include <net/if.h>
 #include <arpa/inet.h>
 
-char* get_local_ip(void)
+char* get_local_ipv6(void)
 {
   struct ifaddrs *ifap, *ifa;
-  struct sockaddr_in *sa;
-  char *localip = NULL;
+  struct sockaddr_in6 *sa6;
+  char *localipv6 = NULL;
 
   if (getifaddrs(&ifap) == -1)
     return NULL;
   for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-    if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET)
+    if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET6)
       continue;
-    sa = (struct sockaddr_in *) ifa->ifa_addr;
+    sa6 = (struct sockaddr_in6*)ifa->ifa_addr;
     if (!(ifa->ifa_flags & IFF_LOOPBACK)) {
-      localip = (char*)malloc(INET_ADDRSTRLEN);
-      inet_ntop(AF_INET, &(sa->sin_addr), localip, INET_ADDRSTRLEN);
+      localipv6 = (char*)malloc(INET6_ADDRSTRLEN);
+      inet_ntop(AF_INET6, &(sa6->sin6_addr), localipv6, INET6_ADDRSTRLEN);
       break;
     }
   }
 
   freeifaddrs(ifap);
-  return localip;
+  return localipv6;
 }
