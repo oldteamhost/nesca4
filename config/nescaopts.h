@@ -19,10 +19,7 @@
 #include "../ncsock/include/types.h"
 
 #define SPEED_TYPE_DEFAULT 3
-#define SCAN_PORTS_TYPE_DEFAULT 1
 #define DEFAULT_PORTS {80,443}
-#define SYN_PING_DEFAULT_DEST_PORT 80
-#define ACK_PING_DEFAULT_DEST_PORT 80
 #define PING_LOG_DEFAULT 20
 #define DNS_RESOLV_SOURCE_PORT_DEFUALT 4555
 #define NEGATIVES_PATH_DEFAULT "resources/negatives.txt"
@@ -47,8 +44,7 @@ public:
   std::string negatives_path = NEGATIVES_PATH_DEFAULT;
   std::vector<std::string> find_target;
 
-  const char* source_ip;
-  int type = SCAN_PORTS_TYPE_DEFAULT;
+  int type = 6;
   int speed_type = SPEED_TYPE_DEFAULT;
   int count_success_ips;
 
@@ -56,19 +52,14 @@ public:
   bool custom_source_port;
   bool find;
   bool random_dns;
-  bool reply_ddos;
-  u8 reply_ddos_proto = 0;
   bool traceroute;
   int random_dns_count;
   bool ns_track;
   int http_threads;
 
-  int _custom_source_port;
+  std::string scriptpath = "";
+  bool no_verbose_script = true;
 
-  bool ip_ddos;
-  bool hidden_eth;
-  u8 ip_ddos_proto = 2;
-  u8 icmp_ddos_type = 8;
 
 #ifdef HAVE_NODE_JS
   bool save_screenshots;
@@ -83,20 +74,13 @@ public:
   std::vector<std::string> new_ping_ip;
   bool no_scan;
 
-  uint8_t tcpflags;
   bool custom_tcpflags;
   const char* custom_res_tcpflags;
-
-  int success_packet_ddos;
-
-  bool tcp_ddos;
-  bool icmp_ddos;
 
   bool timeout;
   int timeout_ms;
   bool custom_recv_timeout_ms;
   int recv_timeout_ms;
-  int ddos_threads = 500;
   int _threads;
 
   std::vector<int> ports = DEFAULT_PORTS;
@@ -105,14 +89,11 @@ public:
   bool debug;
   bool print_errors;
   bool my_life_my_rulez;
-  int frag_mtu = 0;
   bool get_path_log;
   bool syn_debug;
   bool save_camera_screens;
 
   bool ping_off;
-
-  int ddos_packets = 5000;
 
   bool get_response;
 
@@ -128,13 +109,11 @@ public:
   int dns_threads;
   int resol_source_port = DNS_RESOLV_SOURCE_PORT_DEFUALT;
   int resol_delay;
-  bool udp_ddos;
 
   bool ip_scan_import;
   const char* path_ips;
 
   bool custom_ping;
-  int ping_timeout;
   int threads_ping;
   bool custom_threads;
   int ping_log = PING_LOG_DEFAULT;
@@ -143,17 +122,15 @@ public:
   bool syn_ping;
   bool echo_ping;
   bool info_ping;
+  bool udp_ping;
   bool timestamp_ping;
+  bool sctp_ping_init;
   bool max_ping;
 
   int maxg_ping = 3000;
   int maxg_scan = 2000;
 
   int group_del = 5;
-
-
-  int ack_dest_port = ACK_PING_DEFAULT_DEST_PORT;
-  int syn_dest_port = SYN_PING_DEFAULT_DEST_PORT;
 
   /*Don`t touch*/
   bool print_help_menu;
@@ -169,21 +146,6 @@ public:
   bool thread_on_port;
   bool info_version;
   std::vector<std::string> success_ping_ip;
-
-  std::vector<std::string> ftp_logins;
-  std::vector<std::string> ftp_passwords;
-  std::vector<std::string> rtsp_logins;
-  std::vector<std::string> rtsp_passwords;
-  std::vector<std::string> sftp_logins;
-  std::vector<std::string> sftp_passwords;
-  std::vector<std::string> http_logins;
-  std::vector<std::string> http_passwords;
-  std::vector<std::string> hikvision_logins;
-  std::vector<std::string> hikvision_passwords;
-  std::vector<std::string> smtp_logins;
-  std::vector<std::string> smtp_passwords;
-  std::vector<std::string> rvi_logins;
-  std::vector<std::string> rvi_passwords;
 
   std::string path_ftp_login = PATH_FTP_LOGIN_DEFAULT;
   std::string path_ftp_pass = PATH_FTP_PASS_DEFAULT;
