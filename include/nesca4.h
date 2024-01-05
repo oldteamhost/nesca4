@@ -58,7 +58,7 @@
 #include "../ncsock/include/base.h"
 
 /*Угадайте?*/
-#define _VERSION "20231230"
+#define _VERSION "20240105"
 
 void usage(const char* exec);
 void version_menu(void);
