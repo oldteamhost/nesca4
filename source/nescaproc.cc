@@ -211,7 +211,7 @@ int than_bruteforce(const std::string type)
 void printbrute(const std::string& ip, int port, std::string typebrute, nesca_prints& np)
 {
   np.yellow_html_on();
-  std::cout << "[>][" << typebrute << "]:" + ip + ":" + std::to_string(port) + " [BRUTEFORCE]\n";
+  std::cout << "  - " << typebrute << " " + ip + ":" + std::to_string(port) + " [BRUTEFORCE]\n";
   reset_colors;
 }
 
@@ -226,7 +226,7 @@ void ftp_strategy::handle(const std::string& ip, const std::string& result, cons
     brute_temp = threads_bruteforce(nd.ftp_logins, nd.ftp_passwords, "", ip, port, argp.brute_timeout_ms, FTP_BRUTEFORCE, argp.ftp_brute_log);
   }
 
-  result_print = np.main_nesca_out("BA", "ftp://" + brute_temp + result, 3, "D", "", version, rtt_log, "", protocol);
+  result_print = np.main_nesca_out("RES", "ftp://" + brute_temp + result, 3, "D", "", version, rtt_log, "", protocol);
   std::cout << result_print << std::endl;
 }
 
@@ -242,7 +242,7 @@ void smtp_strategy::handle(const std::string& ip, const std::string& result, con
     brute_temp = threads_bruteforce(nd.smtp_logins, nd.smtp_passwords, "", ip, port, argp.brute_timeout_ms, SMTP_BRUTEFORCE, argp.smtp_brute_log);
   }
 
-  result_print = np.main_nesca_out("BA", "smtp://" + brute_temp + result, 3, "D", "", version, "",rtt_log, "", protocol);
+  result_print = np.main_nesca_out("RES", "smtp://" + brute_temp + result, 3, "D", "", version, "",rtt_log, "", protocol);
   std::cout << result_print << std::endl;
 }
 
@@ -256,7 +256,7 @@ void hikvision_strategy::handle(const std::string& ip, const std::string& result
         argp.hikvision_brute_log, argp.brute_timeout_ms, argp.screenshots_save_path_cam);
   }
 
-  result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "",rtt_log, "", protocol);
+  result_print = np.main_nesca_out("RES", "" + brute_temp + result, 3, "", "", "", "",rtt_log, "", protocol);
   std::cout << result_print << std::endl;
 }
 
@@ -264,7 +264,7 @@ void hikvision_strategy::handle(const std::string& ip, const std::string& result
 void https_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn)
 {
-  std::string result_print = np.main_nesca_out("BA", "https://" + result, 3, "", "", "", "",rtt_log, "" ,protocol);
+  std::string result_print = np.main_nesca_out("RES", "https://" + result, 3, "", "", "", "",rtt_log, "" ,protocol);
   std::cout << result_print << std::endl;
 }
 
@@ -277,7 +277,7 @@ void rvi_strategy::handle(const std::string& ip, const std::string& result, cons
     brute_temp = threads_bruteforce(nd.rvi_logins, nd.rvi_passwords, "", ip, port, argp.brute_timeout_ms, RVI_BRUTEFORCE, argp.rvi_brute_log);
   }
 
-  result_print = np.main_nesca_out("BA", "" + brute_temp + result, 3, "", "", "", "", rtt_log, "", protocol);
+  result_print = np.main_nesca_out("RES", "" + brute_temp + result, 3, "", "", "", "", rtt_log, "", protocol);
   std::cout << result_print << std::endl;
 }
 
@@ -296,7 +296,7 @@ void rtsp_strategy::handle(const std::string& ip, const std::string& result, con
     }
   }
 
-  result_print = np.main_nesca_out("BA", "rtsp://" + brute_temp + result + pathget, 3, "", "", "", "",rtt_log, "", protocol);
+  result_print = np.main_nesca_out("RES", "rtsp://" + brute_temp + result + pathget, 3, "", "", "", "",rtt_log, "", protocol);
   std::cout << result_print << std::endl;
 }
 
@@ -395,16 +395,27 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
         ip, port, argp.brute_timeout_ms, HTTP_BRUTEFORCE, argp.http_brute_log);
   }
 
-  result_print = np.main_nesca_out("BA", "http://" + brute_temp + ip + ":" + std::to_string(port),
+  result_print = np.main_nesca_out("RES", "http://" + brute_temp + ip + ":" + std::to_string(port),
       3, "T", "D", http_title, type_target, rtt_log, "", protocol);
 
   /*Вывод основного.*/
   std::cout << result_print << std::endl;
 
+  /*Вывод перенаправления.*/
+  if (!redirect.empty())
+    np.nlog_redirect(redirect);
+
+  /*Вывод ответа http.*/
+  if (argp.get_response) {
+    np.yellow_html_on();
+    std::cout << htmlpro << std::endl;
+    reset_colors;
+  }
+
   /*Получение /robots.txt*/
   if (argp.robots_txt){
     np.gray_nesca_on();
-    std::cout << "[^][ROBOTS]:";
+    std::cout << "  * ROBOTS ";
     reset_colors;
 
     robots_txt = get_robots_txt(ip.c_str(), port, 1100);
@@ -424,7 +435,7 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   /*Получение /sitemap.xml*/
   if (argp.sitemap_xml){
     np.gray_nesca_on();
-    std::cout << "[^][STEMAP]:";
+    std::cout << "  * STEMAP ";
     reset_colors;
 
     sitemap = get_sitemap_xml(ip.c_str(), port, 1100);
@@ -440,24 +451,13 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
     }
   }
 
-  /*Вывод перенаправления.*/
-  if (!redirect.empty())
-    np.nlog_redirect(redirect);
-
-  /*Вывод ответа http.*/
-  if (argp.get_response) {
-    np.yellow_html_on();
-    std::cout << htmlpro << std::endl;
-    reset_colors;
-  }
-
   if (argp.find) {
     for (const auto& target : argp.find_target){
       std::vector<std::string> finds = find_sentences_with_word(target, htmlpro);
       if (!finds.empty()) {
         for (const auto& find : finds){
           np.gray_nesca_on();
-          std::cout << "[FOUND]:";
+          std::cout << "  * FOUND ";
           np.green_html_on();
           std::cout << find;
           reset_colors;
@@ -473,68 +473,8 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   }
 }
 
-#include "../include/nescaengine.h"
-std::string return_port_status(uint8_t type)
-{
-  switch (type)
-  {
-    case PORT_OPEN:            return "open";
-    case PORT_CLOSED:          return "closed";
-    case PORT_FILTER:          return "filtered";
-    case PORT_OPEN_OR_FILTER:  return "open/filtered";
-    case PORT_NO_FILTER:       return "unfiltered";
-  }
-  return "error";
-}
-
-std::string get_type(uint8_t type)
-{
-  switch (type)
-  {
-    case TCP_SYN_SCAN:    return "SYN_SCAN";
-    case TCP_ACK_SCAN:    return "ACK_SCAN";
-    case TCP_XMAS_SCAN:   return "XMAS_SCAN";
-    case TCP_FIN_SCAN:    return "FIN_SCAN";
-    case TCP_WINDOW_SCAN: return "WINDOW_SCAN";
-    case TCP_NULL_SCAN:   return "NULL_SCAN";
-    case TCP_MAIMON_SCAN: return "MAIMON_SCAN";
-    case TCP_PSH_SCAN:    return "PSH_SCAN";
-  }
-
-  return "-1";
-}
-
-void print_port_state(int status, int port, u8 type, std::string service, nesca_prints& np)
-{
-  std::string ex;
-
-  if (type == UDP_SCAN)
-    ex = "udp";
-  else if (type == SCTP_COOKIE_SCAN || type == SCTP_INIT_SCAN)
-    ex = "sctp";
-  else
-    ex = "tcp";
-
-  np.gray_nesca_on();
-  fprintf(stdout, "[&][REPORT]:");
-  np.green_html_on();
-
-  std::cout << std::to_string(port) << "/" << ex;  np.gray_nesca_on();
-  fprintf(stdout, " STATE: ");
-  std::string status_port = return_port_status(status);
-
-  np.golder_rod_on();
-  fprintf(stdout, "%s", status_port.c_str());
-  reset_colors;
-
-  np.gray_nesca_on();
-  fprintf(stdout, " SERVICE: "); np.green_html_on();
-  fprintf(stdout, "%s\n", service.c_str());
-  reset_colors;
-}
-
 void else_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn)
 {
-  std::string result_print = np.main_nesca_out("BA", result, 3, "", "", "", "",rtt_log, "", protocol);
+  std::string result_print = np.main_nesca_out("RES", result, 3, "", "", "", "",rtt_log, "", protocol);
 }

@@ -8,7 +8,7 @@
 #include "include/dns.h"
 #include <stdio.h>
 
-void get_dns(const char* ip, int port, char* dns_buffer, size_t buffer_size)
+void get_dns(const char* ip, int port, int timeout_ms, char* dns_buffer, size_t buffer_size)
 {
   struct in_addr addr;
   int sock, res;
@@ -19,8 +19,8 @@ void get_dns(const char* ip, int port, char* dns_buffer, size_t buffer_size)
   memset(&sa, 0, sizeof(sa));
   sa.sin_family = AF_INET;
 
-  timeout.tv_sec = 600;
-  timeout.tv_usec = 0;
+  timeout.tv_sec = timeout_ms / 1000;
+  timeout.tv_usec = (timeout_ms % 1000) * 1000;
 
   if (inet_pton(AF_INET, ip, &addr) != 1)
     goto fail;

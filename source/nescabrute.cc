@@ -55,7 +55,7 @@ threads_bruteforce(const std::vector<std::string>& login, std::vector<std::strin
         combinations++;
         if (combinations % 50 == 0) {
           int procents = (combinations * 100) / total;
-          std::cout << np1.main_nesca_out("#", "BRUTE "+std::to_string(combinations)+" out of "+std::to_string(total) +" passwd", 6, "", "", std::to_string(procents)+"%", "", "") << std::endl;
+          std::cout << "  " << np1.main_nesca_out("#", "BRUTE "+std::to_string(combinations)+" out of "+std::to_string(total) +" passwd", 6, "", "", std::to_string(procents)+"%", "", "") << std::endl;
         }
       }));
     }
@@ -159,7 +159,7 @@ threads_brute_hikvision(const std::string ip, const std::vector<std::string> log
     for (const auto& password : passwords) {
       if (combinations % 50 == 0) {
         procents = (combinations * 100) / total;
-        std::cout << np1.main_nesca_out("#", "BRUTE "+std::to_string(combinations)+" out of "+
+        std::cout << "  " << np1.main_nesca_out("#", "BRUTE "+std::to_string(combinations)+" out of "+
           std::to_string(total) +" passwd", 6, "", "", std::to_string(procents)+"%", "", "") << std::endl;
       }
       combinations++;

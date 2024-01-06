@@ -1,0 +1,6 @@
+auth=#696969
+title=#CDAB9F
+link=#a9d7b5
+ok=#dcdcff
+error=#fa2a55
+debug=#ffddd1

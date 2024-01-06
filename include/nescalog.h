@@ -26,12 +26,12 @@
 
 class nesca_prints {
   private:
-  std::string gray_nesca = "\033[38;2;107;107;107m";
+  std::string gray_nesca = "\033[38;2;105;105;105m";
   std::string golder_rod = "\033[38;2;218;165;32m";
   std::string sea_green = "\033[38;2;60;179;96;4m";
-  std::string green_html = "\033[38;2;127;255;0m";
+  std::string green_html = "\033[38;2;124;252;0m";
   std::string red_html = "\033[38;2;240;50;55m";
-  std::string yellow_html = "\033[38;2;255;255;0m";
+  std::string yellow_html = "\033[38;2;253;233;16m";
   std::string reset_color = "\033[0m";
 
   std::string
@@ -71,6 +71,8 @@ class nesca_prints {
         std::string message, int ttl, int id, int win, int seq, int iplen);
 
     void easy_packet_trace(u8 *buffer, bool hidden_eth);
+    void print_port_state(int status, u16 port, u8 type, const std::string& service);
+    void print_host_state(size_t num, const std::string& ip, const std::string& rdns, double rtt);
 
     void disable_colors(void);
     void golder_rod_on(void);
@@ -80,6 +82,7 @@ class nesca_prints {
     void yellow_html_on(void);
     void red_html_on(void);
 
+    std::string custom_color(const std::string& html_color);
     void custom_color_on(const std::string& html_color);
     int import_color_scheme(const std::string& file_name, std::map<std::string, std::string>& config_values);
     int processing_color_scheme(const std::map<std::string, std::string>& config_values);

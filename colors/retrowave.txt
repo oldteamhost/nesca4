@@ -1,6 +1,6 @@
-auth=#f6019d
-title=#ff53fd
-link=#2de2e6
-ok=#2de2e6
+auth=#6E5C67
+title=#F89880
+link=#00FFE5
+ok=#EDDA74
 error=#ff53fd
-debug=#ff57a1
+debug=#E600FF

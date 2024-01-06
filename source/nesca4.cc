@@ -169,9 +169,14 @@ int main(int argc, char** argv)
 
   /* PING SPEED */
 
+  if (argp.my_life_my_rulez) {
+    argp.group_del = 2;
+    argp.maxg_ping = 50000;
+    argp.maxg_scan = 50000;
+  }
   if (!argp.custom_threads) {
     if (argp.my_life_my_rulez) {
-      argp.threads_ping = temp_vector.size();
+      argp.threads_ping = 15000;
       n.ping_timeout = 250;
     }
     else {
@@ -286,6 +291,8 @@ nesca_group_execute(struct nescalog_opts *nlo, int threads, std::vector<std::str
     future.get();
 }
 
+size_t host_scan = 1;
+
 void PRENESCASCAN(void)
 {
   struct nescalog_opts nlo;
@@ -326,11 +333,14 @@ void PRENESCASCAN(void)
 
     NESCASCAN(n.success_ping_ip);
 
-    if (argp.no_scan)
-      for (const auto& ip : n.success_ping_ip)
-        if (!argp.ping_off || n.get_new_dns(ip) != "n/a")
-          std::cout << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT", n.get_new_dns(ip),
-              std::to_string(n.get_rtt(ip))+"ms","") << std::endl;
+    if (argp.no_scan) {
+      for (const auto& ip : n.success_ping_ip) {
+        if (!argp.ping_off || n.get_new_dns(ip) != "n/a") {
+          np.print_host_state(host_scan, ip, n.get_new_dns(ip), n.get_rtt(ip));
+          host_scan++;
+        }
+      }
+    }
 
     argp.count_success_ips += n.success_ping_ip.size();
     n.failed_ping_ip.clear();
@@ -411,8 +421,12 @@ void NESCASCAN(std::vector<std::string>& temp_vector)
           n.find_port_status(ip, PORT_OPEN_OR_FILTER) ||
           n.find_port_status(ip, PORT_NO_FILTER)) {
 
-        std::cout << np.main_nesca_out("READY", ip, 5, "rDNS", "RTT",
-            n.get_new_dns(ip), std::to_string(n.get_rtt(ip))+"ms","") << std::endl;
+        np.print_host_state(host_scan, ip, n.get_new_dns(ip), n.get_rtt(ip));
+        /*
+        np.gray_nesca_on();
+        std::cout << "===============================================================\n";
+        reset_colors;
+        */
 
         if (argp.json_save) {
           nhd.ip_address = ip.c_str();
@@ -427,6 +441,7 @@ void NESCASCAN(std::vector<std::string>& temp_vector)
         process_port(ip, n.get_port_list(ip, PORT_NO_FILTER), PORT_NO_FILTER);
         process_port(ip, n.get_port_list(ip, PORT_CLOSED), PORT_CLOSED);
         process_port(ip, n.get_port_list(ip, PORT_ERROR), PORT_ERROR);
+        host_scan++;
         putchar('\n');
 
         if (argp.json_save) {
@@ -578,7 +593,7 @@ void processing_tcp_scan_ports(std::string ip, int port, int result)
   std::unique_ptr<ports_strategy> ports_strategy_;
 
   if (result == PORT_OPEN) {
-    print_port_state(PORT_OPEN, port, argp.type, sn.probe_service(port), np);
+    np.print_port_state(PORT_OPEN, port, argp.type, sn.probe_service(port));
     if (argp.no_proc)
       return;
     if (sn.probe_service(port) == "HTTP")
@@ -613,21 +628,21 @@ void processing_tcp_scan_ports(std::string ip, int port, int result)
   }
   else if (result == PORT_ERROR) {
     if (argp.print_errors)
-      print_port_state(PORT_ERROR, port, argp.type, sn.probe_service(port), np);
+      np.print_port_state(PORT_ERROR, port, argp.type, sn.probe_service(port));
   }
   else if (result == PORT_CLOSED) {
     if (argp.debug)
-      print_port_state(PORT_CLOSED, port, argp.type, sn.probe_service(port), np);
+      np.print_port_state(PORT_CLOSED, port, argp.type, sn.probe_service(port));
   }
   else if (result == PORT_FILTER) {
     if (argp.debug)
-      print_port_state(PORT_FILTER, port, argp.type, sn.probe_service(port), np);
+      np.print_port_state(PORT_FILTER, port, argp.type, sn.probe_service(port));
   }
   else if (result == PORT_OPEN_OR_FILTER) {
-    print_port_state(PORT_OPEN_OR_FILTER, port, argp.type, sn.probe_service(port), np);
+    np.print_port_state(PORT_OPEN_OR_FILTER, port, argp.type, sn.probe_service(port));
   }
   else if (result == PORT_NO_FILTER) {
-    print_port_state(PORT_NO_FILTER, port, argp.type, sn.probe_service(port), np);
+    np.print_port_state(PORT_NO_FILTER, port, argp.type, sn.probe_service(port));
   }
 }
 
@@ -913,7 +928,7 @@ void get_dns_thread(std::string ip)
   std::string temp_dns;
 
   delayy(argp.resol_delay);
-  get_dns(ip.c_str(), argp.resol_source_port, dnsbuf, sizeof(dnsbuf));
+  get_dns(ip.c_str(), argp.resol_source_port, 1200, dnsbuf, sizeof(dnsbuf));
   temp_dns = dnsbuf;
 
   ls.lock();

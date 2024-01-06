@@ -156,6 +156,20 @@ void nesca_prints::log_ethhdr(struct eth_hdr *ethhdr)
     ntohs(ethhdr->eth_type));
 }
 
+#include "../include/nescaengine.h"
+
+static std::string return_port_status(u8 type)
+{
+  switch (type) {
+    case PORT_OPEN:            return "open";
+    case PORT_CLOSED:          return "closed";
+    case PORT_FILTER:          return "filtered";
+    case PORT_OPEN_OR_FILTER:  return "open|filtered";
+    case PORT_NO_FILTER:       return "unfiltered";
+  }
+  return "error";
+}
+
 void nesca_prints::easy_packet_trace(u8 *buffer, bool hidden_eth)
 {
   u8* rbuffer;
@@ -219,6 +233,56 @@ void nesca_prints::easy_packet_trace(u8 *buffer, bool hidden_eth)
   free(rbuffer);
 }
 
+static std::string format_rtt(double rtt)
+{
+  std::stringstream ss;
+  ss << std::fixed << std::setprecision(3) << rtt;
+  return ss.str() + "ms";
+}
+
+void nesca_prints::print_host_state(size_t num, const std::string& ip, const std::string& rdns, double rtt)
+{
+  std::string res;
+  res = gray_nesca + "(" + std::to_string(num) + ") ADDRESS " + reset_color +
+    green_html + ip + reset_color + gray_nesca + " " + "DNS" + " " + reset_color +
+    green_html + "\"" + rdns + "\"" + reset_color + gray_nesca + " " + "RTT" + " " + reset_color +
+    green_html + format_rtt(rtt) + reset_color;
+
+  fprintf(stdout, "%s\n", res.c_str());
+}
+
+void nesca_prints::print_port_state(int status, u16 port, u8 type, const std::string& service)
+{
+  std::string ex, res;
+
+  if (type == UDP_SCAN)
+    ex = "udp";
+  else if (type == SCTP_COOKIE_SCAN || type == SCTP_INIT_SCAN)
+    ex = "sctp";
+  else
+    ex = "tcp";
+
+  res = gray_nesca + "-> PORT " + green_html + std::to_string(port) + "/" + ex +
+        gray_nesca + " STATE " + golder_rod + return_port_status(status) +
+        gray_nesca + " SERVICE " + green_html + service + reset_color;
+
+  fprintf(stdout, "%s\n", res.c_str());
+}
+
+void nesca_prints::nlog_redirect(const std::string& redirect)
+{
+  gray_nesca_on();
+  std::cout << "  * MOV ";
+  yellow_html_on();
+  std::cout << "" << redirect + "\n";
+  reset_colors;
+
+  /*
+  if (html_save)
+    hou.html_add_plus(html_file_path, "Redirect", redirect, "", "");
+  */
+}
+
 std::string
 nesca_prints::main_nesca_out(const std::string& opt, const std::string& result, const int mode, const std::string& opt1, const std::string& opt2,
                             const std::string& result1, const std::string& result2, const std::string& rtt,
@@ -244,7 +308,7 @@ nesca_prints::main_nesca_out(const std::string& opt, const std::string& result, 
       temp_file = print_get_time(get_time()) + "[" + opt + "]" + dots[1] + result;
   }
   else if (mode == 3) {
-    temp = gray_nesca + "[>][" + opt + "]" + dots[0] + reset_color +
+    temp = gray_nesca + "  * " + opt + " " + reset_color +
       sea_green + result + reset_color + gray_nesca + " " + opt1 + dots[1] + " " + reset_color +
       golder_rod + result1 + reset_color + gray_nesca + " " + opt2 + dots[2] + " " + reset_color +
       golder_rod + result2 + reset_color;
@@ -375,6 +439,13 @@ nesca_prints::custom_color_on(const std::string& html_color)
     std::cout << html_to_ansi_color(html_color);
 }
 
+std::string nesca_prints::custom_color(const std::string& html_color)
+{
+  if (colors == true)
+    return (html_to_ansi_color(html_color));
+  return "";
+}
+
 int
 nesca_prints::processing_color_scheme(const std::map<std::string, std::string>& config_values)
 {
@@ -458,20 +529,6 @@ int html_output::html_pre_init(const std::string& filepath)
   )";
 
   return (write_line(filepath, data_html));
-}
-
-void nesca_prints::nlog_redirect(const std::string& redirect)
-{
-  gray_nesca_on();
-  std::cout << "[^][REDIRT]:";
-  yellow_html_on();
-  std::cout << redirect + "\n";
-  reset_colors;
-
-  /*
-  if (html_save)
-    hou.html_add_plus(html_file_path, "Redirect", redirect, "", "");
-  */
 }
 
 int html_output::html_add_result(const std::string& filepath, const std::string& time, const std::string& href, const std::string& text,
