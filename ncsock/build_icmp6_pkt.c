@@ -7,24 +7,25 @@
 
 #include "include/icmp.h"
 #include "include/ip.h"
-#include "libdnet/include/icmp.h"
 #include <stdlib.h>
+#include <string.h>
 
 u8 *build_icmp6_pkt(const struct in6_addr *saddr, const struct in6_addr *daddr, u8 tc, u32 flowlabel,
     u8 hoplimit, u16 seq, u16 id, u8 ptype, u8 pcode, const char *data, u16 datalen, u32 *plen, bool badsum)
 {
-  char *packet;
   struct icmp6_header *icmpv6;
   union icmpv6_msg *msg;
   unsigned int icmplen;
+  char *packet;
   u8 *ipv6;
 
-  packet = (char *) malloc(sizeof(*icmpv6) + sizeof(*msg) + datalen);
+  packet = (char*)malloc(sizeof(*icmpv6) + sizeof(*msg) + datalen);
   if (!packet)
     return NULL;
-  icmpv6 = (struct icmp6_header *) packet;
-  msg = (union icmpv6_msg *) (packet + sizeof(*icmpv6));
+  icmpv6 = (struct icmp6_header*)packet;
+  msg = (union icmpv6_msg*)(packet + sizeof(*icmpv6));
 
+  memset(icmpv6, 0, sizeof(*icmpv6));
   icmplen = sizeof(*icmpv6);
   icmpv6->type = ptype;
   icmpv6->code = pcode;
@@ -40,8 +41,8 @@ u8 *build_icmp6_pkt(const struct in6_addr *saddr, const struct in6_addr *daddr, 
   icmplen += datalen;
 
   icmpv6->checksum = 0;
-  icmpv6->checksum = ip6_pseudoheader_check(saddr, daddr, IPPROTO_ICMPV6, icmplen, icmpv6);
-
+  icmpv6->checksum = ip6_pseudoheader_check(saddr, daddr, IPPROTO_ICMPV6,
+      icmplen, icmpv6);
   if (badsum)
     icmpv6->checksum--;
 

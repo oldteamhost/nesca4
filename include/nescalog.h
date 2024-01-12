@@ -21,7 +21,7 @@
 #include "../ncsock/include/tcp.h"
 #include "../ncsock/include/readpkt.h"
 #include "../ncsock/include/igmp.h"
-#include "../ncsock/libdnet/include/eth.h"
+#include "../ncsock/include/eth.h"
 #include "../ncsock/include/udp.h"
 
 class nesca_prints {
@@ -41,7 +41,7 @@ class nesca_prints {
   void log_udphdr(struct udp_header *udphdr);
   void log_icmphdr(struct icmp4_header *icmphdr);
   void log_igmphdr(struct igmp_header *igmphdr);
-  void log_ethhdr(struct eth_hdr *ethhdr);
+  void log_ethhdr(struct eth_header *ethhdr);
 
   public:
     bool html_save;

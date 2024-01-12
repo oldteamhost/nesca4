@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
 */
 
-#include "include/strbase.h"
+#include "../ncsock/include/utils.h"
 
 u16 generate_rare_port(void)
 {
@@ -56,13 +56,13 @@ u16 generate_checksum(void)
 #include <limits.h>
 u32 random_u32(void)
 {
-  return generate_random_u32(0, UINT_MAX);
+  return generate_random_u32(1, UINT_MAX);
 }
 u16 random_u16(void)
 {
-  return (u16)generate_random_u32(0, USHRT_MAX);
+  return (u16)generate_random_u32(1, USHRT_MAX);
 }
 u8 random_u8(void)
 {
-  return (u8)generate_random_u32(0, UCHAR_MAX);
+  return (u8)generate_random_u32(1, UCHAR_MAX);
 }

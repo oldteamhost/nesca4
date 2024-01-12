@@ -6,27 +6,30 @@
 */
 
 #include "include/eth.h"
-#include "libdnet/include/eth.h"
+#include <netinet/in.h>
+#include <string.h>
 
-u8 *build_eth(eth_addr_t saddr, eth_addr_t daddr, u16 type,
-    const char* data, u16 datalen, u32 *plen)
+u8 *build_eth(eth_addr_t src, eth_addr_t dst, u16 type,
+    const char *data, u16 datalen, u32 *plen)
 {
   struct eth_header *eth;
   int packetlen;
   u8 *packet;
 
-  packetlen = sizeof(struct eth_header) + datalen;
+  packetlen = ETH_HDR_LEN + datalen;
   packet = (u8*)malloc(packetlen);
   if (!packet)
     return NULL;
-  eth = (struct eth_header *)packet;
+  eth = (struct eth_header*)packet;
 
-  eth->src = saddr;
-  eth->dst = daddr;
+  memset(eth, 0, ETH_HDR_LEN);
+  eth->dst  = dst;
+  eth->src  = src;
   eth->type = htons(type);
 
   if (data && datalen)
-    memcpy((u8 *)eth + sizeof(struct eth_header), data, datalen);
+    memcpy((u8*)eth + ETH_HDR_LEN,
+        data, datalen);
 
   *plen = packetlen;
   return packet;

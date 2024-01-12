@@ -46,21 +46,18 @@
 
 typedef u32 ipnesca_t;
 
-int nescasocket(void);
 u8 *tcp_probe(NESCADATA *n, const ipnesca_t dst, u16 dport, u8 type, u32 *packetlen);
 u8 *icmp_probe(NESCADATA *n, const ipnesca_t dst, u8 type, u32 *packetlen);
 u8 *sctp_probe(NESCADATA *n, const ipnesca_t dst, u16 dport, u8 type, u32 *packetlen);
 u8 *udp_probe(NESCADATA *n, const ipnesca_t dst, u16 dport, u8 type, u32 *packetlen);
 u8 *arp_probe(NESCADATA *n, const ipnesca_t dst, u8 type, u32 *packetlen);
-u8* read_icmp_probe(NESCADATA *n, ipnesca_t dst, u8 type);
-u8* read_tcp_probe(NESCADATA *n, ipnesca_t dst, u8 type);
 
+int     nescasocket(void);
 ssize_t sendprobe(int fd, NESCADATA *n, const ipnesca_t dst, u16 dport, u8 type);
 u8*     recvpacket(NESCADATA *n, ipnesca_t dst, u8 type, int timeout_ms, double *rtt);
 bool    readping(NESCADATA *n, const ipnesca_t dst, u8 *packet, u8 type);
 int     readscan(const ipnesca_t dst, u8 *packet, u8 type);
-
-double nescaping(NESCADATA *n, ipnesca_t dst, u8 type);
+double  nescaping(NESCADATA *n, ipnesca_t dst, u8 type);
 
 #endif
 

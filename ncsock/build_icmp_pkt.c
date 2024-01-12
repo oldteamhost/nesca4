@@ -16,18 +16,19 @@ u8 *build_icmp_pkt(const u32 saddr, const u32 daddr, int ttl, u16 ipid, u8 tos, 
     int ipoptlen, u16 seq, u16 id, u8 ptype, u8 pcode, const char *data, u16 datalen, u32 *plen, bool badsum)
 {
   struct icmp4_header icmphdr;
+  int dlen = 0, icmplen = 0;
+  u8 *datastart;
+  char *ping;
 
-  u8 *datastart = icmphdr.data;
-  int dlen = sizeof(icmphdr.data);
-  int icmplen = 0;
-  char *ping = (char *) &icmphdr;
+  datastart = icmphdr.data;
+  dlen = sizeof(icmphdr.data);
+  ping = (char*)&icmphdr;
 
   icmphdr.type = ptype;
   icmphdr.code = pcode;
 
-  if (ptype == 8) {
+  if (ptype == 8)
     icmplen = 8;
-  }
   else if (ptype == 13 && pcode == 0) {
     icmplen = 20;
     memset(datastart, 0, 12);
@@ -43,7 +44,7 @@ u8 *build_icmp_pkt(const u32 saddr, const u32 daddr, int ttl, u16 ipid, u8 tos, 
 
   if (datalen > 0) {
     icmplen += MIN(dlen, datalen);
-    if (data == NULL)
+    if (!data)
       memset(datastart, 0, MIN(dlen, datalen));
     else
       memcpy(datastart, data, MIN(dlen, datalen));
@@ -52,10 +53,11 @@ u8 *build_icmp_pkt(const u32 saddr, const u32 daddr, int ttl, u16 ipid, u8 tos, 
   icmphdr.id = htons(id);
   icmphdr.seq = htons(seq);
   icmphdr.checksum = 0;
-  icmphdr.checksum = in_cksum((unsigned short *) ping, icmplen);
+  icmphdr.checksum = in_cksum((u16*)ping, icmplen);
 
   if (badsum)
     --icmphdr.checksum;
 
-  return build_ip_pkt(saddr, daddr, IPPROTO_ICMP, ttl, ipid, tos, df, ipopt, ipoptlen, ping, icmplen, plen);
+  return build_ip_pkt(saddr, daddr, IPPROTO_ICMP, ttl,
+      ipid, tos, df, ipopt, ipoptlen, ping, icmplen, plen);
 }

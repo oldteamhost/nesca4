@@ -66,7 +66,6 @@ int ext_payload(u8 *buf, u8 *rbuf)
       memcpy(rbuf, buf + sizeof(struct ethhdr) + sizeof(struct ip_header) + hdrsize, paylsize);
     }
     else if (iphdr->protocol == IPPROTO_ICMP) {
-      struct icmp4_header *icmphdr = (struct icmp4_header*)(buf + sizeof(struct ethhdr) + sizeof(struct ip_header));
       hdrsize = sizeof(struct icmp4_header);
       paylsize = ntohs(iphdr->tot_len) - (sizeof(struct ip_header) + hdrsize);
       memcpy(rbuf, buf + sizeof(struct ethhdr) + sizeof(struct ip_header), paylsize);

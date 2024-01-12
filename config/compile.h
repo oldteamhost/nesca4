@@ -9,11 +9,6 @@
 #ifndef COMPILE_H
 #define COMPILE_H
 
-#define HAVE_HIKVISION /*Disable HIKVISION lib*/
-#define HAVE_NODE_JS   /*Disable save screenshots*/
-
-#ifdef HAVE_HIKVISION
-#include "../library/HCNetSDK.h"
-#endif
+/* void */
 
 #endif

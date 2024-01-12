@@ -6,7 +6,7 @@
 */
 
 #include "include/http.h"
-#include "include/strbase.h"
+#include "include/utils.h"
 
 char* parse_http_equiv(const char* html)
 {

@@ -6,7 +6,7 @@
 */
 
 #include "include/tcp.h"
-#include "include/strbase.h"
+#include "include/utils.h"
 #include "include/readpkt.h"
 
 #include <arpa/inet.h>
@@ -52,7 +52,7 @@ double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
   sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
   if (sock == -1)
     return -1;
-  send = send_tcp_packet(sock, saddr, daddr, ttl, df, ipops, ipoptlen,
+  send = send_tcp_packet(NULL, sock, saddr, daddr, ttl, df, ipops, ipoptlen,
       source_port, dest_port, seq, ack, 0, flags, window, 0, 0, 0, data,
       datalen, fragscan, badsum);
 

@@ -22,7 +22,7 @@ int fill_ip_raw(struct ip_header *ip, int packetlen, const u8 *ipopt,
   ip->daddr = daddr;
 
   if (ipoptlen)
-    memcpy((u8 *) ip + sizeof(struct ip_header), ipopt, ipoptlen);
+    memcpy((u8*)ip + sizeof(struct ip_header), ipopt, ipoptlen);
 
   ip->check = 0;
   ip->check = ip_cksum_add((u16*)ip, sizeof(struct ip_header) + ipoptlen, 0);

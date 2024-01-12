@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
 */
 
-#include "include/strbase.h"
+#include "include/utils.h"
 
 int find_word(const char* buffer, const char* word)
 {

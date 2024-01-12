@@ -8,9 +8,7 @@
 #ifndef NCSOCK_SOCKET_H
 #define NCSOCK_SOCKET_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <sys/cdefs.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,30 +23,18 @@ extern "C" {
 #include <poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include "types.h"
 
-/* Compile opts */
-#include "ncsockopt.h"
+#define CMD_BUFFER 4096
 
-/* Starting a session aka connecting to an server
- * this function returns the socket descriptor, this
- * is to ensure that the server does not consider us a
- * new user after each submission. */
-        #define CMD_BUFFER 4096
-int session_run(const char* dest_ip, int port, int timeout_ms, int verbose);
-void session_run_buf(const char* dest_ip, int port, int timeout_ms, char* buffer, size_t buffer_size);
+__BEGIN_DECLS
 
-/* Function for sending packet to server, in sockfd
- * specify what was returned by session_run function,
- * in message field you can specify command, also do not
- * forget to add: \r\n.*/
-        #define SUCCESS_AUTH 0
-        #define FAILED_AUTH -1
-int
-session_packet(int sockfd, char* response_buffer, const char* message,
-    int verbose, int timeout_ms);
+int     session(const char* dst, u16 port, int timeout_ms, u8* packet, size_t len);
+ssize_t session_packet(int fd, u8* packet, ssize_t len, const char* message);
+int     session_run(const char* dest_ip, int port, int timeout_ms, int verbose);
+u8      *sendproto_command(int fd, const char* command);
 
-#ifdef __cplusplus
-}
-#endif
+
+__END_DECLS
 
 #endif

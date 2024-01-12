@@ -36,9 +36,7 @@ void get_dns(const char* ip, int port, int timeout_ms, char* dns_buffer, size_t 
 
   res = getnameinfo((struct sockaddr*)&sa, sizeof(sa), host, sizeof(host), NULL, 0, NI_NAMEREQD);
   close(sock);
-  if (res == -1)
-    goto fail;
-  if (strlen(host) >= buffer_size)
+  if (res < 0)
     goto fail;
 
   strncpy(dns_buffer, host, buffer_size);
@@ -47,5 +45,6 @@ void get_dns(const char* ip, int port, int timeout_ms, char* dns_buffer, size_t 
   return;
 fail:
   strncpy(dns_buffer, "n/a", buffer_size);
+  dns_buffer[buffer_size - 1] = '\0';
   return;
 }

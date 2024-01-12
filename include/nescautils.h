@@ -26,6 +26,7 @@
 #include <vector>
 #include <filesystem>
 #include "../include/nescadata.h"
+#include "../library/HCNetSDK.h"
 #include "../config/compile.h"
 #include <iostream>
 #include <string>

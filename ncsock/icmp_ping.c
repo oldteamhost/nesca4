@@ -6,7 +6,7 @@
 */
 
 #include "include/icmp.h"
-#include "include/strbase.h"
+#include "include/utils.h"
 #include "include/readpkt.h"
 
 #include <arpa/inet.h>
@@ -46,7 +46,7 @@ double icmp_ping(const char* dest_ip, const char* source_ip, int timeout_ms, int
   sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
   if (sock == -1)
     return -1;
-  send = send_icmp_packet(sock, saddr, daddr, ttl, df, ipops, ipoptlen, seq,
+  send = send_icmp_packet(NULL, sock, saddr, daddr, ttl, df, ipops, ipoptlen, seq,
       code, type, data, datalen, fragscan, badsum);
   pthread_mutex_lock(&mutex);
   close(sock);

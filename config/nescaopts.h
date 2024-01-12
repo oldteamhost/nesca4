@@ -60,13 +60,6 @@ public:
   std::string scriptpath = "";
   bool no_verbose_script = true;
 
-
-#ifdef HAVE_NODE_JS
-  bool save_screenshots;
-  std::string screenshots_save_path;
-  int timeout_save_screenshots = 2000;
-#endif
-
   bool robots_txt;
   bool sitemap_xml;
   std::string screenshots_save_path_cam = "";
@@ -157,33 +150,16 @@ public:
   std::string path_http_pass = PATH_HTTP_PASS_DEFAULT;
   std::string path_hikvision_login = PATH_HIKVISION_LOGIN_DEFAULT;
   std::string path_hikvision_pass = PATH_HIKVISION_PASS_DEFAULT;
-  std::string path_smtp_login = PATH_SMTP_LOGIN_DEFAULT;
-  std::string path_smtp_pass = PATH_SMTP_PASS_DEFAULT;
   std::string path_rvi_login = PATH_RVI_LOGIN_DEFAULT;
   std::string path_rvi_pass = PATH_RVI_PASS_DEFAULT;
 
   int brute_timeout_ms = 25;
-  bool ftp_brute_verbose;
-  bool sftp_brute_verbose;
-  bool rtsp_brute_verbose;
-  bool smtp_brute_verbose;
-  bool http_brute_verbose;
-
   bool off_ftp_brute;
   bool off_sftp_brute;
   bool off_rtsp_brute;
   bool off_rvi_brute;
   bool off_http_brute;
-  bool off_smtp_brute;
   bool off_hikvision_brute;
-
-  bool ftp_brute_log;
-  bool sftp_brute_log;
-  bool rtsp_brute_log;
-  bool rvi_brute_log;
-  bool http_brute_log;
-  bool smtp_brute_log;
-  bool hikvision_brute_log;
 
   /*Color options*/
   bool color_off;

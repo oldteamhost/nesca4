@@ -10,17 +10,18 @@
 
 void maceth(const char* mac, eth_addr_t *eth)
 {
-  char hexByte[3];
-  if (mac == NULL || eth == NULL)
+  char hexbyte[3];
+  int i = 0 ;
+
+  if (!mac || !eth)
     return;
 
-  hexByte[2] = '\0';
-
-  for (int i = 0; i < ETH_ADDR_LEN; ++i) {
+  hexbyte[2] = '\0';
+  for (i = 0; i < ETH_ADDR_LEN; ++i) {
     while (*mac && !isxdigit(*mac))
       ++mac;
-    strncpy(hexByte, mac, 2);
-    sscanf(hexByte, "%hhx", &eth->data[i]);
+    strncpy(hexbyte, mac, 2);
+    sscanf(hexbyte, "%hhx", &eth->data[i]);
     mac += 2;
   }
 }

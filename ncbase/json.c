@@ -83,19 +83,14 @@ nesca_json_save_port(const char* filename, const struct nesca_port_details* port
     fprintf(file, "                {\n");
     fprintf(file, "                    \"port\": %u,\n", port_data->port);
     fprintf(file, "                    \"protocol\": \"%s\",\n", port_data->protocol);
-
     if (*port_data->http_title != '\0')
       fprintf(file, "                    \"http_title\": \"%s\",\n", port_data->http_title);
-
     if (*port_data->screenshot != '\0')
       fprintf(file, "                    \"screenshot\": \"%s\",\n", port_data->screenshot);
-
     if (*port_data->type_target != '\0')
-      fprintf(file, "                     \"type_target\": \"%s\",\n", port_data->type_target);
-
+      fprintf(file, "                    \"type_target\": \"%s\",\n", port_data->type_target);
     if (*port_data->content!= '\0')
       fprintf(file, "                    \"content\": \"%s\",\n", port_data->content);
-
     fprintf(file, "                    \"passwd\": \"%s\"\n", port_data->passwd);
     fprintf(file, "                }");
     fclose(file);

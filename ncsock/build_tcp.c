@@ -15,28 +15,25 @@ u8 *build_tcp(u16 sport, u16 dport, u32 seq, u32 ack, u8 reserved, u8 flags,
   u8 *packet;
 
   *packetlen = sizeof(*tcp) + tcpoptlen + datalen;
-  packet = (u8 *) malloc(*packetlen);
+  packet = (u8*)malloc(*packetlen);
   if (!packet)
     return NULL;
-  tcp = (struct tcp_header *) packet;
+  tcp = (struct tcp_header*)packet;
 
   memset(tcp, 0, sizeof(*tcp));
   tcp->th_sport = htons(sport);
   tcp->th_dport = htons(dport);
+  tcp->th_off   = 5 + (tcpoptlen / 4);
+  tcp->th_flags = flags;
 
   if (seq)
     tcp->th_seq = htonl(seq);
-  else if (flags & TH_SYN)
-    seq = generate_random_u32(299, 3993943);
 
   if (ack)
     tcp->th_ack = htonl(ack);
 
   if (reserved)
     tcp->th_x2 = reserved & 0x0F;
-
-  tcp->th_off = 5 + (tcpoptlen / 4);
-  tcp->th_flags = flags;
 
   if (window)
     tcp->th_win = htons(window);
@@ -48,11 +45,9 @@ u8 *build_tcp(u16 sport, u16 dport, u32 seq, u32 ack, u8 reserved, u8 flags,
 
   if (tcpoptlen)
     memcpy(packet + sizeof(*tcp), tcpopt, tcpoptlen);
-
   if (data && datalen)
     memcpy(packet + sizeof(*tcp) + tcpoptlen, data, datalen);
 
   tcp->th_sum = 0;
-
   return packet;
 }

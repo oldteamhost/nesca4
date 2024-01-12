@@ -14,35 +14,34 @@
 #include "../ncsock/include/smtp.h"
 #include "../ncbase/include/base64.h"
 #include "../ncbase/include/binary.h"
-#include <cstring>
 
-std::vector<std::string> rtsp_paths = {"/Streaming/Channels/101", "/h264/ch01/main/av_stream",
-                                      "/cam/realmonitor?channel=1&subtype=0","/live/main",
-                                      "/av0_0", "/mpeg4/ch01/main/av_stream"};
+const std::vector<std::string> rtsp_paths = {"Streaming/Channels/101", "h264/ch01/main/av_stream",
+                                      "cam/realmonitor?channel=1&subtype=0","live/main",
+                                      "av0_0", "mpeg4/ch01/main/av_stream"};
 
-std::vector<std::string> basic_auth_header = {"401 authorization", "401 unauthorized", "www-authenticate",
+const std::vector<std::string> basic_auth_header = {"401 authorization", "401 unauthorized", "www-authenticate",
                                               "401 unauthorized access denied", "401 unauthorised", "www-authenticate",
                                               "digest realm", "basic realm", "401 Unauthorized"};
 
-std::vector<std::string> axis_2400_path = {"/view/viewer_index.shtml", "/view/viewer_index.shtml?", "/check_user.cgi",
-                                          "/view/index2.shtml", "/index.shtml","/view/indexFrame.shtml","/indexFrame.html"};
+const std::vector<std::string> axis_2400_path = {"view/viewer_index.shtml", "view/viewer_index.shtml?", "check_user.cgi",
+                                          "view/index2.shtml", "index.shtml","view/indexFrame.shtml","indexFrame.html"};
 
-std::vector<std::string> network_camera_path ={"/ViewerFrame?Mode=", "/CgiStart?page=", "/admin/index.shtml?"};
+const std::vector<std::string> network_camera_path ={"ViewerFrame?Mode=", "CgiStart?page=", "admin/index.shtml?"};
 
-std::vector<std::string> axis_other_path = {"/view/viewer_index.shtml", "/view/viewer_index.shtml", "/check_user.cgi",
-                                          "/axis-cgi/mjpg/video.cgi", "/jpg/image.jpg?size=3", "/mjpg/video.mjpg",
-                                          "/view/viewer_index.shtml", "/view/viewer_index.shtml", "/check_user.cgi",
-                                          "/cgi-bin/guest/Video.cgi?", "/ISAPI/Security/userCheck", "/SnapshotJPEG",
-                                          "/axis-cgi/com/ptz.cgi?", "/mjpg/video.mjpg"};
+const std::vector<std::string> axis_other_path = {"view/viewer_index.shtml", "view/viewer_index.shtml", "check_user.cgi",
+                                          "axis-cgi/mjpg/video.cgi", "jpg/image.jpg?size=3", "mjpg/video.mjpg",
+                                          "view/viewer_index.shtml", "view/viewer_index.shtml", "check_user.cgi",
+                                          "cgi-bin/guest/Video.cgi?", "ISAPI/Security/userCheck", "SnapshotJPEG",
+                                          "axis-cgi/com/ptz.cgi?", "mjpg/video.mjpg"};
 
 std::vector<std::string> find_sentences_with_word(const std::string& word, const std::string& input_text)
 {
   std::vector<std::string> sentences;
   std::string lowerWord = word;
-  std::transform(lowerWord.begin(), lowerWord.end(), lowerWord.begin(), [](unsigned char c){ return std::tolower(c); });
+  std::transform(lowerWord.begin(), lowerWord.end(), lowerWord.begin(), [](u8 c){ return std::tolower(c); });
 
   std::string lowerText = input_text;
-  std::transform(lowerText.begin(), lowerText.end(), lowerText.begin(), [](unsigned char c){ return std::tolower(c); });
+  std::transform(lowerText.begin(), lowerText.end(), lowerText.begin(), [](u8 c){ return std::tolower(c); });
 
   std::string::size_type pos = lowerText.find(lowerWord);
   while (pos != std::string::npos) {
@@ -62,7 +61,6 @@ std::vector<std::string> find_sentences_with_word(const std::string& word, const
       sentence.erase(std::remove(sentence.begin(), sentence.end(), '\r'), sentence.end());
       sentences.push_back(sentence);
     }
-
     pos = lowerText.find(lowerWord, sentenceEnd);
   }
 
@@ -72,10 +70,10 @@ std::vector<std::string> find_sentences_with_word(const std::string& word, const
 bool contains_word(const std::string& word, const std::string& sentence)
 {
   std::string lowerWord = word;
-  std::transform(lowerWord.begin(), lowerWord.end(), lowerWord.begin(), [](unsigned char c){ return std::tolower(c); });
+  std::transform(lowerWord.begin(), lowerWord.end(), lowerWord.begin(), [](u8 c){ return std::tolower(c); });
 
   std::string lowerSentence = sentence;
-  std::transform(lowerSentence.begin(), lowerSentence.end(), lowerSentence.begin(), [](unsigned char c){ return std::tolower(c); });
+  std::transform(lowerSentence.begin(), lowerSentence.end(), lowerSentence.begin(), [](u8 c){ return std::tolower(c); });
 
   std::string::size_type pos = lowerSentence.find(lowerWord);
   while (pos != std::string::npos) {
@@ -90,8 +88,8 @@ bool contains_word(const std::string& word, const std::string& sentence)
 
 std::string set_target_at_path(const std::string& path)
 {
-  /*AXIS камеры.*/
-  if (contains_word("/operator/basic.shtml", path))
+  /* AXIS камеры */
+  if (contains_word("operator/basic.shtml", path))
     return CAMERA_AXIS_205;
 
   for (auto& p : axis_2400_path)
@@ -102,58 +100,59 @@ std::string set_target_at_path(const std::string& path)
     if (contains_word(p, path))
       return CAMERA_AXIS;
 
-  /*NETWORK камеры.*/
+  /* NETWORK камеры */
   for (auto& p : network_camera_path)
     if (contains_word(p, path))
       return CAMERA_NETWORK;
 
-  if (contains_word("/viewer/live/index.html", path)){return CAMERA_VB_M40;}
-  if (contains_word("/live/index2.html", path)){return CAMERA_BB_SC384;}
+  if (contains_word("viewer/live/index.html", path)){return CAMERA_VB_M40;}
+  if (contains_word("live/index2.html", path)){return CAMERA_BB_SC384;}
 
-  /*Другие камеры.*/
-  if (contains_word("/tool.js", path)){return CAMERA_EASY;}
-  if (contains_word("/command/inquiry.cgi?", path)){return CAMERA_SONY;}
-  if (contains_word("/config/easy_index.cgi", path)){return CAMERA_PANASONIC;}
-  if (contains_word("/view/getuid.cgi", path)){return CAMERA_PANASONIC_WJ_HD180;}
-  if (contains_word("/main/cs_motion.asp", path)){return IP_CAMERA_CONTOL;}
-  if (contains_word("/cgi-bin/data/viostor-220/viostor/viostor.cgi", path)){return NAX;}
+  /* Другие камеры */
+  if (contains_word("tool.js", path)){return CAMERA_EASY;}
+  if (contains_word("command/inquiry.cgi", path)){return CAMERA_SONY;}
+  if (contains_word("config/easy_index.cgi", path)){return CAMERA_PANASONIC;}
+  if (contains_word("view/getuid.cgi", path)){return CAMERA_PANASONIC_WJ_HD180;}
+  if (contains_word("main/cs_motion.asp", path)){return IP_CAMERA_CONTOL;}
+  if (contains_word("cgi-bin/data/viostor-220/viostor/viostor.cgi", path)){return NAX;}
   if (contains_word("gui.css", path)){return DIGITAL_VIDEO_SERVER;}
-  if (contains_word("/config/index.cgi", path)){return CAMERA_PANASONIC_BB_HG;} /*???*/
-  if (contains_word("/login.asp", path)){return HTTP_DIGEST_AUTH;}
-  if (contains_word("/videostream.cgi", path)){return CAMERA_QCAM;}
-  if (contains_word("/gui/gui_outer_frame.shtml", path)){return CAMERA_NW;}
-  if (contains_word("/admin/index.html", path)){return AUTH;}
+  if (contains_word("config/index.cgi", path)){return CAMERA_PANASONIC_BB_HG;} /* ??? */
+  if (contains_word("videostream.cgi", path)){return CAMERA_QCAM;}
+  if (contains_word("gui/gui_outer_frame.shtml", path)){return CAMERA_NW;}
+  if (contains_word("admin/index.html", path)){return AUTH;}
   if (contains_word("liveview.html", path)){return CAMERA_AVISYS;}
   if (contains_word("js/upfile.js", path)){return CAMERA_FOSCAM;}
   if (contains_word("ssi.cgi/login.htm", path)){return CAMERA_GEO;}
-  if (contains_word("src=\\\"webs.cgi?", path)){return CAMERA_UA;}
-  if (contains_word("/app/multi/single.asp", path)){return NETWORK_VIDEO_SYSTEM;}
-  if (contains_word("/app/live/sim/single.asp", path)){return NETWORK_VIDEO_SYSTEM;}
-  if (contains_word("/doc/page/login.asp?_", path)){return WEB_CAMERA_HIKVISION;}
-  if (contains_word("/login", path)){return AUTH;}
+  if (contains_word("src=\\\"webs.cgi", path)){return CAMERA_UA;}
+  if (contains_word("app/multi/single.asp", path)){return NETWORK_VIDEO_SYSTEM;}
+  if (contains_word("app/live/sim/single.asp", path)){return NETWORK_VIDEO_SYSTEM;}
+  if (contains_word("doc/page/login.asp", path)){return WEB_CAMERA_HIKVISION;}
+  if (contains_word("login.asp", path)){return HTTP_DIGEST_AUTH;}
+  if (contains_word("login", path)){return AUTH;}
 
-  /*Другое*/
-  if (contains_word("/cgi-sys/defaultwebpage.cgi", path)){return CPANEL;}
-  if (contains_word("/login.html", path)){return AUTH;}
-  if (contains_word("/cgi-bin/luci", path)){return AUTH_LUCI;}
+  /* Другое */
+  if (contains_word("cgi-sys/defaultwebpage.cgi", path)){return CPANEL;}
+  if (contains_word("login.html", path)){return AUTH;}
   if (contains_word("cgi-bin/luci", path)){return AUTH_LUCI;}
-  if (contains_word("/admin_login", path)){return AUTH_SIMIAN;}
-  if (contains_word("/ecoremote/index.html", path)){return METEDAS;}
-  if (contains_word("?password-protected=login", path)){return LIFE_IS_GOOD;}
-  if (contains_word("/webpages/index.html", path)){return TP_LINK;}
-  if (contains_word("/k3cloud/html5", path)){return KINGDEE;}
+  if (contains_word("cgi-bin/luci", path)){return AUTH_LUCI;}
+  if (contains_word("admin_login", path)){return AUTH_SIMIAN;}
+  if (contains_word("ecoremote/index.html", path)){return METEDAS;}
+  if (contains_word("password-protected=login", path)){return LIFE_IS_GOOD;}
+  if (contains_word("webpages/index.html", path)){return TP_LINK;}
+  if (contains_word("k3cloud/html5", path)){return KINGDEE;}
+  if (contains_word("https:", path)){return HTTPS_REDIRECT;}
 
   return "fuck";
 }
 
 std::string set_target_at_http_header(const std::string& buffer)
 {
-  /*Разное.*/
+  /* Разное */
   for (auto& p : basic_auth_header)
     if (contains_word(p, buffer))
       return HTTP_BASIC_AUTH;
 
-  /*Другие камеры.*/
+  /* Другие камеры */
   if (contains_word("airos_logo", buffer)){return CAMERA_AIROS;}
   if (contains_word("acti Corporation", buffer)){return CAMERA_ACKTI;}
   if (contains_word("qlikview", buffer)){return CAMERA_QLIK;}
@@ -195,38 +194,30 @@ int than_bruteforce(const std::string type)
     return -1;
 
   if (type == CAMERA_AXIS || type == CAMERA_AXIS_205 ||
-    type == CAMERA_AXIS_2400 || type == HTTP_BASIC_AUTH ||
-    type == CAMERA_BB_SC384 || type == CAMERA_VB_M40 ||
-    type == CAMERA_PANASONIC || type == CAMERA_UA ||
-    type == CAMERA_SONY || type == CAMERA_LG_SMART ||
-    type == CAMERA_EAGLE_EYE || type == CAMERA_QLIK
-    || type == CAMERA_AXIS_Q6055_E) {
-
+      type == CAMERA_AXIS_2400 || type == HTTP_BASIC_AUTH ||
+      type == CAMERA_BB_SC384 || type == CAMERA_VB_M40 ||
+      type == CAMERA_PANASONIC || type == CAMERA_UA ||
+      type == CAMERA_SONY || type == CAMERA_LG_SMART ||
+      type == CAMERA_EAGLE_EYE || type == CAMERA_QLIK
+      || type == CAMERA_AXIS_Q6055_E)
     return HTTP_BASIC_AUTH_BRUTE;
-  }
 
   return -1;
-}
-
-void printbrute(const std::string& ip, int port, std::string typebrute, nesca_prints& np)
-{
-  np.yellow_html_on();
-  std::cout << "  - " << typebrute << " " + ip + ":" + std::to_string(port) + " [BRUTEFORCE]\n";
-  reset_colors;
 }
 
 void ftp_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn)
 {
-  char version[2048];
+  u8 version[2048];
   get_ftp_version(ip.c_str(), port, 1200, version, sizeof(version));
 
   if (!argp.off_ftp_brute) {
-    printbrute(ip, port, "FTP", np);
-    brute_temp = threads_bruteforce(nd.ftp_logins, nd.ftp_passwords, "", ip, port, argp.brute_timeout_ms, FTP_BRUTEFORCE, argp.ftp_brute_log);
+    NESCABRUTE brute(nd.brute_threads, ip.c_str(), NULL, port, nd.brute_maxcon, nd.brute_attempts, nd.brute_timeout, argp.brute_timeout_ms, FTP_BRUTEFORCE,
+        nd.ftp_logins, nd.ftp_passwords, &np);
+    brute_temp = brute.getres_nescastyle();
   }
 
-  result_print = np.main_nesca_out("RES", "ftp://" + brute_temp + result, 3, "D", "", version, rtt_log, "", protocol);
+  result_print = np.main_nesca_out("RES", "ftp://" + brute_temp + result, 3, "D", "", (char*)version, rtt_log, "", protocol);
   std::cout << result_print << std::endl;
 }
 
@@ -234,15 +225,9 @@ void ftp_strategy::handle(const std::string& ip, const std::string& result, cons
 void smtp_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn)
 {
-  char version[2048];
+  u8 version[2048];
   get_smtp_version(ip.c_str(), port, 1200, version, sizeof(version));
-
-  if (!argp.off_smtp_brute) {
-    printbrute(ip, port, "SMTP", np);
-    brute_temp = threads_bruteforce(nd.smtp_logins, nd.smtp_passwords, "", ip, port, argp.brute_timeout_ms, SMTP_BRUTEFORCE, argp.smtp_brute_log);
-  }
-
-  result_print = np.main_nesca_out("RES", "smtp://" + brute_temp + result, 3, "D", "", version, "",rtt_log, "", protocol);
+  result_print = np.main_nesca_out("RES", "smtp://" + brute_temp + result, 3, "D", "", (char*)version, "",rtt_log, "", protocol);
   std::cout << result_print << std::endl;
 }
 
@@ -251,9 +236,9 @@ void hikvision_strategy::handle(const std::string& ip, const std::string& result
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn)
 {
   if (!argp.off_hikvision_brute){
-    printbrute(ip, port, "HIKVISION", np);
-    brute_temp = threads_brute_hikvision(ip, nd.hikvision_logins, nd.hikvision_passwords,
-        argp.hikvision_brute_log, argp.brute_timeout_ms, argp.screenshots_save_path_cam);
+    NESCABRUTE brute(nd.brute_threads, ip.c_str(), NULL, port, nd.brute_maxcon, nd.brute_attempts, nd.brute_timeout, argp.brute_timeout_ms, HIKVISION_BRUTEFORCE,
+        nd.hikvision_logins, nd.hikvision_passwords, &np);
+    brute_temp = brute.getres_nescastyle();
   }
 
   result_print = np.main_nesca_out("RES", "" + brute_temp + result, 3, "", "", "", "",rtt_log, "", protocol);
@@ -273,8 +258,9 @@ void rvi_strategy::handle(const std::string& ip, const std::string& result, cons
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn)
 {
   if (!argp.off_rvi_brute) {
-    printbrute(ip, port, "RVI(DVR)", np);
-    brute_temp = threads_bruteforce(nd.rvi_logins, nd.rvi_passwords, "", ip, port, argp.brute_timeout_ms, RVI_BRUTEFORCE, argp.rvi_brute_log);
+    NESCABRUTE brute(nd.brute_threads, ip.c_str(), nd.get_redirect(ip).c_str(), port, nd.brute_maxcon, nd.brute_attempts, nd.brute_timeout, argp.brute_timeout_ms, RVI_BRUTEFORCE,
+        nd.rvi_logins, nd.rvi_passwords, &np);
+    brute_temp = brute.getres_nescastyle();
   }
 
   result_print = np.main_nesca_out("RES", "" + brute_temp + result, 3, "", "", "", "", rtt_log, "", protocol);
@@ -287,10 +273,9 @@ void rtsp_strategy::handle(const std::string& ip, const std::string& result, con
   std::string pathget;
 
   if (!argp.off_rtsp_brute){
-    printbrute(ip, port, "RTSP", np);
-
     for (const auto& path : rtsp_paths) {
-      brute_temp = threads_bruteforce(nd.rtsp_logins, nd.rtsp_passwords, path, ip, port, argp.brute_timeout_ms, RTSP_BRUTEFORCE, argp.rtsp_brute_log);
+      NESCABRUTE brute(nd.brute_threads, ip.c_str(), NULL, port, nd.brute_maxcon, nd.brute_attempts, nd.brute_timeout, argp.brute_timeout_ms, HTTP_BRUTEFORCE,
+          nd.rtsp_logins, nd.rtsp_passwords, &np);
       if (!brute_temp.empty())
           pathget = path;
     }
@@ -309,43 +294,13 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   char title[HTTP_BUFFER_SIZE];
 
   htmlpro = nd.get_html(ip);
-
-#ifdef HAVE_NODE_JS
-  if (argp.save_screenshots) {
-    std::string command = "node utils/screenshot.js http://" + ip + ":" + std::to_string(port) + "/" + " " +
-    std::to_string(argp.timeout_save_screenshots) + " " + argp.screenshots_save_path;
-    std::system(command.c_str());
-
-    if (argp.json_save) {
-      size_t file_size;
-      std::string path_to_file_easy;
-
-      if (argp.screenshots_save_path == ".")
-        path_to_file_easy = ip + ".png";
-      else
-        path_to_file_easy = argp.screenshots_save_path + ip + ".png";
-
-      unsigned char* file_data = binary_file(path_to_file_easy.c_str(), &file_size);
-
-      if (file_data) {
-        char* encoded_data = base64_encode(file_data, file_size);
-        screenshot_base64 = encoded_data;
-        free(file_data);
-        free(encoded_data);
-      }
-    }
-  }
-#endif
-
   get_http_title(htmlpro.c_str(), title, HTTP_BUFFER_SIZE);
   redirect = nd.get_redirect(ip);
 
-  /*http title это из класса.*/
   http_title = title;
   if (http_title.empty())
     http_title = "n/a";
 
-  /*Сравнение списка negatives*/
   for (const auto& n : argp.nesca_negatives) {
     const std::string& first = n.first;
     const std::string& second = n.second;
@@ -373,7 +328,6 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
     }
   }
 
-  /*Получение характеристики.*/
   type_target = "n/a";
   httpcheck = set_target_at_path(redirect);
   httpcheck1 = set_target_at_http_header(htmlpro.c_str());
@@ -388,31 +342,25 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
 
   brute = than_bruteforce(type_target);
 
-  /*Брутфорс HTTP basic auth.*/
   if (!argp.off_http_brute && type_target != "fuck" && brute != EOF) {
-    printbrute(ip, port, "HTTP", np);
-    brute_temp = threads_bruteforce(nd.http_logins, nd.http_passwords, redirect,
-        ip, port, argp.brute_timeout_ms, HTTP_BRUTEFORCE, argp.http_brute_log);
+    NESCABRUTE brute(nd.brute_threads, ip.c_str(), nd.get_redirect(ip).c_str(), port, nd.brute_maxcon, nd.brute_attempts, nd.brute_timeout, argp.brute_timeout_ms, HTTP_BRUTEFORCE,
+        nd.http_logins, nd.http_passwords, &np);
+    brute_temp = brute.getres_nescastyle();
   }
 
   result_print = np.main_nesca_out("RES", "http://" + brute_temp + ip + ":" + std::to_string(port),
       3, "T", "D", http_title, type_target, rtt_log, "", protocol);
 
-  /*Вывод основного.*/
   std::cout << result_print << std::endl;
 
-  /*Вывод перенаправления.*/
   if (!redirect.empty())
     np.nlog_redirect(redirect);
-
-  /*Вывод ответа http.*/
   if (argp.get_response) {
     np.yellow_html_on();
     std::cout << htmlpro << std::endl;
     reset_colors;
   }
 
-  /*Получение /robots.txt*/
   if (argp.robots_txt){
     np.gray_nesca_on();
     std::cout << "  * ROBOTS ";
@@ -432,7 +380,6 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
     }
   }
 
-  /*Получение /sitemap.xml*/
   if (argp.sitemap_xml){
     np.gray_nesca_on();
     std::cout << "  * STEMAP ";
@@ -476,5 +423,5 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
 void else_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn)
 {
-  std::string result_print = np.main_nesca_out("RES", result, 3, "", "", "", "",rtt_log, "", protocol);
+  std::cout << np.main_nesca_out("RES", result, 3, "", "", "", "",rtt_log, "", protocol) << std::endl;
 }

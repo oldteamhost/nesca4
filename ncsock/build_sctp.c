@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
 */
 
+#include "include/ip.h"
 #include "include/sctp.h"
 
 static unsigned long update_adler32(unsigned long adler, u8 *buf, int len)
@@ -36,24 +37,27 @@ u8 *build_sctp(u16 sport, u16 dport, u32 vtag, const char *chunks,
   u8 *packet;
 
   *packetlen = sizeof(*sctp) + chunkslen + datalen;
-  packet = (u8 *)malloc(*packetlen);
-  sctp = (struct sctp_header *)packet;
+  packet = (u8*)malloc(*packetlen);
+  sctp = (struct sctp_header*)packet;
 
+  memset(sctp, 0, sizeof(*sctp));
   sctp->sport = htons(sport);
   sctp->dport = htons(dport);
-  sctp->vtag = htonl(vtag);
+  sctp->vtag  = htonl(vtag);
   sctp->check = 0;
 
   if (chunks)
     memcpy(packet + sizeof(*sctp), chunks, chunkslen);
-
   if (data)
     memcpy(packet + sizeof(*sctp) + chunkslen, data, datalen);
 
+  /* RFC 2960 originally defined Adler32 checksums, which was later
+   * revised to CRC32C in RFC 3309 and RFC 4960 respectively.
+   * Nmap uses CRC32C by default, unless --adler32 is given. */
   if (adler32sum)
     sctp->check = htonl(adler32(packet, *packetlen));
   else
-    sctp->check = htonl(adler32(packet, *packetlen));
+    sctp->check = htonl(_crc32c(packet, *packetlen));
 
   if (badsum)
     --sctp->check;

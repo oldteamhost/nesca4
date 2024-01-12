@@ -16,9 +16,10 @@ u8 *build_sctp_pkt(u32 saddr, u32 daddr, int ttl, u16 ipid, u8 tos,
   u8 *packet, *sctp;
   u32 sctplen;
 
-  sctp = build_sctp(sport, dport, vtag, chunks, chunkslen, data, datalen, &sctplen, adler32sum, badsum);
-  packet = build_ip_pkt(saddr, daddr, IPPROTO_SCTP, ttl, ipid, tos, df,
-      ipopt, ipoptlen, (char*)sctp, sctplen, packetlen);
+  sctp = build_sctp(sport, dport, vtag, chunks, chunkslen, data,
+      datalen, &sctplen, adler32sum, badsum);
+  packet = build_ip_pkt(saddr, daddr, IPPROTO_SCTP, ttl, ipid,
+      tos, df, ipopt, ipoptlen, (char*)sctp, sctplen, packetlen);
 
   free(sctp);
   return packet;

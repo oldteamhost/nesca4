@@ -7,10 +7,10 @@
 
 #include "include/ftp.h"
 #include "include/socket.h"
-#include "include/strbase.h"
+#include "include/utils.h"
 
-void get_ftp_version(const char* ip, const int port, const int timeout_ms, char* version_buffer, size_t buffer_size)
+void get_ftp_version(const char* ip, u16 port, int timeout_ms, u8* version_buffer, ssize_t len)
 {
-  session_run_buf(ip, port, timeout_ms, version_buffer, buffer_size);
-  remove_specials(version_buffer);
+  session(ip, port, timeout_ms, version_buffer, len);
+  remove_specials((char*)version_buffer);
 }

@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
 */
 
-#include "include/base.h"
+#include "include/utils.h"
 #include <stdio.h>
 #include <sys/socket.h>
 #include <time.h>
@@ -26,13 +26,13 @@ int this_is(const char* node)
   else if (len >= 8 && strncmp(node, "https://", 8) == 0)
     return _URL_;
   cidr_symbol = strchr(node, '/');
-  if (cidr_symbol != NULL) {
+  if (cidr_symbol) {
     mask = atoi(cidr_symbol + 1);
     if (mask >= 0 && mask <= 32)
       return CIDR;
   }
   ip_range_delimiter = strchr(node, '-');
-  if (ip_range_delimiter != NULL)
+  if (ip_range_delimiter)
     if (ip_range_delimiter != node && ip_range_delimiter[1] != '\0')
       return RANGE;
   tempend = dns_or_ip(node);
@@ -48,15 +48,13 @@ int this_is(const char* node)
 
 const char* get_this_is(int type)
 {
-  switch (type)
-  {
+  switch (type) {
     case _URL_: return "URL";
-    case DNS: return "DNS";
-    case CIDR: return "CIDR";
+    case DNS:   return "DNS";
+    case CIDR:  return "CIDR";
     case RANGE: return "RANGE";
-    case IPv4: return "IPv4";
+    case IPv4:  return "IPv4";
   }
-
   return "-1";
 }
 

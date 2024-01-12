@@ -10,7 +10,6 @@
 #include <ifaddrs.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <netpacket/packet.h>
 
 int get_local_mac(const char *dev, char *mac_address)
 {

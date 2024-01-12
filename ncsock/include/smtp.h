@@ -8,21 +8,17 @@
 #ifndef SMTP_H
 #define SMTP_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdio.h>
+#include <stdbool.h>
 #include <arpa/inet.h>
+#include <sys/cdefs.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-/* Compile opts */
-#include "ncsockopt.h"
+#include "types.h"
 
 /* SMTP Response codes */
 #define SMTP_REPLY_READY           220
@@ -42,17 +38,11 @@ extern "C" {
 #define SMTP_REPLY_AUTH_ERROR      535
 #define SMTP_REPLY_TRANSACTION_FAILED 554
 
-/* Function for authorization on ftp server, uses 2 previous
- * functions, can work in threads.*/
-int
-smtp_auth(const char* ip, int port, const char* login, const char* pass,
-        int verbose, int timeout_ms);
+__BEGIN_DECLS
 
-void get_smtp_version(const char* ip, const int port, const int timeout_ms,
-    char* version_buffer, size_t buffer_size);
+void get_smtp_version(const char* ip, u16 port, int timeout_ms,
+    u8* version_buffer, size_t len);
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
 
 #endif

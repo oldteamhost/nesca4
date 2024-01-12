@@ -7,9 +7,7 @@
 */
 
 #include "../include/nescatesting.h"
-#include "../ncsock/include/strbase.h"
 #include "../ncsock/include/readpkt.h"
-#include "../ncsock/include/base.h"
 #include "../ncsock/include/utils.h"
 #include <arpa/inet.h>
 #include <cassert>
@@ -1675,24 +1673,24 @@ void _interpreter_::sendpacket(u8 proto, int fd, struct sendpktline *spl)
     iph = id->iphdr_presets[spl->hp.iphdr];
     if (proto == IPPROTO_TCP) {
       packet = sendtcp(fd, spl, &plen, &dst);
-      send_ip4_packet(fd, &dst, iph.mtu, packet, plen);
+      send_ip4_packet(NULL, fd, &dst, iph.mtu, packet, plen);
     }
     else if (proto == IPPROTO_ICMP) {
       packet = sendicmp(fd, spl, &plen, icmpseq, &dst);
-      send_ip4_packet(fd, &dst, iph.mtu, packet, plen);
+      send_ip4_packet(NULL, fd, &dst, iph.mtu, packet, plen);
       icmpseq++;
     }
     else if (proto == IPPROTO_UDP) {
       packet = sendudp(fd, spl, &plen, &dst);
-      send_ip4_packet(fd, &dst, iph.mtu, packet, plen);
+      send_ip4_packet(NULL, fd, &dst, iph.mtu, packet, plen);
     }
     else if (proto == IPPROTO_IP) {
       packet = sendip(fd, spl, &plen, &dst);
-      send_ip4_packet(fd, &dst, iph.mtu, packet, plen);
+      send_ip4_packet(NULL, fd, &dst, iph.mtu, packet, plen);
     }
     else if (proto == IPPROTO_IGMP) {
       packet = sendigmp(fd, spl, &plen, &dst);
-      send_ip4_packet(fd, &dst, iph.mtu, packet, plen);
+      send_ip4_packet(NULL, fd, &dst, iph.mtu, packet, plen);
     }
     if (packet)
       free(packet);

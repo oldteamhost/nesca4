@@ -23,25 +23,53 @@
 #include "../include/nescalog.h"
 #include "nescathread.h"
 #include "../config/compile.h"
-#include "../ncsock/include/bruteforce.h"
 
-std::string
-threads_bruteforce(const std::vector<std::string>& login, std::vector<std::string>& pass,
-        std::string http_path, std::string ip, int port, int delay, uint8_t proto, int brute_log);
+typedef std::vector<std::string> logins_t;
+typedef std::vector<std::string> passwords_t;
 
+#define HTTP_BRUTEFORCE      0
+#define FTP_BRUTEFORCE       1
+#define SMTP_BRUTEFORCE      2
+#define RVI_BRUTEFORCE       3
+#define RTSP_BRUTEFORCE      4
+#define HIKVISION_BRUTEFORCE 5
 
+class NESCABRUTE {
+  private:
+    std::vector<int> connections;
+    int numconnections = 0;
+    bool auth = false;
+    const char *path;
+    const char *ip;
+    const char *reslogin, *respass;
 
-std::string
-brute_ssh(const std::string& ip, int port, const std::string login, const std::string pass,
-        int brute_log, int verbose);
-std::string
-threads_brute_ssh(const std::string ip, int port, const std::vector<std::string> logins,
-        const std::vector<std::string> passwords, int brute_log, int verbose, int brute_timeout_ms);
+    double rttmshost = 0.0;
+    bool okprobe = false;
+    bool customtimeout = false;
+    int customtimeoutms = 0;
 
-std::string
-brute_hikvision(std::string ip, std::string login, std::string pass, int brute_log, const std::string& path);
+    void newconnect(const char* ip, u16 port, u8 proto,
+        int timeoutms, int maxconnections);
+    void authprobe(int fd, u8 proto, const char* login,
+        const char* pass, int timeoutms);
+    int gettimeoutms(void);
+    int getrandomcon(void);
+    bool checkres(const char *login, const char *pass);
+    void runbrute(const std::string& ip, int port,
+        std::string typebrute, nesca_prints *np);
+    std::string getprotostr(u8 proto);
 
-std::string
-threads_brute_hikvision(const std::string ip, const std::vector<std::string> logins,
-        const std::vector<std::string> passwords, int brute_log, int brute_timeout_ms, const std::string&path);
+  public:
+    NESCABRUTE(int threads, const char* ip, const char* path,
+        u16 port, int maxconnections, int attempts, int timeoutms, int delayms,
+        u8 proto, logins_t login, passwords_t pass, nesca_prints *np);
+
+    std::string getlogin(void);
+    std::string getpass(void);
+    std::string getres_nescastyle(void);
+};
+
+bool hikvisionauth(const char* ip, u16 port, const char* login, const char* pass);
+bool dvrauth(const char* ip, u16 port, const char* login, const char* pass);
+
 #endif

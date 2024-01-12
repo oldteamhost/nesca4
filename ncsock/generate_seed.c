@@ -5,10 +5,10 @@
  * SPDX-License-Identifier: BSD-3-Clause
 */
 
-#include "include/strbase.h"
+#include "include/utils.h"
 #include <time.h>
 
-unsigned int generate_seed(void)
+u32 generate_seed(void)
 {
   struct timespec ts;
   if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)

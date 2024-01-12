@@ -12,21 +12,13 @@
 #include "../include/nescabrute.h"
 #include "../include/nescautils.h"
 #include "../include/nescadata.h"
-#include "../ncsock/include/bruteforce.h"
 #include "../ncsock/include/socket.h"
 #include "../ncsock/include/ftp.h"
-#include "../ncsock/include/base.h"
 #include "../ncsock/include/http.h"
-#include "../ncsock/include/strbase.h"
 #include <mutex>
 
-struct http_header initheader(const std::string& path, const std::string &host,
-    const std::string &useragent, const std::string &method);
-
-char* updsend_http(struct http_header *hh, const std::string& ip,
-    const u16 port, const int timeout_ms);
-
-void send_http(struct http_header *hh, NESCADATA &nd, const std::string& ip,
+void prepare_redirect(const char* redirect, char* reshost, char* respath, ssize_t buflen);
+void send_http(struct http_request *r, NESCADATA &nd, const std::string& ip,
     const u16 port, const int timeout_ms);
 
 #endif

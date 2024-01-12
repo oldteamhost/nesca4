@@ -7,9 +7,13 @@
 
 #include "include/http.h"
 #include "include/types.h"
+#include <stdio.h>
 
-char *_base64_encode(const unsigned char *input, size_t length)
+char *_base64_encode(const u8 *input, size_t length)
 {
+  if (!length)
+    return NULL;
+
   char *encoded_data;
   size_t i = 0, j = 0;
   u8 a, b, c;

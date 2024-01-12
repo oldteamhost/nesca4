@@ -6,9 +6,10 @@
 */
 
 #include "include/ip.h"
+#include <netinet/in.h>
 #include <sys/socket.h>
 
-int send_ip6_packet(int fd, const struct sockaddr_in6 *dst, const u8 *packet, u32 plen)
+int send_ip6_packet(struct ethtmp *eth, int fd, const struct sockaddr_in6 *dst, const u8 *packet, u32 plen)
 {
-  return sendto(fd, packet, plen, 0, (struct sockaddr *)dst, sizeof(*dst));
+  return (SEND_IP6_PACKET_ETH_OR_SD(fd, eth, (struct sockaddr*)dst, packet, plen));
 }

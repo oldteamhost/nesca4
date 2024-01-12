@@ -8,86 +8,252 @@
 
 #include "../include/nescabrute.h"
 #include "../include/nescautils.h"
-#include "../ncsock/include/bruteforce.h"
 #include "../ncsock/include/socket.h"
 #include "../ncsock/include/ftp.h"
-#include "../ncsock/include/base.h"
-#include "../ncsock/include/strbase.h"
-#include <mutex>
-#include <string>
+#include "../ncsock/include/http.h"
+#include "../ncsock/include/utils.h"
+#include "../include/nescautils.h"
 
+#include "../library/dhnetsdk.h"
+#include "../library/HCNetSDK.h"
+
+#define MAXLEN 6554543
+#define START_TIMEOUT 1200
+
+extern std::mutex ls;
+std::mutex fuck;
 nesca_prints np1;
 
-std::string
-threads_bruteforce(const std::vector<std::string>& login, std::vector<std::string>& pass,
-    std::string http_path, std::string ip, int port, int delay, uint8_t proto, int brute_log)
+void NESCABRUTE::newconnect(const char* ip, u16 port, u8 proto,
+    int timeoutms, int maxconnections)
 {
-  std::vector<std::future<void>> futures;
-  thread_pool pool(100);
-  std::string result = "";
-  std::mutex wait;
+  if (proto == HIKVISION_BRUTEFORCE || proto == RVI_BRUTEFORCE)
+    return;
 
-  int total = login.size() * pass.size();
-  int combinations = 0;
+  std::chrono::high_resolution_clock::time_point start, end;
+  std::chrono::microseconds duration;
+  int res = 0, code = 0;
+  u8 temp[MAXLEN];
 
-  for (const auto& l : login){
-    for (const auto& p : pass){
-      futures.push_back(pool.enqueue([&combinations, &total, &wait, brute_log, l, p, ip, port, proto, http_path, delay, &result]() {
-        wait.lock();
-        if (brute_log)
-          np1.nlog_custom("LOG", "                 try: " + l + "@" + p + " [BRUTEFORCE]\n", 1);
+  if (numconnections > maxconnections)
+    return;
 
-        bruteforce_opts bo;
-        bo.dest_ip = ip.c_str();
-        bo.dest_port = port;
-        bo.proto = proto;
-        bo.http_path = http_path.c_str();
-        bo.delay_ms = delay;
-        bo.login = l.c_str();
-        bo.pass = p.c_str();
-        wait.unlock();
+  if (!okprobe)
+    start = std::chrono::high_resolution_clock::now();
+  if (proto == FTP_BRUTEFORCE)
+    res = session(ip, port, timeoutms, temp, MAXLEN);
+  else
+    res = session(ip, port, timeoutms, NULL, 0);
+  if (!okprobe)
+    end = std::chrono::high_resolution_clock::now();
+  if (res == -1)
+    return;
 
-        int auth = ncsock_bruteforce(&bo);
-        if(auth == 0) {
-          result = l + ":" + p + "@";
-        }
-
-        combinations++;
-        if (combinations % 50 == 0) {
-          int procents = (combinations * 100) / total;
-          std::cout << "  " << np1.main_nesca_out("#", "BRUTE "+std::to_string(combinations)+" out of "+std::to_string(total) +" passwd", 6, "", "", std::to_string(procents)+"%", "", "") << std::endl;
-        }
-      }));
-    }
+  if (!okprobe) {
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    rttmshost = (duration.count() / 1000.0) * 3;
+    okprobe = true;
   }
 
-  for (auto& future : futures){future.wait();}
-  if (!result.empty()){return result;}
+  if (proto == FTP_BRUTEFORCE) {
+    code = atoi((char*)temp);
+    if (code != R_220)
+      return;
+  }
+
+  ls.lock();
+  connections.push_back(res);
+  numconnections++;
+  ls.unlock();
+}
+
+void NESCABRUTE::authprobe(int fd, u8 proto, const char* login, const char* pass, int timeoutms)
+{
+  switch (proto) {
+    case FTP_BRUTEFORCE:
+      auth = ftpauth(fd, login, pass);
+      break;
+    case HTTP_BRUTEFORCE:
+      auth = auth_http_basic(fd, ip, path, login, pass);
+      break;
+    case RVI_BRUTEFORCE:
+      auth = dvrauth(ip, 37777, login, pass);
+      break;
+    case HIKVISION_BRUTEFORCE:
+      auth = hikvisionauth(ip, 8000, login, pass);
+      break;
+  }
+}
+
+int NESCABRUTE::getrandomcon(void)
+{
+  u32 index;
+  if (connections.empty())
+    return -1;
+
+  mt19937_seed(generate_seed());
+  index = mt19937_random() % connections.size();
+
+  return connections[index];
+}
+
+bool NESCABRUTE::checkres(const char *login, const char *pass)
+{
+  if (!auth)
+    return false;
+  reslogin = login;
+  respass = pass;
+
+  for (const auto& c : connections)
+    if (c != -1)
+      close(c);
+
+  return true;
+}
+
+int NESCABRUTE::gettimeoutms(void)
+{
+  if (customtimeout)
+    return customtimeoutms;
+  else {
+    if (!okprobe)
+      return START_TIMEOUT;
+    else {
+      if ((int)rttmshost > START_TIMEOUT)
+        return START_TIMEOUT;
+      return (int)rttmshost;
+    }
+  }
+}
+
+std::string NESCABRUTE::getlogin(void)
+{
+  if (reslogin)
+    return reslogin;
+  else
+    return "";
+}
+
+std::string NESCABRUTE::getpass(void)
+{
+  if (reslogin)
+    return respass;
+  else
+    return "";
+}
+
+std::string NESCABRUTE::getres_nescastyle(void)
+{
+  if (!getlogin().empty() && !getpass().empty())
+    return (getlogin() + ":" + getpass() + "@");
   return "";
 }
 
-LONG
-V0_brute_hikvision(char* ip, char* login, char* pass, int port)
+void NESCABRUTE::runbrute(const std::string& ip, int port, std::string typebrute, nesca_prints* np)
 {
-  NET_DVR_DEVICEINFO device = {0};
-  return (NET_DVR_Login(ip, 8000, login, pass, &device));
+  np->yellow_html_on();
+  std::cout << "  * " << typebrute << " " + ip + ":" + std::to_string(port) + " BRUTEFORCE\n";
+  reset_colors;
 }
 
-LONG
-V30_brute_hikvision(char* ip, char* login, char* pass, int port)
+std::string NESCABRUTE::getprotostr(u8 proto)
+{
+  switch (proto) {
+    case HTTP_BRUTEFORCE:
+      return "HTTP";
+    case FTP_BRUTEFORCE:
+      return "FTP";
+    case RVI_BRUTEFORCE:
+      return "RVI(DVR)";
+    case HIKVISION_BRUTEFORCE:
+      return "HIKVISION";
+  }
+  return "n/a";
+}
+
+NESCABRUTE::NESCABRUTE(int threads, const char* ip, const char* path,
+    u16 port, int maxconnections, int attempts, int timeoutms, int delayms,
+    u8 proto, logins_t login, passwords_t pass, nesca_prints *np)
+{
+
+  /*
+  std::cout << "threads: " << threads << std::endl;
+  std::cout << "maxcon: " << maxconnections << std::endl;
+  std::cout << "timeout: " << timeoutms << std::endl;
+  std::cout << "attempts: " << attempts << std::endl;
+  std::cout << "delayms: " << delayms << std::endl;
+  */
+
+  runbrute(ip, port, getprotostr(proto), np);
+  thread_pool pool(threads);
+  int i, combinations = 0, procents, total;
+  reslogin = NULL;
+  respass = NULL;
+
+  this->path = "";
+  this->ip = ip;
+  if (path)
+    this->path = path;
+  total = login.size() * pass.size();
+  if (timeoutms != -1) {
+    customtimeout = true;
+    customtimeoutms = timeoutms;
+  }
+
+  if (proto != HIKVISION_BRUTEFORCE && proto != RVI_BRUTEFORCE) {
+    for (i = 0; i < 5; i++) {
+      newconnect(ip, port, proto, gettimeoutms(), maxconnections);
+      if (!connections.empty())
+        break;
+    }
+    if (connections.empty())
+      return;
+  }
+
+  for (const auto& l : login) {
+    for (const auto& p : pass) {
+      if (combinations % (get_log(total)) == 0) {
+        procents = (combinations * 100) / total;
+        std::cout << "    " << np->main_nesca_out("#", "BRUTE " + std::to_string(combinations) +
+            " out of " + std::to_string(total) + " passwd", 6, "", "",
+            std::to_string(procents)+"%", "", "") << std::endl;
+      }
+      pool.enqueue([this, ip, port, proto, attempts, maxconnections, l, p]() {
+        newconnect(ip, port, proto, gettimeoutms(), maxconnections);
+        for (int i = 1; i <= attempts; i++) {
+          authprobe(getrandomcon(), proto, l.c_str(), p.c_str(), gettimeoutms());
+          ls.lock();
+          bool check = checkres(l.c_str(), p.c_str());
+          ls.unlock();
+          if (check)
+            return;
+        }
+      });
+      combinations++;
+      delayy(delayms);
+    }
+  }
+}
+
+LONG V0_brute_hikvision(char* ip, char* login, char* pass, int port)
+{
+  NET_DVR_DEVICEINFO device = {0};
+  return (NET_DVR_Login(ip, port, login, pass, &device));
+}
+
+LONG V30_brute_hikvision(char* ip, char* login, char* pass, int port)
 {
   NET_DVR_DEVICEINFO_V30 device = {0};
   return (NET_DVR_Login_V30(ip, port, login, pass, &device));
 }
 
-LONG
-V40_brute_hikvision(char *ip, char* login, char* pass, int port)
+LONG V40_brute_hikvision(char *ip, char* login, char* pass, int port)
 {
   NET_DVR_USER_LOGIN_INFO logininfo = {0};
   NET_DVR_DEVICEINFO_V40 device = {0};
 
   logininfo.bUseAsynLogin = false;
-  logininfo.wPort = 8000;
+  logininfo.wPort = port;
 
   strcpy(logininfo.sDeviceAddress, ip);
   strcpy(logininfo.sUserName, login);
@@ -96,86 +262,54 @@ V40_brute_hikvision(char *ip, char* login, char* pass, int port)
   return (NET_DVR_Login_V40(&logininfo, &device));
 }
 
-std::string
-brute_hikvision(std::string ip, std::string login, std::string pass, int brute_log, const std::string& path)
+bool hikvisionauth(const char* ip, u16 port, const char* login, const char* pass)
 {
-#ifdef HAVE_HIKVISION
-  if (brute_log)
-    np1.nlog_custom("HIKVISION", "                 try: " + login + "@" + pass + " [BRUTEFORCE]\n", 1);
-
+  char *_ip, *_login, *_pass;
   LONG res;
-  std::string result = "";
 
   freopen("/dev/null", "w", stderr);
   NET_DVR_Init();
 
-  char *_ip = ip.data();
-  char *_login = login.data();
-  char *_pass = pass.data();
-  u16 port = 8000;
+  _ip = const_cast<char*>(ip);
+  _login = const_cast<char*>(login);
+  _pass = const_cast<char*>(pass);
 
   res = V0_brute_hikvision(_ip, _login, _pass, port);
 
-  /*
-  if (res < 0) {
-    res = V30_brute_hikvision(_ip, _login, _pass, port);
-    if (res < 0) {
-      res = V40_brute_hikvision(_ip, _login, _pass, port);
-      if (res < 0)
-        goto sum;
-    }
-  }
-  */
-
-  if (res < 0)
-    goto sum;
-
-  result = login + ":" + pass + "@";
-  goto sum;
-
-#else
-  return "no-hikvision";
-#endif
-sum:
+  ls.lock();
   NET_DVR_Logout(res);
   NET_DVR_Cleanup();
-  return result;
+  ls.unlock();
+
+  if (res < 0)
+    return false;
+  return true;
 }
 
-std::mutex fuck;
+void CALLBACK MyDisconnectCallback(LLONG lLoginID, char *pchDVRIP,
+    LONG nDVRPort, LDWORD dwUser) {
+  return;
+}
 
-std::string
-threads_brute_hikvision(const std::string ip, const std::vector<std::string> logins, const std::vector<std::string> passwords,
-    int brute_log, int brute_timeout_ms, const std::string&path)
+bool dvrauth(const char* ip, u16 port, const char* login, const char* pass)
 {
-  std::vector<std::string> results;
-  std::vector<std::future<void>> futures;
-  thread_pool pool(100);
-  int combinations = 0;
-  int total = logins.size() * passwords.size();
-  int procents;
+  NET_DEVICEINFO devinfo = {0};
+  char *_ip, *_login, *_pass;
+  u64 res = 0;
 
-  for (const auto& login : logins) {
-    for (const auto& password : passwords) {
-      if (combinations % 50 == 0) {
-        procents = (combinations * 100) / total;
-        std::cout << "  " << np1.main_nesca_out("#", "BRUTE "+std::to_string(combinations)+" out of "+
-          std::to_string(total) +" passwd", 6, "", "", std::to_string(procents)+"%", "", "") << std::endl;
-      }
-      combinations++;
+  _ip = const_cast<char*>(ip);
+  _login = const_cast<char*>(login);
+  _pass = const_cast<char*>(pass);
 
-      delayy(brute_timeout_ms);
-      futures.push_back(pool.enqueue([ip, login, password, brute_log, path, &results, combinations, total]() {
-        std::string temp = brute_hikvision(ip, login, password, brute_log, path);
-        fuck.lock();
-        if (!temp.empty())
-          results.push_back(temp);
-        fuck.unlock();
-      }));
-    }
-  }
-  for (auto& future : futures) {future.wait();}
-  if (!results.empty()) {return results[0];} else{return "";}
+  CLIENT_Init(MyDisconnectCallback, 0);
+  res = CLIENT_Login(_ip, port, _login, _pass, &devinfo);
 
-  return "";
+  ls.lock();
+  CLIENT_Logout(res);
+  CLIENT_Cleanup();
+  ls.unlock();
+
+  if (res == 0)
+    return false;
+  return true;
 }

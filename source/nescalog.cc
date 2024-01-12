@@ -8,9 +8,8 @@
 
 #include "../include/nescalog.h"
 #include "../ncbase/include/json.h"
-#include "../ncsock/include/strbase.h"
-#include "../ncsock/include/base.h"
 #include "../ncsock/include/icmp.h"
+#include "../ncsock/include/utils.h"
 #include "../ncsock/include/igmp.h"
 #include <cstdio>
 #include <cstdlib>
@@ -41,7 +40,7 @@ nesca_prints::html_to_ansi_color(const std::string& html_color)
 void nesca_prints::log_tcphdr(const struct tcp_header *tcphdr)
 {
   gray_nesca_on();
-  printf("[^][TCPHEADER]:");
+  printf("-> TCP: ");
   reset_colors;
 
   printf("%ssport:%s %s%u%s, %sdport:%s %s%u%s, %sseq:%s %s%u%s, %sack:%s %s%u%s, %s2x_off:%s %s%u bytes%s,",
@@ -85,7 +84,7 @@ void nesca_prints::log_tcphdr(const struct tcp_header *tcphdr)
 void nesca_prints::log_icmphdr(struct icmp4_header *icmphdr)
 {
   gray_nesca_on();
-  printf("[^][ICMPHEADER]:");
+  printf("-> ICMP: ");
   reset_colors;
   printf("%stype:%s %s%u%s, %scode:%s %s%u%s, %scheck:%s %s0x%04X%s, %sid:%s %s%u%s, %sseq:%s %s%u%s\n",
     green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), (unsigned int)icmphdr->type, gray_nesca.c_str(),
@@ -98,7 +97,7 @@ void nesca_prints::log_icmphdr(struct icmp4_header *icmphdr)
 void nesca_prints::log_igmphdr(struct igmp_header *igmphdr)
 {
   gray_nesca_on();
-  printf("[^][IGMPHEADER]:");
+  printf("-> IGMP: ");
   reset_colors;
   printf("%stype:%s %s%u%s, %scode:%s %s%u%s, %scheck:%s %s0x%04X%s, %svar:%s %s%u%s\n",
     green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), (unsigned int)igmphdr->type, gray_nesca.c_str(),
@@ -110,7 +109,7 @@ void nesca_prints::log_igmphdr(struct igmp_header *igmphdr)
 void nesca_prints::log_iphdr(struct ip_header *iphdr)
 {
   gray_nesca_on();
-  printf("[^][IPHEADER]:");
+  printf("-> IP: ");
   reset_colors;
   printf("%sversion:%s %s%u%s, %sihl:%s %s%u bytes%s, %stos:%s %s%u%s, %stot_len:%s %s%u%s, %sid:%s %s%u%s, %sflags:%s %s%c%c%c%s, %sfrag_off:%s %s%u%s, %sttl:%s %s%u%s, %sproto:%s %s%u%s, %scheck:%s %s0x%04X%s, %ssaddr:%s %s%s%s, %sdaddr:%s %s%s%s\n",
          green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), (unsigned int)iphdr->version, gray_nesca.c_str(),
@@ -131,7 +130,7 @@ void nesca_prints::log_iphdr(struct ip_header *iphdr)
 void nesca_prints::log_udphdr(struct udp_header *udphdr)
 {
   gray_nesca_on();
-  printf("[^][UDPHEADER]:");
+  printf("-> UDP: ");
   reset_colors;
   printf("%sSource Port:%s %s%u%s, %sDestination Port:%s %s%u%s, %sLength:%s %s%u bytes%s, %sChecksum:%s %s0x%04X%s\n",
     green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), ntohs(udphdr->uh_sport), gray_nesca.c_str(),
@@ -140,20 +139,20 @@ void nesca_prints::log_udphdr(struct udp_header *udphdr)
     green_html.c_str(), gray_nesca.c_str(), golder_rod.c_str(), ntohs(udphdr->check), gray_nesca.c_str());
 }
 
-void nesca_prints::log_ethhdr(struct eth_hdr *ethhdr)
+void nesca_prints::log_ethhdr(struct eth_header *ethhdr)
 {
   gray_nesca_on();
-  printf("[^][ETHHEADER]:");
+  printf("-> ETH: ");
   reset_colors;
   printf("%sdaddr:%s %02X:%02X:%02X:%02X:%02X:%02X, %ssaddr:%s %02X:%02X:%02X:%02X:%02X:%02X, %stype:%s 0x%04X\n",
     green_html.c_str(), golder_rod.c_str(),
-    ethhdr->eth_dst.data[0], ethhdr->eth_dst.data[1], ethhdr->eth_dst.data[2],
-    ethhdr->eth_dst.data[3], ethhdr->eth_dst.data[4], ethhdr->eth_dst.data[5],
+    ethhdr->dst.data[0], ethhdr->dst.data[1], ethhdr->dst.data[2],
+    ethhdr->dst.data[3], ethhdr->dst.data[4], ethhdr->dst.data[5],
     green_html.c_str(), golder_rod.c_str(),
-    ethhdr->eth_src.data[0], ethhdr->eth_src.data[1], ethhdr->eth_src.data[2],
-    ethhdr->eth_src.data[3], ethhdr->eth_src.data[4], ethhdr->eth_src.data[5],
+    ethhdr->src.data[0], ethhdr->src.data[1], ethhdr->src.data[2],
+    ethhdr->src.data[3], ethhdr->src.data[4], ethhdr->src.data[5],
     green_html.c_str(), golder_rod.c_str(),
-    ntohs(ethhdr->eth_type));
+    ntohs(ethhdr->type));
 }
 
 #include "../include/nescaengine.h"
@@ -178,14 +177,14 @@ void nesca_prints::easy_packet_trace(u8 *buffer, bool hidden_eth)
   struct udp_header  *udph;
   struct icmp4_header *icmph;
   struct igmp_header *igmph;
-  struct eth_hdr *ethh;
+  struct eth_header *ethh;
 
-  struct ip_header *iph = ext_iphdr(buffer);
+  struct ip_header *iph = (struct ip_header*)(buffer);
 
-  printf("\n%s%s[TRACEROUTE]:%slen=%s%u %ssaddr=%s%s\n", gray_nesca.c_str(), print_get_time(get_time()).c_str(), green_html.c_str(), golder_rod.c_str(),
+  printf("\n%s-> TRACEROUTE: %slen=%s%u %ssaddr=%s%s\n", gray_nesca.c_str(), green_html.c_str(), golder_rod.c_str(),
       ntohs(iph->tot_len), green_html.c_str(), golder_rod.c_str(), inet_ntoa(*(struct in_addr*)&iph->saddr));
 
-  ethh = (struct eth_hdr *)buffer;
+  ethh = (struct eth_header *)buffer;
   if (!hidden_eth)
     log_ethhdr(ethh);
 
@@ -193,16 +192,16 @@ void nesca_prints::easy_packet_trace(u8 *buffer, bool hidden_eth)
 
   switch (iph->protocol) {
     case IPPROTO_TCP: {
-      tcph = ext_tcphdr(buffer);
+      tcph = (struct tcp_header*)(buffer + sizeof(struct ip_header));
       log_tcphdr(tcph);
       break;
     }
     case IPPROTO_UDP:
-      udph = ext_udphdr(buffer);
+      udph = (struct udp_header*)(buffer + sizeof(struct ip_header));
       log_udphdr(udph);
       break;
     case IPPROTO_ICMP:
-      icmph = ext_icmphdr(buffer);
+      icmph = (struct icmp4_header*)(buffer + sizeof(struct ip_header));
       log_icmphdr(icmph);
       break;
     case IPPROTO_IGMP:
@@ -339,13 +338,14 @@ nesca_prints::main_nesca_out(const std::string& opt, const std::string& result, 
 
   }
   else if (mode == 6) {
-    temp = golder_rod + "-> " + result + " " + opt + " " + result1;
+    temp = golder_rod + "> " + result + " " + opt + " " + result1;
       temp_file = "-> " + result + " " + opt + " " + result1;
 
   }
 
   return temp;
 }
+
 void
 nesca_prints::nlog_packet_trace(std::string action, std::string protocol, std::string& source_ip,
       std::string& dest_ip, int source_port, int dest_port,
@@ -375,7 +375,6 @@ nesca_prints::disable_colors(void)
   yellow_html = "";
   reset_color = "";
 }
-
 
 int
 nesca_prints::import_color_scheme(const std::string& file_name, std::map<std::string, std::string>& config_values)
@@ -487,10 +486,13 @@ void nesca_prints::nlog_custom(const std::string& auth, std::string message, int
   {
     case 0:
       green_html_on();
+      break;
     case 1:
       yellow_html_on();
+      break;
     case 2:
       red_html_on();
+      break;
   }
 
   std::cout << print_get_time(get_time()) + "[" + auth + "]:" + message;

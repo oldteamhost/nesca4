@@ -81,6 +81,7 @@
 #define UNKNOWN_ERROR                  "Unknown error"
 #define NOT_FOUND_404                  "404 not found"
 #define EMPTY_REQUEST                  "Empty request"
+#define HTTPS_REDIRECT                 "Moved to HTTP(s)"
 
 #define HTTP_BASIC_AUTH_BRUTE  999
 

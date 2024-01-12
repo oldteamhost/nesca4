@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
 */
 
-#include "include/strbase.h"
+#include "include/utils.h"
 
 void to_lower(char* str)
 {

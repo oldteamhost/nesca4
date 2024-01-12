@@ -20,14 +20,35 @@
 #include <stdbool.h>
 #include "types.h"
 #include "mt19937.h"
-#include "../libdnet/include/ip6.h"
-#include "../libdnet/include/eth.h"
-#include "../libdnet/include/ip.h"
+#include "../include/eth.h"
 #include <bits/wordsize.h>
 
 #define SCTP_HDR_LEN 12
 
-__BEGIN_DECLS
+#define SCTP_DATA               0x00
+#define SCTP_INIT               0x01
+#define SCTP_INIT_ACK           0x02
+#define SCTP_SACK               0x03
+#define SCTP_HEARTBEAT          0x04
+#define SCTP_HEARTBEAT_ACK      0x05
+#define SCTP_ABORT              0x06
+#define SCTP_SHUTDOWN           0x07
+#define SCTP_SHUTDOWN_ACK       0x08
+#define SCTP_ERROR              0x09
+#define SCTP_COOKIE_ECHO        0x0a
+#define SCTP_COOKIE_ACK         0x0b
+#define SCTP_ECNE               0x0c
+#define SCTP_CWR                0x0d
+#define SCTP_SHUTDOWN_COMPLETE  0x0e
+#define SCTP_AUTH               0x0f /* RFC 4895 */
+#define SCTP_ASCONF_ACK         0x80 /* RFC 5061 */
+#define SCTP_PKTDROP            0x81 /* draft-stewart-sctp-pktdrprep-08 */
+#define SCTP_PAD                0x84 /* RFC 4820 */
+#define SCTP_FORWARD_TSN        0xc0 /* RFC 3758 */
+#define SCTP_ASCONF             0xc1 /* RFC 5061 */
+
+#define SCTP_TYPEFLAG_REPORT 1
+#define SCTP_TYPEFLAG_SKIP   2
 
 struct sctp_header
 {
@@ -85,15 +106,15 @@ do {                                                              \
   sctp_pack_chunk_header(sctp_pack_chip, type, flags, length);    \
 } while (0)
 
+__BEGIN_DECLS
+
 u8 *build_sctp(u16 sport, u16 dport, u32 vtag, const char *chunks,
     int chunkslen, const char *data, u16 datalen, u32 *packetlen,
     bool adler32sum, bool badsum);
-
 u8 *build_sctp_pkt(u32 saddr, u32 daddr, int ttl, u16 ipid, u8 tos,
     bool df, u8 *ipopt, int ipoptlen, u16 sport, u16 dport, u32 vtag,
     char *chunks, int chunkslen, const char *data, u16 datalen,
     u32 *packetlen, bool adler32sum, bool badsum);
-
 u8 *build_sctp6_pkt(const struct in6_addr *source, const struct in6_addr *victim,
     u8 tc, u32 flowlabel, u8 hoplimit, u16 sport, u16 dport,
     u32 vtag, char *chunks, int chunkslen, const char *data,

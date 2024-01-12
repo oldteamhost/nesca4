@@ -45,17 +45,14 @@
 #include "../ncbase/include/binary.h"
 #include "../config/compile.h"
 
-#include "../ncsock/include/bruteforce.h"
 #include "../ncsock/include/tcp.h"
 #include "../ncsock/include/http.h"
 #include "../ncsock/include/utils.h"
 #include "../ncsock/include/readpkt.h"
 #include "../ncsock/include/dns.h"
-#include "../ncsock/include/strbase.h"
 #include "../ncsock/include/ftp.h"
 #include "../ncsock/include/smtp.h"
 #include "../ncsock/include/icmp.h"
-#include "../ncsock/include/base.h"
 
 /*Угадайте?*/
 #define _VERSION "20240105"
@@ -115,7 +112,6 @@ option long_options[] = {
 
   {"PR", no_argument, 0, 8},
   /*
-  {"hide-eth", no_argument, 0, 64},
   {"tcp", no_argument, 0, 15},
   {"icmp", required_argument, 0, 16},
   {"reqnum", required_argument, 0, 10},
@@ -132,16 +128,22 @@ option long_options[] = {
   {"import", required_argument, 0, 23},
   {"find", required_argument, 0, 19},
   {"random-ip", required_argument, 0, 5},
-  {"brute-login", required_argument, 0, 12},
   {"data-string", required_argument, 0, 56},
-  {"brute-pass", required_argument, 0, 11},
   {"ping-log", required_argument, 0, 90},
   {"my-life-my-rulez", no_argument, 0, 53},
-  {"brute-log", required_argument, 0, 30},
-  {"brute-verbose", required_argument, 0, 31},
-  {"thread-on-port", no_argument, 0, 48},
-  {"no-brute", required_argument, 0, 44},
+
+
   {"brute-delay", required_argument, 0, 47},
+  {"brute-login", required_argument, 0, 12},
+  {"brute-pass", required_argument, 0, 11},
+  {"brute-timeout", required_argument, 0, 31},
+  {"brute-threads", required_argument, 0, 39},
+  {"brute-maxcon", required_argument, 0, 41},
+  {"brute-attempts", required_argument, 0, 64},
+  {"no-brute", required_argument, 0, 44},
+
+
+  {"thread-on-port", no_argument, 0, 48},
   {"negatives", required_argument, 0, 76},
   {"TP", required_argument, 0, 57},
   {"debug", no_argument, 0, 27},
@@ -176,11 +178,6 @@ option long_options[] = {
   {"robots", no_argument, 0, 67},
   {"hikshots", required_argument, 0, 35},
   {"sitemap", no_argument, 0, 68},
-#ifdef HAVE_NODE_JS
-  {"screenshots", required_argument, 0, 's'},
-  {"ss-timeout", required_argument, 0, 41},
-  {"ns-track", no_argument, 0, 39},
-#endif
 
   {"maxg-ping", required_argument, 0, 60},
   {"maxg-scan", required_argument, 0, 61},

@@ -6,10 +6,10 @@
 */
 
 #include "include/ip.h"
+#include <netinet/in.h>
 
 u16 ip4_pseudoheader_check(u32 saddr, u32 daddr, u8 proto, u16 len, const void *hstart)
 {
-  int sum;
   struct pseudo
   {
     u32 src;
@@ -18,11 +18,12 @@ u16 ip4_pseudoheader_check(u32 saddr, u32 daddr, u8 proto, u16 len, const void *
     u8 proto;
     u16 length;
   } hdr;
+  int sum;
 
-  hdr.src = saddr;
-  hdr.dst = daddr;
-  hdr.zero = 0;
-  hdr.proto = proto;
+  hdr.src    = saddr;
+  hdr.dst    = daddr;
+  hdr.zero   = 0;
+  hdr.proto  = proto;
   hdr.length = htons(len);
 
   sum = ip_cksum_add(&hdr, sizeof(hdr), 0);
@@ -33,7 +34,7 @@ u16 ip4_pseudoheader_check(u32 saddr, u32 daddr, u8 proto, u16 len, const void *
    * ones (the equivalent  in one's complement  arithmetic).   An all zero
    * transmitted checksum  value means that the transmitter  generated  no
    * checksum" */
-  if (proto == IP_PROTO_UDP && sum == 0)
+  if (proto == IPPROTO_UDP && sum == 0)
     sum = 0xFFFF;
 
   return sum;

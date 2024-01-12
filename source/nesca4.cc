@@ -16,14 +16,13 @@
 #include "../ncsock/include/utils.h"
 #include "../ncsock/include/arp.h"
 #include "../ncsock/include/eth.h"
-#include "../ncsock/include/strbase.h"
 #include "../ncsock/include/tcp.h"
 #include "../ncsock/include/utils.h"
 #include <arpa/inet.h>
-#include <bits/getopt_core.h>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <csignal>
 #include <cstring>
 #include <mutex>
 #include <netinet/in.h>
@@ -34,52 +33,47 @@
 #include <unistd.h>
 #include <string.h>
 #include <vector>
+#include <signal.h>
 
 nesca_prints np;
 html_output ho;
 services_nesca sn;
 arguments_program argp;
 readfiler rf;
+NESCADATA n;
 
 #define HTTP_BUFLEN 65535
-
-NESCADATA n;
 
 const char* run;
 std::mutex ls;
 const char* short_options = "s:hl:vd:T:p:aS:n";
 
-
 int main(int argc, char** argv)
 {
   /*
-    eth_addr_t src;
-    const char* srcmac = "40:b0:76:47:8f:9a";
-    char* temp = NULL;
-    eth_t *s;
-    ip_addreth_t daddr, saddr;
+  eth_addr_t src;
+  const char* srcmac = "40:b0:76:47:8f:9a";
+  char temp[512];
+  eth_t *s;
+  ip_addreth_t daddr, saddr;
 
-    maceth(srcmac, &src);
-    inet_pton(AF_INET, "195.168.1.35", saddr.data);
-    inet_pton(AF_INET, "142.250.150.113", daddr.data);
+  maceth(srcmac, &src);
+  inet_pton(AF_INET, "195.168.1.35", saddr.data);
+  inet_pton(AF_INET, "142.250.150.113", daddr.data);
 
-    temp = get_active_interface_name();
-    s = eth_open(temp);
+  get_active_interface_name(temp, sizeof(temp));
+  s = eth_open(temp);
 
-    send_arpreq_packet(s, src, saddr, daddr, ARP_OP_REQUEST);
+  send_arpreq_packet(s, src, saddr, daddr, ARP_OP_REQUEST);
 
-    eth_close(s);
-    if (temp)
-      free(temp);
-    return 0;
+  eth_close(s);
   return 0;
   */
 
-  n.pd.data = "";
-  n.pd.datalen = 0;
-
   char* templocalip = NULL;
   struct tcp_flags tf;
+  n.pd.data = "";
+  n.pd.datalen = 0;
 
   run = argv[0];
   memset(&tf, 0, sizeof(struct tcp_flags));
@@ -148,11 +142,6 @@ int main(int argc, char** argv)
     np.golder_rod_on();
     printf("-> syn: %d, ack: %d, rst: %d, fin: %d, psh: %d, urg: %d, cwr: %d, ece: %d\n",
             tf.syn, tf.ack, tf.rst, tf.fin, tf.psh, tf.urg, tf.cwr, tf.ece);
-    reset_colors;
-  }
-  if (n.frag_mtu > 16) {
-    np.golder_rod_on();
-    printf("-> NOTE: Note that if (ihl * 4) < (mtu) then fragmentation will not be performed, it is better to use mtu not more than 16.\n");
     reset_colors;
   }
   if (n.pd.datalen > 1400) {
@@ -335,7 +324,7 @@ void PRENESCASCAN(void)
 
     if (argp.no_scan) {
       for (const auto& ip : n.success_ping_ip) {
-        if (!argp.ping_off || n.get_new_dns(ip) != "n/a") {
+        if (!argp.ping_off) {
           np.print_host_state(host_scan, ip, n.get_new_dns(ip), n.get_rtt(ip));
           host_scan++;
         }
@@ -557,28 +546,56 @@ check:
   }
 
 start:
-  if (argp.ack_ping && rtt == -1)
-    rtt = nescaping(&n, dst, TCP_PING_ACK);
+  if (argp.ack_ping && rtt == -1) {
+    for (size_t i = 0; i < n.ack_ping_ports.size(); i++) {
+      rtt = nescaping(&n, dst, TCP_PING_ACK);
+      if (rtt != -1)
+        break;
+    }
+  }
   if (argp.echo_ping && rtt == -1)
     rtt = nescaping(&n, dst, ICMP_PING_ECHO);
-  if (argp.syn_ping && rtt == -1)
-    rtt = nescaping(&n, dst, TCP_PING_SYN);
+  if (argp.syn_ping && rtt == -1) {
+    for (size_t i = 0; i < n.syn_ping_ports.size(); i++) {
+      rtt = nescaping(&n, dst, TCP_PING_SYN);
+      if (rtt != -1)
+        break;
+    }
+  }
   if (argp.info_ping && rtt == -1)
     rtt = nescaping(&n, dst, ICMP_PING_INFO);
   if (argp.timestamp_ping && rtt == -1)
     rtt = nescaping(&n, dst, ICMP_PING_TIME);
-  if (argp.sctp_ping_init && rtt == -1)
+  if (argp.sctp_ping_init && rtt == -1) {
     rtt = nescaping(&n, dst, SCTP_INIT_PING);
-  if (argp.udp_ping && rtt == -1)
-    rtt = nescaping(&n, dst, UDP_PING);
+    for (size_t i = 0; i < n.sctp_ping_ports.size(); i++) {
+      rtt = nescaping(&n, dst, SCTP_INIT_PING);
+      if (rtt != -1)
+        break;
+    }
+  }
+  if (argp.udp_ping && rtt == -1) {
+    for (size_t i = 0; i < n.udp_ping_ports.size(); i++) {
+      rtt = nescaping(&n, dst, UDP_PING);
+      if (rtt != -1)
+        break;
+    }
+  }
 
   goto check;
 }
 
 void nesca_http(const std::string& ip, const u16 port, const int timeout_ms)
 {
-  struct http_header hh = initheader("/", ip, "oldteam", "GET");
-  send_http(&hh, n, ip, port, timeout_ms);
+  struct http_request r;
+  init_http_request(&r, "GET", "", "", 0, "/", 0, 0);
+  add_http_header(&r, "User-Agent", "oldteam");
+  add_http_header(&r, "Connection", "close");
+  send_http(&r, n, ip, port, timeout_ms);
+
+  ls.lock();
+  free_http_request(&r);
+  ls.unlock();
 }
 
 void processing_tcp_scan_ports(std::string ip, int port, int result)
@@ -788,22 +805,9 @@ void usage(const char* exec)
   std::cout << "  -excludefile <exclude_file>: Exclude list from file\n";
 
   np.golder_rod_on();
-  std::cout << "PORT SCAN OPTIONS:" << std::endl;
-  reset_colors;
-  std::cout << "  -fin, -xmas, -null, -psh: Use one of these scanning methods.\n";
-  std::cout << "  -ack, -windows -maimon: Use ack or window or maimon scan method.\n";
-  std::cout << "  -scanflags <flags>: Customize TCP scan flag. Ex: (ACKSYN) > AS;\n";
-  std::cout << "  -sctp-init, -sctp-cookie: Use SCTP INIT/COOKIE-ECHO scan method.\n";
-  std::cout << "  -udp: On UDP scan method and udp ports.\n";
-  std::cout << "  -p <port ranges>: Only scan specified port(s). \n    Ex: -p 80; -p 22,80; -p 1-65535;\n";
-  std::cout << "  -delay, -d <ms>: Set delay for scan.\n";
-  std::cout << "  -scan-timeout <ms>: Edit timeout for getting packet on port.\n";
-  std::cout << "  -no-scan: Disable port scan(skip).\n";
-
-  np.golder_rod_on();
   std::cout << "PING SCAN OPTIONS:" << std::endl;
   reset_colors;
-  std::cout << "  -PS, -PA, -PY, -PU <port>: Use SYN|ACK|UDP|SCTP ping.\n";
+  std::cout << "  -PS, -PA, -PY, -PU <ports>: Use SYN|ACK|UDP|SCTP ping.\n";
   std::cout << "  -PE, -PI, -PM: Use ICMP ping ECHO|INFO|TIMESTAMP\n";
   std::cout << "  -TP <num>: Set max thread(s) for ping.\n";
   std::cout << "  -max-ping: Using all ping methods.\n";
@@ -819,14 +823,30 @@ void usage(const char* exec)
   std::cout << "  -no-resolv, -n: Skip dns-resolution.\n";
 
   np.golder_rod_on();
+  std::cout << "PORT SCAN OPTIONS:" << std::endl;
+  reset_colors;
+  std::cout << "  -fin, -xmas, -null, -psh: Use one of these scanning methods.\n";
+  std::cout << "  -ack, -windows -maimon: Use ack or window or maimon scan method.\n";
+  std::cout << "  -scanflags <flags>: Customize TCP scan flag. Ex: (ACKSYN) > AS;\n";
+  std::cout << "  -sctp-init, -sctp-cookie: Use SCTP INIT/COOKIE-ECHO scan method.\n";
+  std::cout << "  -udp: On UDP scan method and udp ports.\n";
+  std::cout << "  -p <port ranges>: Only scan specified port(s). \n    Ex: -p 80; -p 22,80; -p 1-65535;\n";
+  std::cout << "  -delay, -d <ms>: Set delay for scan.\n";
+  std::cout << "  -scan-timeout <ms>: Edit timeout for getting packet on port.\n";
+  std::cout << "  -no-scan: Disable port scan(skip).\n";
+
+
+  np.golder_rod_on();
   std::cout << "BRUTEFORCE OPTIONS:" << std::endl;
   reset_colors;
   std::cout << "  -brute-login <ss,path>: Set path for <ss> logins.\n";
   std::cout << "  -brute-pass <ss,path>: Set path for <ss> passwords.\n";
-  std::cout << "  -brute-delay <ms>: Edit brute timout.\n";
+  std::cout << "  -brute-threads <num>: Edit count threads.\n";
+  std::cout << "  -brute-maxcon <num>: Edit max count connections.\n";
+  std::cout << "  -brute-attempts <num>: Edit max count attempts.\n";
+  std::cout << "  -brute-timeout <ms>: Edit brute timeout ms (default AUTO).\n";
+  std::cout << "  -brute-delay <ms>: Set delay for brute.\n";
   std::cout << "  -no-brute <ss,2>: Disable <ss> bruteforce.\n";
-  std::cout << "  -brute-verbose <ss,2>: Display bruteforce <ss> all info.\n";
-  std::cout << "  -brute-log <ss,2>: Display bruteforce <ss> info.\n";
 
   np.golder_rod_on();
   std::cout << "FIREWALL/IDS EVASION AND SPOOFING:" << std::endl;
@@ -881,14 +901,6 @@ void usage(const char* exec)
   std::cout << "  -script <path>: Running nesca interpreter.\n";
   std::cout << "  -no-verbose: Disable interpreter verbose.\n";
 
-#ifdef HAVE_NODE_JS
-  np.golder_rod_on();
-  std::cout << "SAVE SCREENSHOTS:" << std::endl;
-  reset_colors;
-  std::cout << "  -screenshot, -s <folder>: Save screenshot on pages.\n";
-  std::cout << "  -ss-timeout <ms>: Set timeout on save screenshots.\n";
-#endif
-
   np.golder_rod_on();
   std::cout << "EXAMPLES:" << std::endl;
   reset_colors;
@@ -908,8 +920,6 @@ void init_bruteforce(void)
   n.http_passwords      = write_file(argp.path_http_pass);
   n.hikvision_logins    = write_file(argp.path_hikvision_login);
   n.hikvision_passwords = write_file(argp.path_hikvision_pass);
-  n.smtp_logins         = write_file(argp.path_smtp_login);
-  n.smtp_passwords      = write_file(argp.path_smtp_pass);
   n.rvi_logins          = write_file(argp.path_rvi_login);
   n.rvi_passwords       = write_file(argp.path_rvi_pass);
 }
@@ -945,6 +955,7 @@ pre_check(void)
     np.disable_colors();
   }
 
+
   if (argp.import_color_scheme) {
     np.import_color_scheme(argp.path_color_scheme, np.config_values);
     np.processing_color_scheme(np.config_values);
@@ -974,9 +985,7 @@ pre_check(void)
       std::filesystem::create_directory(directory_path);
 
     argp.json_save = true;
-    argp.save_screenshots = true;
     argp.json_save_path = "ns_track/data.json";
-    argp.screenshots_save_path = "ns_track/";
   }
 
   if (np.html_save) {
@@ -992,6 +1001,7 @@ pre_check(void)
     write_temp(np.html_file_path, "resources/data_html");
   }
 
+
   if (argp.json_save) {
     std::vector<std::string> temp = write_file("resources/data_json");
     auto it = std::find(temp.begin(), temp.end(), argp.json_save_path);
@@ -999,9 +1009,29 @@ pre_check(void)
       if (check_file(argp.json_save_path)) {
         nesca_json_set_comma(argp.json_save_path);
         nesca_json_skip_line(argp.json_save_path);
+        nesca_json_start_array(argp.json_save_path);
+        nesca_json_skip_line(argp.json_save_path);
       }
+      else
+        nesca_json_start_array(argp.json_save_path);
     }
+    else
+      nesca_json_start_array(argp.json_save_path);
     write_temp(argp.json_save_path, "resources/data_json");
+  }
+
+  /* FIX HIKVISION AND RVI PING */
+  for (size_t i = 0; i < argp.ports.size(); ++i) {
+    if (argp.ports[i] == 8000) {
+      n.ack_ping_ports.push_back(8000);
+      break;
+    }
+  }
+  for (size_t i = 0; i < argp.ports.size(); ++i) {
+    if (argp.ports[i] == 37777) {
+      n.ack_ping_ports.push_back(37777);
+      break;
+    }
   }
 
   if (!check_file("./resources/nesca-services"))
@@ -1104,8 +1134,6 @@ void parse_args(int argc, char** argv)
           argp.path_rtsp_login = what_convert;
         else if (what[1] == "http")
           argp.path_http_login = what_convert;
-        else if (what[1] == "smtp")
-          argp.path_smtp_login = what_convert;
         else if (what[1] == "hikvision")
           argp.path_hikvision_login = what_convert;
         else if (what[1] == "rvi")
@@ -1115,7 +1143,6 @@ void parse_args(int argc, char** argv)
           argp.path_ftp_login = what_convert;
           argp.path_http_login = what_convert;
           argp.path_rtsp_login = what_convert;
-          argp.path_smtp_login = what_convert;
           argp.path_hikvision_login = what_convert;
         }
         break;
@@ -1132,8 +1159,6 @@ void parse_args(int argc, char** argv)
           argp.path_rtsp_pass = what_convert;
         else if (what[1] == "http")
           argp.path_http_pass = what_convert;
-        else if (what[1] == "smtp")
-          argp.path_smtp_pass = what_convert;
         else if (what[1] == "hikvision")
           argp.path_hikvision_pass = what_convert;
         else if (what[1] == "rvi")
@@ -1141,58 +1166,9 @@ void parse_args(int argc, char** argv)
         else if (what[1] == "all") {
           argp.path_rvi_pass = what_convert;
           argp.path_ftp_pass = what_convert;
-          argp.path_smtp_pass = what_convert;
           argp.path_rtsp_pass = what_convert;
           argp.path_http_pass = what_convert;
           argp.path_hikvision_pass = what_convert;
-        }
-        break;
-      }
-      case 30: {
-        std::vector<std::string> what = split_string_string(optarg, ',');
-        for (int i = 0; i < static_cast<int>(what.size()); i++) {
-          what[i] = to_lower_case(what[i]);
-          if (what[i] == "ftp")
-            argp.ftp_brute_log = true;
-          else if (what[i] == "rtsp")
-            argp.rtsp_brute_log = true;
-          else if (what[i] == "http")
-            argp.http_brute_log = true;
-          else if (what[i] == "hikvision")
-            argp.hikvision_brute_log = true;
-          else if (what[i] == "smtp")
-            argp.smtp_brute_log = true;
-          else if (what[i] == "rvi")
-            argp.rvi_brute_log = true;
-          else if (what[i] == "all") {
-            argp.ftp_brute_log = true;
-            argp.smtp_brute_log = true;
-            argp.rvi_brute_log = true;
-            argp.rtsp_brute_log = true;
-            argp.http_brute_log = true;
-            argp.hikvision_brute_log = true;
-          }
-        }
-        break;
-      }
-      case 31: {
-        std::vector<std::string> what = split_string_string(optarg, ',');
-        for (int i = 0; i < static_cast<int>(what.size()); i++) {
-          what[i] = to_lower_case(what[i]);
-          if (what[i] == "ftp")
-            argp.ftp_brute_verbose = true;
-          else if (what[i] == "rtsp")
-            argp.rtsp_brute_verbose = true;
-          else if (what[i] == "http")
-            argp.http_brute_verbose = true;
-          else if (what[i] == "smtp")
-            argp.smtp_brute_verbose = true;
-          else if (what[i] == "all") {
-            argp.ftp_brute_verbose = true;
-            argp.smtp_brute_verbose = true;
-            argp.rtsp_brute_verbose = true;
-            argp.http_brute_verbose = true;
-          }
         }
         break;
       }
@@ -1208,14 +1184,11 @@ void parse_args(int argc, char** argv)
             argp.off_http_brute = true;
           else if (what[i] == "hikvision")
             argp.off_hikvision_brute = true;
-          else if (what[i] == "smtp")
-            argp.off_smtp_brute = true;
           else if (what[i] == "rvi")
             argp.off_rvi_brute = true;
           else if (what[i] == "all") {
             argp.off_ftp_brute = true;
             argp.off_rvi_brute = true;
-            argp.off_smtp_brute = true;
             argp.off_rtsp_brute = true;
             argp.off_http_brute = true;
             argp.off_hikvision_brute = true;
@@ -1247,7 +1220,7 @@ void parse_args(int argc, char** argv)
       case 20:
         n.frag_mtu = atoi(optarg);
         if (n.frag_mtu >! 0 && n.frag_mtu % 8 != 0) {
-          np.nlog_error("Data payload MTU must be > 0 and multiple of 8: (8,16,32,64)\n");
+          np.nlog_error("Data payload MTU must be > 0 and multiple of 8: (8,16,32,64,128...)\n");
           exit(1);
         }
         break;
@@ -1291,7 +1264,7 @@ void parse_args(int argc, char** argv)
       case 13:
         argp.custom_ping = true;
         argp.sctp_ping_init = true;
-        n.sctpport = atoi(optarg);
+        n.sctp_ping_ports = split_string_int(optarg, ',');
         break;
       case 35:
         argp.save_camera_screens = true;
@@ -1323,18 +1296,6 @@ void parse_args(int argc, char** argv)
         }
         break;
       }
-#ifdef HAVE_NODE_JS
-      case 's':
-        argp.save_screenshots = true;
-        argp.screenshots_save_path = optarg;
-        break;
-      case 41:
-        argp.timeout_save_screenshots = atoi(optarg);
-        break;
-      case 39:
-        argp.ns_track = true;
-        break;
-#endif
       case 56: {
         n.pd.data = optarg;
         n.pd.datalen = strlen(optarg);
@@ -1429,12 +1390,12 @@ void parse_args(int argc, char** argv)
       case 80:
         argp.custom_ping = true;
         argp.syn_ping = true;
-        n.syn_dest_port = atoi(optarg);
+        n.syn_ping_ports = split_string_int(optarg, ',');
         break;
       case 81:
         argp.custom_ping = true;
         argp.ack_ping = true;
-        n.ack_dest_port = atoi(optarg);
+        n.ack_ping_ports = split_string_int(optarg, ',');
         break;
       case 43:
         argp.json_save = true;
@@ -1467,8 +1428,6 @@ void parse_args(int argc, char** argv)
         argp.type = TCP_NULL_SCAN;
         break;
       case 8:
-        //argp.custom_ping = true;
-        //argp.arp_ping = true;
         break;
       case 22:
         argp.http_timeout = atoi(optarg);
@@ -1501,15 +1460,16 @@ void parse_args(int argc, char** argv)
       case 95:
         argp.no_proc = true;
         break;
-      case 64:
-        break;
       case 42:
         n.ack = atoi(optarg);
+        break;
+      case 31:
+        n.brute_timeout = atoi(optarg);
         break;
       case 18:
         argp.custom_ping = true;
         argp.udp_ping = true;
-        n.udpport = atoi(optarg);
+        n.udp_ping_ports = split_string_int(optarg, ',');
         break;
       case 65:
         n.badsum = true;
@@ -1524,6 +1484,15 @@ void parse_args(int argc, char** argv)
       }
       case 6:
         argp.no_verbose_script = false;
+        break;
+      case 39:
+        n.brute_threads = atoi(optarg);
+        break;
+      case 64:
+        n.brute_attempts = atoi(optarg);
+        break;
+      case 41:
+        n.brute_maxcon = atoi(optarg);
         break;
       case 97:
         argp.type = TCP_MAIMON_SCAN;

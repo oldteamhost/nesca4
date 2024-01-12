@@ -9,7 +9,6 @@
 #include "include/readpkt.h"
 #include "include/ip.h"
 #include "include/utils.h"
-#include "libdnet/include/ip6.h"
 #include <linux/if_ether.h>
 #include <netinet/in.h>
 #include <stdio.h>

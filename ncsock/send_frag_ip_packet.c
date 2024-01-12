@@ -9,22 +9,27 @@
 
 int send_frag_ip_packet(int fd, const struct sockaddr_in *dst, const u8 *packet, u32 plen, u32 mtu)
 {
-  struct ip_header *ip = (struct ip_header *) packet;
-  int headerlen = ip->ihl* 4;
-  u32 datalen = plen - headerlen;
-  int fdatalen = 0, res = 0;
-  int fragment = 0;
+  int fdatalen = 0, res = 0, fragment = 0;
+  struct ip_header *ip;
+  int headerlen;
+  u32 datalen;
+  u8 *fpacket;
 
-  assert(headerlen <= (int) plen);
-  assert(headerlen >= 20 && headerlen <= 60); /* sanity check (RFC791) */
+  ip = (struct ip_header*)packet;
+  headerlen = ip->ihl* 4;
+  datalen = plen - headerlen;
+
+  assert(headerlen <= (int)plen);
+  /* sanity check (RFC791) */
+  assert(headerlen >= 20 && headerlen <= 60);
   assert(mtu > 0 && mtu % 8 == 0);
 
   if (datalen <= mtu)
     return send_ip_raw(fd, dst, packet, plen);
 
-  u8 *fpacket = (u8 *) malloc(headerlen + mtu);
+  fpacket = (u8*)malloc(headerlen + mtu);
   memcpy(fpacket, packet, headerlen + mtu);
-  ip = (struct ip_header*) fpacket;
+  ip = (struct ip_header*)fpacket;
 
   for (fragment = 1; fragment * mtu < datalen + mtu; fragment++) {
     fdatalen = (fragment * mtu <= datalen ? mtu : datalen % mtu);
@@ -44,4 +49,3 @@ int send_frag_ip_packet(int fd, const struct sockaddr_in *dst, const u8 *packet,
   free(fpacket);
   return res;
 }
-

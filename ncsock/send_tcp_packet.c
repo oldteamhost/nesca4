@@ -6,11 +6,9 @@
 */
 
 #include "include/tcp.h"
+#include "include/ip.h"
 
-extern int send_ip_packet(int fd, const struct sockaddr_storage *dst,
-    int fragscan, const u8 *packet, u32 plen);
-
-int send_tcp_packet(int fd, const u32 saddr, const u32 daddr, int ttl, bool df,
+int send_tcp_packet(struct ethtmp *eth, int fd, const u32 saddr, const u32 daddr, int ttl, bool df,
     u8 *ipops, int ipoptlen, u16 sport, u16 dport, u32 seq, u32 ack, u8 reserved, u8 flags, u16 window, u16 urp,
     u8 *options, int optlen, const char *data, u16 datalen, int fragscan, bool badsum)
 {
@@ -27,10 +25,10 @@ int send_tcp_packet(int fd, const u32 saddr, const u32 daddr, int ttl, bool df,
     return -1;
 
   memset(&dst, 0, sizeof(dst));
-  dst_in = (struct sockaddr_in *) &dst;
+  dst_in = (struct sockaddr_in*)&dst;
   dst_in->sin_family = AF_INET;
   dst_in->sin_addr.s_addr = daddr;
-  res = send_ip_packet(fd, &dst, fragscan, packet, packetlen);
+  res = send_ip_packet(eth, fd, &dst, fragscan, packet, packetlen);
 
   free(packet);
   return res;

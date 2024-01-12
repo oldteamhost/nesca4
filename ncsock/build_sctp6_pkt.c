@@ -16,9 +16,10 @@ u8 *build_sctp6_pkt(const struct in6_addr *source, const struct in6_addr *victim
   u8 *packet, *sctp;
   u32 sctplen;
 
-  sctp = build_sctp(sport, dport, vtag, chunks, chunkslen, data, datalen, &sctplen, adler32sum, badsum);
-  packet = build_ip6_pkt(source, victim, tc, flowlabel, IPPROTO_SCTP, hoplimit,
-      (char*)sctp, sctplen, packetlen);
+  sctp = build_sctp(sport, dport, vtag, chunks, chunkslen, data, datalen,
+      &sctplen, adler32sum, badsum);
+  packet = build_ip6_pkt(source, victim, tc, flowlabel, IPPROTO_SCTP,
+      hoplimit, (char*)sctp, sctplen, packetlen);
 
   free(sctp);
   return packet;

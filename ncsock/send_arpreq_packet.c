@@ -8,22 +8,20 @@
 #include "include/arp.h"
 #include "include/eth.h"
 #include "include/utils.h"
-#include "libdnet/include/eth.h"
+#include "include/eth.h"
 #include <stdlib.h>
 
-int send_arpreq_packet(eth_t *eth, eth_addr_t saddr, ip_addreth_t ipsaddr,
-    ip_addreth_t ipdaddr, u16 operation)
+int send_arpreq_packet(eth_t *eth, eth_addr_t ethsrc,
+    ip_addreth_t ipsrc, ip_addreth_t ipdst, u16 operation)
 {
-  eth_addr_t dst, dst1;
-  u8 *packet;
   u32 packetlen;
+  u8 *packet;
   int res;
 
-  memcpy(dst.data, ETH_ADDR_BROADCAST, ETH_ADDR_LEN);
-  memcpy(dst1.data, "\x00\x00\x00\x00\x00\x00", ETH_ADDR_LEN);
-
-  packet = build_arp_pkt(saddr, dst, ARP_HRD_ETH, ARP_PRO_IP, ETH_ADDR_LEN, _IP_ADDR_LEN,
-      operation, saddr, ipsaddr, dst1, ipdaddr, &packetlen);
+  packet = build_arp_pkt(ethsrc, MAC_STRING_TO_ADDR(ETH_ADDR_BROADCAST),
+      ARP_HRD_ETH, ARP_PRO_IP, ETH_ADDR_LEN, _IP_ADDR_LEN,
+      operation, ethsrc, ipsrc, MAC_STRING_TO_ADDR("\x00\x00\x00\x00\x00\x00"),
+      ipdst, &packetlen);
   if (!packet)
     return -1;
 

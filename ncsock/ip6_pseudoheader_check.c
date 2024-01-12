@@ -6,10 +6,10 @@
 */
 
 #include "include/ip.h"
+#include <netinet/in.h>
 
 u16 ip6_pseudoheader_check(const struct in6_addr *saddr, const struct in6_addr *daddr, u8 nxt, u32 len, const void *hstart)
 {
-  int sum;
   struct pseudo
   {
     struct in6_addr src;
@@ -18,6 +18,7 @@ u16 ip6_pseudoheader_check(const struct in6_addr *saddr, const struct in6_addr *
     u8 z0, z1, z2;
     u8 nxt;
   } hdr;
+  int sum;
 
   hdr.src = *saddr;
   hdr.dst = *daddr;
@@ -28,12 +29,13 @@ u16 ip6_pseudoheader_check(const struct in6_addr *saddr, const struct in6_addr *
   sum = ip_cksum_add(&hdr, sizeof(hdr), 0);
   sum = ip_cksum_add(hstart, len, sum);
   sum = ip_cksum_carry(sum);
+
   /* RFC 2460: "Unlike IPv4, when UDP packets are originated by an IPv6 node,
      the UDP checksum is not optional.  That is, whenever originating a UDP
      packet, an IPv6 node must compute a UDP checksum over the packet and the
      pseudo-header, and, if that computation yields a result of zero, it must be
      changed to hex FFFF for placement in the UDP header." */
-  if (nxt == IP_PROTO_UDP && sum == 0)
+  if (nxt == IPPROTO_UDP && sum == 0)
     sum = 0xFFFF;
 
   return sum;

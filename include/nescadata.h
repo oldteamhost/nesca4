@@ -69,12 +69,24 @@ class NESCADATA {
     u32 src;
 
     int ping_timeout = 600;
-    int ack_dest_port = 80;
-    int syn_dest_port = 80;
-    int sctpport = 80;
-    int udpport = 80;
+
+    int temp_ack_port = 0;
+    int temp_syn_port = 0;
+    int temp_udp_port = 0;
+    int temp_sctp_port = 0;
+
+    std::vector<int> ack_ping_ports = {80};
+    std::vector<int> syn_ping_ports = {80};
+    std::vector<int> sctp_ping_ports = {80};
+    std::vector<int> udp_ping_ports = {53};
+
     int frag_mtu = 0;
     int sport = -1;
+
+    int brute_timeout = -1;
+    int brute_threads = 5;
+    int brute_maxcon = 10;
+    int brute_attempts = 2;
 
     bool badsum = false;
     bool customttl = false;

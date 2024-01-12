@@ -1,5 +1,6 @@
 admin
 anonymous
+foo
 ftp
 root
 root123

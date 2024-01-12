@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
 */
 
-#include "include/strbase.h"
+#include "include/utils.h"
 #include <stdlib.h>
 
 char* generate_random_str(int len, const char* dictionary)

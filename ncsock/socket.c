@@ -6,7 +6,11 @@
 */
 
 #include "include/socket.h"
+#include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
 #include <unistd.h>
+#include <signal.h>
 
 int session_run(const char* dest_ip, int port, int timeout_ms, int verbose)
 {
@@ -20,14 +24,16 @@ int session_run(const char* dest_ip, int port, int timeout_ms, int verbose)
 
   server_addr.sin_family = AF_INET;
   server_addr.sin_port = htons(port);
+  if (inet_pton(AF_INET, dest_ip, &server_addr.sin_addr) <= 0)
+    goto fail;
 
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
   if (sockfd == -1)
     return -1;
 
-  if (inet_pton(AF_INET, dest_ip, &server_addr.sin_addr) <= 0)
-    goto fail;
   if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1)
+    goto fail;
+  if (setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) == -1)
     goto fail;
   if (connect(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1)
     goto fail;
@@ -47,7 +53,7 @@ fail:
   return -1;
 }
 
-void session_run_buf(const char* dest_ip, int port, int timeout_ms, char* buffer, size_t buffer_size)
+int session(const char* dst, u16 port, int timeout_ms, u8* packet, size_t len)
 {
   struct timeval timeout;
   struct sockaddr_in server_addr;
@@ -58,44 +64,70 @@ void session_run_buf(const char* dest_ip, int port, int timeout_ms, char* buffer
 
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
   if (sockfd == -1)
-    return;
+    return -1;
 
   server_addr.sin_family = AF_INET;
   server_addr.sin_port = htons(port);
+  inet_pton(AF_INET, dst, &server_addr.sin_addr);
 
-  if (inet_pton(AF_INET, dest_ip, &server_addr.sin_addr) <= 0)
-    goto fail;
-  if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1)
-    goto fail;
-  if (connect(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1)
+  setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+  setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
+
+  if (connect(sockfd,(struct sockaddr*)&server_addr, sizeof(server_addr)) == -1)
     goto fail;
 
-  r = recv(sockfd, buffer, buffer_size - 1, 0);
-  close(sockfd);
-  if (r == -1)
-    return;
+  if (packet) {
+    r = recv(sockfd, packet, len - 1, 0);
+    packet[r] = '\0';
+  }
 
-  buffer[r] = '\0';
+  return sockfd;
+
 fail:
   close(sockfd);
-  return;
+  return -1;
 }
 
-int
-session_packet(int sockfd, char* response_buffer, const char* message, int verbose, int timeout_ms)
-{
-  int s, r;
+#include <pthread.h>
 
-  s = send(sockfd, message, strlen(message), 0);
+ssize_t session_packet(int fd, u8* packet, ssize_t len, const char* message)
+{
+  ssize_t s, r;
+
+  s = send(fd, message, strlen(message), MSG_NOSIGNAL);
   if (s == -1)
     return -1;
-  r = recv(sockfd, response_buffer, CMD_BUFFER - 1, 0);
+  r = recv(fd, packet, len - 1, MSG_NOSIGNAL);
   if (r == -1)
     return -1;
 
-  response_buffer[r] = '\0';
-  if (verbose)
-    printf("VERBOSE  %s", response_buffer);
-
+  packet[r] = '\0';
   return r;
+}
+
+u8 *sendproto_command(int fd, const char* command)
+{
+  char sendbuf[CMD_BUFFER];
+  pthread_mutex_t mutex;
+  u8 *packet = NULL;
+
+  pthread_mutex_init(&mutex, NULL);
+
+  snprintf(sendbuf, CMD_BUFFER, "%s", command);
+
+  pthread_mutex_lock(&mutex);
+  packet = (u8*)malloc(CMD_BUFFER);
+  pthread_mutex_unlock(&mutex);
+  if (!packet)
+    return NULL;
+
+  if (session_packet(fd, (u8*)packet, CMD_BUFFER, sendbuf) == -1) {
+    pthread_mutex_lock(&mutex);
+    free(packet);
+    pthread_mutex_unlock(&mutex);
+
+    return NULL;
+  }
+
+  return packet;
 }

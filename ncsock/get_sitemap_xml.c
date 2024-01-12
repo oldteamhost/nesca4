@@ -9,37 +9,12 @@
 
 int get_sitemap_xml(const char* ip, const int port, const int timeout_ms)
 {
-  int res, code;
-  char* buf = NULL;
-  struct http_header hh;
+  struct http_response r;
+  u8 temp[65535];
 
-  hh.user_agent = "ncsock";
-  hh.content_len = 0;
-  hh.content_type = "";
-  hh.method = "GET";
-  hh.path = "/sitemap.xml";
-  hh.dest_host = ip;
-  hh.auth_header = "";
-
-  /* it is not necessary to allocate memory for this function,
-   * but it is better to do it when getting the whole page into
-   * the buffer */
-  buf = (char*)malloc(4096);
-  if (!buf)
+  if (sendfast_http_request(ip, port, "/sitemap.xml", timeout_ms, &r, temp, sizeof(temp)) == -1)
     return -1;
-
-  res = send_http_request(ip, port, timeout_ms, &hh, buf, 4096);
-  if (res == -1)
-    goto fail;
-
-  code = parse_http_response_code(buf);
-  if (code == 200)
-    goto ok;
-  goto fail;
-fail:
-  free(buf);
+  if (r.code == 200)
+    return 0;
   return -1;
-ok:
-  free(buf);
-  return 0;
 }
