@@ -7,11 +7,11 @@
 
 #include "include/debianfix.h"
 
-u64 _strlcpy(char* dst, const char* src, u64 dlen)
+size_t _strlcpy(char *dst, const char *src, size_t dlen)
 {
+#ifdef OLD
   const char *osrc = src;
   u64 nleft = dlen;
-
   if (nleft != 0)
     while (--nleft != 0)
       if ((*dst++ = *src++) == '\0')
@@ -21,6 +21,24 @@ u64 _strlcpy(char* dst, const char* src, u64 dlen)
       *dst = '\0';
     while (*src++);
   }
-
   return(src - osrc - 1);
+#endif
+  
+  register char *d = dst;
+  register const char *s = src;
+  register size_t n = dlen;
+
+  if (n != 0 && --n != 0) {
+    do {
+      if ((*d++ = *s++) == 0)
+	break;
+    } while (--n != 0);
+  }
+  if (n == 0) {
+    if (dlen != 0)
+      *d = '\0';
+    while (*s++);
+  }
+  
+  return(s - src - 1);	
 }

@@ -14,10 +14,8 @@
 
 int this_is(const char* node)
 {
-  int len, mask;
-  char* cidr_symbol;
-  char* ip_range_delimiter;
-  int tempend = 0;
+  char *ip_range_delimiter, *cidr_symbol;
+  int tempend = 0, len, mask;
 
   len = strlen(node);
 

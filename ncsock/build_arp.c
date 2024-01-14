@@ -13,8 +13,8 @@ u8 *build_arp(u16 hdr, u16 pro, u8 hln, u8 pln,
     u16 operation, eth_addr_t sha, ip_addreth_t spa,
     eth_addr_t tha, ip_addreth_t tpa, u32 *plen)
 {
-  int packetlen;
   struct arp_header *arp;
+  int packetlen;
   u8* packet;
 
   packetlen = sizeof(struct arp_header);

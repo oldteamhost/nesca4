@@ -6,16 +6,8 @@
 */
 
 #include "../ncsock/include/utils.h"
-
-u16 generate_rare_port(void)
-{
-  return(random_num(49151, 65535));
-}
-
-u32 generate_seq(void)
-{
-  return(random_num(1, 4294967294));
-}
+#include "include/mt19937.h"
+#include <limits.h>
 
 const char* generate_ipv4(void)
 {
@@ -31,38 +23,42 @@ const char* generate_ipv4(void)
 
 u32 random_num(u32 min, u32 max)
 {
-  u32 range = max - min + 1;
+  u32 range;
+  
+  mt19937_seed(generate_seed());
+  range = max - min + 1;
   if (min > max)
     return -1;
 
-  mt19937_seed(generate_seed());
-  u32 random_value = min + (u32)(mt19937_random() % range);
-
-  return random_value;
+  return (min + (u32)(mt19937_random() % range));
 }
 
-u32 generate_ident(void)
-{
-  mt19937_seed(generate_seed());
-  return (u16)(mt19937_random() % 229444421);
+u32 generate_ident(void) {
+  return (random_num(1, 229444421));
+}
+
+u16 generate_rare_port(void) {
+  return(random_num(49151, 65535));
+}
+
+u32 generate_seq(void) {
+  return(random_num(1, 4294967294));
+}
+
+u32 random_u32(void) {
+  return generate_random_u32(1, UINT_MAX);
+}
+
+u16 random_u16(void) {
+  return (u16)generate_random_u32(1, USHRT_MAX);
+}
+
+u8 random_u8(void) {
+  return (u8)generate_random_u32(1, UCHAR_MAX);
 }
 
 u16 generate_checksum(void)
 {
   mt19937_seed(generate_seed());
-  return (u16)(1+ (mt19937_random() % 0xFFFF-1));
-}
-
-#include <limits.h>
-u32 random_u32(void)
-{
-  return generate_random_u32(1, UINT_MAX);
-}
-u16 random_u16(void)
-{
-  return (u16)generate_random_u32(1, USHRT_MAX);
-}
-u8 random_u8(void)
-{
-  return (u8)generate_random_u32(1, UCHAR_MAX);
+  return (u16)(1+ (mt19937_random() % 0xFFFF - 1));
 }

@@ -6,14 +6,12 @@
 */
 
 #include "include/eth.h"
-#include <netinet/in.h>
-#include <string.h>
 
 u8 *build_eth(eth_addr_t src, eth_addr_t dst, u16 type,
     const char *data, u16 datalen, u32 *plen)
 {
   struct eth_header *eth;
-  int packetlen;
+  u32 packetlen;
   u8 *packet;
 
   packetlen = ETH_HDR_LEN + datalen;
@@ -26,10 +24,10 @@ u8 *build_eth(eth_addr_t src, eth_addr_t dst, u16 type,
   eth->dst  = dst;
   eth->src  = src;
   eth->type = htons(type);
-
+  
   if (data && datalen)
     memcpy((u8*)eth + ETH_HDR_LEN,
-        data, datalen);
+	   data, datalen);
 
   *plen = packetlen;
   return packet;

@@ -10,6 +10,7 @@
 int send_ip_eth(struct ethtmp *eth, const u8 *packet, u32 plen)
 {
   u32 packetlen;
+  eth_t *ethsd;
   u8 *ethframe;
   int res;
 
@@ -17,7 +18,12 @@ int send_ip_eth(struct ethtmp *eth, const u8 *packet, u32 plen)
       (char*)packet, plen, &packetlen);
   if (!ethframe)
     return -1;
-  res = eth_send(eth->ethsd, ethframe, packetlen);
+
+  if (!eth->ethsd)
+    ethsd = eth_open_cached(eth->devname);
+  else
+    ethsd = eth->ethsd;
+  res = eth_send(ethsd, ethframe, packetlen);
 
   free(ethframe);
   return res;

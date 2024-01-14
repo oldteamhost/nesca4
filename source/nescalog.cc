@@ -261,7 +261,7 @@ void nesca_prints::print_port_state(int status, u16 port, u8 type, const std::st
   else
     ex = "tcp";
 
-  res = gray_nesca + "-> PORT " + green_html + std::to_string(port) + "/" + ex +
+  res = gray_nesca + " # PORT " + green_html + std::to_string(port) + "/" + ex +
         gray_nesca + " STATE " + golder_rod + return_port_status(status) +
         gray_nesca + " SERVICE " + green_html + service + reset_color;
 

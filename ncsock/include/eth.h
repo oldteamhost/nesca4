@@ -39,9 +39,8 @@
 #define ETH_TYPE_LEN  2
 #define ETH_CRC_LEN   4
 #define ETH_HDR_LEN   14
-
 #define ETH_LEN_MIN   64   /* minimum frame length with CRC */
-#define ETH_LEN_MAX   1518 /* maximum frame length with CRC */
+#define ETH_LEN_MAX 1518   /* maximum frame length with CRC */
 
 #define ETH_MTU (ETH_LEN_MAX - ETH_HDR_LEN - ETH_CRC_LEN)
 #define ETH_MIN (ETH_LEN_MIN - ETH_HDR_LEN - ETH_CRC_LEN)
@@ -58,11 +57,8 @@
 #define ETH_TYPE_PPPOE      0x8864 /* PPP Over Ethernet Session Stage */
 #define ETH_TYPE_LOOPBACK   0x9000 /* used to test interfaces */
 
-#define ETH_IS_MULTICAST(ea) \
-  (*(ea) & 0x01) /* is address mcast/bcast? */
-
-#define ETH_ADDR_BROADCAST \
-  "\xff\xff\xff\xff\xff\xff"
+#define ETH_IS_MULTICAST(ea) (*(ea)&0x01) /* is address mcast/bcast? */
+#define ETH_ADDR_BROADCAST "\xff\xff\xff\xff\xff\xff"
 
 #define eth_pack_hdr(h, _dst, _src, _type) do {             \
   struct eth_header *eth_pack_p = (struct eth_header*)(h);  \
@@ -79,7 +75,6 @@
       sscanf(mac_str_ + i * 3, "%2hhx", &addr_var.data[i]); \
     addr_var;                                               \
   })
-
 #define MAC_ADDR_STRING_FORMAT "%02x:%02x:%02x:%02x:%02x:%02x"
 #define PRINT_MAC_ADDR(addr)                                \
   printf(MAC_ADDR_STRING_FORMAT "\n",                       \
@@ -98,32 +93,27 @@ typedef struct eth_addr {
   u8 data[ETH_ADDR_LEN];
 } eth_addr_t;
 
-struct eth_info
-{
-  char  srcmac[6];
-  char  dstmac[6];
-  eth_t *ethsd;
-  char  devname[16];
-};
-
 struct ethtmp
 {
-  eth_t *ethsd;
-  eth_addr_t dst;
-  eth_addr_t src;
+  eth_t      *ethsd;
+  eth_addr_t  dst;
+  eth_addr_t  src;
+  char        devname[16];
 };
 
 struct eth_header
 {
-  eth_addr_t dst;  /* dst addr */
-  eth_addr_t src;  /* src addr */
-  u16 type;        /* payload type */
+  eth_addr_t dst;
+  eth_addr_t src;
+  u16        type;
 };
 
 __BEGIN_DECLS
 
-u8 *build_eth(eth_addr_t src, eth_addr_t dst, u16 type,
-    const char *data, u16 datalen, u32 *plen);
+u8 *build_eth(eth_addr_t src, eth_addr_t dst, u16 type, const char *data,
+              u16 datalen, u32 *plen);
+eth_t   *eth_open_cached(const char *device);
+void     eth_close_cached(void);
 eth_t   *eth_open(const char *device);
 ssize_t  eth_send(eth_t *e, const void *buf, size_t len);
 eth_t   *eth_close(eth_t *e);
