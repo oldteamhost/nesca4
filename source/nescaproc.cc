@@ -77,7 +77,8 @@ bool contains_word(const std::string& word, const std::string& sentence)
 
   std::string::size_type pos = lowerSentence.find(lowerWord);
   while (pos != std::string::npos) {
-    if (std::isalpha(lowerSentence[pos - 1]) || std::isalpha(lowerSentence[pos + lowerWord.length()]))
+    if ((pos > 0 && std::isalpha(lowerSentence[pos - 1])) || 
+	(pos + lowerWord.length() < lowerSentence.length() && std::isalpha(lowerSentence[pos + lowerWord.length()])))
       pos = lowerSentence.find(lowerWord, pos + 1);
     else
       return 1;

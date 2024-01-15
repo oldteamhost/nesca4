@@ -66,7 +66,7 @@ u8 *icmp_probe(NESCADATA *n, const ipnesca_t dst, u8 type, u32 *packetlen)
 {
   u8 *res = NULL;
   bool df = true;
-  u8 icmptype;
+  u8 icmptype = 0;
 
   if (!n->customttl)
     n->ttl = -1;

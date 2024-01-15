@@ -23,8 +23,9 @@ eth_t *eth_open_cached(const char *device)
   }
   etht_cache_device = eth_open(device);
   if (etht_cache_device)
-    strncpy(etht_cache_device_name, device,
-            sizeof(etht_cache_device_name));
+    snprintf(etht_cache_device_name,
+	     sizeof(etht_cache_device_name), "%s", device);
+  
   return etht_cache_device;
 }
 

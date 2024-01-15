@@ -85,9 +85,9 @@ int main(int argc, char** argv)
   n.src = inet_addr(templocalip);
   free(templocalip);
 
-  get_active_interface_name(n.dev, 512);
+  //  get_active_interface_name(n.dev, 512);
   get_gateway_ip(n.gateway_ip, sizeof(n.gateway_ip));
-  get_local_mac(n.dev, n.srcmac);
+  //  get_local_mac(n.dev, n.srcmac);
 
   parse_args(argc, argv);
 
@@ -411,12 +411,7 @@ void NESCASCAN(std::vector<std::string>& temp_vector)
           n.find_port_status(ip, PORT_NO_FILTER)) {
 
         np.print_host_state(host_scan, ip, n.get_new_dns(ip), n.get_rtt(ip));
-        /*
-        np.gray_nesca_on();
-        std::cout << "===============================================================\n";
-        reset_colors;
-        */
-
+	
         if (argp.json_save) {
           nhd.ip_address = ip.c_str();
           nhd.rtt = n.get_rtt(ip);
@@ -705,39 +700,38 @@ std::vector<std::string> resolvhosts(bool datablocks, std::vector<std::string> h
       n.add_ip(n.gateway_ip);
     }
     else {
-
-    temp = this_is(t.c_str());
-    if (temp == CIDR) {
-      std::vector<std::string> temp = cidr_to_ips({t});
-      for (auto& tt : temp)
-        result[tt] = "";
-    }
-    if (temp == RANGE) {
-      std::vector<std::string> temp = range_to_ips({t});
-      for (auto& tt : temp)
-        result[tt] = "";
-    }
-    if (temp == _URL_) {
-      clean = clean_url(t.c_str());
-      if (!clean)
-        continue;
-      res = get_ip(clean, ipbuf, sizeof(ipbuf));
-      if (res == -1)
-        np.nlog_error("Failed to resolve \"" + std::string(clean)+ "\"\n");
+      temp = this_is(t.c_str());
+      if (temp == CIDR) {
+	std::vector<std::string> temp = cidr_to_ips({t});
+	for (auto& tt : temp)
+	  result[tt] = "";
+      }
+      if (temp == RANGE) {
+	std::vector<std::string> temp = range_to_ips({t});
+	for (auto& tt : temp)
+	  result[tt] = "";
+      }
+      if (temp == _URL_) {
+	clean = clean_url(t.c_str());
+	if (!clean)
+	  continue;
+	res = get_ip(clean, ipbuf, sizeof(ipbuf));
+	if (res == -1)
+	  np.nlog_error("Failed to resolve \"" + std::string(clean)+ "\"\n");
+	else
+	  result[ipbuf] = clean;
+	free(clean);
+	memset(ipbuf, 0, 16);
+      }
+      if (temp == DNS) {
+	res = get_ip(t.c_str(), ipbuf, sizeof(ipbuf));
+	if (res == -1)
+	  np.nlog_error("Failed to resolve \"" + std::string(t.c_str())+ "\"\n");
+	else
+	  result[ipbuf] = t;
+      }
       else
-        result[ipbuf] = clean;
-      free(clean);
-      memset(ipbuf, 0, 16);
-    }
-    if (temp == DNS) {
-      res = get_ip(t.c_str(), ipbuf, sizeof(ipbuf));
-      if (res == -1)
-        np.nlog_error("Failed to resolve \"" + std::string(t.c_str())+ "\"\n");
-      else
-        result[ipbuf] = t;
-    }
-    else
-      result[t] = "";
+	result[t] = "";
     }
   }
   if (datablocks) {

@@ -65,12 +65,12 @@ struct sctp_chunk_header
   u16 len;
 };
 
-#define sctp_pack_chunk_header(hdr, _type, _flags, _len) do {                  \
-  struct sctp_chunk_header *sctp_pack_chp = (struct sctp_chunk_header*)(hdr);  \
-  sctp_pack_chp->type = _type;                                                 \
-  sctp_pack_chp->flags = _flags;                                               \
-  sctp_pack_chp->len = htons(_len);                                            \
-} while (0)
+#define sctp_pack_chunk_header(hdr, _type, _flags, _len) do {		\
+    struct sctp_chunk_header *sctp_pack_chp = (struct sctp_chunk_header*)(hdr);	\
+    sctp_pack_chp->type = _type;					\
+    sctp_pack_chp->flags = _flags;					\
+    sctp_pack_chp->len = htons(_len);					\
+  } while (0)
 
 struct sctp_chunk_header_init
 {
@@ -82,29 +82,28 @@ struct sctp_chunk_header_init
   u32 itsn;  /* Initial TSN */
 };
 
-#define sctp_pack_chunkhdr_init(hdr, __type, __flags, __len, __itag, __arwnd, __nos,     \
-    __nis, __itsn) do {                                                                  \
-  struct sctp_chunk_header_init *sctp_pack_chip =                                        \
-      (struct sctp_chunk_header_init*)(hdr);                                             \
-  sctp_pack_chunk_header(sctp_pack_chip, __type, __flags, __len);                        \
-  sctp_pack_chip->itag = htonl(__itag);                                                  \
-  sctp_pack_chip->arwnd = htonl(__arwnd);                                                \
-  sctp_pack_chip->nos = htons(__nos);                                                    \
-  sctp_pack_chip->nis = htons(__nis);                                                    \
-  sctp_pack_chip->itsn = htonl(__itsn);                                                  \
-} while (0)
+#define sctp_pack_chunkhdr_init(hdr, __type, __flags, __len, __itag, __arwnd, __nos, \
+				__nis, __itsn) do {			\
+    struct sctp_chunk_header_init *sctp_pack_chip =			\
+      (struct sctp_chunk_header_init*)(hdr);				\
+    sctp_pack_chunk_header(sctp_pack_chip, __type, __flags, __len);	\
+    sctp_pack_chip->itag = htonl(__itag);				\
+    sctp_pack_chip->arwnd = htonl(__arwnd);				\
+    sctp_pack_chip->nos = htons(__nos);					\
+    sctp_pack_chip->nis = htons(__nis);					\
+    sctp_pack_chip->itsn = htonl(__itsn);				\
+  } while (0)
 
-struct sctp_chunk_header_cookie_echo
-{
+struct sctp_chunk_header_cookie_echo {
   struct sctp_chunk_header chunkhdr;
 };
 
 #define sctp_pack_chunkhdr_cookie_echo(hdr, type, flags, length)  \
-do {                                                              \
-  struct sctp_chunk_header_cookie_echo *sctp_pack_chip =          \
-      (struct sctp_chunk_header_cookie_echo*)(hdr);               \
-  sctp_pack_chunk_header(sctp_pack_chip, type, flags, length);    \
-} while (0)
+  do {								  \
+    struct sctp_chunk_header_cookie_echo *sctp_pack_chip =	  \
+      (struct sctp_chunk_header_cookie_echo*)(hdr);		  \
+    sctp_pack_chunk_header(sctp_pack_chip, type, flags, length);  \
+  } while (0)
 
 __BEGIN_DECLS
 

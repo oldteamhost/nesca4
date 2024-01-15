@@ -1639,7 +1639,7 @@ void _interpreter_::sendpacket(u8 proto, int fd, struct sendpktline *spl)
   struct temp_ip_header iph;
   struct sockaddr_in dst;
   u16 icmpseq = 1;
-  u8* packet;
+  u8* packet = NULL;
   u32 plen = 0;
   dst.sin_family = AF_INET;
 

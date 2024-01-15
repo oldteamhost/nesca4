@@ -55,7 +55,7 @@
 #include "../ncsock/include/icmp.h"
 
 /*Угадайте?*/
-#define _VERSION "20240105"
+#define _VERSION "20240115"
 
 void usage(const char* exec);
 void version_menu(void);

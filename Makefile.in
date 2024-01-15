@@ -1,0 +1,46 @@
+CC = gcc
+CXX = g++
+CFLAGS = -g -Wall -O2
+LDFLAGS = -pthread -Wl,-rpath,library/platform/linux -Llibrary/platform/linux
+SRC_DIR = source
+MODULE_DIR = modules
+C_NCSOCK_DIR = ncsock
+C_NCBASE_DIR = ncbase
+BUILD_DIR = build
+
+SRCS = $(wildcard $(SRC_DIR)/*.cc)
+MODULE_SRCS = $(wildcard $(MODULE_DIR)/*.cc)
+C_NCSOCK_SRCS = $(wildcard $(C_NCSOCK_DIR)/*.c)
+C_NCBASE_SRCS = $(wildcard $(C_NCBASE_DIR)/*.c)
+
+OBJS = $(patsubst $(SRC_DIR)/%.cc,$(BUILD_DIR)/%.o,$(SRCS))
+MODULE_OBJS = $(patsubst $(MODULE_DIR)/%.cc,$(BUILD_DIR)/%.o,$(MODULE_SRCS))
+C_NCSOCK_OBJS = $(patsubst $(C_NCSOCK_DIR)/%.c,$(BUILD_DIR)/%.o,$(C_NCSOCK_SRCS))
+C_NCBASE_OBJS = $(patsubst $(C_NCBASE_DIR)/%.c,$(BUILD_DIR)/%.o,$(C_NCBASE_SRCS))
+
+TARGET = nesca4
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS) $(C_NCSOCK_OBJS) $(MODULE_OBJS) $(C_NCBASE_OBJS)
+	$(CXX) $^ -o $@ $(LDFLAGS) -lhcnetsdk -ldhnetsdk -ldhdvr
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cc
+	$(CXX) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/%.o: $(MODULE_DIR)/%.cc
+	$(CXX) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/%.o: $(C_NCSOCK_DIR)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/%.o: $(C_NCBASE_DIR)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -rf $(BUILD_DIR) $(TARGET) config.status config.log autom4te.cache Makefile
+
+distclean: clean
+	rm -f configure
+
+.PHONY: all clean distclean

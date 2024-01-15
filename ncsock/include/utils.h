@@ -26,6 +26,7 @@
 #include <sys/cdefs.h>
 #include "mt19937.h"
 #include "../include/eth.h"
+#include <sys/time.h>
 
 #define CIDR  0
 #define IPv4  1
@@ -42,7 +43,6 @@
 #define IS_NULL_OR_EMPTY(str) \
   ((str == NULL) || (*str == '\0'))
 
-#include <sys/time.h>
 #define U64_SEED() ({                     \
   struct timeval t;                       \
   gettimeofday(&t, NULL);                 \
@@ -54,7 +54,9 @@
 
 __BEGIN_DECLS
 
-int   this_is(const char* node);
+int this_is(const char *node);
+int getipv4(const char *node, char *res, u8 reslen);
+  
 int   check_root_perms(void);
 void  delayy(int ms);
 void  get_current_date(char* formatted_date, size_t max_length);
@@ -69,8 +71,8 @@ void  macstr(eth_addr_t *eth, char* mac);
 int   get_gateway_ip(char* buf, size_t len);
 int   get_local_mac(const char *dev, char *mac_address);
 int   parse_ipopts(const char *txt, u8 *data, int datalen,
-          int* firsthopoff, int* lasthopoff, char *errstr,
-          size_t errstrlen);
+		   int* firsthopoff, int* lasthopoff, char *errstr,
+		   size_t errstrlen);
 void  parse_tcpopts(u8 *optp, int len, char *result, int bufsize);
 u8   *hexbin(char *str, size_t *outlen);
 int   find_word(const char* buffer, const char* word);

@@ -23,8 +23,8 @@
 
 int read_packet(struct readfiler *rf, int recv_timeout_ms, u8 **buffer)
 {
-  struct sockaddr_in  *dest, source;
-  struct sockaddr_in6 *dest6, source6;
+  struct sockaddr_in  *dest = NULL, source;
+  struct sockaddr_in6 *dest6 = NULL, source6;
 
   struct ip_header *iph;
   struct ip6_hdr *iph6;

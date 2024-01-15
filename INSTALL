@@ -1,19 +1,11 @@
-sudo apt-get install nodejs
-sudo apt install gcc make git cmake
+sudo apt install build-essential git
 git clone https://github.com/oldteamhost/nesca4
 cd nesca4
-cmake .
+./configure
 make -j12
 
-sudo pacman -S nodejs cmake git make
+sudo pacman -S git
 git clone https://github.com/oldteamhost/nesca4
 cd nesca4
-cmake .
+./configure
 make -j12
-
-Скриншоты не сохраняются!:
-cd nesca4 && sudo chmod u+rwx,g+r,o+r utils/
-
-Для компиляции без библиотек, нужно зайти в файл `config/compile.h`, и закомментировать, или удалить строчку отвечающую за библиотеку,
-без которой вы хотите скомпилировать:
-#define HAVE_NODE_JS

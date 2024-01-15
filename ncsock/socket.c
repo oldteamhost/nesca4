@@ -16,7 +16,7 @@ int session_run(const char* dest_ip, int port, int timeout_ms, int verbose)
 {
   struct timeval timeout;
   struct sockaddr_in server_addr;
-  int sockfd, r;
+  int sockfd = -1, r;
   char response_buffer[CMD_BUFFER];
 
   timeout.tv_sec = timeout_ms / 1000;

@@ -9,6 +9,7 @@
 
 int main(void)
 {
+  /*
   struct ethtmp eth;
   struct sockaddr_in dst;
   u8 *packet;
@@ -30,7 +31,13 @@ int main(void)
   send_ip4_packet(&eth, 0, &dst, 0, packet, packetlen);
 
   eth_close_cached();
+  */
 
+  char ip[16];
+  
+  getipv4("https://yandex.ru/", ip, 16);
+  printf("res: %s\n", ip);
+  
   return 0;
 }
 
