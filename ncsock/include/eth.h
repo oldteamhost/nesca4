@@ -45,17 +45,31 @@
 #define ETH_MTU (ETH_LEN_MAX - ETH_HDR_LEN - ETH_CRC_LEN)
 #define ETH_MIN (ETH_LEN_MIN - ETH_HDR_LEN - ETH_CRC_LEN)
 
-#define ETH_TYPE_PUP        0x0200 /* PUP protocol */
-#define ETH_TYPE_IP         0x0800 /* IP protocol */
-#define ETH_TYPE_ARP        0x0806 /* address resolution protocol */
-#define ETH_TYPE_REVARP     0x8035 /* reverse addr resolution protocol */
-#define ETH_TYPE_8021Q      0x8100 /* IEEE 802.1Q VLAN tagging */
-#define ETH_TYPE_IPV6       0x86DD /* IPv6 protocol */
-#define ETH_TYPE_MPLS       0x8847 /* MPLS */
-#define ETH_TYPE_MPLS_MCAST 0x8848 /* MPLS Multicast */
-#define ETH_TYPE_PPPOEDISC  0x8863 /* PPP Over Ethernet Discovery Stage */
-#define ETH_TYPE_PPPOE      0x8864 /* PPP Over Ethernet Session Stage */
-#define ETH_TYPE_LOOPBACK   0x9000 /* used to test interfaces */
+#define ETH_TYPE_IPV4       0x0800 /* Internet Protocol Version 4              */
+#define ETH_TYPE_ARP        0x0806 /* Address Resolution Protocol              */
+#define ETH_TYPE_FRAMERELAY 0x0808 /* Frame Relay ARP                          */
+#define ETH_TYPE_PPTP       0x880B /* Point-to-Point Tunneling Protocol        */
+#define ETH_TYPE_GSMP       0x880C /* General Switch Management Protocol       */
+#define ETH_TYPE_RARP       0x8035 /* Reverse Address Resolution Protocol      */
+#define ETH_TYPE_IPV6       0x86DD /* Internet Protocol Version 6              */
+#define ETH_TYPE_MPLS       0x8847 /* MPLS                                     */
+#define ETH_TYPE_MPS_UAL    0x8848 /* MPLS with upstream-assigned label        */
+#define ETH_TYPE_MCAP       0x8861 /* Multicast Channel Allocation Protocol    */
+#define ETH_TYPE_PPPOE_D    0x8863 /* PPP over Ethernet Discovery Stage        */
+#define ETH_TYPE_PPOE_S     0x8864 /* PPP over Ethernet Session Stage          */
+#define ETH_TYPE_CTAG       0x8100 /* Customer VLAN Tag Type                   */
+#define ETH_TYPE_EPON       0x8808 /* Ethernet Passive Optical Network         */
+#define ETH_TYPE_PBNAC      0x888E /* Port-based network access control        */
+#define ETH_TYPE_STAG       0x88A8 /* Service VLAN tag identifier              */
+#define ETH_TYPE_ETHEXP1    0x88B5 /* Local Experimental Ethertype             */
+#define ETH_TYPE_ETHEXP2    0x88B6 /* Local Experimental Ethertype             */
+#define ETH_TYPE_ETHOUI     0x88B7 /* OUI Extended Ethertype                   */
+#define ETH_TYPE_PREAUTH    0x88C7 /* Pre-Authentication                       */
+#define ETH_TYPE_LLDP       0x88CC /* Link Layer Discovery Protocol (LLDP)     */
+#define ETH_TYPE_MACSEC     0x88E5 /* Media Access Control Security            */
+#define ETH_TYPE_MVRP       0x88F5 /* Multiple VLAN Registration Protocol      */
+#define ETH_TYPE_MMRP       0x88F6 /* Multiple Multicast Registration Protocol */
+#define ETH_TYPE_FRRR       0x890D /* Fast Roaming Remote Request              */
 
 #define ETH_IS_MULTICAST(ea) (*(ea)&0x01) /* is address mcast/bcast? */
 #define ETH_ADDR_BROADCAST "\xff\xff\xff\xff\xff\xff"

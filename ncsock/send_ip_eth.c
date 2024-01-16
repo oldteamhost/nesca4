@@ -14,7 +14,7 @@ int send_ip_eth(struct ethtmp *eth, const u8 *packet, u32 plen)
   u8 *ethframe;
   int res;
 
-  ethframe = build_eth(eth->src, eth->dst, ETH_TYPE_IP,
+  ethframe = build_eth(eth->src, eth->dst, ETH_TYPE_IPV4,
       (char*)packet, plen, &packetlen);
   if (!ethframe)
     return -1;
