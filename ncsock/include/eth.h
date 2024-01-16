@@ -126,6 +126,7 @@ __BEGIN_DECLS
 
 u8 *build_eth(eth_addr_t src, eth_addr_t dst, u16 type, const char *data,
               u16 datalen, u32 *plen);
+
 eth_t   *eth_open_cached(const char *device);
 void     eth_close_cached(void);
 eth_t   *eth_open(const char *device);

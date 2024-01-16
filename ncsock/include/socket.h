@@ -34,7 +34,6 @@ ssize_t session_packet(int fd, u8* packet, ssize_t len, const char* message);
 int     session_run(const char* dest_ip, int port, int timeout_ms, int verbose);
 u8      *sendproto_command(int fd, const char* command);
 
-
 __END_DECLS
 
 #endif

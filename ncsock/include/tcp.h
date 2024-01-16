@@ -75,7 +75,6 @@ struct tcp_flags
 #define TCP_OPT_LEN_MAX 40
 #define TCP_HDR_LEN_MAX (TCP_HDR_LEN + TCP_OPT_LEN_MAX)
 
-
 #define TCP_OPT_EOL         0 /* end of option list */
 #define TCP_OPT_NOP         1 /* no operation */
 #define TCP_OPT_MSS         2 /* maximum segment size */
@@ -125,25 +124,37 @@ struct tcp_opt
 __BEGIN_DECLS
 
 u8 *build_tcp(u16 sport, u16 dport, u32 seq, u32 ack, u8 reserved, u8 flags,
-    u16 window, u16 urp, const u8 *tcpopt, int tcpoptlen, const char *data, u16 datalen,
-    u32 *packetlen);
-u8 *build_tcp_pkt(u32 saddr, u32 daddr, u8 ttl, u16 ipid, u8 tos,
-  bool df, const u8 *ipopt, int ipoptlen, u16 sport, u16 dport, u32 seq, u32 ack, u8 reserved, u8 flags, u16 window,
-  u16 urp, const u8 *tcpopt, int tcpoptlen, const char *data, u16 datalen, u32 *packetlen, bool badsum);
-u8 *build_tcp6_pkt(const struct in6_addr *source, const struct in6_addr *victim, u8 tc, u32 flowlabel,
-  u8 hoplimit, u16 sport, u16 dport, u32 seq, u32 ack, u8 reserved, u8 flags, u16 window, u16 urp,
-  const u8 *tcpopt, int tcpoptlen, const char *data, u16 datalen, u32 *packetlen, bool badsum);
+              u16 window, u16 urp, const u8 *tcpopt, int tcpoptlen,
+              const char *data, u16 datalen, u32 *packetlen);
+
+u8 *build_tcp_pkt(u32 saddr, u32 daddr, u8 ttl, u16 ipid, u8 tos, bool df,
+                  const u8 *ipopt, int ipoptlen, u16 sport, u16 dport, u32 seq,
+                  u32 ack, u8 reserved, u8 flags, u16 window, u16 urp,
+                  const u8 *tcpopt, int tcpoptlen, const char *data,
+                  u16 datalen, u32 *packetlen, bool badsum);
+
+u8 *build_tcp6_pkt(const struct in6_addr *source, const struct in6_addr *victim,
+                   u8 tc, u32 flowlabel, u8 hoplimit, u16 sport, u16 dport,
+                   u32 seq, u32 ack, u8 reserved, u8 flags, u16 window, u16 urp,
+                   const u8 *tcpopt, int tcpoptlen, const char *data,
+                   u16 datalen, u32 *packetlen, bool badsum);
+
+int send_tcp_packet(struct ethtmp *eth, int fd, const u32 saddr,
+                    const u32 daddr, int ttl, bool df, u8 *ipops, int ipoptlen,
+                    u16 sport, u16 dport, u32 seq, u32 ack, u8 reserved,
+                    u8 flags, u16 window, u16 urp, u8 *options, int optlen,
+                    const char *data, u16 datalen, int fragscan, bool badsum);
+
+int fast_send_tcp(int fd, const char *saddr, const char *daddr, int ttl,
+                  u16 dport, u8 flags, const char *data, u16 datalen);
+
+double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
+		int source_port, u16 window, u32 ack, int timeout_ms, int ttl, u8 *ipops,
+		int ipoptlen, const char *data, u16 datalen, int fragscan, bool badsum);
+
 struct tcp_flags set_flags(uint8_t type);
 struct tcp_flags str_set_flags(const char *flags);
 u8 set_tcp_flags(struct tcp_flags *tf);
-int send_tcp_packet(struct ethtmp *eth, int fd, const u32 saddr, const u32 daddr, int ttl, bool df,
-    u8 *ipops, int ipoptlen, u16 sport, u16 dport, u32 seq, u32 ack, u8 reserved, u8 flags, u16 window, u16 urp,
-    u8 *options, int optlen, const char *data, u16 datalen, int fragscan, bool badsum);
-int fast_send_tcp(int fd, const char* saddr, const char* daddr, int ttl, u16 dport, u8 flags,
-    const char* data, u16 datalen);
-double tcp_ping(int type, const char* ip, const char* source_ip, int dest_port,
-    int source_port, u16 window, u32 ack, int timeout_ms, int ttl, u8 *ipops,
-    int ipoptlen, const char *data, u16 datalen, int fragscan, bool badsum);
 
 __END_DECLS
 

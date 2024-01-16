@@ -108,16 +108,22 @@ struct sctp_chunk_header_cookie_echo {
 __BEGIN_DECLS
 
 u8 *build_sctp(u16 sport, u16 dport, u32 vtag, const char *chunks,
-    int chunkslen, const char *data, u16 datalen, u32 *packetlen,
-    bool adler32sum, bool badsum);
-u8 *build_sctp_pkt(u32 saddr, u32 daddr, int ttl, u16 ipid, u8 tos,
-    bool df, u8 *ipopt, int ipoptlen, u16 sport, u16 dport, u32 vtag,
-    char *chunks, int chunkslen, const char *data, u16 datalen,
-    u32 *packetlen, bool adler32sum, bool badsum);
+               int chunkslen, const char *data, u16 datalen, u32 *packetlen,
+               bool adler32sum, bool badsum);
+
+u8 *build_sctp_pkt(u32 saddr, u32 daddr, int ttl, u16 ipid, u8 tos, bool df,
+                   u8 *ipopt, int ipoptlen, u16 sport, u16 dport, u32 vtag,
+                   char *chunks, int chunkslen, const char *data, u16 datalen,
+                   u32 *packetlen, bool adler32sum, bool badsum);
+
 u8 *build_sctp6_pkt(const struct in6_addr *source, const struct in6_addr *victim,
-    u8 tc, u32 flowlabel, u8 hoplimit, u16 sport, u16 dport,
-    u32 vtag, char *chunks, int chunkslen, const char *data,
-    u16 datalen, u32 *packetlen, bool adler32sum, bool badsum);
+		    u8 tc, u32 flowlabel, u8 hoplimit, u16 sport, u16 dport, u32 vtag,
+		    char *chunks, int chunkslen, const char *data, u16 datalen,
+                    u32 *packetlen, bool adler32sum, bool badsum);
+
+int send_sctp_packet(struct ethtmp *eth, int fd, const u32 saddr, const u32 daddr, int ttl, bool df,
+		     u8 *ipops, int ipoptlen, u16 sport, u16 dport, char *chunks, int chunkslen, u32 vtag,
+		     const char *data, u16 datalen, int fragscan, bool adler32sum, bool badsum);
 
 __END_DECLS
 

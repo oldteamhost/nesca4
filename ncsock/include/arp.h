@@ -48,14 +48,17 @@ struct arp_header
 
 __BEGIN_DECLS
 
-u8 *build_arp(u16 hdr, u16 pro, u8 hln, u8 pln, u16 operation,
-    eth_addr_t sha, ip_addreth_t spa, eth_addr_t tha,
-    ip_addreth_t tpa, u32 *plen);
-u8 *build_arp_pkt(eth_addr_t ethsrc, eth_addr_t ethdst,
-    u16 hdr, u16 pro, u8 hln, u8 pln, u16 operation, eth_addr_t sha,
-    ip_addreth_t spa, eth_addr_t tha, ip_addreth_t tpa, u32 *packetlen);
-int send_arpreq_packet(eth_t *eth, eth_addr_t ethsrc,
-    ip_addreth_t ipsrc, ip_addreth_t ipdst, u16 operation);
+u8 *build_arp(u16 hdr, u16 pro, u8 hln, u8 pln, u16 operation, eth_addr_t sha,
+              ip_addreth_t spa, eth_addr_t tha, ip_addreth_t tpa, u32 *plen);
+
+u8 *build_arp_pkt(eth_addr_t ethsrc, eth_addr_t ethdst, u16 hdr, u16 pro,
+                  u8 hln, u8 pln, u16 operation, eth_addr_t sha,
+                  ip_addreth_t spa, eth_addr_t tha, ip_addreth_t tpa,
+                  u32 *packetlen);
+
+int send_arpreq_packet(eth_t *eth, eth_addr_t ethsrc, ip_addreth_t ipsrc,
+                       ip_addreth_t ipdst, u16 operation);
+
 
 __END_DECLS
 

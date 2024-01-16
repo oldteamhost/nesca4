@@ -123,23 +123,34 @@ typedef struct ip_addreth_addr
 __BEGIN_DECLS
 
 int fill_ip_raw(struct ip_header *ip, int packetlen, const u8 *ipopt,
-		int ipoptlen, int tos, int id, int off, int ttl, int p, u32 saddr,
-		u32 daddr);
+                int ipoptlen, int tos, int id, int off, int ttl, int p,
+                u32 saddr, u32 daddr);
+
 u8 *build_ip_pkt(u32 saddr, u32 daddr, u8 proto, int ttl, u16 ipid, u8 tos,
-		 bool df, const u8 *ipopt, int ipoptlen, const char *data, u16 datalen,
-		 u32 *plen);
+                 bool df, const u8 *ipopt, int ipoptlen, const char *data,
+                 u16 datalen, u32 *plen);
+
 u8 *build_ip6_pkt(const struct in6_addr *source, const struct in6_addr *victim,
-		  u8 tc, u32 flowlabel, u8 nexthdr, int hoplimit, const char *data, u16 datalen,
-		  u32 *plen);
+                  u8 tc, u32 flowlabel, u8 nexthdr, int hoplimit,
+                  const char *data, u16 datalen, u32 *plen);
+
 int ip_cksum_add(const void *buf, size_t len, int cksum);
 unsigned long _crc32c(u8 *buf, int len);
-u16 ip4_pseudoheader_check(u32 saddr, u32 daddr, u8 proto, u16 len, const void *hstart);
-u16 ip6_pseudoheader_check(const struct in6_addr *saddr, const struct in6_addr *daddr,
-			   u8 nxt, u32 len, const void *hstart);
 u16 in_cksum(u16 *ptr, int nbytes);
-int send_frag_ip_packet(int fd, const struct sockaddr_in *dst, const u8 *packet, u32 plen,
-			u32 mtu);
-int send_ip_raw(int fd, const struct sockaddr_in *dst, const u8 *packet, u32 plen);
+
+u16 ip4_pseudoheader_check(u32 saddr, u32 daddr, u8 proto, u16 len,
+                           const void *hstart);
+
+u16 ip6_pseudoheader_check(const struct in6_addr *saddr,
+                           const struct in6_addr *daddr, u8 nxt, u32 len,
+                           const void *hstart);
+
+int send_frag_ip_packet(int fd, const struct sockaddr_in *dst, const u8 *packet,
+                        u32 plen, u32 mtu);
+
+int send_ip_raw(int fd, const struct sockaddr_in *dst, const u8 *packet,
+                u32 plen);
+
 int send_ip_eth(struct ethtmp *eth, const u8 *packet, u32 plen);
 int send_ip6_eth(struct ethtmp *eth, const u8 *packet, u32 plen);
 
@@ -151,14 +162,18 @@ int send_ip6_eth(struct ethtmp *eth, const u8 *packet, u32 plen);
    : sendto((fd), (packet), (packetlen), 0, (dst), sizeof(*dst)))
 
 int send_ip4_packet(struct ethtmp *eth, int fd, const struct sockaddr_in *dst,
-		    int fragscan, const u8 *packet, u32 plen);
-int send_ip6_packet(struct ethtmp *eth, int fd, const struct sockaddr_in6 *dst,
-		    const u8 *packet, u32 plen);
-int send_ip_packet(struct ethtmp *eth, int fd, const struct sockaddr_storage *dst,
-		   int fragscan, const u8 *packet, u32 plen);
-int send_ip_empty(int sock, u32 saddr, u32 daddr, u16 ttl, u8 proto, bool df, const u8 *ipopt,
-		  int ipoptlen, const char* data, u16 datalen, int fragscan);
+                    int fragscan, const u8 *packet, u32 plen);
 
+int send_ip6_packet(struct ethtmp *eth, int fd, const struct sockaddr_in6 *dst,
+                    const u8 *packet, u32 plen);
+
+int send_ip_packet(struct ethtmp *eth, int fd,
+                   const struct sockaddr_storage *dst, int fragscan,
+                   const u8 *packet, u32 plen);
+
+int send_ip_empty(int sock, u32 saddr, u32 daddr, u16 ttl, u8 proto, bool df,
+                  const u8 *ipopt, int ipoptlen, const char *data, u16 datalen,
+                  int fragscan);
 __END_DECLS
 
 #endif
