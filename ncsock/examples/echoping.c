@@ -11,6 +11,7 @@
 #include "../include/icmp.h"
 #include "../include/readpkt.h"
 #include "../include/utils.h"
+#include "../include/log.h"
 
 noreturn void usage(char** argv)
 {
@@ -37,7 +38,7 @@ int main(int argc, char** argv)
     usage(argv);
 
   if (!check_root_perms())
-    printf("Only <sudo> run!\n");
+    errx(1, "Only <sudo> run!");
 
   data = generate_random_str(atoi(argv[3]),
       DEFAULT_DICTIONARY);
