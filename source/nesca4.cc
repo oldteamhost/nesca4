@@ -253,7 +253,7 @@ void nesca_log(struct nescalog_opts *nlo, int complete)
 void nescaend(int success, double res)
 {
   np.golder_rod_on();
-  std::cout << "-> NESCA finished " << success << " up IPs (success) in " << std::fixed << std::setprecision(2) << res << " seconds\n";
+  std::cout << "NESCA finished " << success << " up IPs (success) in " << std::fixed << std::setprecision(2) << res << " seconds\n";
   reset_colors;
 }
 
@@ -405,6 +405,7 @@ void NESCASCAN(std::vector<std::string>& temp_vector)
       nlo = initlog(http_ips.size(), get_log(http_ips.size()), "HTTP");
       nesca_group_execute(&nlo, argp.http_threads, http_ips, nesca_http, 80, argp.http_timeout);
     }
+    
     for (const auto& ip : group_vector) {
       if (n.find_port_status(ip, PORT_OPEN) || argp.debug ||
           n.find_port_status(ip, PORT_OPEN_OR_FILTER) ||
@@ -601,14 +602,13 @@ void processing_tcp_scan_ports(std::string ip, int port, int result)
   stream << std::fixed << std::setprecision(2) << n.get_rtt(ip);
   std::string rtt_log = stream.str(); std::string protocol = sn.probe_service(port);
   std::string result1 = ip + ":" + std::to_string(port);
-
   std::unique_ptr<ports_strategy> ports_strategy_;
 
   if (result == PORT_OPEN) {
     np.print_port_state(PORT_OPEN, port, argp.type, sn.probe_service(port));
     if (argp.no_proc)
       return;
-    if (sn.probe_service(port) == "HTTP")
+    if (port == 80)
       ports_strategy_ = std::make_unique<http_strategy>();
     else if (port == 20 || port == 21)
       ports_strategy_ = std::make_unique<ftp_strategy>();
@@ -658,7 +658,7 @@ void processing_tcp_scan_ports(std::string ip, int port, int result)
   }
 }
 
-void process_port(const std::string& ip, std::vector<uint16_t> ports, int port_type)
+void process_port(const std::string& ip, std::vector<u16> ports, int port_type)
 {
   int total_ports_to_process = ports.size();
   int port_count_on_this_ip = 0;
@@ -958,7 +958,7 @@ pre_check(void)
   char formatted_date[11];
   np.golder_rod_on();
   get_current_date(formatted_date, sizeof(formatted_date));
-  std::cout << "-> Running NESCA [v" + std::string(_VERSION) + "] # " +
+  std::cout << "Running NESCA [v" + std::string(_VERSION) + "] # " +
   std::string(get_time()) + " at " + formatted_date << std::endl; 
   reset_colors;
 
