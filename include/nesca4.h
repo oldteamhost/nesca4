@@ -111,8 +111,9 @@ option long_options[] = {
   {"no-verbose", no_argument, 0, 6},
 
   {"PR", no_argument, 0, 8},
+  {"adler32", no_argument, 0, 15},
+  
   /*
-  {"tcp", no_argument, 0, 15},
   {"icmp", required_argument, 0, 16},
   {"reqnum", required_argument, 0, 10},
   {"TDD", required_argument, 0, 9},

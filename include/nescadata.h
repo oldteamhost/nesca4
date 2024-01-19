@@ -89,6 +89,7 @@ class NESCADATA {
     int brute_attempts = 2;
 
     bool badsum = false;
+    bool adler32sum = false;
     bool customttl = false;
     bool customsport = false;
 

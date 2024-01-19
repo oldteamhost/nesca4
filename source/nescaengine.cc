@@ -129,7 +129,7 @@ u8 *sctp_probe(NESCADATA *n, const ipnesca_t dst, u16 dport, u8 type, u32 *packe
 
   res = build_sctp_pkt(n->src, dst, n->ttl,
     random_u16(), 0, df, n->ip_options, n->ipoptslen, n->sport, dport, vtag, chunk,
-    chunklen, n->pd.data, n->pd.datalen, packetlen, true, n->badsum);
+    chunklen, n->pd.data, n->pd.datalen, packetlen, n->adler32sum, n->badsum);
 
   if (chunk)
     free(chunk);

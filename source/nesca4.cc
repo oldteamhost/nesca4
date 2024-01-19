@@ -856,6 +856,7 @@ void usage(const char* exec)
   std::cout << "  -badsum: Send packets with a bogus checksum.\n";
   std::cout << "  -ack <num>: Set custom ACK number.\n";
   std::cout << "  -ttl <num>: Set custom ip_header_ttl.\n";
+  std::cout << "  -adler32: Use adler32 checksum for SCTP.\n";
 
   np.golder_rod_on();
   std::cout << "PROCCESSING SCAN:" << std::endl;
@@ -1234,6 +1235,7 @@ void parse_args(int argc, char** argv)
         argp.path_ips = optarg;
         break;
       case 15:
+	n.adler32sum = true;
         break;
       case 16:
         break;
