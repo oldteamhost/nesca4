@@ -13,7 +13,7 @@ u8 *build_ip6_pkt(const struct in6_addr *source, const struct in6_addr *victim, 
   u8 *packet;
 
   if (hoplimit == -1)
-    hoplimit = generate_random_u32(23, 37);
+    hoplimit = generate_random_u32(63, 121);
 
   *plen= sizeof(struct ip6_hdr) + datalen;
   packet = (u8 *) malloc(*plen);
