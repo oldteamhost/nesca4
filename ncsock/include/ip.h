@@ -22,13 +22,19 @@
 #include <sys/cdefs.h>
 #include <sys/socket.h>
 #include "tcp.h"
+#include <bits/wordsize.h>
 
 struct ip_header
 {
 #define MAX_IHL_LEN 60
-  u8  ihl:4;     /* header length */
 #define IP_VERSION 4
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+  u8  ihl:4;     /* header length */
   u8  version:4; /* ip proto version */
+#else
+  u8  version:4; /* ip proto version */
+  u8  ihl:4;     /* header length */
+#endif
 #define DEFAULT_TOS 0
   u8  tos;       /* type of service */
   u16 tot_len;   /* total length */
