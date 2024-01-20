@@ -1,7 +1,7 @@
 CC = gcc
 CXX = g++
 CFLAGS = -g -Wall -O2
-LDFLAGS = -pthread -Wl,-rpath,library/platform/linux -Llibrary/platform/linux
+LDFLAGS = -pthread -L library/platform/linux -Wl,-rpath=$(shell pwd)/library/platform/linux
 SRC_DIR = source
 MODULE_DIR = modules
 C_NCSOCK_DIR = ncsock
