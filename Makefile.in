@@ -1,7 +1,7 @@
 CC = gcc
 CXX = g++
 CFLAGS = -g -Wall -O2
-LDFLAGS = -pthread -L library/platform/linux -Wl,-rpath=$(shell pwd)/library/platform/linux
+LDFLAGS = -pthread -lhcnetsdk -ldhnetsdk -ldhdvr -L library/platform/linux -Wl,-rpath=$(shell pwd)/library/platform/linux
 SRC_DIR = source
 MODULE_DIR = modules
 C_NCSOCK_DIR = ncsock
@@ -23,7 +23,7 @@ TARGET = nesca4
 all: $(TARGET)
 
 $(TARGET): $(OBJS) $(C_NCSOCK_OBJS) $(MODULE_OBJS) $(C_NCBASE_OBJS)
-	$(CXX) $^ -o $@ $(LDFLAGS) -lhcnetsdk -ldhnetsdk -ldhdvr
+	$(CXX) $^ -o $@ $(LDFLAGS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cc
 	$(CXX) $(CFLAGS) -c $< -o $@
