@@ -83,11 +83,9 @@ If the compilation was successful and no (error:) appears, you have an executabl
 sudo ./nesca4 google.com
 ```
 ### EXPORT ERROR
-If you get an error like: (./nesca4: error while loading shared libraries), you can compile without the library that caused this error, or without all of them.
-
-**To do this, you must first remove nesca4:**
+If you get an error like: (./nesca4: error while loading shared libraries), then one of the libraries does not want to be installed via rpath.
+**In order to fix this you can perform:**
 ```
-make clean
+make fix
 ```
-This command will remove the result of the make and configure actions.  
-**PS:** Now you need to go back to your CONFIGURE and configure without libraries and then compile.
+Or compile without the library that caused the error at all.  
