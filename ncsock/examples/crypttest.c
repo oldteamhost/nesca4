@@ -27,9 +27,9 @@ noreturn void usage(char** argv)
 
 int main(int argc, char **argv)
 {
-  char *temp;
+  char *temp = NULL;
   
-  if (argc < 2 + 1)
+    if (argc < 2 + 1)
     usage(argv);
 
   if (atoi(argv[2]) > 3)
