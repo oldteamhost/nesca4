@@ -13,12 +13,12 @@ HAVE_DVR := $(shell grep -c "HAVE_DVR 1" config/config.h)
 
 ifeq ($(HAVE_HIKVISION),1)
 LDFLAGS += -lhcnetsdk
-LDFLAGS += -L library/platform/linux -Wl,-rpath=$(shell pwd)/library/platform/linux
+LDFLAGS += -L$(shell pwd)/library/platform/linux -Wl,-rpath=$(shell pwd)/library/platform/linux
 endif
 
 ifeq ($(HAVE_DVR),1)
 LDFLAGS += -ldhnetsdk -ldhdvr
-LDFLAGS += -L library/platform/linux -Wl,-rpath=$(shell pwd)/library/platform/linux
+LDFLAGS += -L$(shell pwd)/library/platform/linux -Wl,-rpath=$(shell pwd)/library/platform/linux
 endif
 
 SRCS = $(wildcard $(SRC_DIR)/*.cc)
