@@ -69,7 +69,7 @@ Now the compilation stage, after that you can already use nesca4.
 ```
 make
 ```
-**You can also speed it up by running it in threads, but this may cause errors at the end:**
+**You can also speed it up by running it in threads:**
 ```
 make -j
 ```
@@ -86,6 +86,8 @@ sudo ./nesca4 google.com
 If you get an error like: (./nesca4: error while loading shared libraries), then one of the libraries does not want to be installed via rpath.
 **In order to fix this you can perform:**
 ```
-make fix
+sudo make fix
 ```
-Or compile without the library that caused the error at all.  
+**PS:** Running this command must necessarily be via (sudo) or at least (su).
+
+Also, to fix this error, you can simply recompile nesca4 without the library that caused the error.
