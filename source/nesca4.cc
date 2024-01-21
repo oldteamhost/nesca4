@@ -1075,16 +1075,21 @@ int count_map_vector(const std::unordered_map<std::string, std::vector<int>>& ma
 
 std::string randomstr(int len)
 {
-  int i;
-  std::string res;
   const std::string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const int chlen = characters.length(); /* член */
+  const int chlen = characters.length();  
+  std::string res;
+  u32 seed;
+  u8 _char;
+  int i;  
 
-  std::srand(static_cast<u32>(std::time(0)));
+  seed = generate_seed_u32();
+  mt19937_seed(seed);
+  
   for (i = 0; i < len; ++i) {
-    char _char = characters[std::rand() % chlen];
+    _char = characters[mt19937_random() % chlen];
     res += _char;
   }
+  
   return res;
 }
 
