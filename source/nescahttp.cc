@@ -13,7 +13,7 @@
 #include <mutex>
 
 #define HTTP_BUFLEN 65535
-extern std::mutex fuck;
+std::mutex fuck;
 
 void prepare_redirect(const char* redirect, char* reshost, char* respath, ssize_t buflen)
 {

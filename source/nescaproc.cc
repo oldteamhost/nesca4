@@ -14,6 +14,7 @@
 #include "../ncsock/include/smtp.h"
 #include "../ncbase/include/base64.h"
 #include "../ncbase/include/binary.h"
+#include "../config/compile.h"
 
 const std::vector<std::string> rtsp_paths = {"Streaming/Channels/101", "h264/ch01/main/av_stream",
                                       "cam/realmonitor?channel=1&subtype=0","live/main",
@@ -236,11 +237,13 @@ void smtp_strategy::handle(const std::string& ip, const std::string& result, con
 void hikvision_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn)
 {
+#ifdef HAVE_HIKVISION
   if (!argp.off_hikvision_brute){
     NESCABRUTE brute(nd.brute_threads, ip.c_str(), NULL, port, nd.brute_maxcon, nd.brute_attempts, nd.brute_timeout, argp.brute_timeout_ms, HIKVISION_BRUTEFORCE,
         nd.hikvision_logins, nd.hikvision_passwords, &np);
     brute_temp = brute.getres_nescastyle();
   }
+#endif
 
   result_print = np.main_nesca_out("RES", "" + brute_temp + result, 3, "", "", "", "",rtt_log, "", protocol);
   std::cout << result_print << std::endl;
@@ -258,13 +261,16 @@ void https_strategy::handle(const std::string& ip, const std::string& result, co
 void rvi_strategy::handle(const std::string& ip, const std::string& result, const std::string& rtt_log,
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn)
 {
+#ifdef HAVE_DVR
   if (!argp.off_rvi_brute) {
     NESCABRUTE brute(nd.brute_threads, ip.c_str(), nd.get_redirect(ip).c_str(), port, nd.brute_maxcon, nd.brute_attempts, nd.brute_timeout, argp.brute_timeout_ms, RVI_BRUTEFORCE,
         nd.rvi_logins, nd.rvi_passwords, &np);
     brute_temp = brute.getres_nescastyle();
   }
+#endif
 
   result_print = np.main_nesca_out("RES", "" + brute_temp + result, 3, "", "", "", "", rtt_log, "", protocol);
+
   std::cout << result_print << std::endl;
 }
 

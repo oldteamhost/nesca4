@@ -1,0 +1,8 @@
+AC_PREREQ([2.69])
+AC_INIT([libncsock], [20240120])
+AC_CONFIG_HEADERS([config.h:config.h.in])
+AC_PROG_CC
+AC_C_BIGENDIAN
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
+

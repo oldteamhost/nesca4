@@ -26,8 +26,6 @@
 #include <vector>
 #include <filesystem>
 #include "../include/nescadata.h"
-#include "../library/HCNetSDK.h"
-#include "../config/compile.h"
 #include <iostream>
 #include <string>
 #include <cstring>
@@ -52,7 +50,6 @@ std::string gettypeddos(class arguments_program& argp);
 std::vector<int> parse_range(const std::string& range_string);
 bool __check_root_perms();
 std::string to_lower_case(std::string str);
-bool hikvision_screenshot(const std::string& ip, const long user_id, const NET_DVR_DEVICEINFO_V40 device, const std::string& path);
 size_t find_char(const std::string& str, char ch);
 std::string parse_word(const std::vector<std::string>& options, const std::string& search_word);
 int write_temp(const std::string& data, const std::string& file_name);

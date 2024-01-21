@@ -16,7 +16,6 @@
     #define OS_POSIX64    1 
 #endif
 
-
 #ifndef __PLAYRECT_defined
 #define __PLAYRECT_defined
 typedef struct __PLAYRECT
@@ -34,17 +33,25 @@ typedef  unsigned __int64   UINT64;
 typedef  signed   __int64   INT64;
 #elif defined(__linux__) || defined(__APPLE__) //linux
 #define  BOOL  int
+#undef DWORD
 typedef  unsigned int       DWORD;
+#undef WORD
 typedef  unsigned short     WORD;
 typedef  unsigned short     USHORT;
 typedef  short              SHORT;
+#undef LONG
 typedef  int                LONG;
+#undef BYTE
 typedef  unsigned char      BYTE;
+#undef UINT
 typedef  unsigned int       UINT;
+#undef LPVOID
 typedef  void*              LPVOID;
 typedef  void*              HANDLE;
-typedef  unsigned int*      LPDWORD; 
+#undef LPDWORD
+typedef  unsigned int*      LPDWORD;
 typedef  unsigned long long UINT64;
+#undef INT64
 typedef  signed long long   INT64;
 
 #ifndef TRUE
@@ -66,18 +73,14 @@ typedef unsigned int   COLORREF;
 
 #ifndef __HWND_defined
 #define __HWND_defined
-#if defined(__APPLE__) || defined(ANDROID)
+#undef HWND
 typedef void* HWND;
-#elif defined(__linux__)
-typedef unsigned int HWND;
-#else
-typedef void* HWND;
-#endif
 #endif
 
 #ifndef __HDC_defined
 #define __HDC_defined
 #if defined(__linux__)
+#undef HDC
 typedef struct __DC
 {
     void*   surface;        //SDL Surface
@@ -5876,7 +5879,7 @@ NET_DVR_DecPlayBackCtrl
 #define DS_69UD_V2                  5002    //69UD Decoder V2
 #define DS_69UD_T                   5003    //6UD Decoder T
 
-//TRANSCODE    5401 - 5450  £¨50£©
+//TRANSCODE    5401 - 5450  ï¿½ï¿½50ï¿½ï¿½
 #define DS_68VTG          5401 //integrated transcoding gateway
 
 //vedio Conference device  5571 - 5590 (20)
@@ -5924,7 +5927,7 @@ NET_DVR_DecPlayBackCtrl
 #define DS_B80_VO02                5830//Video output board
 #define DS_B81_MCU                 5831//B81 main bord
 #define DS_B81_AI                  5832//B81 smart analyze board
-#define DS_B81_TVI                 5833//B81 Analog video input module£¨TVI/BNC£©
+#define DS_B81_TVI                 5833//B81 Analog video input moduleï¿½ï¿½TVI/BNCï¿½ï¿½
 #define DS_B81_APL                 5834//B81service module X86
 #define DS_B81_D08T                5835//B81 data collection service board
 #define DS_B85                     5836//B85 small IoT host
@@ -10662,7 +10665,7 @@ typedef struct tagNET_DVR_ALARMINFO_FIXED_HEADER
         {
             DWORD    dwAlarmChanNum;
             DWORD    dwPicLen;//Jpeg
-            BYTE     byPicURL; //0-Binary£¬1-URL
+            BYTE     byPicURL; //0-Binaryï¿½ï¿½1-URL
             BYTE    byTarget; // 0-not distinguish,1-hunman,2-vehicle
             BYTE    byRes1[2]; //
 #if (defined(OS_WINDOWS64) || defined(OS_POSIX64))
@@ -13539,7 +13542,7 @@ typedef struct tagNET_DVR_PREVIEWINFO{
     BYTE byVideoCodingType;
     DWORD dwDisplayBufNum; //soft player display buffer size(number of frames), range:1-50, default:1 
     BYTE byNPQMode;  //0-direct connect 1-by SMS
-    BYTE byRecvMetaData;  //wwhether to recieve metadata£¬Capability is GET /ISAPI/System/capabilities, and  DeviceCap.SysCap.isSupportMetadata is true
+    BYTE byRecvMetaData;  //wwhether to recieve metadataï¿½ï¿½Capability is GET /ISAPI/System/capabilities, and  DeviceCap.SysCap.isSupportMetadata is true
     BYTE byDataType;    //0-stream data,1-audio data
     BYTE byRes[213];
 }NET_DVR_PREVIEWINFO, *LPNET_DVR_PREVIEWINFO;
@@ -14454,7 +14457,7 @@ typedef struct tagNET_VCA_LEAVE_POSITION
     NET_VCA_POLYGON   struRegion; //Region
     WORD wLeaveDelay;  //Alarm time of no people, unit: s
     WORD wStaticDelay; //Alarm time of sleeping, unit: s
-    BYTE byMode;       //mode,0-leave,1-sleep,2-leave and sleep£¬3-onPosition
+    BYTE byMode;       //mode,0-leave,1-sleep,2-leave and sleepï¿½ï¿½3-onPosition
     BYTE byPersonType; //Person on guard,0-single,1-couple
     BYTE   byOnPosition; //Number of posts, 1-10, default 1
     BYTE      bySensitivity;     //sensitivity, 1-5
@@ -16578,8 +16581,8 @@ typedef struct tagNET_DVR_ITS_CALIBRATION
 typedef struct tagNET_DVR_BV_DIRECT_CALIBRATION
 {
     DWORD  dwCameraHeight;   //Camera Height,unit:cm
-    float  fPitchAngle;      //Camera Pitch Angle[0¡ã, 60¡ã],
-    float  fInclineAngle;    //Camera Incline Angle[-20¡ã,20¡ã]
+    float  fPitchAngle;      //Camera Pitch Angle[0ï¿½ï¿½, 60ï¿½ï¿½],
+    float  fInclineAngle;    //Camera Incline Angle[-20ï¿½ï¿½,20ï¿½ï¿½]
     BYTE   byRes1[228];
 }NET_DVR_BV_DIRECT_CALIBRATION, *LPNET_DVR_BV_DIRECT_CALIBRATION;
 
@@ -22737,7 +22740,7 @@ typedef struct tagNET_DVR_AIR_CONDITION_PARAM
     DWORD    dwSize;            //Structure size
     BYTE    byEnable;        //0- open, 1- shutdown
     BYTE    byMode;            //Air conditioning mode
-    BYTE    byTemperature;    //Temperature, general value is 16-30¡ã
+    BYTE    byTemperature;    //Temperature, general value is 16-30ï¿½ï¿½
     BYTE	byAirConditionNo;	// air Number
     BYTE    byRes[8];        //Reserved
 }NET_DVR_AIR_CONDITION_PARAM, *LPNET_DVR_AIR_CONDITION_PARAM;
@@ -24311,9 +24314,9 @@ typedef enum _COUNTRY_INDEX_
     COUNTRY_BVI = 191, //The British Virgin Islands 
     COUNTRY_ATV = 192, //Anguilla The Valley 
     COUNTRY_ANB = 193, //Antigua and Barbuda 
-    COUNTRY_CSM = 194, //Collectivit¨¦ de Saint-Martin 
+    COUNTRY_CSM = 194, //Collectivitï¿½ï¿½ de Saint-Martin 
     COUNTRY_ACY = 195, //Autonomous country 
-    COUNTRY_SBY = 196, //Saint-Barth¨¦lemy 
+    COUNTRY_SBY = 196, //Saint-Barthï¿½ï¿½lemy 
     COUNTRY_SKN = 197, //Saint Kitts and Nevis 
     COUNTRY_MOT = 198, //Montserrat 
     COUNTRY_GLP = 199, //Guadeloupe
@@ -24368,7 +24371,7 @@ typedef enum _COUNTRY_INDEX_
     COUNTRY_TOE = 246, //Tokelau
     COUNTRY_NUE = 247, //Niue
     COUNTRY_TCD = 248, //The Cook Islands
-    COUNTRY_PFP = 249, //Polyn¨¦sie francaiseFrench Polynesia
+    COUNTRY_PFP = 249, //Polynï¿½ï¿½sie francaiseFrench Polynesia
     COUNTRY_PID = 250, //Pitcairn Islands 
     COUNTRY_HAW = 251, //Hawaii State 
     COUNTRY_RES17 = 252, //Res
@@ -24581,9 +24584,9 @@ typedef enum _CR_INDEX_
     CR_BVI = 191, //The British Virgin Islands 
     CR_ATV = 192, //Anguilla The Valley 
     CR_ANB = 193, //Antigua and Barbuda 
-    CR_CSM = 194, //Collectivit¨¦ de Saint-Martin 
+    CR_CSM = 194, //Collectivitï¿½ï¿½ de Saint-Martin 
     CR_ACY = 195, //Autonomous country 
-    CR_SBY = 196, //Saint-Barth¨¦lemy 
+    CR_SBY = 196, //Saint-Barthï¿½ï¿½lemy 
     CR_SKN = 197, //Saint Kitts and Nevis 
     CR_MOT = 198, //Montserrat 
     CR_GLP = 199, //Guadeloupe
@@ -24638,7 +24641,7 @@ typedef enum _CR_INDEX_
     CR_TOE = 246, //Tokelau
     CR_NUE = 247, //Niue
     CR_TCD = 248, //The Cook Islands
-    CR_PFP = 249, //Polyn¨¦sie francaiseFrench Polynesia
+    CR_PFP = 249, //Polynï¿½ï¿½sie francaiseFrench Polynesia
     CR_PID = 250, //Pitcairn Islands 
     CR_HAW = 251, //Hawaii State 
     CR_RES17 = 252, //Res
@@ -26139,7 +26142,7 @@ typedef struct tagNET_DVR_VOD_PARA
     BYTE                byCourseFile;    //Course file 0 - no, 1 - yes
     BYTE                byDownload;    //Download 0- no, 1- yes.
     BYTE                byOptimalStreamType;  //Whether to play back according to the optimal code stream type. 0 - no, 1 - yes
-    BYTE                byUseAsyn;       //0-SynIO£¬1-AsynIO 
+    BYTE                byUseAsyn;       //0-SynIOï¿½ï¿½1-AsynIO 
     BYTE                byRes2[19];
 }NET_DVR_VOD_PARA, *LPNET_DVR_VOD_PARA;
 
@@ -26166,9 +26169,9 @@ typedef struct tagNET_DVR_VOD_PARA_V50
     BYTE                    sUserName[NAME_LEN/*32*/]; //Double verification user name
     BYTE                    sPassword[PASSWD_LEN/*16*/]; //Double verification password
     BYTE                    byRemoteFile;    //Play back the remote file 0- no, 1- yes
-    BYTE                    byUseAsyn;       //0-SynIO£¬1-AsynIO 
+    BYTE                    byUseAsyn;       //0-SynIOï¿½ï¿½1-AsynIO 
     BYTE                    byRes2[201];
-    BYTE                    byHls;          //HLS play back£¬0- no, 1- yes
+    BYTE                    byHls;          //HLS play backï¿½ï¿½0- no, 1- yes
     char*                   pSavedFileName;	//it works when 'byDownload' is 1
 }NET_DVR_VOD_PARA_V50, *LPNET_DVR_VOD_PARA_V50;
 
@@ -27519,15 +27522,15 @@ typedef struct tagNET_DVR_PICCFG
     DWORD    dwSize;
     BYTE    byUseType;    //1use for background picture
     BYTE    bySequence; //picture index
-    BYTE    byOverlayEnabled; //picture overlay enabled£¬ 1-include overlay param£¬0-not include
+    BYTE    byOverlayEnabled; //picture overlay enabledï¿½ï¿½ 1-include overlay paramï¿½ï¿½0-not include
     BYTE    byRes[1];
     NET_DVR_BASEMAP_CFG    struBasemapCfg;
     BYTE    sPicName[NAME_LEN];//Pic name
     DWORD   dwVideoWall;       //1 byte WallNo + 1 byte channelNo +2 byte windowNo
-    BYTE   	byFlash; //flashEnabled£¬1-yes£¬0-no
-    BYTE   	byTranslucent; //translucentEnabled£¬1-yes£¬0-no
-    BYTE    byShowEnabled; //showEnabled£¬1-yes£¬0-no
-    BYTE    byPictureType; //pictureType£¬1-bmp£¬2-jpg£¬3-png
+    BYTE   	byFlash; //flashEnabledï¿½ï¿½1-yesï¿½ï¿½0-no
+    BYTE   	byTranslucent; //translucentEnabledï¿½ï¿½1-yesï¿½ï¿½0-no
+    BYTE    byShowEnabled; //showEnabledï¿½ï¿½1-yesï¿½ï¿½0-no
+    BYTE    byPictureType; //pictureTypeï¿½ï¿½1-bmpï¿½ï¿½2-jpgï¿½ï¿½3-png
     BYTE    byRes2[24];
 }NET_DVR_PICTURECFG, *LPNET_DVR_PICTURECFG;
 /*******************************OSD*******************************/
@@ -28443,7 +28446,7 @@ typedef struct tagNET_ITC_POST_RS485_PARAM
 typedef struct tagNET_ITC_RADAR_PARAM
 {
     BYTE    byRadarType;    //Radar type: 0- no radar, 1- Andoray radar, 2- Olvia, 3- TransMicrowave, 0xff- other type
-    BYTE    byLevelAngle;   //Angle to the horizontal, default: 25¡ã, value range: 0~90¡ã
+    BYTE    byLevelAngle;   //Angle to the horizontal, default: 25ï¿½ï¿½, value range: 0~90ï¿½ï¿½
     WORD    wRadarSensitivity; //Radar sensitivity 
     WORD    wRadarSpeedValidTime;//Radar speed effective time (0~2000] MS, 0 did not support
     BYTE    byRes1[2];
@@ -29507,7 +29510,7 @@ typedef struct tagNET_DVR_SETUPALARM_PARAM
     WORD  wTaskNo;//Tasking number and the (field dwTaskNo corresponding data upload NET_DVR_VEHICLE_RECOG_RESULT the same time issued a task structure NET_DVR_VEHICLE_RECOG_COND corresponding fields in dwTaskNo
     BYTE  byDeployType;//deploy type:0-client deploy,1-real time deploy
     BYTE  bySubScription;
-    //Bit7-MotionDetection Target Picture£»0-false£¬1-true
+    //Bit7-MotionDetection Target Pictureï¿½ï¿½0-falseï¿½ï¿½1-true
     BYTE  byRes1[2];
     BYTE  byAlarmTypeURL;//bit0-(NET_DVR_FACESNAP_RESULT),0-binary,1-URL
     //bit1-(Picture data in EVENT_JSON),0-binary,1-URL
@@ -31606,7 +31609,7 @@ typedef struct tagNET_DVR_LOCAL_GENERAL_CFG
     DWORD    dwResumeUpgradeTimeout;   //resume upgrade reconnect timeout,ms
     BYTE     byAlarmReconnectMode;          
     BYTE     byStdXmlBufferSize;       //Receive buffer size of ISAPI transparent transparent  1-1M other-default 
-    BYTE     byMultiplexing;           //0-general link(not TLS)not using byMultiplexing£¬1-general link(not TLS)using byMultiplexing
+    BYTE     byMultiplexing;           //0-general link(not TLS)not using byMultiplexingï¿½ï¿½1-general link(not TLS)using byMultiplexing
     BYTE     byFastUpgrade;           //0-normal upgrade, 1-fast upgrade
     BYTE     byRes1[232];
 }NET_DVR_LOCAL_GENERAL_CFG, *LPNET_DVR_LOCAL_GENERAL_CFG;
@@ -33650,17 +33653,17 @@ typedef struct tagNET_DVR_CAMERA_SETUPCFG
     BYTE byLensType; //The focal length of the lens type,0-unknow,1-8mm,2-12mm,3-16mm,4-25mm,5-35mm,6-50mm,7-4mm,8-6mm
     BYTE bySetupHeightUnit;// Height 0 ~ M, 1~CM
     DWORD dwSceneDis; //Between the edge position and camera image under the horizontal distance, unit: cm
-    float fPitchAngle; //Camera pitch angle [-180 ¡ã, 180 ¡ã], float * 1000
-    float fInclineAngle; //Camera tilt angle [-180 ¡ã, 180 ¡ã], float * 1000
-    float fRotateAngle;  //Camera rotation angle [-180 ¡ã, 180 ¡ã], float * 1000
+    float fPitchAngle; //Camera pitch angle [-180 ï¿½ï¿½, 180 ï¿½ï¿½], float * 1000
+    float fInclineAngle; //Camera tilt angle [-180 ï¿½ï¿½, 180 ï¿½ï¿½], float * 1000
+    float fRotateAngle;  //Camera rotation angle [-180 ï¿½ï¿½, 180 ï¿½ï¿½], float * 1000
     WORD  wVideoDetCoefficient; //Video test coefficient [0300] (3.6 new)
     BYTE  byErectMethod; //Erection of 0- dress, 1- side mounted (3.6 new)
     BYTE  byCameraViewAngle;//The camera view (0- vertical, 1- inclined, (Default) 0- vertical)
     DWORD dwHorizontalDistance;//Camera Horizontal distance: 1-1000, (Default) 30, unit:cm, pay attention to the camera angle to tilt the effective
     BYTE  byDetailLensType;//Range: 1-100, Default: 28, unit: 0.1mm
     BYTE  byRes[3];
-    float fHorFieldAngle; //[0¡ã, 360¡ã]
-    float fVerFieldAngle; //[0¡ã, 360¡ã]
+    float fHorFieldAngle; //[0ï¿½ï¿½, 360ï¿½ï¿½]
+    float fVerFieldAngle; //[0ï¿½ï¿½, 360ï¿½ï¿½]
     float fLableSetupHeight; //[0-100]
     float fMaxViewRadius;//MaxViewRadius,0-10000.00m,default:5000.
     BYTE  byRes1[16];
@@ -38852,8 +38855,8 @@ typedef struct tagNET_DVR_BV_SAMPLE_CALIB_CFG
 {
     DWORD  dwSize;
     DWORD  dwCameraHeight; //Camera Height,Unit:cm
-    float  fPitchAngle;    //Camera Pitch Angle[0¡ã, 60¡ã],
-    float  fInclineAngle;  //Camera Incline Angle[-20¡ã,20¡ã]
+    float  fPitchAngle;    //Camera Pitch Angle[0ï¿½ï¿½, 60ï¿½ï¿½],
+    float  fInclineAngle;  //Camera Incline Angle[-20ï¿½ï¿½,20ï¿½ï¿½]
     NET_DVR_BV_SAMPLE_CALIB_POINT struCalibPoint[MAX_SAMPLE_NUM]; //Sample calibration 
     NET_DVR_BV_SAMPLE_CALIB_POINT struCalibPointEx[MAX_SAMPLE_NUM_EX/*7*/]; //Sample calibration extension
     BYTE  byRes[60];
@@ -39483,7 +39486,7 @@ typedef struct tagNET_DVR_SINGLE_PLAN_SEGMENT
     //16-finger print or password,17-employee no and finger print,18-employee no and finger print and password,
     //19-face and finger print and swipe card,20-face and password and finger print,21-employee no and face,22-face or face and swipe card
     //22-fingerprint or face, 23-card or face or password 24-card or face or password 25-card or face,26-card or face or fingerprint ,27-card or fingerprint or password
-    //28-face or password,29-employee and face and password,30-card or face or face and card£¬31-face or finger or password£¬32-iris£¬33-face or finger or card or iris£¬34-face or card or password or iris
+    //28-face or password,29-employee and face and password,30-card or face or face and cardï¿½ï¿½31-face or finger or passwordï¿½ï¿½32-irisï¿½ï¿½33-face or finger or card or irisï¿½ï¿½34-face or card or password or iris
     BYTE byRes[5];
     NET_DVR_TIME_SEGMENT struTimeSegment; //time segment parameter 
 }NET_DVR_SINGLE_PLAN_SEGMENT, *LPNET_DVR_SINGLE_PLAN_SEGMENT;
@@ -43622,7 +43625,7 @@ typedef  struct  tagNET_DVR_HISTORICAL_QUERY_PARAM //Historical Query Param
     NET_DVR_TIME_V30 struEndTime;//End Time
     NET_DVR_SENSOR_VALUE struVoltageValue; //Voltage Value; Unit: V 
     NET_DVR_SENSOR_VALUE struCurrentValue; //Current Value; Unit: mA
-    NET_DVR_SENSOR_VALUE struTemperatureValue;//Temperature Value,Unit: ¡æ
+    NET_DVR_SENSOR_VALUE struTemperatureValue;//Temperature Value,Unit: ï¿½ï¿½
     NET_DVR_SENSOR_VALUE struHumidityValue;//Humidity Value
     BYTE   bySwitchStatus;//Switch Status, 0~Close,1~Open
     BYTE   bySensorStatus; //Sensor Status; 
@@ -43935,7 +43938,7 @@ typedef    struct tagNET_SDK_MANUAL_THERMOMETRY
     DWORD        dwChannel;
     DWORD      dwRelativeTime; // relative time scale (read-only) 
     DWORD    dwAbsTime;      // absolute time scale (read-only) 
-    BYTE       byThermometryUnit;//Temperature measurement unit: 0 (¡æ), 1 (¨H), 2 (K) 
+    BYTE       byThermometryUnit;//Temperature measurement unit: 0 (ï¿½ï¿½), 1 (ï¿½H), 2 (K) 
     BYTE       byDataType;//State of data types: 0 - testing, 1 - start, 2 - end (read-only) 
     BYTE      byRes1[6];
     NET_SDK_MANUALTHERM_RULE struRuleInfo;
@@ -44068,9 +44071,9 @@ typedef struct  tagNET_DVR_VEHICLE_WEIGHT_RESULT_
     char      sDevDescInfo[MAX_DEVDESC_LEN/*64*/];       //Device description information
     WORD      wAxleWeight[MAX_TRUCK_AXLE_NUM/*10*/];    //Axle weight array
     WORD      wAxleDistance[MAX_TRUCK_AXLE_NUM/*10*/];  //Axle distance array,unit mm.
-    DWORD     dwLength;                 //Vehicle Length £¬unit cm
-    DWORD     dwWidth;                  //Vehicle Width£¬unit cm
-    DWORD     dwHeight;                 //Vehicle Height£¬unit cm
+    DWORD     dwLength;                 //Vehicle Length ï¿½ï¿½unit cm
+    DWORD     dwWidth;                  //Vehicle Widthï¿½ï¿½unit cm
+    DWORD     dwHeight;                 //Vehicle Heightï¿½ï¿½unit cm
     BYTE      byTollwayVehicleType;     //TOOLWAY_VEHICLE_TYPE
     BYTE      byRes2[11];               //res
 }NET_DVR_VEHICLE_WEIGHT_RESULT, *LPNET_DVR_VEHICLE_WEIGHT_RESULT;
@@ -46779,7 +46782,7 @@ typedef struct tagNET_DVR_ID_CARD_INFO_ALARM
     BYTE byCardType; 
     BYTE byDeviceNo;
     BYTE byMask; //wear mask:1-unknown,2-no,3-yes
-    BYTE  byCurrentEvent; //is CurrentEvent£º0-invalid£¬1-current event£¬2- off-line event
+    BYTE  byCurrentEvent; //is CurrentEventï¿½ï¿½0-invalidï¿½ï¿½1-current eventï¿½ï¿½2- off-line event
     DWORD dwFingerPrintDataLen;
     char *pFingerPrintData;
     DWORD dwCapturePicDataLen;
@@ -47599,7 +47602,7 @@ typedef    struct tagNET_DVR_TEMPHUMSENSOR
     BYTE        byTemperatureValue;//
     BYTE        byHumidityValue;//
     BYTE        byFanSwitch;//
-    BYTE        byThermometryUnit;//unit:(¡æ),1-(¨H),2-(K)
+    BYTE        byThermometryUnit;//unit:(ï¿½ï¿½),1-(ï¿½H),2-(K)
     BYTE        byRes[62];
 }NET_DVR_TEMPHUMSENSOR, *LPNET_DVR_TEMPHUMSENSOR;
 
@@ -47856,8 +47859,8 @@ typedef    struct tagNET_DVR_REC_PASSBACK_BASIC_CFG
     DWORD     dwStopTime;    //Detection window stop time
     WORD    wMaxTotalConcurrenceNum;   //Concurrent posts back because limit, is aimed at encoder, not the article back task 
     WORD    wMaxDvrConcurrenceNum;     //A single DVR concurrent back channel number limit 
-    DWORD   dwSyncSpeed;     //synchronization speed£¨unit:Mbps£¬Max:12Mbps£©
-    DWORD   dwRecordType;     //The video type:0xffffffff£­all£¬0£­timing£¬1- motion detection, 2£­alarm(all videos labeled as alarm type)£¬0xff-other
+    DWORD   dwSyncSpeed;     //synchronization speedï¿½ï¿½unit:Mbpsï¿½ï¿½Max:12Mbpsï¿½ï¿½
+    DWORD   dwRecordType;     //The video type:0xffffffffï¿½ï¿½allï¿½ï¿½0ï¿½ï¿½timingï¿½ï¿½1- motion detection, 2ï¿½ï¿½alarm(all videos labeled as alarm type)ï¿½ï¿½0xff-other
     BYTE    byRes[248];
 }NET_DVR_REC_PASSBACK_BASIC_CFG, *LPNET_DVR_REC_PASSBACK_BASIC_CFG;
 
@@ -48178,7 +48181,7 @@ typedef    struct tagNET_DVR_THERMOMETRY_BASICPARAM
     BYTE      byStreamOverlay; //Stream Overlay:0- No,1- Yes
     BYTE      byPictureOverlay;//Picture Overlay:0- No,1- Yes
     BYTE      byThermometryRange;//Thermometry Range,0-Default,1-(-20~150),2-(0~550),3-(0-650),4-(-40~150),5-(0-1200),6-(-20-120),7-(20~350),8-(20~45),,9-(30~45)0xff-Auto
-    BYTE      byThermometryUnit;//Thermometry Unit: 0-(¡æ),1-(¨H),2-(K).
+    BYTE      byThermometryUnit;//Thermometry Unit: 0-(ï¿½ï¿½),1-(ï¿½H),2-(K).
     BYTE      byThermometryCurve;//temperature curve mode display mode, 0 - closed, 1 - pattern 1 (transverse temperature trend line mode), 2 - to mode 2 (longitudinal temperature trend line mode) ,0xff-automatic
     BYTE      byFireImageModea;//Model of fire image, 0-res, 1 - black and white, 2 - thermal detection modes, 3 - fire mode (field 0 remains, avoid compatible with interface before) 
     BYTE      byShowTempStripEnable;//Show temperature Strip Enable
@@ -48187,7 +48190,7 @@ typedef    struct tagNET_DVR_THERMOMETRY_BASICPARAM
     BYTE      byEnviroHumidity;//Environment Humidity,range:0~100%
     BYTE      byRes2[2];
     NET_DVR_TEMPERATURE_COLOR struTempColor;//Thermometry Alarm Color
-    int       iEnviroTemperature;//Environment Temperatrue,range:-273~10000(¡æ)
+    int       iEnviroTemperature;//Environment Temperatrue,range:-273~10000(ï¿½ï¿½)
     int       iCorrectionVolume;//Range:-100~100
     /*
     bit0-center point display:0-no,1-yes;
@@ -48362,7 +48365,7 @@ typedef struct tagNET_DVR_THERMOMETRY_ALARM
     DWORD   dwSize;
     DWORD   dwChannel;//Channel
     BYTE    byRuleID;//Rule ID
-    BYTE    byThermometryUnit;//Thermometry Unit: 0-(¡æ),1-(¨H),2-(K)
+    BYTE    byThermometryUnit;//Thermometry Unit: 0-(ï¿½ï¿½),1-(ï¿½H),2-(K)
     WORD    wPresetNo; //Preset No.
     NET_PTZ_INFO  struPtzInfo;//ptz 
     BYTE    byAlarmLevel;//0-Advance Alarm 1-Alarm
@@ -48418,7 +48421,7 @@ typedef struct tagNET_DVR_THERMOMETRY_DIFF_ALARM
     char*   pPicBuff;//Picture
     char*   pThermalPicBuff;//Thermal Picture
     char*   pThermalInfoBuff;//Thermal Info
-    BYTE    byThermometryUnit;//Thermometry Unit: 0-(¡æ),1-(¨H),2-(K)
+    BYTE    byThermometryUnit;//Thermometry Unit: 0-(ï¿½ï¿½),1-(ï¿½H),2-(K)
     BYTE    byPicTransType;        //Image data transmission: 0-binary; 1-url
     BYTE    byRes1[2];
     float   fToleranceTemperature;//
@@ -49003,12 +49006,12 @@ typedef struct tagNET_DVR_MULTIFUNCTION_SERIALCFG
     BYTE  byVariable;  //serial port: 1-invariable  2-variable
     BYTE  bySerialWorkMode;   //work mode: 1-RS485, 2-RS232
     BYTE  byFunType;   //type: 1-keyboard control, 2-screen control, 3-transparent channel mode,  4-PTZ control,  5-matrix control, 6-console
-    BYTE byDataBit;// data bit:  0£­5bit, 1£­6bit, 2£­7bit, 3£­8bit
-    BYTE byStopBit;// stop bit:  0£­1bit, 1£­2bit
-    BYTE byParity;// 0£­no check, 1£­odd check, 2£­parity check
-    BYTE byFlowcontrol;// 0£­no, 1£­soft flow control, 2-hard flow control
+    BYTE byDataBit;// data bit:  0ï¿½ï¿½5bit, 1ï¿½ï¿½6bit, 2ï¿½ï¿½7bit, 3ï¿½ï¿½8bit
+    BYTE byStopBit;// stop bit:  0ï¿½ï¿½1bit, 1ï¿½ï¿½2bit
+    BYTE byParity;// 0ï¿½ï¿½no check, 1ï¿½ï¿½odd check, 2ï¿½ï¿½parity check
+    BYTE byFlowcontrol;// 0ï¿½ï¿½no, 1ï¿½ï¿½soft flow control, 2-hard flow control
     BYTE byRes1;
-    DWORD dwBaudRate;//baud rate: 0£­50, 1£­75, 2£­110, 3£­150, 4£­300, 5£­600, 6£­1200, 7£­2400, 8£­4800, 9£­9600, 10£­19200, 11£­38400, 12£­57600, 13£­76800, 14£­115.2k   
+    DWORD dwBaudRate;//baud rate: 0ï¿½ï¿½50, 1ï¿½ï¿½75, 2ï¿½ï¿½110, 3ï¿½ï¿½150, 4ï¿½ï¿½300, 5ï¿½ï¿½600, 6ï¿½ï¿½1200, 7ï¿½ï¿½2400, 8ï¿½ï¿½4800, 9ï¿½ï¿½9600, 10ï¿½ï¿½19200, 11ï¿½ï¿½38400, 12ï¿½ï¿½57600, 13ï¿½ï¿½76800, 14ï¿½ï¿½115.2k   
     WORD wProtocol;   
     BYTE byRes[34];
 }NET_DVR_MULTIFUNCTION_SERIALCFG, *LPNET_DVR_MULTIFUNCTION_SERIALCFG;
@@ -49776,7 +49779,7 @@ typedef	struct tagNET_DVR_ALARM_SEARCH_COND
     WORD                       wEventType;//Event type, only dwAlarmComm COMM_VCA_ALARM 0x4993 smart detection alarm is valid, 0- means all events,1- mixedTargetDetection, 2- radarVideoDetection
     WORD                       wSubEventType;//The subevent type, 0- represents all the subevents, and the remaining values vary according to the value of wEventType, see the capability set for details.
     BYTE                       bySupport; //reserve
-    BYTE                       byNoBoundary; //remove boundary£¬0-no£¬1-yes£¬only dwAlarmComm COMM_VCA_ALARM 0x4993 smart detection alarm is valid
+    BYTE                       byNoBoundary; //remove boundaryï¿½ï¿½0-noï¿½ï¿½1-yesï¿½ï¿½only dwAlarmComm COMM_VCA_ALARM 0x4993 smart detection alarm is valid
     BYTE                       byRes[122];    //reserve
 }NET_DVR_ALARM_SEARCH_COND, *LPNET_DVR_ALARM_SEARCH_COND;
 //alarm search result struct
@@ -50200,7 +50203,7 @@ enum ADDITIONAL_LIB
 typedef struct tagNET_DVR_AUTOTEST_CFG_HEAD
 {
     DWORD   dwSize;
-    DWORD   dwInfoType;          //1-Video£¬3-Audio
+    DWORD   dwInfoType;          //1-Videoï¿½ï¿½3-Audio
     DWORD   dwRetResult;
     DWORD   dwDataBodySize;     //Structure address size followed 
     void*   lpDataBody;         //Structure address followed 
@@ -50219,7 +50222,7 @@ typedef struct tagNET_DVR_AUTOTEST_VIDEO_CFG
 typedef struct tagNET_DVR_AUTOTEST_AUDIO_CFG
 {
     DWORD  dwVoCh;
-    DWORD  dwOpen;             //1-enable£¬0-disable
+    DWORD  dwOpen;             //1-enableï¿½ï¿½0-disable
 }NET_DVR_AUTOTEST_AUDIO_CFG, *LPNET_DVR_AUTOTEST_AUDIO_CFG;
 
 #if ((defined __linux__) || (defined _WIN64))

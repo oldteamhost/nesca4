@@ -22,18 +22,21 @@
 #include <sys/cdefs.h>
 #include <sys/socket.h>
 #include "tcp.h"
-#include <bits/wordsize.h>
+
+#ifdef ONLY_COMPILE
+#include "../compile.h"
+#endif
 
 struct ip_header
 {
 #define MAX_IHL_LEN 60
 #define IP_VERSION 4
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-  u8  ihl:4;     /* header length */
+#if (defined(WORDS_BIGENDIAN))
   u8  version:4; /* ip proto version */
+  u8  ihl:4;     /* header length */
 #else
-  u8  version:4; /* ip proto version */
   u8  ihl:4;     /* header length */
+  u8  version:4; /* ip proto version */
 #endif
 #define DEFAULT_TOS 0
   u8  tos;       /* type of service */

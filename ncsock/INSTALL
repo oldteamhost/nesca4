@@ -1,9 +1,5 @@
 /* check ncsock/build/ */
 NCSOCK:
+./configure
 cd ncsock
-make
-
-/* only after compile ncsock */
-EXAMPLES:
-cd exmaples/
-make
+make -j

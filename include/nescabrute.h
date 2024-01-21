@@ -31,7 +31,6 @@ typedef std::vector<std::string> passwords_t;
 #define FTP_BRUTEFORCE       1
 #define SMTP_BRUTEFORCE      2
 #define RVI_BRUTEFORCE       3
-#define RTSP_BRUTEFORCE      4
 #define HIKVISION_BRUTEFORCE 5
 
 class NESCABRUTE {
@@ -68,8 +67,5 @@ class NESCABRUTE {
     std::string getpass(void);
     std::string getres_nescastyle(void);
 };
-
-bool hikvisionauth(const char* ip, u16 port, const char* login, const char* pass);
-bool dvrauth(const char* ip, u16 port, const char* login, const char* pass);
 
 #endif

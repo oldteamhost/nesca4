@@ -21,7 +21,10 @@
 #include "types.h"
 #include "mt19937.h"
 #include "../include/eth.h"
-#include <bits/wordsize.h>
+
+#ifdef ONLY_COMPILE
+#include "../compile.h"
+#endif
 
 struct tcp_header
 {
@@ -29,12 +32,12 @@ struct tcp_header
   u16 th_dport;  /* Destination port. */
   u32 th_seq;    /* Sequence number. */
   u32 th_ack;    /* Acknowledgement number. */
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-  u8  th_x2:4;   /* (unused). */
+#if (defined(WORDS_BIGENDIAN))
   u8  th_off:4;  /* Data offset. */
+  u8  th_x2:4;   /* (unused). */
 #else
-  u8  th_off:4;  /* Data offset. */
   u8  th_x2:4;   /* (unused). */
+  u8  th_off:4;  /* Data offset. */
 #endif
   u8  th_flags;  /* TCP flags. */
   u16 th_win;    /* Window. */

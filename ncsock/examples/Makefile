@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS := -Wall -I../build -g
+CFLAGS := -Wall -O3 -I../build -g
 LDFLAGS := -L../build -Wl,-rpath,../build
 LDLIBS := -lncsock
 
