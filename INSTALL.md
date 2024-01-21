@@ -33,12 +33,61 @@ git clone https://github.com/oldteamhost/nesca4
 ```
 **PS:** This method is more difficult because it requires some knowledge of the terminal.
 
-## COMPILE
-cd nesca4
-./configure
-make
+## CONFIGURE
+Now comes the stage of customizing the source code, and setting up its compilation.
 
-COMPILE NOT DVR & HIKVISION:
-make clean
+**First, you need to go to the directory with the code nesca4:**
+```
+cd nesca4
+```
+Note that the nesca4 directory must be in your current directory.
+
+**Then you need to run the file (configure):**
+```
+./configure
+```
+### OPTIONS CONFIGURE
+This is not a mandatory step, but if you need to customize the source code it is a must.
+
+**To disable the hikvision library, run configure with this option:**
+```
+./configure --disable-hikvision
+```
+**To disable the dvr library, run configure with this option:**
+```
+./configure --disable-dvr
+```
+**You can also use them together:**
+```
 ./configure --disable-dvr --disable-hikvision
+```
+
+## COMPILE
+Now the compilation stage, after that you can already use nesca4.
+
+**To compile, execute:**
+```
 make
+```
+**You can also speed it up by running it in threads, but this may cause errors at the end:**
+```
+make -j
+```
+**PS:** First would be compiling the ncsock library, then already compiling nesca4 and linking it all together.
+
+## START NESCA4
+If the compilation was successful and no (error:) appears, you have an executable file nesca4 in your current folder, this is the program itself, it is ready to be used.
+
+**To test launch, execute:**
+```
+sudo ./nesca4 google.com
+```
+### EXPORT ERROR
+If you get an error like: (./nesca4: error while loading shared libraries), you can compile without the library that caused this error, or without all of them.
+
+**To do this, you must first remove nesca4:**
+```
+make clean
+```
+This command will remove the result of the make and configure actions.  
+**PS:** Now you need to go back to your CONFIGURE and configure without libraries and then compile.
