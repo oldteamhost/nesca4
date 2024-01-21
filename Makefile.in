@@ -48,6 +48,9 @@ $(BUILD_DIR)/%.o: $(C_NCBASE_DIR)/%.c
 $(C_NCSOCK_DIR)/build/libncsock.a: $(C_NCSOCK_DIR)/Makefile
 	cd $(C_NCSOCK_DIR) && make && cd ..
 
+fix:
+	cp -f $(shell pwd)/library/platform/linux/*.so /usr/lib
+
 clean:
 	rm -rf $(BUILD_DIR) $(TARGET) config/config.h config.status config.log autom4te.cache Makefile && cd $(C_NCSOCK_DIR) && make clean && cd ..
 
