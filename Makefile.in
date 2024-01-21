@@ -7,6 +7,9 @@ MODULE_DIR = modules
 C_NCSOCK_DIR = ncsock
 C_NCBASE_DIR = ncbase
 BUILD_DIR = build
+INSTALL_DIR = /usr/local/bin
+TARGET = nesca4
+DATA_DIR = /usr/local/share/$(TARGET)
 
 HAVE_HIKVISION := $(shell grep -c "HAVE_HIKVISION 1" config/config.h)
 HAVE_DVR := $(shell grep -c "HAVE_DVR 1" config/config.h)
@@ -29,8 +32,6 @@ OBJS = $(patsubst $(SRC_DIR)/%.cc,$(BUILD_DIR)/%.o,$(SRCS))
 MODULE_OBJS = $(patsubst $(MODULE_DIR)/%.cc,$(BUILD_DIR)/%.o,$(MODULE_SRCS))
 C_NCBASE_OBJS = $(patsubst $(C_NCBASE_DIR)/%.c,$(BUILD_DIR)/%.o,$(C_NCBASE_SRCS))
 
-TARGET = nesca4
-
 all: $(TARGET)
 
 $(TARGET): $(OBJS) $(MODULE_OBJS) $(C_NCBASE_OBJS) $(C_NCSOCK_DIR)/build/libncsock.a
@@ -48,14 +49,20 @@ $(BUILD_DIR)/%.o: $(C_NCBASE_DIR)/%.c
 $(C_NCSOCK_DIR)/build/libncsock.a: $(C_NCSOCK_DIR)/Makefile
 	cd $(C_NCSOCK_DIR) && make && cd ..
 
-fix:
+install-libs:
+	for file in "/usr/lib/libHCCore.so" "/usr/lib/libdhdvr.so" "/usr/lib/libdhnetsdk.so" "/usr/lib/libhcnetsdk.so" "/usr/lib/libhpr.so"; do \
+	if [ -e "$$file" ]; then \
+		echo "File $$file exists. Removing..."; \
+		sudo rm "$$file"; \
+		echo "File $$file removed."; \
+	else \
+		echo "File $$file does not exist."; \
+	fi; \
+	done
 	cp -f $(shell pwd)/library/platform/linux/*.so /usr/lib
 
 clean:
 	rm -rf $(BUILD_DIR) $(TARGET) config/config.h config.status config.log autom4te.cache Makefile && cd $(C_NCSOCK_DIR) && make clean && cd ..
-
-distclean: clean
-	rm -f configure && cd $(C_NCSOCK_DIR) && make distclean && cd ..
 
 print-vars:
 	@echo "HAVE_HIKVISION=$(HAVE_HIKVISION)"
@@ -63,4 +70,4 @@ print-vars:
 	@echo "LDFLAGS=$(LDFLAGS)"
 	@echo "CFLAGS=$(CFLAGS)"
 
-.PHONY: all clean distclean
+.PHONY: all clean distclean install-libs

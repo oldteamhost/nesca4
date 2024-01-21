@@ -86,7 +86,7 @@ sudo ./nesca4 google.com
 If you get an error like: (./nesca4: error while loading shared libraries), then one of the libraries does not want to be installed via rpath.
 **In order to fix this you can perform:**
 ```
-sudo make fix
+sudo make install-libs
 ```
 **PS:** Running this command must necessarily be via (sudo) or at least (su).
 
