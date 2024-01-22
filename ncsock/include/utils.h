@@ -90,9 +90,62 @@ u32   generate_seq(void);
 u32   random_u32(void);
 u16   random_u16(void);
 u8    random_u8(void);
-const char* generate_ipv4(void);
-const char* get_time();
-const char* get_this_is(int type);
+const char *generate_ipv4(void);
+const char *get_time(void);
+const char *get_this_is(int type);
+
+#define USED(x) ((void)(x))
+#define Z(x) (memset((x), '\0', sizeof(x)))
+
+#define parseip4(from, to)                                                     \
+  ({                                                                           \
+    char *p = from;                                                            \
+    int i;                                                                     \
+    for (i = 0; i < 4 && *p; i++) {                                            \
+      to[i] = strtoul(p, &p, 0);                                               \
+      p++;                                                                     \
+    }                                                                          \
+    to[i] = '\0';                                                              \
+    (i == 4) ? 4 : -1;                                                         \
+  })
+
+#define parseip6(from, to)                                                     \
+  ({                                                                           \
+    USED(from);                                                                \
+    USED(to);                                                                  \
+    16;                                                                        \
+  })
+
+#define parseip(from, to) (strchr(from, '.') ? parseip4(from, to) : parseip6(from, to))
+
+#define maskfromip(v, ip, mask)                                                \
+  do {                                                                         \
+    USED(v);                                                                   \
+    USED(ip);                                                                  \
+    USED(mask);                                                                \
+  } while (0)
+
+inline char *ip4str(u8 *from, char *to) {
+  sprintf(to, "%d.%d.%d.%d", from[0], from[1], from[2], from[3]);
+  return to;
+}
+
+inline char *ip6str(u8 *from, char *to) {
+  USED(from), USED(to);
+  return to;
+}
+
+#define ipstr(v, from, to) ((v == 4) ? ip4str(from, to) : ip6str(from, to))
+
+int   parsecmask(int v, char *from, u8 *to);
+int   parsecidr(char *cidr, u8 *ip, u8 *mask);
+int   parseipmask(char *ip, char *mask, u8 *pip, u8 *pmask);
+u8    maskcnum(u8 *from);
+char *cidrstr(int v, u8 *ip, u8 *mask, char *to);
+
+#define ip4num(pip)                                                            \
+  (((u32)(pip[3]) << 0) | ((u32)(pip[2]) << 8) | ((u32)(pip[1]) << 16) |       \
+   ((u32)(pip[0]) << 24))
 
 __END_DECLS
 

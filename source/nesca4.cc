@@ -284,12 +284,11 @@ size_t host_scan = 1;
 
 void PRENESCASCAN(void)
 {
+  int ipsnoscan = 0, groupsize = 0, i = 0, count = 0, end = 0;  
+  std::vector<std::string> temp_vector, group_vector;  
   struct nescalog_opts nlo;
-  std::vector<std::string> temp_vector;
-  std::vector<std::string> group_vector;
   bool groupscan = false;
-  int ipsnoscan = 0, groupsize = 0, i = 0,
-      count = 0, end = 0;
+  
   temp_vector = n.get_all_ips();
 
   ipsnoscan = temp_vector.size();
@@ -315,7 +314,7 @@ void PRENESCASCAN(void)
     else
       group_vector = temp_vector;
 
-    nlo = initlog(group_vector.size(), get_log(group_vector.size()), "Ping");
+    nlo = initlog(group_vector.size()-1, get_log(group_vector.size()-1), "Ping");
     nesca_group_execute(&nlo, argp.threads_ping, group_vector, nesca_ping);
     n.update_data_from_ips(n.failed_ping_ip);
     n.sort_ips_rtt(n.success_ping_ip);
@@ -378,7 +377,7 @@ void NESCASCAN(std::vector<std::string>& temp_vector)
       argp.dns_threads = group_vector.size();
 
     if (!argp.no_get_dns) {
-      nlo = initlog(group_vector.size(), get_log(group_vector.size()), "Resolv");
+      nlo = initlog(group_vector.size()-1, get_log(group_vector.size()-1), "Resolv");
       nesca_group_execute(&nlo, argp.dns_threads, group_vector, get_dns_thread);
     }
 
@@ -389,7 +388,7 @@ void NESCASCAN(std::vector<std::string>& temp_vector)
     if (argp._threads >= 3000)
       argp._threads = 3000;
 
-    nlo = initlog(group_vector.size(), get_log(group_vector.size()), "SCAN");
+    nlo = initlog(group_vector.size()-1, get_log(group_vector.size()-1), "SCAN");
     nesca_group_execute(&nlo, argp._threads, group_vector, nesca_scan, argp.ports, argp.timeout_ms);
 
     if (!argp.no_proc) {
@@ -402,7 +401,7 @@ void NESCASCAN(std::vector<std::string>& temp_vector)
             http_ips.push_back(ip);
         }
       }
-      nlo = initlog(http_ips.size(), get_log(http_ips.size()), "HTTP");
+      nlo = initlog(http_ips.size()-1, get_log(http_ips.size()-1), "HTTP");
       nesca_group_execute(&nlo, argp.http_threads, http_ips, nesca_http, 80, argp.http_timeout);
     }
     

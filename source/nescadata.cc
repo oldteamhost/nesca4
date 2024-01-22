@@ -1,3 +1,4 @@
+
 /*
  *          NESCA4
  *   Сделано от души 2023.
@@ -276,71 +277,101 @@ void NESCADATA::sort_ips_rtt(std::vector<std::string>& ips)
 }
 
 #include "../include/nescautils.h"
+#include "../ncsock/include/utils.h"
 
-std::vector<std::string> range_to_ips(const std::vector<std::string>& ip_ranges)
+static void numipv4(u32 n, u8 *ip)
 {
-  u32 start_ip = 0;
-  u32 end_ip = 0;
+  ip[0] = static_cast<u8>((n >> 24) & 0xFF);
+  ip[1] = static_cast<u8>((n >> 16) & 0xFF);
+  ip[2] = static_cast<u8>((n >> 8) & 0xFF);
+  ip[3] = static_cast<u8>(n & 0xFF);
+}
+
+static std::vector<std::string> listips(const std::string &cidr)
+{
+#define V4 4
+#define V6 16
+  u8 pip[V6], pmask[V6], maxip[V6], tmp[V6];
   std::vector<std::string> result;
-  std::stringstream ss;
-  std::string start_octet_str, end_octet_str;
+  int v, i;
+  u32 n;
 
-  for (const auto& range : ip_ranges) {
-    std::istringstream iss(range);
-    std::string start_ip_str, end_ip_str;
-    std::getline(iss, start_ip_str, '-');
-    std::getline(iss, end_ip_str);
-    std::istringstream start_ss(start_ip_str), end_ss(end_ip_str);
-    for (int i = 3; i >= 0; --i) {
-      std::getline(start_ss, start_octet_str, '.');
-      std::getline(end_ss, end_octet_str, '.');
-      start_ip |= (std::stoi(start_octet_str) << (i * 8));
-      end_ip |= (std::stoi(end_octet_str) << (i * 8));
+  v = parsecidr(const_cast<char*>(cidr.data()), pip, pmask);
+  if (v == -1)
+    return result;
+  
+  for (i = 0; i < v; i++)
+    maxip[i] = (pip[i] & pmask[i]) | ~pmask[i];
+  
+  if (v == V4) {
+    for (n = ip4num(pip); n <= ip4num(maxip); n++) {
+      char ip[46];
+      numipv4(n, tmp);
+      result.push_back(ipstr(v, tmp, ip));
     }
-    for (u32 i = start_ip; i <= end_ip; ++i) {
-      ss << ((i >> 24) & 0xFF) << '.' << ((i >> 16) & 0xFF)
-        << '.' << ((i >> 8) & 0xFF) << '.' << (i & 0xFF);
-      result.push_back(ss.str());
-    }
-    start_ip = 0;
-    end_ip = 0;
   }
-
+  
   return result;
+}
+
+std::string ipbin(const std::string &ip)
+{
+  std::stringstream ss(ip);
+  std::string token, binip = "";
+  int octet;
+  
+  while (std::getline(ss, token, '.')) {
+    octet = std::stoi(token);
+    binip += std::bitset<8>(octet).to_string();
+  }
+  
+  return binip;
+}
+
+std::string rangetocidr(const std::string &ip_range)
+{
+  std::string start_ip, end_ip, binstart, binend;
+  std::stringstream ss(ip_range);
+  size_t prefixlen = 0, i;
+  
+  std::getline(ss, start_ip, '-');
+  std::getline(ss, end_ip);
+  
+  binstart = ipbin(start_ip);
+  binend = ipbin(end_ip);
+  
+  for (i = 0; i < binstart.size(); ++i) {
+    if (binstart[i] == binend[i])
+      ++prefixlen;
+    else
+      break;
+  }
+  
+  return ((start_ip + "/" + std::to_string(prefixlen)));
 }
 
 std::vector<std::string> cidr_to_ips(const std::vector<std::string>& cidr_list)
 {
-  unsigned long long int ipAddress = 0;
-  std::vector<std::string> ipAddresses;
-
-  for (const std::string& cidr : cidr_list) {
-    std::string networkAddress = cidr.substr(0, cidr.find('/'));
-    int subnetMaskBits = std::stoi(cidr.substr(cidr.find('/') + 1));
-
-    std::vector<unsigned long long int> octets;
-    std::string octetString;
-    std::stringstream networkAddressStream(networkAddress);
-
-    while (std::getline(networkAddressStream, octetString, '.'))
-      octets.push_back(std::strtoull(octetString.c_str(), nullptr, 10));
-    for (auto octet : octets)
-      ipAddress = (ipAddress << 8) | octet;
-
-    std::bitset<32> subnetMask((0xFFFFFFFFUL << (32 - subnetMaskBits)) & 0xFFFFFFFFUL);
-    ipAddress &= subnetMask.to_ulong();
-
-    for (unsigned long long int i = 0; i < (1ULL << (32 - subnetMaskBits)); i++) {
-      std::stringstream ipAddressStream;
-      ipAddressStream << ((ipAddress >> 24) & 0xFF) << '.' << ((ipAddress >> 16) & 0xFF) << '.'
-        << ((ipAddress >> 8) & 0xFF) << '.' << (ipAddress & 0xFF);
-      ipAddresses.push_back(ipAddressStream.str());
-      ipAddress++;
-    }
+  std::vector<std::string> res, ips;
+  
+  for (const auto& cidr : cidr_list) {
+    ips = listips(cidr);
+    res.insert(res.end(), ips.begin(), ips.end());
   }
-
-  return ipAddresses;
+  
+  return res;
 }
+
+std::vector<std::string> range_to_ips(const std::vector<std::string>& ip_ranges)
+{
+  std::vector<std::string> tmp;
+  
+  for (const auto& range : ip_ranges)
+    tmp.push_back(rangetocidr(range));
+
+  return (cidr_to_ips(tmp));
+}
+
 std::vector<std::string> convert_dns_to_ip(const std::vector<std::string>& dns_vector)
 {
   std::vector<std::string> ip_vector;
