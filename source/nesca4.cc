@@ -186,10 +186,10 @@ int main(int argc, char** argv)
     switch (argp.speed_type)
     {
       case 5:
-        argp.ack_ping = true;
+	argp.echo_ping = true;
         break;
       case 4:
-        argp.echo_ping = true;
+	argp.echo_ping = true;
         argp.ack_ping = true;
         break;
       case 3:
@@ -541,6 +541,8 @@ check:
   }
 
 start:
+  if (argp.echo_ping && rtt == -1)
+    rtt = nescaping(&n, dst, ICMP_PING_ECHO);
   if (argp.ack_ping && rtt == -1) {
     for (size_t i = 0; i < n.ack_ping_ports.size(); i++) {
       rtt = nescaping(&n, dst, TCP_PING_ACK);
@@ -548,8 +550,6 @@ start:
         break;
     }
   }
-  if (argp.echo_ping && rtt == -1)
-    rtt = nescaping(&n, dst, ICMP_PING_ECHO);
   if (argp.syn_ping && rtt == -1) {
     for (size_t i = 0; i < n.syn_ping_ports.size(); i++) {
       rtt = nescaping(&n, dst, TCP_PING_SYN);
