@@ -40,9 +40,9 @@ int main(int argc, char** argv)
   if (!check_root_perms())
     errx(1, "Only <sudo> run!");
 
-  data = generate_random_str(atoi(argv[3]),
+  data = random_str(atoi(argv[3]),
       DEFAULT_DICTIONARY);
-  src = get_local_ip();
+  src = ip4_util_strsrc();
 
   dst.sin_addr.s_addr = inet_addr(argv[1]);
   dst.sin_family = AF_INET;

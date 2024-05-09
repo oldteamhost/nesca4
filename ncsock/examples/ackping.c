@@ -37,9 +37,9 @@ int main(int argc, char** argv)
   if (!check_root_perms())
     errx(1, "Only <sudo> run!");
 
-  data = generate_random_str(atoi(argv[4]),
+  data = random_str(atoi(argv[4]),
       DEFAULT_DICTIONARY);
-  src = get_local_ip();
+  src = ip4_util_strsrc();
 
   dst.sin_addr.s_addr = inet_addr(argv[1]);
   dst.sin_family = AF_INET;
@@ -53,7 +53,7 @@ int main(int argc, char** argv)
   for (i = 1; i <= 10; i++) {
     /* SEND PACKET */
     tcp4_send_pkt(NULL, fd, inet_addr(src), dst.sin_addr.s_addr, 121,
-        false, NULL, 0, generate_rare_port(), atoi(argv[2]),
+        false, NULL, 0, random_srcport(), atoi(argv[2]),
         random_u32(), 0, 0, TCP_FLAG_ACK, 1024, 0, NULL, 0, data,
         strlen(data), 0, false);
 

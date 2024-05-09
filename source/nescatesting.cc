@@ -415,12 +415,12 @@ void _scanner_::get_ip_header(struct blockpreset *bp)
   ip.version = 4;
   ip.tos = 5;
   ip.tot_len = -1;
-  ip.ident = generate_random_u32(0, USHRT_MAX);
+  ip.ident = random_u16();
   ip.frag_off = -1;
   ip.ttl = 121;
   ip.protocol = -1;
   ip.check = -1;
-  tempconvip  = get_local_ip();
+  tempconvip  = ip4_util_strsrc();
   ip.saddr = inet_addr(tempconvip);
   free(tempconvip);
   ip.ipopt = NULL;
@@ -440,7 +440,7 @@ void _scanner_::get_ip_header(struct blockpreset *bp)
           ip.ihl = set_customnum(hl.value, hl.key, IP4_IHL_MAX, i);
           break;
         case VALUE_TYPE_RANDOM:
-          ip.ihl = generate_random_u32(0, MAX_IP_IHL);
+          ip.ihl = random_num_u32(0, MAX_IP_IHL);
           break;
         case VALUE_TYPE_NONE:
           ip.ihl = 0;
@@ -457,7 +457,7 @@ void _scanner_::get_ip_header(struct blockpreset *bp)
           ip.version = set_customnum(hl.value, hl.key, MAX_IP_VERSION, i);
           break;
         case VALUE_TYPE_RANDOM:
-          ip.version = generate_random_u32(0, MAX_IP_VERSION);
+          ip.version = random_num_u32(0, MAX_IP_VERSION);
           break;
         case VALUE_TYPE_NONE:
           ip.version = 0;
@@ -471,7 +471,7 @@ void _scanner_::get_ip_header(struct blockpreset *bp)
           ip.tos = set_customnum(hl.value, hl.key, MAX_IP_TOS, i);
           break;
         case VALUE_TYPE_RANDOM:
-          ip.tos = generate_random_u32(0, MAX_IP_TOS);
+          ip.tos = random_num_u32(0, MAX_IP_TOS);
           break;
         case VALUE_TYPE_NONE:
           ip.tos = 0;
@@ -487,7 +487,7 @@ void _scanner_::get_ip_header(struct blockpreset *bp)
           ip.tot_len = set_customnum(hl.value, hl.key, USHRT_MAX, i);
           break;
         case VALUE_TYPE_RANDOM:
-          ip.tot_len = generate_random_u32(0, USHRT_MAX);
+          ip.tot_len = random_u16();
           break;
         case VALUE_TYPE_NONE:
           ip.tot_len = 0;
@@ -515,7 +515,7 @@ void _scanner_::get_ip_header(struct blockpreset *bp)
             ip.frag_off = set_customnum(hl.value, hl.key, USHRT_MAX, i);
           break;
         case VALUE_TYPE_RANDOM:
-          ip.frag_off = generate_random_u32(0, USHRT_MAX);
+          ip.frag_off = random_u16();
           break;
         case VALUE_TYPE_NONE:
           ip.frag_off = -2;
@@ -529,7 +529,7 @@ void _scanner_::get_ip_header(struct blockpreset *bp)
           ip.ttl = set_customnum(hl.value, hl.key, MAX_IP_TTL, i);
           break;
         case VALUE_TYPE_RANDOM:
-          ip.ttl = generate_random_u32(0, MAX_IP_TTL);
+          ip.ttl = random_num_u32(0, MAX_IP_TTL);
           break;
         case VALUE_TYPE_NONE:
           ip.ttl = 0;
@@ -543,7 +543,7 @@ void _scanner_::get_ip_header(struct blockpreset *bp)
           ip.protocol = set_customnum(hl.value, hl.key, MAX_IP_PROTOCOL, i);
           break;
         case VALUE_TYPE_RANDOM:
-          ip.protocol = generate_random_u32(0, MAX_IP_PROTOCOL);
+          ip.protocol = random_num_u32(0, MAX_IP_PROTOCOL);
           break;
         case VALUE_TYPE_NONE:
           ip.protocol = 0;
@@ -559,7 +559,7 @@ void _scanner_::get_ip_header(struct blockpreset *bp)
           ip.check = set_customnum(hl.value, hl.key, USHRT_MAX, i);
           break;
         case VALUE_TYPE_RANDOM:
-          ip.check = generate_checksum();
+          ip.check = random_check();
           break;
         case VALUE_TYPE_NONE:
           ip.check = 0;
@@ -573,7 +573,7 @@ void _scanner_::get_ip_header(struct blockpreset *bp)
           break;
         case VALUE_TYPE_RANDOM:
           const char* temprandomip;
-          temprandomip = generate_ipv4();
+          temprandomip = random_ip4();
           ip.saddr = inet_addr(temprandomip);
           break;
         case VALUE_TYPE_NONE:
@@ -589,7 +589,7 @@ void _scanner_::get_ip_header(struct blockpreset *bp)
           break;
         case VALUE_TYPE_RANDOM:
           const char* temprandomip;
-          temprandomip = generate_ipv4();
+          temprandomip = random_ip4();
           ip.daddr = inet_addr(temprandomip);
           break;
         case VALUE_TYPE_NONE:
@@ -670,12 +670,12 @@ void _scanner_::get_tcp_header(struct blockpreset *bp)
   struct temp_tcp_header tcp;
   struct headerline hl;
 
-  tcp.th_sport = generate_rare_port();
+  tcp.th_sport = random_srcport();
   tcp.th_dport = 80;
-  tcp.th_seq = generate_random_u32(0, UINT_MAX);
+  tcp.th_seq = random_u32();
   tcp.th_ack = 0;
   tcp.th_flags = TCP_FLAG_SYN;
-  tcp.th_win = generate_random_u32(0, USHRT_MAX);
+  tcp.th_win = random_u16();
   tcp.th_urp = 0;
   tcp.th_x2 = -1;
   tcp.th_off = -1;
@@ -707,7 +707,7 @@ void _scanner_::get_tcp_header(struct blockpreset *bp)
           tcp.th_dport = set_customnum(hl.value, hl.key, USHRT_MAX, i);
           break;
         case VALUE_TYPE_RANDOM:
-          tcp.th_dport = generate_rare_port();
+          tcp.th_dport = random_srcport();
           break;
         case VALUE_TYPE_NONE:
           tcp.th_dport = 0;
@@ -732,7 +732,7 @@ void _scanner_::get_tcp_header(struct blockpreset *bp)
           tcp.th_ack = set_customnum(hl.value, hl.key, UINT_MAX, i);
           break;
         case VALUE_TYPE_RANDOM:
-          tcp.th_ack = generate_random_u32(0, UINT_MAX);
+          tcp.th_ack = random_u32();
           break;
         case VALUE_TYPE_NONE:
           break;
@@ -743,8 +743,8 @@ void _scanner_::get_tcp_header(struct blockpreset *bp)
       switch (hl.valuetype) {
         case VALUE_TYPE_CUSTOM:
           struct tcp_flags tf;
-          tf = tcp_qprc_str_setflags(hl.value.c_str());
-          tcp.th_flags = tcp_qprc_setflags(&tf);
+          tf = tcp_util_str_setflags(hl.value.c_str());
+          tcp.th_flags = tcp_util_setflags(&tf);
           break;
         case VALUE_TYPE_RANDOM:
           // XXX
@@ -772,7 +772,7 @@ void _scanner_::get_tcp_header(struct blockpreset *bp)
           tcp.th_urp = set_customnum(hl.value, hl.key, USHRT_MAX, i);
           break;
         case VALUE_TYPE_RANDOM:
-          tcp.th_urp = generate_random_u32(0, USHRT_MAX);
+          tcp.th_urp = random_u16();
           break;
         case VALUE_TYPE_NONE:
           break;
@@ -785,7 +785,7 @@ void _scanner_::get_tcp_header(struct blockpreset *bp)
           tcp.th_x2 = set_customnum(hl.value, hl.key, MAX_TCP_REVERSED, i);
           break;
         case VALUE_TYPE_RANDOM:
-          tcp.th_x2 = generate_random_u32(0, MAX_TCP_REVERSED);
+          tcp.th_x2 = random_num_u32(0, MAX_TCP_REVERSED);
           break;
         case VALUE_TYPE_NONE:
           tcp.th_x2 = 0;
@@ -799,7 +799,7 @@ void _scanner_::get_tcp_header(struct blockpreset *bp)
           tcp.th_off = set_customnum(hl.value, hl.key, MAX_TCP_OFF, i);
           break;
         case VALUE_TYPE_RANDOM:
-          tcp.th_off = random_num(0, MAX_TCP_OFF);
+          tcp.th_off = random_num_u32(0, MAX_TCP_OFF);
           break;
         case VALUE_TYPE_NONE:
           tcp.th_off = 0;
@@ -812,7 +812,7 @@ void _scanner_::get_tcp_header(struct blockpreset *bp)
           tcp.th_sum = set_customnum(hl.value, hl.key, USHRT_MAX, i);
           break;
         case VALUE_TYPE_RANDOM:
-          tcp.th_sum = generate_checksum();
+          tcp.th_sum = random_check();
           break;
         case VALUE_TYPE_NONE:
           tcp.th_sum = 0;
@@ -831,7 +831,7 @@ void _scanner_::get_tcp_header(struct blockpreset *bp)
             intererror(i, "[tcp_header] (" + bp->keyword + ") <data>", "The maximum payload size on linux is 1400.");
           break;
         case VALUE_TYPE_RANDOM: {
-          tcp.tp.data = generate_random_str(generate_random_u32(0, MAX_TCP_DATA_SIZE), DEFAULT_DICTIONARY);
+          tcp.tp.data = random_str(random_num_u32(0, MAX_TCP_DATA_SIZE), DEFAULT_DICTIONARY);
           tcp.tp.datalen = strlen(tcp.tp.data);
           break;
         }
@@ -868,7 +868,7 @@ void _scanner_::get_icmp_header(struct blockpreset *bp)
 
   icmp.checksum = -1;
   icmp.code = 0;
-  icmp.id = generate_random_u32(0, USHRT_MAX);
+  icmp.id = random_u16();
   icmp.seq = -1;
   icmp.type = ICMP4_ECHO;
   icmp.tp.data = "";
@@ -886,7 +886,7 @@ void _scanner_::get_icmp_header(struct blockpreset *bp)
           icmp.type = set_customnum(hl.value, hl.key, UCHAR_MAX, i);
           break;
         case VALUE_TYPE_RANDOM:
-          icmp.type = generate_random_u32(0, UCHAR_MAX);
+          icmp.type = random_u8();
           break;
         case VALUE_TYPE_NONE:
           icmp.type = 0;
@@ -899,7 +899,7 @@ void _scanner_::get_icmp_header(struct blockpreset *bp)
           icmp.code = set_customnum(hl.value, hl.key, UCHAR_MAX, i);
           break;
         case VALUE_TYPE_RANDOM:
-          icmp.code = generate_random_u32(0, UCHAR_MAX);
+          icmp.code = random_u8();
           break;
         case VALUE_TYPE_NONE:
           icmp.type = 0;
@@ -912,7 +912,7 @@ void _scanner_::get_icmp_header(struct blockpreset *bp)
           icmp.seq = set_customnum(hl.value, hl.key, USHRT_MAX, i);
           break;
         case VALUE_TYPE_RANDOM:
-          icmp.seq = generate_random_u32(0, USHRT_MAX);
+          icmp.seq = random_u16();
           break;
         case VALUE_TYPE_NONE:
           icmp.seq = 0;
@@ -937,7 +937,7 @@ void _scanner_::get_icmp_header(struct blockpreset *bp)
           icmp.checksum = set_customnum(hl.value, hl.key, USHRT_MAX, i);
           break;
         case VALUE_TYPE_RANDOM:
-          icmp.checksum = generate_checksum();
+          icmp.checksum = random_check();
           break;
         case VALUE_TYPE_NONE:
           icmp.checksum = 0;
@@ -957,7 +957,7 @@ void _scanner_::get_icmp_header(struct blockpreset *bp)
             intererror(i, "[icmp_header] (" + bp->keyword + ") <data>", "The maximum payload size on linux is 1400.");
           break;
         case VALUE_TYPE_RANDOM: {
-          icmp.tp.data = generate_random_str(generate_random_u32(0, MAX_TCP_DATA_SIZE), DEFAULT_DICTIONARY);
+          icmp.tp.data = random_str(random_num_u32(0, MAX_TCP_DATA_SIZE), DEFAULT_DICTIONARY);
           icmp.tp.datalen = strlen(icmp.tp.data);
           break;
         }
@@ -977,7 +977,7 @@ void _scanner_::get_udp_header(struct blockpreset *bp)
   struct temp_udp_header udp;
   struct headerline hl;
 
-  udp.uh_sport = generate_rare_port();
+  udp.uh_sport = random_srcport();
   udp.uh_dport = 80;
   udp.ulen = -1;
   udp.check = -1;
@@ -1008,7 +1008,7 @@ void _scanner_::get_udp_header(struct blockpreset *bp)
           udp.uh_dport = set_customnum(hl.value, hl.key, USHRT_MAX, i);
           break;
         case VALUE_TYPE_RANDOM:
-          udp.uh_dport = generate_rare_port();
+          udp.uh_dport = random_u16();
           break;
         case VALUE_TYPE_NONE:
           udp.uh_dport = 0;
@@ -1021,7 +1021,7 @@ void _scanner_::get_udp_header(struct blockpreset *bp)
           udp.ulen = set_customnum(hl.value, hl.key, USHRT_MAX, i);
           break;
         case VALUE_TYPE_RANDOM:
-          udp.ulen = generate_random_u32(0, USHRT_MAX);
+          udp.ulen = random_u16();
           break;
         case VALUE_TYPE_NONE:
           udp.ulen = 0;
@@ -1034,7 +1034,7 @@ void _scanner_::get_udp_header(struct blockpreset *bp)
           udp.check = set_customnum(hl.value, hl.key, USHRT_MAX, i);
           break;
         case VALUE_TYPE_RANDOM:
-          udp.check = generate_checksum();
+          udp.check = random_check();
           break;
         case VALUE_TYPE_NONE:
           udp.check = 0;
@@ -1052,7 +1052,7 @@ void _scanner_::get_udp_header(struct blockpreset *bp)
             intererror(i, "[udp_header] (" + bp->keyword + ") <data>", "The maximum payload size on linux is 1400.");
           break;
         case VALUE_TYPE_RANDOM: {
-          udp.tp.data = generate_random_str(generate_random_u32(0, MAX_TCP_DATA_SIZE), DEFAULT_DICTIONARY);
+          udp.tp.data = random_str(random_num_u32(0, MAX_TCP_DATA_SIZE), DEFAULT_DICTIONARY);
           udp.tp.datalen = strlen(udp.tp.data);
           break;
         }
@@ -1091,7 +1091,7 @@ void _scanner_::get_igmp_header(struct blockpreset *bp)
           igmp.type = set_customhex(hl.value, hl.key, UCHAR_MAX, i);
           break;
         case VALUE_TYPE_RANDOM:
-          igmp.type = generate_random_u32(0, UCHAR_MAX);
+          igmp.type = random_u8();
           break;
         case VALUE_TYPE_NONE:
           igmp.type = 0;
@@ -1104,7 +1104,7 @@ void _scanner_::get_igmp_header(struct blockpreset *bp)
           igmp.code = set_customnum(hl.value, hl.key, UCHAR_MAX, i);
           break;
         case VALUE_TYPE_RANDOM:
-          igmp.code = generate_random_u32(0, UCHAR_MAX);
+          igmp.code = random_u8();
           break;
         case VALUE_TYPE_NONE:
           break;
@@ -1116,7 +1116,7 @@ void _scanner_::get_igmp_header(struct blockpreset *bp)
           igmp.check = set_customnum(hl.value, hl.key, USHRT_MAX, i);
           break;
         case VALUE_TYPE_RANDOM:
-          igmp.check = generate_checksum();
+          igmp.check = random_check();
           break;
         case VALUE_TYPE_NONE:
           igmp.check = 0;
@@ -1129,7 +1129,7 @@ void _scanner_::get_igmp_header(struct blockpreset *bp)
           igmp.var = set_customnum(hl.value, hl.key, UINT_MAX, i);
           break;
         case VALUE_TYPE_RANDOM:
-          igmp.var = generate_random_u32(0, UINT_MAX);
+          igmp.var = random_u32();
           break;
         case VALUE_TYPE_NONE:
           break;
@@ -1148,7 +1148,7 @@ void _scanner_::get_igmp_header(struct blockpreset *bp)
             intererror(i, "[igmp_header] (" + bp->keyword + ") <data>", "The maximum payload size on linux is 1400.");
           break;
         case VALUE_TYPE_RANDOM: {
-          igmp.tp.data = generate_random_str(generate_random_u32(0, MAX_TCP_DATA_SIZE), DEFAULT_DICTIONARY);
+          igmp.tp.data = random_str(random_num_u32(0, MAX_TCP_DATA_SIZE), DEFAULT_DICTIONARY);
           igmp.tp.datalen = strlen(igmp.tp.data);
           break;
         }

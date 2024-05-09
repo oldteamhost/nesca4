@@ -40,8 +40,8 @@
 
 __BEGIN_DECLS
 
-void get_smtp_version(const char* ip, u16 port, int timeout_ms,
-    u8* version_buffer, size_t len);
+void smtp_qprc_version(const char* dst, u16 dstport, int timeoutms,
+    u8* verbuf, size_t buflen);
 
 __END_DECLS
 

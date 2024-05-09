@@ -6,8 +6,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#include "include/ip.h"
 #include "include/utils.h"
-#include "include/dns.h"
 
 int getipv4(const char *node, char *res, u8 reslen)
 {
@@ -23,7 +23,7 @@ int getipv4(const char *node, char *res, u8 reslen)
     goto write;
   }
   else if (is == DNS) {
-    if (get_ip(node, tbuf, 16) != -1) {
+    if (ip4_util_strdst(node, tbuf, 16) != -1) {
       tres = tbuf;
       goto write;
     }
@@ -33,7 +33,7 @@ int getipv4(const char *node, char *res, u8 reslen)
     turl = clean_url(node);
     if (!turl)
       goto fail;
-    if (get_ip(turl, tbuf, 16) != -1) {
+    if (ip4_util_strdst(turl, tbuf, 16) != -1) {
       tres = tbuf;
       goto write;
     }

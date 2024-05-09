@@ -81,7 +81,7 @@ int main(int argc, char** argv)
   if (argc <= 1)
     usage(run);
 
-  templocalip = get_local_ip();
+  templocalip = ip4_util_strsrc();
   n.src = inet_addr(templocalip);
   free(templocalip);
 
@@ -114,10 +114,10 @@ int main(int argc, char** argv)
 
   if (argp.type != SCTP_INIT_SCAN && argp.type != SCTP_COOKIE_SCAN) {
     if (!argp.custom_tcpflags)
-      tf = tcp_qprc_exflags(argp.type);
+      tf = tcp_util_exflags(argp.type);
     else
-      tf = tcp_qprc_str_setflags(argp.custom_res_tcpflags);
-    n.tcpflags = tcp_qprc_setflags(&tf);
+      tf = tcp_util_str_setflags(argp.custom_res_tcpflags);
+    n.tcpflags = tcp_util_setflags(&tf);
   }
 
   /* GET HOSTS */
@@ -129,7 +129,7 @@ int main(int argc, char** argv)
   }
   if (argp.random_ip)
     for (int i = 1; i <= argp.random_ip_count; i++)
-      n.add_ip(generate_ipv4());
+      n.add_ip(random_ip4());
   std::vector<std::string> temp_vector = n.get_all_ips();
 
   /* WARNINGS */
@@ -583,13 +583,13 @@ start:
 void nesca_http(const std::string& ip, const u16 port, const int timeout_ms)
 {
   struct http_request r;
-  init_http_request(&r, "GET", "", "", 0, "/", 0, 0);
-  add_http_header(&r, "User-Agent", "oldteam");
-  add_http_header(&r, "Connection", "close");
+  http_init_req(&r, "GET", "", "", 0, "/", 0, 0);
+  http_add_hdr(&r, "User-Agent", "oldteam");
+  http_add_hdr(&r, "Connection", "close");
   send_http(&r, n, ip, port, timeout_ms);
 
   ls.lock();
-  free_http_request(&r);
+  http_free_req(&r);
   ls.unlock();
 }
 
@@ -714,7 +714,7 @@ std::vector<std::string> resolvhosts(bool datablocks, std::vector<std::string> h
 	clean = clean_url(t.c_str());
 	if (!clean)
 	  continue;
-	res = get_ip(clean, ipbuf, sizeof(ipbuf));
+	res = ip4_util_strdst(clean, ipbuf, sizeof(ipbuf));
 	if (res == -1)
 	  np.nlog_error("Failed to resolve \"" + std::string(clean)+ "\"\n");
 	else
@@ -723,7 +723,7 @@ std::vector<std::string> resolvhosts(bool datablocks, std::vector<std::string> h
 	memset(ipbuf, 0, 16);
       }
       if (temp == DNS) {
-	res = get_ip(t.c_str(), ipbuf, sizeof(ipbuf));
+	res = ip4_util_strdst(t.c_str(), ipbuf, sizeof(ipbuf));
 	if (res == -1)
 	  np.nlog_error("Failed to resolve \"" + std::string(t.c_str())+ "\"\n");
 	else
@@ -932,7 +932,7 @@ void get_dns_thread(std::string ip)
   std::string temp_dns;
 
   delayy(argp.resol_delay);
-  get_dns(ip.c_str(), argp.resol_source_port, 1200, dnsbuf, sizeof(dnsbuf));
+  dns_util_getip4(ip.c_str(), argp.resol_source_port, 1200, dnsbuf, sizeof(dnsbuf));
   temp_dns = dnsbuf;
 
   ls.lock();
@@ -1081,7 +1081,7 @@ std::string randomstr(int len)
   u8 _char;
   int i;  
 
-  seed = generate_seed_u32();
+  seed = random_seed_u32();
   mt19937_seed(seed);
   
   for (i = 0; i < len; ++i) {

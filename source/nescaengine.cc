@@ -45,7 +45,7 @@ u8 *tcp_probe(NESCADATA *n, const ipnesca_t dst, u16 dport, u8 type, u32 *packet
   }
 
   if (!n->customsport)
-    n->sport = generate_rare_port();
+    n->sport = random_srcport();
   if (!n->customttl)
     n->ttl = -1;
 
@@ -100,7 +100,7 @@ u8 *sctp_probe(NESCADATA *n, const ipnesca_t dst, u16 dport, u8 type, u32 *packe
   u32 vtag = 0;
 
   if (!n->customsport)
-    n->sport = generate_rare_port();
+    n->sport = random_srcport();
   if (!n->customttl)
     n->ttl = -1;
 
@@ -145,7 +145,7 @@ u8 *udp_probe(NESCADATA *n, const ipnesca_t dst, u16 dport, u8 type, u32 *packet
   }
 
   if (!n->customsport)
-    n->sport = generate_rare_port();
+    n->sport = random_srcport();
   if (!n->customttl)
     n->ttl = -1;
 

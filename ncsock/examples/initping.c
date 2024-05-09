@@ -37,7 +37,7 @@ int main(int argc, char** argv)
   if (!check_root_perms())
     errx(1, "Only <sudo> run!");
 
-  src = get_local_ip();
+  src = ip4_util_strsrc();
 
   dst.sin_addr.s_addr = inet_addr(argv[1]);
   dst.sin_family = AF_INET;
@@ -54,7 +54,7 @@ int main(int argc, char** argv)
     chunk = (char*)malloc(chunklen);
     sctp_pack_chunkhdr_init(chunk, SCTP_INIT, 0, chunklen, random_u32(), 32768, 10, 2048, random_u32());
     sendpacket = sctp4_build_pkt(inet_addr(src), dst.sin_addr.s_addr,
-        121, random_u16(), 0, false, NULL, 0, generate_rare_port(),
+        121, random_u16(), 0, false, NULL, 0, random_srcport(),
         atoi(argv[2]), 0, chunk, chunklen, NULL, 0, &packetlen, false, false);
     if (chunk)
       free(chunk);

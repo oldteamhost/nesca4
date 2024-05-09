@@ -25,20 +25,20 @@ int main(int argc, char** argv)
   if (argc < 3 + 1)
     usage(argv);
 
-  init_http_request(&r, "GET", "", "", 0, "/", 0, 0);
-  add_http_header(&r, "Connection", "close");
-  add_http_header(&r, "Host", argv[1]);
-  add_http_header(&r, "User-Agent", argv[3]);
+  http_init_req(&r, "GET", "", "", 0, "/", 0, 0);
+  http_add_hdr(&r, "Connection", "close");
+  http_add_hdr(&r, "Host", argv[1]);
+  http_add_hdr(&r, "User-Agent", argv[3]);
 
   fd = session(argv[1], atoi(argv[2]), 2000, NULL, 0);
   if (fd == -1)
     return -1;
 
-  send_http_packet(fd, &r);
-  recv_http_packet(fd, &res, response, CMD_BUFFER);
+  http_send_pkt(fd, &r);
+  http_recv_pkt(fd, &res, response, CMD_BUFFER);
   printf("%s\n", response);
 
-  free_http_request(&r);
+  http_free_req(&r);
   close(fd);
 }
 

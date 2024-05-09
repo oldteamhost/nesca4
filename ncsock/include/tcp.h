@@ -149,9 +149,9 @@ double tcp4_qprc_ping(int type, const char *src, const char *dst, int dstport,
                       int srcport, u16 win, u32 ack, int timeoutms, int ttl,
                       u8 *ipops, int ipoptlen, const char *data, u16 datalen,
                       int mtu, bool badsum);
-struct tcp_flags tcp_qprc_exflags(u8 type);
-struct tcp_flags tcp_qprc_str_setflags(const char *flags);
-u8 tcp_qprc_setflags(struct tcp_flags *tf);
+struct tcp_flags tcp_util_exflags(u8 type);
+struct tcp_flags tcp_util_str_setflags(const char *flags);
+u8 tcp_util_setflags(struct tcp_flags *tf);
 
 __END_DECLS
 

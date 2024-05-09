@@ -173,9 +173,9 @@
 
 __BEGIN_DECLS
 
-bool ftpauth(int fd, const char* login, const char* pass);
-void get_ftp_version(const char* ip, u16 port, int timeout_ms,
-    u8* version_buffer, ssize_t len);
+bool ftp_qprc_auth(int fd, const char* login, const char* pass);
+void ftp_qprc_version(const char* dst, u16 dstport, int timeoutms,
+    u8* verbuf, ssize_t buflen);
 
 __END_DECLS
 

@@ -211,7 +211,7 @@ void ftp_strategy::handle(const std::string& ip, const std::string& result, cons
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn)
 {
   u8 version[2048];
-  get_ftp_version(ip.c_str(), port, 1200, version, sizeof(version));
+  ftp_qprc_version(ip.c_str(), port, 1200, version, sizeof(version));
 
   if (!argp.off_ftp_brute) {
     NESCABRUTE brute(nd.brute_threads, ip.c_str(), NULL, port, nd.brute_maxcon, nd.brute_attempts, nd.brute_timeout, argp.brute_timeout_ms, FTP_BRUTEFORCE,
@@ -228,7 +228,7 @@ void smtp_strategy::handle(const std::string& ip, const std::string& result, con
     const std::string& protocol, int port, arguments_program& argp, nesca_prints& np, NESCADATA& nd, services_nesca& sn)
 {
   u8 version[2048];
-  get_smtp_version(ip.c_str(), port, 1200, version, sizeof(version));
+  smtp_qprc_version(ip.c_str(), port, 1200, version, sizeof(version));
   result_print = np.main_nesca_out("RES", "smtp://" + brute_temp + result, 3, "D", "", (char*)version, "",rtt_log, "", protocol);
   std::cout << result_print << std::endl;
 }
@@ -301,7 +301,7 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
   char title[HTTP_BUFFER_SIZE];
 
   htmlpro = nd.get_html(ip);
-  get_http_title(htmlpro.c_str(), title, HTTP_BUFFER_SIZE);
+  http_qprc_title(htmlpro.c_str(), title, HTTP_BUFFER_SIZE);
   redirect = nd.get_redirect(ip);
 
   http_title = title;
@@ -373,7 +373,7 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
     std::cout << "  * ROBOTS ";
     reset_colors;
 
-    robots_txt = get_robots_txt(ip.c_str(), port, 1100);
+    robots_txt = http_qprc_robots_txt(ip.c_str(), port, 1100);
 
     if (robots_txt == -1) {
       np.red_html_on();
@@ -392,7 +392,7 @@ void http_strategy::handle(const std::string& ip, const std::string& result, con
     std::cout << "  * STEMAP ";
     reset_colors;
 
-    sitemap = get_sitemap_xml(ip.c_str(), port, 1100);
+    sitemap = http_qprc_sitemap_xml(ip.c_str(), port, 1100);
     if (sitemap == -1) {
       np.red_html_on();
       std::cout << ip << " sitemap.xml not found!\n";

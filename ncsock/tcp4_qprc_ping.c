@@ -46,9 +46,9 @@ double tcp4_qprc_ping(int type, const char *src, const char *dst, int dstport,
   rf.ip = (struct sockaddr_storage*)&_dst;
   rf.protocol = IPPROTO_TCP;
 
-  seq = generate_seq();
-  tf = tcp_qprc_exflags(type);
-  flags = tcp_qprc_setflags(&tf);
+  seq = random_u32();
+  tf = tcp_util_exflags(type);
+  flags = tcp_util_setflags(&tf);
 
   sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
   if (sock == -1)

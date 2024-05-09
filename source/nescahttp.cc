@@ -90,22 +90,22 @@ void send_http(struct http_request *r, NESCADATA &nd, const std::string& ip,
 
   dns = nd.get_dns(ip);
   if (!dns.empty())
-    add_http_header(r, "Host", dns.c_str());
+    http_add_hdr(r, "Host", dns.c_str());
   else
-    add_http_header(r, "Host", ip.c_str());
+    http_add_hdr(r, "Host", ip.c_str());
 
-  sendfast_http_custom(ip.c_str(), port, timeout_ms, r, &response, resbuf, HTTP_BUFLEN);
+  http_qprc_pkt(ip.c_str(), port, timeout_ms, r, &response, resbuf, HTTP_BUFLEN);
   res = (char*)resbuf;
 
-  find_http_redirect(response.hdr, resbuf, redirect, HTTP_BUFLEN);
+  http_qprc_redirect(response.hdr, resbuf, redirect, HTTP_BUFLEN);
   if (!std::string(redirect).empty()) {
     fuck.lock();
       nd.add_redirect(ip, redirect);
     fuck.unlock();
     prepare_redirect(redirect, reshost, respath, HTTP_BUFLEN);
-    update_uri(&r->uri, "", "", 0, respath);
-    modify_http_header(r, "Host", reshost);
-    sendfast_http_custom(ip.c_str(), port, timeout_ms, r, &response, newbuf, HTTP_BUFLEN);
+    http_update_uri(&r->uri, "", "", 0, respath);
+    http_modify_hdr(r, "Host", reshost);
+    http_qprc_pkt(ip.c_str(), port, timeout_ms, r, &response, newbuf, HTTP_BUFLEN);
     res = std::string((char*)newbuf);
   }
   if (res.empty())

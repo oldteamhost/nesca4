@@ -22,8 +22,6 @@ __BEGIN_DECLS
 
 void mt19937_seed(u32 seed);
 u32 mt19937_random(void);
-u32 generate_seed_u32(void);
-u32 generate_random_u32(u32 min, u32 max);
 
 __END_DECLS
 

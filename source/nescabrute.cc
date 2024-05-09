@@ -146,10 +146,10 @@ void NESCABRUTE::authprobe(int fd, u8 proto, const char* login, const char* pass
 {
   switch (proto) {
     case FTP_BRUTEFORCE:
-      auth = ftpauth(fd, login, pass);
+      auth = ftp_qprc_auth(fd, login, pass);
       break;
     case HTTP_BRUTEFORCE:
-      auth = auth_http_basic(fd, ip, path, login, pass);
+      auth = http_basicauth(fd, ip, path, login, pass);
       break;
       
     case RVI_BRUTEFORCE:
@@ -172,7 +172,7 @@ int NESCABRUTE::getrandomcon(void)
   if (connections.empty())
     return -1;
 
-  mt19937_seed(generate_seed());
+  mt19937_seed(random_seed_u32());
   index = mt19937_random() % connections.size();
 
   return connections[index];

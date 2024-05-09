@@ -44,26 +44,3 @@ u32 mt19937_random(void)
 
   return y;
 }
-
-u32 generate_seed_u32(void)
-{
-#include <time.h>
-  struct timespec ts;
-  if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
-    return -1;
-
-  return ((u32)(ts.tv_sec * 1000000000ULL + ts.tv_nsec));
-}
-
-#include <limits.h>
-u32 generate_random_u32(u32 min, u32 max)
-{
-  u32 range;
-  if (min > max)
-    return 1;
-
-  range = (max >= min) ? (max - min) : (UINT_MAX - min);
-  mt19937_seed(generate_seed_u32());
-  return (min + (mt19937_random() % range + 1));
-}
-

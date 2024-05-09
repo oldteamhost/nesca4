@@ -7,6 +7,7 @@
 
 #include "include/tcp.h"
 #include "include/ip.h"
+#include "include/utils.h"
 
 int tcp4_send_pkt(struct ethtmp *eth, int fd, const u32 src, const u32 dst,
                   int ttl, bool df, u8 *ipops, int ipoptlen, u16 srcport,
@@ -20,9 +21,10 @@ int tcp4_send_pkt(struct ethtmp *eth, int fd, const u32 src, const u32 dst,
   int res = -1;
   u8 *pkt;
 
-  pkt = tcp4_build_pkt(src, dst, ttl, generate_random_u32(10, 9999), IP_TOS_DEFAULT, df,
-    ipops, ipoptlen, srcport, dstport, seq, ack, reserved, flags, win, urp, opt, optlen, data, datalen,
-    &pktlen, badsum);
+  pkt = tcp4_build_pkt(src, dst, ttl, random_u16(), IP_TOS_DEFAULT,
+		       df, ipops, ipoptlen, srcport, dstport, seq,
+		       ack, reserved, flags, win, urp, opt, optlen,
+		       data, datalen, &pktlen, badsum);
   if (!pkt)
     return -1;
 

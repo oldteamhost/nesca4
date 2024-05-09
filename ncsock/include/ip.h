@@ -35,7 +35,6 @@
 #define IP_TOS_LOWCOST      0x02    /* low monetary cost - XXX */
 #define IP_TOS_ECT          0x02    /* ECN-capable transport */
 #define IP_TOS_CE           0x01    /* congestion experienced */
-
 #define IP4_ADDR_LEN        4       /* IP address length */
 #define IP4_RF              0x8000  /* reserved fragment flag */
 #define IP4_DF              0x4000  /* dont fragment flag */
@@ -44,7 +43,6 @@
 #define IP4_OFFMASK         0x1fff  /* mask for fragment offset */
 #define IP4_IHL_MAX         60
 #define IP4_VERSION         4
-
 #define IP6_HDR_LEN         40      /* header length */
 #define IP6_LEN_MAX         65535   /* non-jumbo payload */
 #define IP6_MTU_MIN         1280    /* minimum MTU (1024 + 256) */
@@ -154,7 +152,10 @@ int ip4_send_raw(int fd, const struct sockaddr_in *dst, const u8 *pkt,
                  u32 pktlen);
 int ip4_send_eth(struct ethtmp *eth, const u8 *pkt, u32 pktlen);
 int ip6_send_eth(struct ethtmp *eth, const u8 *pkt, u32 pktlen);
-
+char *ip4_util_strsrc(void);
+char *ip6_util_strsrc(void);
+int ip6_util_strdst(const char *dns, char *ipbuf, size_t buflen);
+int ip4_util_strdst(const char* dns, char* ipbuf, size_t buflen);
 __END_DECLS
 
 #endif
