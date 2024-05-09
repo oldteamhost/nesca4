@@ -16,11 +16,11 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <algorithm>
 #include <netinet/in.h>
 #include <string>
 #include <unistd.h>
 #include <unordered_map>
-#include <algorithm>
 #include <limits>
 #include <limits.h>
 #include <vector>
@@ -437,7 +437,7 @@ void _scanner_::get_ip_header(struct blockpreset *bp)
     if (hl.key == "ihl") {
       switch (hl.valuetype) {
         case VALUE_TYPE_CUSTOM:
-          ip.ihl = set_customnum(hl.value, hl.key, MAX_IHL_LEN, i);
+          ip.ihl = set_customnum(hl.value, hl.key, IP4_IHL_MAX, i);
           break;
         case VALUE_TYPE_RANDOM:
           ip.ihl = generate_random_u32(0, MAX_IP_IHL);
@@ -674,7 +674,7 @@ void _scanner_::get_tcp_header(struct blockpreset *bp)
   tcp.th_dport = 80;
   tcp.th_seq = generate_random_u32(0, UINT_MAX);
   tcp.th_ack = 0;
-  tcp.th_flags = TH_SYN;
+  tcp.th_flags = TCP_FLAG_SYN;
   tcp.th_win = generate_random_u32(0, USHRT_MAX);
   tcp.th_urp = 0;
   tcp.th_x2 = -1;
@@ -743,8 +743,8 @@ void _scanner_::get_tcp_header(struct blockpreset *bp)
       switch (hl.valuetype) {
         case VALUE_TYPE_CUSTOM:
           struct tcp_flags tf;
-          tf = str_set_flags(hl.value.c_str());
-          tcp.th_flags = set_tcp_flags(&tf);
+          tf = tcp_qprc_str_setflags(hl.value.c_str());
+          tcp.th_flags = tcp_qprc_setflags(&tf);
           break;
         case VALUE_TYPE_RANDOM:
           // XXX
@@ -870,7 +870,7 @@ void _scanner_::get_icmp_header(struct blockpreset *bp)
   icmp.code = 0;
   icmp.id = generate_random_u32(0, USHRT_MAX);
   icmp.seq = -1;
-  icmp.type = ICMP_ECHO;
+  icmp.type = ICMP4_ECHO;
   icmp.tp.data = "";
   icmp.tp.datalen = 0;
 
@@ -1386,23 +1386,23 @@ void _interpreter_::checkoptions(u8 protocol, struct sendpktline *spl)
   }
 }
 
-#define BUILD_IP(data, len, proto, reslen) \
+#define BUILD_IP(data, len, _proto, reslen) \
   do { \
     bool df = false; \
     if (iph.mtu == -1 || iph.frag_off == -2) df = true; \
-    res = build_ip_pkt(iph.saddr, iph.daddr, iph.protocol, iph.ttl, iph.ident, \
+    res = ip4_build(iph.saddr, iph.daddr, iph.protocol, iph.ttl, iph.ident, \
         iph.tos, df, iph.ipopt, iph.ipoptlen, (char*)data, len, &(reslen)); \
-    ip = (struct ip_header*)res; \
+    ip = (struct ip4_hdr*)res; \
     if (iph.protocol == -1) \
-      ip->protocol = (proto); \
+      ip->proto = (_proto); \
     if (iph.frag_off != -1 && iph.frag_off != -2) \
-      ip->frag_off = htons(iph.frag_off); \
+      ip->off = htons(iph.frag_off); \
     if (iph.ihl != -1) \
       ip->ihl = iph.ihl; \
     if (iph.tot_len != -1) \
-      ip->tot_len = htons(iph.tot_len); \
+      ip->totlen = htons(iph.tot_len); \
     if (iph.tot_len != -1 || iph.ihl != -1 || iph.protocol == -1) \
-      ip->check = ip_cksum_add((u16*)ip, sizeof(struct ip_header) + iph.ipoptlen, 0); \
+      ip->check = ip_check_add((u16*)ip, sizeof(struct ip4_hdr) + iph.ipoptlen, 0); \
     if (iph.check != -1) { \
       ip->check = 0; \
       ip->check = htons(iph.check); \
@@ -1414,8 +1414,8 @@ u8* _interpreter_::sendtcp(int fd, struct sendpktline *spl, u32 *plen, struct so
   struct temp_ip_header iph;
   struct temp_tcp_header tcph;
   struct sockaddr_in resdst;
-  struct tcp_header *tcp;
-  struct ip_header *ip;
+  struct tcp_hdr *tcp;
+  struct ip4_hdr *ip;
   u8 *tcpopt = NULL;
   int tcpoptlen = 0;
   u8* res;
@@ -1426,7 +1426,7 @@ u8* _interpreter_::sendtcp(int fd, struct sendpktline *spl, u32 *plen, struct so
   tcph = id->tcphdr_presets[spl->hp.tcphdr];
 
   /* BUILD TCP */
-  tcp = (struct tcp_header*)build_tcp(tcph.th_sport, tcph.th_dport,
+  tcp = (struct tcp_hdr*)tcp_build(tcph.th_sport, tcph.th_dport,
       tcph.th_seq, tcph.th_ack, tcph.th_x2, tcph.th_flags, tcph.th_win,
       tcph.th_urp, tcpopt, tcpoptlen, tcph.tp.data, tcph.tp.datalen, &tcplen);
   if (tcph.th_off != -1) {
@@ -1434,14 +1434,14 @@ u8* _interpreter_::sendtcp(int fd, struct sendpktline *spl, u32 *plen, struct so
     std::cout << tcph.th_off << std::endl;
   }
   if (tcph.th_sum == -1)
-    tcp->th_sum = ip4_pseudoheader_check(iph.saddr, iph.daddr, IPPROTO_TCP, tcplen, (struct tcp_header*)tcp);
+    tcp->th_sum = ip4_pseudocheck(iph.saddr, iph.daddr, IPPROTO_TCP, tcplen, (struct tcp_hdr*)tcp);
   else
     tcp->th_sum = tcph.th_sum;
 
   /* BUILD IP */
   BUILD_IP(tcp, tcplen, IPPROTO_TCP, reslen);
 
-  resdst.sin_addr.s_addr = ip->daddr;
+  resdst.sin_addr.s_addr = ip->dst;
   resdst.sin_family = AF_INET;
 
   if (tcp)
@@ -1455,9 +1455,9 @@ u8* _interpreter_::sendicmp(int fd, struct sendpktline *spl, u32 *plen, u16 seq,
 {
   struct temp_ip_header iph;
   struct temp_icmp4_header icmph;
-  struct ip_header *ip;
+  struct ip4_hdr *ip;
   struct sockaddr_in resdst;
-  struct icmp4_header icmp;
+  struct icmp4_hdr icmp;
   u8* res;
   u32 reslen;
 
@@ -1500,16 +1500,16 @@ u8* _interpreter_::sendicmp(int fd, struct sendpktline *spl, u32 *plen, u16 seq,
     icmp.seq = htons(icmph.seq);
   else
     icmp.seq = seq;
-  icmp.checksum = 0;
+  icmp.check = 0;
   if (iph.check == -1)
-    icmp.checksum = in_cksum((u16*)ping, icmplen);
+    icmp.check = in_check((u16*)ping, icmplen);
   else
-    icmp.checksum = htons(icmph.checksum);
+    icmp.check = htons(icmph.checksum);
 
   /* BUILD IP */
   BUILD_IP(ping, icmplen, IPPROTO_ICMP, reslen);
 
-  resdst.sin_addr.s_addr = ip->daddr;
+  resdst.sin_addr.s_addr = ip->dst;
   resdst.sin_family = AF_INET;
 
   *dst = resdst;
@@ -1521,7 +1521,7 @@ u8* _interpreter_::sendip(int fd, struct sendpktline *spl, u32 *plen, struct soc
 {
   struct temp_ip_header iph;
   struct sockaddr_in resdst;
-  struct ip_header *ip;
+  struct ip4_hdr *ip;
   u8* res;
   u32 reslen;
 
@@ -1530,7 +1530,7 @@ u8* _interpreter_::sendip(int fd, struct sendpktline *spl, u32 *plen, struct soc
   /* BUILD IP */
   BUILD_IP(NULL, 0, IPPROTO_IP, reslen);
 
-  resdst.sin_addr.s_addr = ip->daddr;
+  resdst.sin_addr.s_addr = ip->dst;
   resdst.sin_family = AF_INET;
 
   *dst = resdst;
@@ -1543,8 +1543,8 @@ u8* _interpreter_::sendudp(int fd, struct sendpktline *spl, u32 *plen, struct so
   struct temp_ip_header iph;
   struct temp_udp_header udph;
   struct sockaddr_in resdst;
-  struct ip_header *ip;
-  struct udp_header *udp;
+  struct ip4_hdr *ip;
+  struct udp_hdr *udp;
   u8* res;
   u32 reslen;
   u32 udplen;
@@ -1553,19 +1553,19 @@ u8* _interpreter_::sendudp(int fd, struct sendpktline *spl, u32 *plen, struct so
   udph = id->udphdr_presets[spl->hp.udphdr];
 
   /* BUILD UDP */
-  udp = (struct udp_header*)build_udp(udph.uh_sport, udph.uh_dport,
+  udp = (struct udp_hdr*)udp_build(udph.uh_sport, udph.uh_dport,
       udph.tp.data, udph.tp.datalen, &udplen);
   if (udph.ulen != -1)
-    udp->ulen = htons(udph.ulen);
+    udp->len = htons(udph.ulen);
   if (udph.check == -1)
-    udp->check = ip4_pseudoheader_check(iph.saddr, iph.daddr, IPPROTO_UDP, udplen, udp);
+    udp->check = ip4_pseudocheck(iph.saddr, iph.daddr, IPPROTO_UDP, udplen, udp);
   else
     udp->check = htons(udph.check);
 
   /* BUILD IP */
   BUILD_IP(udp, udplen, IPPROTO_UDP, reslen);
 
-  resdst.sin_addr.s_addr = ip->daddr;
+  resdst.sin_addr.s_addr = ip->dst;
   resdst.sin_family = AF_INET;
 
   if (udp)
@@ -1580,9 +1580,9 @@ u8* _interpreter_::sendigmp(int fd, struct sendpktline *spl, u32 *plen, struct s
 {
   struct temp_ip_header iph;
   struct temp_igmp_header igmph;
-  struct ip_header *ip;
+  struct ip4_hdr *ip;
   struct sockaddr_in resdst;
-  struct igmp_header igmp;
+  struct igmp_hdr igmp;
   u8* res;
   u32 reslen;
   u32 igmplen;
@@ -1615,14 +1615,14 @@ u8* _interpreter_::sendigmp(int fd, struct sendpktline *spl, u32 *plen, struct s
   }
   igmp.check = 0;
   if (igmph.check == -1)
-    igmp.check = in_cksum((u16*) pkt, igmplen);
+    igmp.check = in_check((u16*) pkt, igmplen);
   else
     igmp.check = htons(igmph.check);
 
   /* BUILD IP */
   BUILD_IP(pkt, igmplen, IPPROTO_IGMP, reslen);
 
-  resdst.sin_addr.s_addr = ip->daddr;
+  resdst.sin_addr.s_addr = ip->dst;
   resdst.sin_family = AF_INET;
 
   *dst = resdst;
@@ -1673,24 +1673,24 @@ void _interpreter_::sendpacket(u8 proto, int fd, struct sendpktline *spl)
     iph = id->iphdr_presets[spl->hp.iphdr];
     if (proto == IPPROTO_TCP) {
       packet = sendtcp(fd, spl, &plen, &dst);
-      send_ip4_packet(NULL, fd, &dst, iph.mtu, packet, plen);
+      ip4_send(NULL, fd, &dst, iph.mtu, packet, plen);
     }
     else if (proto == IPPROTO_ICMP) {
       packet = sendicmp(fd, spl, &plen, icmpseq, &dst);
-      send_ip4_packet(NULL, fd, &dst, iph.mtu, packet, plen);
+      ip4_send(NULL, fd, &dst, iph.mtu, packet, plen);
       icmpseq++;
     }
     else if (proto == IPPROTO_UDP) {
       packet = sendudp(fd, spl, &plen, &dst);
-      send_ip4_packet(NULL, fd, &dst, iph.mtu, packet, plen);
+      ip4_send(NULL, fd, &dst, iph.mtu, packet, plen);
     }
     else if (proto == IPPROTO_IP) {
       packet = sendip(fd, spl, &plen, &dst);
-      send_ip4_packet(NULL, fd, &dst, iph.mtu, packet, plen);
+      ip4_send(NULL, fd, &dst, iph.mtu, packet, plen);
     }
     else if (proto == IPPROTO_IGMP) {
       packet = sendigmp(fd, spl, &plen, &dst);
-      send_ip4_packet(NULL, fd, &dst, iph.mtu, packet, plen);
+      ip4_send(NULL, fd, &dst, iph.mtu, packet, plen);
     }
     if (packet)
       free(packet);

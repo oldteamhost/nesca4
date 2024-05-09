@@ -11,38 +11,38 @@
 #include <netinet/if_ether.h>
 #include <netinet/in.h>
 
-struct ip_header* ext_iphdr(u8 *buf)
+struct ip4_hdr* ext_iphdr(u8 *buf)
 {
-  struct ip_header *iphdr;
-  iphdr = (struct ip_header*)(buf + sizeof(struct ethhdr));
+  struct ip4_hdr *iphdr;
+  iphdr = (struct ip4_hdr*)(buf + sizeof(struct ethhdr));
   return iphdr;
 }
 
-struct tcp_header* ext_tcphdr(u8 *buf)
+struct tcp_hdr* ext_tcphdr(u8 *buf)
 {
-  struct tcp_header *tcphdr;
-  tcphdr = (struct tcp_header*)(buf + sizeof(struct ethhdr) + sizeof(struct ip_header));
+  struct tcp_hdr *tcphdr;
+  tcphdr = (struct tcp_hdr*)(buf + sizeof(struct ethhdr) + sizeof(struct ip4_hdr));
   return tcphdr;
 }
 
-struct udp_header* ext_udphdr(u8 *buf)
+struct udp_hdr* ext_udphdr(u8 *buf)
 {
-  struct udp_header *udphdr;
-  udphdr = (struct udp_header *)(buf + sizeof(struct ethhdr) + sizeof(struct ip_header));
+  struct udp_hdr *udphdr;
+  udphdr = (struct udp_hdr *)(buf + sizeof(struct ethhdr) + sizeof(struct ip4_hdr));
   return udphdr;
 }
 
-struct icmp4_header* ext_icmphdr(u8 *buf)
+struct icmp4_hdr* ext_icmphdr(u8 *buf)
 {
-  struct icmp4_header *icmphdr;
-  icmphdr = (struct icmp4_header *)(buf + sizeof(struct ethhdr) + sizeof(struct ip_header));
+  struct icmp4_hdr *icmphdr;
+  icmphdr = (struct icmp4_hdr *)(buf + sizeof(struct ethhdr) + sizeof(struct ip4_hdr));
   return icmphdr;
 }
 
-struct igmp_header* ext_igmphdr(u8 *buf)
+struct igmp_hdr* ext_igmphdr(u8 *buf)
 {
-  struct igmp_header *igmphdr;
-  igmphdr = (struct igmp_header *)(buf + sizeof(struct ethhdr) + sizeof(struct ip_header));
+  struct igmp_hdr *igmphdr;
+  igmphdr = (struct igmp_hdr *)(buf + sizeof(struct ethhdr) + sizeof(struct ip4_hdr));
   return igmphdr;
 }
 
@@ -52,23 +52,23 @@ int ext_payload(u8 *buf, u8 *rbuf)
   struct ethhdr *eth_header = (struct ethhdr *)buf;
 
   if (ntohs(eth_header->h_proto) == ETH_P_IP) {
-    struct ip_header *iphdr = (struct ip_header*)(buf + sizeof(struct ethhdr));
-    if (iphdr->protocol == IPPROTO_TCP) {
-      struct tcp_header *tcphdr = (struct tcp_header *)(buf + sizeof(struct ethhdr) + sizeof(struct ip_header));
+    struct ip4_hdr *iphdr = (struct ip4_hdr*)(buf + sizeof(struct ethhdr));
+    if (iphdr->proto == IPPROTO_TCP) {
+      struct tcp_hdr *tcphdr = (struct tcp_hdr *)(buf + sizeof(struct ethhdr) + sizeof(struct ip4_hdr));
       hdrsize = tcphdr->th_x2;
-      paylsize = ntohs(iphdr->tot_len) - (sizeof(struct ip_header) + hdrsize * 4);
-      memcpy(rbuf, buf + sizeof(struct ethhdr) + sizeof(struct ip_header) + hdrsize * 4, paylsize);
+      paylsize = ntohs(iphdr->totlen) - (sizeof(struct ip4_hdr) + hdrsize * 4);
+      memcpy(rbuf, buf + sizeof(struct ethhdr) + sizeof(struct ip4_hdr) + hdrsize * 4, paylsize);
     }
-    else if (iphdr->protocol == IPPROTO_UDP) {
-      struct udp_header *udphdr = (struct udp_header*)(buf + sizeof(struct ethhdr) + sizeof(struct ip_header));
-      hdrsize = sizeof(struct udp_header);
-      paylsize = ntohs(udphdr->ulen) - hdrsize;
-      memcpy(rbuf, buf + sizeof(struct ethhdr) + sizeof(struct ip_header) + hdrsize, paylsize);
+    else if (iphdr->proto == IPPROTO_UDP) {
+      struct udp_hdr *udphdr = (struct udp_hdr*)(buf + sizeof(struct ethhdr) + sizeof(struct ip4_hdr));
+      hdrsize = sizeof(struct udp_hdr);
+      paylsize = ntohs(udphdr->len) - hdrsize;
+      memcpy(rbuf, buf + sizeof(struct ethhdr) + sizeof(struct ip4_hdr) + hdrsize, paylsize);
     }
-    else if (iphdr->protocol == IPPROTO_ICMP) {
-      hdrsize = sizeof(struct icmp4_header);
-      paylsize = ntohs(iphdr->tot_len) - (sizeof(struct ip_header) + hdrsize);
-      memcpy(rbuf, buf + sizeof(struct ethhdr) + sizeof(struct ip_header), paylsize);
+    else if (iphdr->proto == IPPROTO_ICMP) {
+      hdrsize = sizeof(struct icmp4_hdr);
+      paylsize = ntohs(iphdr->totlen) - (sizeof(struct ip4_hdr) + hdrsize);
+      memcpy(rbuf, buf + sizeof(struct ethhdr) + sizeof(struct ip4_hdr), paylsize);
     }
   }
 

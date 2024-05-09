@@ -8,9 +8,7 @@
 #include "include/ip.h"
 
 #define CRC32C_POLY 0x1EDC6F41
-
-#define CRC32C(c,d) \
-  (c=(c>>8)^crc_c[(c^(d))&0xFF])
+#define CRC32C(c, d) (c = (c >> 8) ^ crc_c[(c ^ (d)) & 0xFF])
 
 static unsigned long crc_c[256] = {
 0x00000000L, 0xF26B8303L, 0xE13B70F7L, 0x1350F3F4L,
@@ -79,8 +77,7 @@ static unsigned long crc_c[256] = {
 0xBE2DA0A5L, 0x4C4623A6L, 0x5F16D052L, 0xAD7D5351L,
 };
 
-unsigned long
-_crc32c(u8 *buf, int len)
+unsigned long __crc32c(u8 *buf, int len)
 {
   u8 byte0, byte1, byte2, byte3;
   unsigned long crc32 = ~0L;

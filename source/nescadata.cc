@@ -9,10 +9,7 @@
 
 #include "../include/nescadata.h"
 #include "../ncsock/include/types.h"
-
-#include <cmath>
 #include <cstdio>
-#include <cstring>
 #include <vector>
 #include <unordered_set>
 
@@ -276,7 +273,6 @@ void NESCADATA::sort_ips_rtt(std::vector<std::string>& ips)
   });
 }
 
-#include "../include/nescautils.h"
 #include "../ncsock/include/utils.h"
 
 static void numipv4(u32 n, u8 *ip)

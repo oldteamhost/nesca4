@@ -114,10 +114,10 @@ int main(int argc, char** argv)
 
   if (argp.type != SCTP_INIT_SCAN && argp.type != SCTP_COOKIE_SCAN) {
     if (!argp.custom_tcpflags)
-      tf = set_flags(argp.type);
+      tf = tcp_qprc_exflags(argp.type);
     else
-      tf = str_set_flags(argp.custom_res_tcpflags);
-    n.tcpflags = set_tcp_flags(&tf);
+      tf = tcp_qprc_str_setflags(argp.custom_res_tcpflags);
+    n.tcpflags = tcp_qprc_setflags(&tf);
   }
 
   /* GET HOSTS */

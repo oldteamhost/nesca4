@@ -7,12 +7,10 @@
 */
 
 #include "../include/nescaengine.h"
-#include <cassert>
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
 #include <netinet/in.h>
-#include <limits.h>
 #include "../ncsock/include/eth.h"
 #include "../ncsock/include/sctp.h"
 #include "../ncsock/include/utils.h"
@@ -31,12 +29,12 @@ u8 *tcp_probe(NESCADATA *n, const ipnesca_t dst, u16 dport, u8 type, u32 *packet
 
   switch (type) {
     case TCP_PING_ACK:
-      tcpflags = TH_ACK;
+      tcpflags = TCP_FLAG_ACK;
       destport = n->ack_ping_ports[n->temp_ack_port];
       n->temp_ack_port++;
       break;
     case TCP_PING_SYN:
-      tcpflags = TH_SYN;
+      tcpflags = TCP_FLAG_SYN;
       destport = n->syn_ping_ports[n->temp_syn_port];
       n->temp_syn_port++;
       break;
@@ -54,7 +52,7 @@ u8 *tcp_probe(NESCADATA *n, const ipnesca_t dst, u16 dport, u8 type, u32 *packet
   if (n->frag_mtu > 0)
     df = false;
 
-  res = build_tcp_pkt(n->src, dst, n->ttl, random_u16(), 0, df,
+  res = tcp4_build_pkt(n->src, dst, n->ttl, random_u16(), 0, df,
       n->ip_options, n->ipoptslen, n->sport, destport, random_u32(),
       0, 0, tcpflags, n->windowlen, 0, NULL, 0, n->pd.data,
       n->pd.datalen, packetlen, n->badsum);
@@ -73,20 +71,20 @@ u8 *icmp_probe(NESCADATA *n, const ipnesca_t dst, u8 type, u32 *packetlen)
 
   switch (type) {
     case ICMP_PING_ECHO:
-      icmptype = ICMP_ECHO;
+      icmptype = ICMP4_ECHO;
       break;
     case ICMP_PING_INFO:
-      icmptype = ICMP_INFO_REQUEST;
+      icmptype = ICMP4_INFO_REQUEST;
       break;
     case ICMP_PING_TIME:
-      icmptype = ICMP_TIMESTAMP;
+      icmptype = ICMP4_TIMESTAMP;
       break;
   }
 
   if (n->frag_mtu > 0)
     df = false;
 
-  res = build_icmp_pkt(n->src, dst, n->ttl, random_u16(), 0, df,
+  res = icmp4_build_pkt(n->src, dst, n->ttl, random_u16(), 0, df,
       n->ip_options, n->ipoptslen, random_u16(), random_u16(),
       icmptype, 0, n->pd.data, n->pd.datalen, packetlen, n->badsum);
 
@@ -111,7 +109,7 @@ u8 *sctp_probe(NESCADATA *n, const ipnesca_t dst, u16 dport, u8 type, u32 *packe
       dport = n->sctp_ping_ports[n->temp_sctp_port];
       n->temp_sctp_port++;
     case SCTP_INIT_SCAN:
-      chunklen = sizeof(struct sctp_chunk_header_init);
+      chunklen = sizeof(struct sctp_chunk_hdr_init);
       chunk = (char*)malloc(chunklen);
       sctp_pack_chunkhdr_init(chunk, SCTP_INIT, 0, chunklen, random_u32(), 32768, 10, 2048, random_u32());
       break;
@@ -127,7 +125,7 @@ u8 *sctp_probe(NESCADATA *n, const ipnesca_t dst, u16 dport, u8 type, u32 *packe
   if (n->frag_mtu > 0)
     df = false;
 
-  res = build_sctp_pkt(n->src, dst, n->ttl,
+  res = sctp4_build_pkt(n->src, dst, n->ttl,
     random_u16(), 0, df, n->ip_options, n->ipoptslen, n->sport, dport, vtag, chunk,
     chunklen, n->pd.data, n->pd.datalen, packetlen, n->adler32sum, n->badsum);
 
@@ -154,7 +152,7 @@ u8 *udp_probe(NESCADATA *n, const ipnesca_t dst, u16 dport, u8 type, u32 *packet
   if (n->frag_mtu > 0)
     df = false;
 
-  res = build_udp_pkt(n->src, dst, n->ttl, random_u16(), 0, df, n->ip_options, n->ipoptslen,
+  res = udp4_build_pkt(n->src, dst, n->ttl, random_u16(), 0, df, n->ip_options, n->ipoptslen,
       n->sport, dport, n->pd.data, n->pd.datalen, packetlen, n->badsum);
 
   return res;
@@ -163,7 +161,7 @@ u8 *udp_probe(NESCADATA *n, const ipnesca_t dst, u16 dport, u8 type, u32 *packet
 u8 *arp_probe(NESCADATA *n, const ipnesca_t dst, u8 type, u32 *packetlen)
 {
   u8 *res = NULL;
-  ip_addreth_t daddr, saddr;
+  ip4_addreth_t daddr, saddr;
   eth_addr_t ethsaddr;
 
   /* ip source */
@@ -173,8 +171,8 @@ u8 *arp_probe(NESCADATA *n, const ipnesca_t dst, u8 type, u32 *packetlen)
   /* mac source */
   memcpy(ethsaddr.data, n->srcmac, ETH_ADDR_LEN);
 
-  res = build_arp_pkt(ethsaddr, MAC_STRING_TO_ADDR(ETH_ADDR_BROADCAST), ARP_HRD_ETH,
-      ARP_PRO_IP, ETH_ADDR_LEN, _IP_ADDR_LEN, ARP_OP_REQUEST, ethsaddr,
+  res = arp4_build_pkt(ethsaddr, MAC_STRING_TO_ADDR(ETH_ADDR_BROADCAST), ARP_HRD_ETH,
+      ARP_PRO_IP, ETH_ADDR_LEN, IP4_ADDR_LEN, ARP_OP_REQUEST, ethsaddr,
       saddr, MAC_STRING_TO_ADDR("\x00\x00\x00\x00\x00\x00"), daddr, packetlen);
 
   return res;
@@ -191,36 +189,36 @@ bool readping(NESCADATA *n, const ipnesca_t dst, u8 *packet, u8 type)
   u8 tcpflags = 0;
 
   if (type == ICMP_PING_ECHO || type == ICMP_PING_TIME || type == ICMP_PING_INFO) {
-    const struct icmp4_header *icmp = (struct icmp4_header *)(packet + sizeof(struct eth_header) + sizeof(struct ip_header));
+    const struct icmp4_hdr *icmp = (struct icmp4_hdr *)(packet + sizeof(struct eth_hdr) + sizeof(struct ip4_hdr));
     icmptype = icmp->type;
-    if (type == ICMP_PING_TIME && icmptype == ICMP_TIMESTAMPREPLY)
+    if (type == ICMP_PING_TIME && icmptype == ICMP4_TIMESTAMPREPLY)
       return true;
-    if (type == ICMP_PING_ECHO && icmptype == ICMP_ECHOREPLY)
+    if (type == ICMP_PING_ECHO && icmptype == ICMP4_ECHOREPLY)
       return true;
-    if (type == ICMP_PING_INFO && icmptype == ICMP_INFO_REPLY)
+    if (type == ICMP_PING_INFO && icmptype == ICMP4_INFO_REPLY)
       return true;
   }
   if (type == TCP_PING_ACK || type == TCP_PING_SYN) {
-    const struct tcp_header *tcp = (struct tcp_header*)(packet + sizeof(struct eth_header) + sizeof(struct ip_header));
+    const struct tcp_hdr *tcp = (struct tcp_hdr*)(packet + sizeof(struct eth_hdr) + sizeof(struct ip4_hdr));
     tcpflags = tcp->th_flags;
-    if (type == TCP_PING_ACK && tcpflags == TH_RST)
+    if (type == TCP_PING_ACK && tcpflags == TCP_FLAG_RST)
       return true;
     if (type == TCP_PING_SYN && tcpflags)
       return true;
   }
   if (type == SCTP_INIT_PING) {
-    const struct sctp_header *sctp = (struct sctp_header*)(packet + sizeof(struct eth_header) + sizeof(struct ip_header));
-    if (sctp->sport)
+    const struct sctp_hdr *sctp = (struct sctp_hdr*)(packet + sizeof(struct eth_hdr) + sizeof(struct ip4_hdr));
+    if (sctp->srcport)
       return true;
   }
   if (type == UDP_PING) {
-    const struct ip_header *ip = (struct ip_header*)(packet + sizeof(struct eth_header));
-    if (ip->protocol == IPPROTO_ICMP) {
-      const struct icmp4_header *icmp = (struct icmp4_header*)(packet + sizeof(struct eth_header) + sizeof(struct ip_header));
+    const struct ip4_hdr *ip = (struct ip4_hdr*)(packet + sizeof(struct eth_hdr));
+    if (ip->proto == IPPROTO_ICMP) {
+      const struct icmp4_hdr *icmp = (struct icmp4_hdr*)(packet + sizeof(struct eth_hdr) + sizeof(struct ip4_hdr));
       if (icmp->type == 3 && icmp->code == 3)
         return true;
     }
-    if (ip->protocol == IPPROTO_UDP)
+    if (ip->proto == IPPROTO_UDP)
       return true;
   }
 
@@ -230,8 +228,8 @@ bool readping(NESCADATA *n, const ipnesca_t dst, u8 *packet, u8 type)
 int readscan(const ipnesca_t dst, u8 *packet, u8 type)
 {
   if (type == SCTP_INIT_SCAN || type == SCTP_COOKIE_SCAN || type == SCTP_INIT_PING) {
-    const struct sctp_header *sctp = (struct sctp_header*)(packet + sizeof(struct eth_header) + sizeof(struct ip_header));
-    const struct sctp_chunk_header *chunk = (struct sctp_chunk_header*)((u8*)sctp + 12);
+    const struct sctp_hdr *sctp = (struct sctp_hdr*)(packet + sizeof(struct eth_hdr) + sizeof(struct ip4_hdr));
+    const struct sctp_chunk_hdr *chunk = (struct sctp_chunk_hdr*)((u8*)sctp + 12);
 
     if (type == SCTP_INIT_SCAN) {
       if (chunk->type == SCTP_INIT_ACK)
@@ -244,22 +242,22 @@ int readscan(const ipnesca_t dst, u8 *packet, u8 type)
         return PORT_CLOSED;
   }
   else if (type == UDP_SCAN) {
-    const struct ip_header *ip = (struct ip_header*)(packet + sizeof(struct eth_header));
-    if (ip->protocol == IPPROTO_ICMP) {
-      const struct icmp4_header *icmp = (struct icmp4_header*)(packet + sizeof(struct eth_header) + sizeof(struct ip_header));
+    const struct ip4_hdr *ip = (struct ip4_hdr*)(packet + sizeof(struct eth_hdr));
+    if (ip->proto == IPPROTO_ICMP) {
+      const struct icmp4_hdr *icmp = (struct icmp4_hdr*)(packet + sizeof(struct eth_hdr) + sizeof(struct ip4_hdr));
       if (icmp->type == 3 && icmp->code == 3)
         return PORT_CLOSED;
     }
-    else if (ip->protocol == IPPROTO_UDP) /* its real? */
+    else if (ip->proto == IPPROTO_UDP) /* its real? */
       return PORT_OPEN;
     else
       return PORT_FILTER;
   }
   else {
-    const struct tcp_header *tcp = (struct tcp_header*)(packet + sizeof(struct eth_header) + sizeof(struct ip_header));
+    const struct tcp_hdr *tcp = (struct tcp_hdr*)(packet + sizeof(struct eth_hdr) + sizeof(struct ip4_hdr));
     switch (type) {
       case TCP_MAIMON_SCAN: {
-        if (tcp->th_flags == TH_RST)
+        if (tcp->th_flags == TCP_FLAG_RST)
           return PORT_CLOSED;
         return PORT_OPEN_OR_FILTER;
       }
@@ -267,12 +265,12 @@ int readscan(const ipnesca_t dst, u8 *packet, u8 type)
       case TCP_FIN_SCAN:
       case TCP_XMAS_SCAN:
       case TCP_NULL_SCAN: {
-        if (tcp->th_flags == TH_RST)
+        if (tcp->th_flags == TCP_FLAG_RST)
           return PORT_CLOSED;
         return PORT_OPEN;
       }
       case TCP_WINDOW_SCAN: {
-        if (tcp->th_flags == TH_RST) {
+        if (tcp->th_flags == TCP_FLAG_RST) {
           if (tcp->th_win > 0)
             return PORT_OPEN;
           else
@@ -281,7 +279,7 @@ int readscan(const ipnesca_t dst, u8 *packet, u8 type)
         }
       }
       case TCP_ACK_SCAN: {
-        if (tcp->th_flags == TH_RST)
+        if (tcp->th_flags == TCP_FLAG_RST)
           return PORT_NO_FILTER;
         return PORT_FILTER;
       }
@@ -291,7 +289,7 @@ int readscan(const ipnesca_t dst, u8 *packet, u8 type)
             return PORT_OPEN;
           case 0x1A:
             return PORT_OPEN;
-          case TH_RST:
+          case TCP_FLAG_RST:
             return PORT_CLOSED;
           default:
             return PORT_FILTER;
@@ -412,5 +410,5 @@ ssize_t sendprobe(int fd, NESCADATA *n, const ipnesca_t dst,
       break;
   }
 
-  return (send_ip4_packet(NULL, fd, &dest, n->frag_mtu, packet, packetlen));
+  return (ip4_send(NULL, fd, &dest, n->frag_mtu, packet, packetlen));
 }

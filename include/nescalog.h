@@ -15,6 +15,8 @@
 #include <string>
 #include <fstream>
 #include <map>
+#include <cstring>
+#include <algorithm>
 
 #include "../include/nescautils.h"
 #include "../ncsock/include/ip.h"
@@ -36,12 +38,12 @@ class nesca_prints {
 
   std::string
   html_to_ansi_color(const std::string& html_color);
-  void log_iphdr(struct ip_header *iphdr);
-  void log_tcphdr(const struct tcp_header *tcphdr);
-  void log_udphdr(struct udp_header *udphdr);
-  void log_icmphdr(struct icmp4_header *icmphdr);
-  void log_igmphdr(struct igmp_header *igmphdr);
-  void log_ethhdr(struct eth_header *ethhdr);
+  void log_iphdr(struct ip4_hdr *iphdr);
+  void log_tcphdr(const struct tcp_hdr *tcphdr);
+  void log_udphdr(struct udp_hdr *udphdr);
+  void log_icmphdr(struct icmp4_hdr *icmphdr);
+  void log_igmphdr(struct igmp_hdr *igmphdr);
+  void log_ethhdr(struct eth_hdr *ethhdr);
 
   public:
     bool html_save;

@@ -20,7 +20,7 @@ noreturn void usage(char** argv)
 int main(int argc, char** argv)
 {
   struct timespec start_time, end_time;
-  struct sctp_header *sctph = NULL;
+  struct sctp_hdr *sctph = NULL;
   u8 *packet, *sendpacket;
   struct sockaddr_in dst;
   struct readfiler rf;
@@ -50,22 +50,22 @@ int main(int argc, char** argv)
 
   for (i = 0; i < 10; i++) {
     /* SEND PACKET */
-    chunklen = sizeof(struct sctp_chunk_header_init);
+    chunklen = sizeof(struct sctp_chunk_hdr_init);
     chunk = (char*)malloc(chunklen);
     sctp_pack_chunkhdr_init(chunk, SCTP_INIT, 0, chunklen, random_u32(), 32768, 10, 2048, random_u32());
-    sendpacket = build_sctp_pkt(inet_addr(src), dst.sin_addr.s_addr,
+    sendpacket = sctp4_build_pkt(inet_addr(src), dst.sin_addr.s_addr,
         121, random_u16(), 0, false, NULL, 0, generate_rare_port(),
         atoi(argv[2]), 0, chunk, chunklen, NULL, 0, &packetlen, false, false);
     if (chunk)
       free(chunk);
-    send_ip4_packet(NULL, fd, &dst, 0, sendpacket, packetlen);
+    ip4_send(NULL, fd, &dst, 0, sendpacket, packetlen);
 
     /* RECV PACKET */
     packet = (u8 *)calloc(RECV_BUFFER_SIZE, sizeof(u8));
     clock_gettime(CLOCK_MONOTONIC, &start_time);
     if (read_packet(&rf, atoi(argv[3]), &packet) != -1)
-      sctph = (struct sctp_header*)(packet +
-          sizeof(struct eth_header) + sizeof(struct ip_header));
+      sctph = (struct sctp_hdr*)(packet +
+          sizeof(struct eth_hdr) + sizeof(struct ip4_hdr));
     clock_gettime(CLOCK_MONOTONIC, &end_time);
     free(packet);
 

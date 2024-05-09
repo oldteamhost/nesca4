@@ -10,9 +10,9 @@
 
 ssize_t eth_send(eth_t *e, const void *buf, size_t len)
 {
-  struct eth_header *eth;
+  struct eth_hdr *eth;
 
-  eth = (struct eth_header*)buf;
+  eth = (struct eth_hdr*)buf;
   e->sll.sll_protocol = eth->type;
 
   return (sendto(e->fd, buf, len, 0,

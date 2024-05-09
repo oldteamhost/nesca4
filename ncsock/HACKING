@@ -1,0 +1,88 @@
+1 RAW TOOLS
+  1.1 addr build packets
+    1.1.1 applied build packets
+  1.2 send packets by addr proto
+  1.3 recv packets by addr proto
+  1.4 raw tools
+  1.5 advanced send packets by addr proto
+  1.6 interface send packets by addr proto
+
+2 STANDART TOOLS
+  2.1 send packets
+  2.2 recv packets
+  2.3 analysis packets
+  2.4 buld applied prepared packets
+
+3 QUICK TOOLS
+  3.1 quick send
+  3.2 quick recv
+  3.2 quick tools
+
+1.1 FUNC NAME		<proto><v>_build
+    ip4_build()
+      
+1.1.1 FUNC NAME		<proto>_build
+    tcp_build()
+
+1.2 FUNC NAME		<proto><v>_send
+    ip4_send()
+      
+1.3 FUNC_NAME		<proto><v>_recv
+    ip4_recv()
+
+1.4 FUNC_NAME		<proto><v>_<target_action>
+    ipv4_hdr()
+
+1.5 FUNC NAME           <proto><v>_send_<criterion_send>
+   ip4_send_frag
+   
+1.5 FUNC NAME           <proto>_send
+   ip_send
+
+2.1 FUNC NAME		<proto><vaddr>_send_pkt
+    tcp4_send_pkt()
+      
+2.2 FUNC NAME		<proto><vaddr>_recv_pkt
+    tcp4_recv_pkt()
+
+2.3 FUNC NAME		<proto><vaddr>_def_<target_action>
+    tcp4_def_ident()
+
+2.4 FUNC NAME		<proto><vaddr>_build_pkt
+    tcp4_build_pkt()
+
+3.1 FUNC NAME		<proto><vaddr>_qsend_pkt
+    tcp4_qsend_pkt()
+
+3.2 FUNC NAME		<proto><vaddr>_recvq_pkt
+    tcp4_qrecv_pkt()
+
+3.3 FUNC NAME		<proto><vaddr>_qprc_<target_action>
+    tcp4_qprc_rtt()
+      
+
+PROTO HEADER: <proto><v>_hdr
+  ip4_hdr
+  tcp_hdr
+  icmp4_hdr
+CHECKSUM: check
+FILL HEADER: pack
+PACKET: pkt
+SIZE: len
+PACKET SIZE: pktlen
+DEST ADDRESS: dst
+SOURCE ADDR: src
+IDENT: id
+PROTO CRITERION: <PROTO><v>_<CRITERION>_<...,>
+  IP4_TTL
+  ICMP6_STATUS_CODE
+OPTION: opt
+WINDOW: win
+SOURCE PORT: srcport
+DEST PORT: dstport
+PAYLOAD: data
+PAYLOAD SIZE: datalen
+PROTOCOL: proto
+SOCKET: fd
+FRAGMENTATION: mtu
+

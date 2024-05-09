@@ -8,40 +8,38 @@
 #ifndef UDP_HEADER
 #define UDP_HEADER
 
-#include "types.h"
 #include <stdbool.h>
-#include "../include/eth.h"
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/cdefs.h>
 
+#include "../include/eth.h"
+#include "types.h"
+
 #define UDP_HDR_LEN 8
 
-struct udp_header
+struct udp_hdr
 {
-  u16 uh_sport; /* source port */
-  u16 uh_dport; /* destination port */
-  u16 ulen;     /* udp length (including header) */
-  u16 check;    /* udp checksum */
+  u16 srcport; /* source port */
+  u16 dstport; /* destination port */
+  u16 len;     /* udp length (including header) */
+  u16 check;   /* udp checksum */
 };
 
 __BEGIN_DECLS
 
-u8 *build_udp(u16 sport, u16 dport, const char *data, u16 datalen,
-              u32 *packetlen);
-
-u8 *build_udp_pkt(const u32 saddr, const u32 daddr, int ttl, u16 ipid, u8 tos,
-                  bool df, u8 *ipopt, int ipoptlen, u16 sport, u16 dport,
-                  const char *data, u16 datalen, u32 *plen, bool badsum);
-
-u8 *build_udp6_pkt(const struct in6_addr *source, const struct in6_addr *victim,
-                   u8 tc, u32 flowlabel, u8 hoplimit, u16 sport, u16 dport,
-                   const char *data, u16 datalen, u32 *plen, bool badsum);
-
-int send_udp_packet(struct ethtmp *eth, int fd, const u32 saddr,
-                    const u32 daddr, int ttl, u16 ipid, u8 *ipopt, int ipoptlen,
-                    u16 sport, u16 dport, bool df, const char *data,
-                    u16 datalen, int fragscan, bool badsum);
+u8 *udp_build(u16 srcport, u16 dstport, const char *data, u16 datalen,
+              u32 *pktlen);
+u8 *udp4_build_pkt(const u32 src, const u32 dst, int ttl, u16 ipid, u8 tos,
+                   bool df, u8 *ipopt, int ipoptlen, u16 srcport, u16 dstport,
+                   const char *data, u16 datalen, u32 *pktlen, bool badsum);
+u8 *udp6_build_pkt(const struct in6_addr *src, const struct in6_addr *dst,
+                   u8 tc, u32 flowlabel, u8 hoplimit, u16 srcport, u16 dstport,
+                   const char *data, u16 datalen, u32 *pktlen, bool badsum);
+int udp4_send_pkt(struct ethtmp *eth, int fd, const u32 src, const u32 dst,
+                  int ttl, u16 ipid, u8 *ipopt, int ipoptlen, u16 srcport,
+                  u16 dstport, bool df, const char *data, u16 datalen, int mtu,
+                  bool badsum);
 
 __END_DECLS
 

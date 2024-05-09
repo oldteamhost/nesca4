@@ -20,7 +20,7 @@ noreturn void usage(char** argv)
 int main(int argc, char** argv)
 {
   struct timespec start_time, end_time;
-  struct tcp_header *tcph = NULL;
+  struct tcp_hdr *tcph = NULL;
   struct sockaddr_in dst;
   struct readfiler rf;
   double rtt;
@@ -52,9 +52,9 @@ int main(int argc, char** argv)
 
   for (i = 1; i <= 10; i++) {
     /* SEND PACKET */
-    send_tcp_packet(NULL, fd, inet_addr(src), dst.sin_addr.s_addr, 121,
+    tcp4_send_pkt(NULL, fd, inet_addr(src), dst.sin_addr.s_addr, 121,
         false, NULL, 0, generate_rare_port(), atoi(argv[2]),
-        random_u32(), 0, 0, TH_ACK, 1024, 0, NULL, 0, data,
+        random_u32(), 0, 0, TCP_FLAG_ACK, 1024, 0, NULL, 0, data,
         strlen(data), 0, false);
 
     /* RECV PACKET */
@@ -66,7 +66,7 @@ int main(int argc, char** argv)
     free(packet);
 
     /* READ PACKET */
-    if (tcph && tcph->th_flags == TH_RST)
+    if (tcph && tcph->th_flags == TCP_FLAG_RST)
         rtt = (end_time.tv_sec - start_time.tv_sec) * 1000.0 +
           (end_time.tv_nsec - start_time.tv_nsec) / 1000000.0;
     else

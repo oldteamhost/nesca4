@@ -26,7 +26,7 @@ int read_packet(struct readfiler *rf, int recv_timeout_ms, u8 **buffer)
   struct sockaddr_in  *dest = NULL, source;
   struct sockaddr_in6 *dest6 = NULL, source6;
 
-  struct ip_header *iph;
+  struct ip4_hdr *iph;
   struct ip6_hdr *iph6;
 
   if (rf->ip->ss_family == AF_INET)
@@ -55,9 +55,9 @@ int read_packet(struct readfiler *rf, int recv_timeout_ms, u8 **buffer)
       goto fail;
 
     if (rf->ip->ss_family == AF_INET) {
-      iph = (struct ip_header*)(read_buffer + sizeof(struct ethhdr));
+      iph = (struct ip4_hdr*)(read_buffer + sizeof(struct ethhdr));
       memset(&source, 0, sizeof(source));
-      source.sin_addr.s_addr = iph->saddr;
+      source.sin_addr.s_addr = iph->src;
       if (source.sin_addr.s_addr == dest->sin_addr.s_addr)
         fuckyeah = true;
     }
@@ -76,7 +76,7 @@ int read_packet(struct readfiler *rf, int recv_timeout_ms, u8 **buffer)
         goto fail;
       if (rf->protocol) {
         if (rf->ip->ss_family == AF_INET)
-          if (iph->protocol != rf->protocol || iph->protocol != rf->second_protocol)
+          if (iph->proto != rf->protocol || iph->proto != rf->second_protocol)
             continue;
         if (rf->ip->ss_family == AF_INET6)
           if (iph6->ip6_ctlun.ip6_un1.ip6_un1_nxt != rf->protocol || iph6->ip6_ctlun.ip6_un1.ip6_un1_nxt != rf->second_protocol)

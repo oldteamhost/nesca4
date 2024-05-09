@@ -22,7 +22,7 @@ noreturn void usage(char** argv)
 int main(int argc, char** argv)
 {
   struct timespec start_time, end_time;
-  struct icmp4_header *icmph = NULL;
+  struct icmp4_hdr *icmph = NULL;
   struct sockaddr_in dst;
   struct readfiler rf;
   int fd, i;
@@ -55,8 +55,8 @@ int main(int argc, char** argv)
 
   for (i = 1; i <= 10; i++) {
     /* SEND PACKET */
-    send_icmp_packet(NULL, fd, inet_addr(src), dst.sin_addr.s_addr, 121, false,
-        NULL, 0, i, 0, ICMP_ECHO, data, strlen(data), 0, false);
+    icmp4_send_pkt(NULL, fd, inet_addr(src), dst.sin_addr.s_addr, 121, false,
+        NULL, 0, i, 0, ICMP4_ECHO, data, strlen(data), 0, false);
 
     /* RECV PACKET */
     packet = (u8 *)calloc(RECV_BUFFER_SIZE, sizeof(u8));
@@ -67,7 +67,7 @@ int main(int argc, char** argv)
     free(packet);
 
     /* READ PACKET */
-    if (icmph && icmph->type == ICMP_ECHOREPLY)
+    if (icmph && icmph->type == ICMP4_ECHOREPLY)
         rtt = (end_time.tv_sec - start_time.tv_sec) * 1000.0 +
           (end_time.tv_nsec - start_time.tv_nsec) / 1000000.0;
     else
