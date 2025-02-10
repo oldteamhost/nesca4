@@ -299,7 +299,7 @@ NESCAPORT *NESCATARGET::get_real_port(size_t id)
 void NESCATARGET::add_service(NESCAPORT *port, int service,
   struct timeval tstamp1, struct timeval tstamp2)
 {
-  NESCASERVICE res;
+  NESCASERVICE res={};
 
   res.rtt.tstamp1=tstamp1;
   res.rtt.tstamp2=tstamp2;
@@ -338,9 +338,11 @@ void NESCATARGET::add_info_service(NESCAPORT *port, int service,
   NESCASERVICE *_service=nullptr;
   NESCAINFO i={};
 
-  for (auto &s:port->services)
+  for (auto /* dont touch & */&s:port->services)
     if (s.service==service)
       _service=&s;
+  if (!_service)
+    return;
 
   i.info=info;
   i.type=type;
@@ -1267,12 +1269,27 @@ void NESCAOPTS::set_badsum_flag(void) { this->badsum_flag=1; }
 bool NESCAOPTS::check_badsum_flag(void) { return this->badsum_flag; }
 
 
-
 /*
  * -cfg <cfg_param>
  */
 void NESCAOPTS::set_cfg_flag(void) { this->cfg_flag=1; }
-void NESCAOPTS::set_cfg_param(const std::string &cfg_param) { this->cfg_param=cfg_param; }
+void NESCAOPTS::set_cfg_param(const std::string &cfg_param)
+{
+  std::string newpath;
+  size_t i;
+  bool t;
+  for (i=t=0;i<cfg_param.length();i++) {
+    if (cfg_param.at(i)=='-'&&cfg_param.at(i+1)=='-') {
+      newpath="resources/config/";
+      t=1;
+      i+=2;
+    }
+    if (t) newpath+=cfg_param[i];
+  }
+  if (newpath.empty())
+    newpath=cfg_param;
+  this->cfg_param=newpath;
+}
 std::string NESCAOPTS::get_cfg_param(void) { return this->cfg_param; }
 bool NESCAOPTS::check_cfg_flag(void) { return this->cfg_flag; }
 

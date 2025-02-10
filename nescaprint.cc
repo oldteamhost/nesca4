@@ -467,7 +467,7 @@ void NESCAPRINT::usage(int argc, char **argv)
  -dhex <hexseq> - append a custom data to packet
  -dstr <str> - append a custom ASCII data to packets
  -ttl <num> - set Time To Live, (TTL)
- -win <num> - set your TCP window siz, default 1024
+ -win <num> - set your TCP window size, default 1024
  -ackn <num> - set TCP acknowledgment number
  -off <flag1[/flag2]...,> - set fragmentation OFFset: df,mf,rf
  -ipopt <hex> - set ip options to packet
