@@ -450,75 +450,68 @@ void NESCAPRINT::nescadevice(NESCADEVICE *device)
  */
 void NESCAPRINT::usage(int argc, char **argv)
 {
-  printf("Usage: %s [flags] <targets>\n", argv[0]);
-  std::cout << "TARGETS\n";
-  std::cout << "  <targets>: dns, ip4, ip6, cidr4, cidr6, range4, range6\n";
-  std::cout << "  -import <file>: import targets from file\n";
-  std::cout << "  -random-ip <num>: choose random ip4 target(s)\n";
-  std::cout << "INTERFACE\n";
-  std::cout << "  -dev <name>: set your interface\n";
-  std::cout << "  -dst, -src <mac>: set your source or dest mac\n";
-  std::cout << "  -ip4, -ip6 <ip>: set your source ip4 or ip6\n";
-  std::cout << "ENGINE\n";
-  std::cout << "  -maxfds <num>: set your max open fds\n";
-  std::cout << "  -pps <pps>: set max packet per second for send\n";
-  std::cout << "  -gplus <num>: set plus target group size\n";
-  std::cout << "  -gmax <num>: set max target group size\n";
-  std::cout << "  -gmin <num>: set min target group size\n";
-  std::cout << "  -stats: display engine statistics after exec\n";
-  std::cout << "PACKETS\n";
-  std::cout << "  -dlen <num>: append random data to sent packets\n";
-  std::cout << "  -dhex <hex>: append a custom payload to sent packet\n";
-  std::cout << "  -dstr <str>: append a custom ASCII string to sent packets\n";
-  std::cout << "  -ttl <num>: set Time To Live\n";
-  std::cout << "  -win <num>: set your TCP window size, default 1024\n";
-  std::cout << "  -ackn <num>: set TCP acknowledgment number\n";
-  std::cout << "  -off <flag1[/flag2]...,>: set fragmentation OFFset: df,mf,rf\n";
-  std::cout << "  -ipopt <hex>: set ip options to packet\n";
-  std::cout << "  -badsum: send packets with bodus checksum\n";
-  std::cout << "  -adler32: use adler32 checksum for all SCTP packets\n";
-  std::cout << "PINGER\n";
-  std::cout << "  -ps, -pa, -py, -pu <ports>: use SYN/ACK/UDP/SCTP ping.\n";
-  std::cout << "  -pr, -pe, -pi, -pm: use ARP or ICMP ping ECHO/INFO/TIMESTAMP\n";
-  std::cout << "  -all-ping: use all ping methods\n";
-  std::cout << "  -wait-ping <time>: set your max wait time for ping (timeout)\n";
-  std::cout << "  -num-ping <num>: set count ping probes\n";
-  std::cout << "  -n-ping: skip ping scan, disable ping\n";
-  std::cout << "PORTSCAN\n";
-  std::cout << "  -xmas, -fin, -psh, -null: use one of these scanning methods.\n";
-  std::cout << "  -syn, -ack, -window, -maimon: use other TCP methods port scan.\n";
-  std::cout << "  -init, -cookie, -udp: use init, cookie SCTP, or UDP port scan method.\n";
-  std::cout << "  -all-scan: using all scan port methods.\n";
-  std::cout << "  -wait-scan <time>: set your max wait time for scan (timeout)\n";
-  std::cout << "  -num-scan <num>: set count scan probes\n";
-  std::cout << "  -mtpl-scan <multiplier>: set your multiplier for calc scan timeout\n    Nb: <rtt> * <mult> = timeout\n";
-  std::cout << "  -p <ports>: set ports for scan,\n    Ex: -p 80; -p 80,443; -p S:40-50,U:3,T:33,10-15\n";
-  std::cout << "  -sn, -n-scan: skip port scan, disable port scan.\n";
-  std::cout << "SERVICES & DATABASE\n";
-  std::cout << "  -s <ports>: set ports for service,\n    Ex: -s http:40-50,ftp:3,rvi:33,10-15\n";
-  std::cout << "  -detal: do not abbreviate service information\n";
-  std::cout << "  -dbpath <path>: set your nesca database path\n";
-  std::cout << "  -n-db: skip or off nesca database scanning\n";
-  std::cout << "BRUTEFORCE\n";
-  std::cout << "  -login <path>: set your logins passwd list\n";
-  std::cout << "  -pass <path>: set your pass passwd list\n";
-  std::cout << "  -wait-brute <time>: set your max wait time (timeout)\n";
-  std::cout << "  -threads-brute <num>: set your number threads\n";
-  std::cout << "  -delay-brute <time>: set your special delay\n";
-  std::cout << "  -n-brute: skip or off nesca bruteforcing\n";
-  std::cout << "OUTPUT\n";
-  std::cout << "  -onlyopen: output information only if there are open ports\n";
-  std::cout << "  -v: display all verbose information\n";
-  std::cout << "  -html <filepath>: save output in html format\n";
-  std::cout << "OTHER\n";
-  std::cout << "  -n: no resolv, skip resolution dns names\n";
-  std::cout << "  -cfg <path>: set your config file for opts\n";
-  std::cout << "  -help: display this menu and exit\n";
-  std::cout << "EXAMPLES:\n";
-  std::cout << "  ./nesca4 google.com -p 80,443 -syn -pe -v\n";
-  std::cout << "  ./nesca4 -random-ip 1000 google.com -p 80,443 -all-ping -syn -v\n";
-  std::cout << "  ./nesca4 _gateway -pr -p 0-500 -syn -v -maxfds 5\n";
+  printf("Usage %s [flags] <targets>\n", argv[0]);
+  std::cout << R"(
+ -import <filepath> - import target(s) from file
+ -random-ip <numips> - choose random ip4 target(s)
+ -dev <ifr.if_name> - specify your interface
+ -dst, -src <mac> - set your source/dest mac address
+ -ip4, -ip6 <ip4/6> - set your source ip4 or ip6
+ -maxfds <numfds> - set your max open fds
+ -pps <pps> - set max packet per second for send
+ -gplus <num> - set plus target group size
+ -gmax <num> - set max target group size
+ -gmin <num> - set min target group size
+ -stats - display engine statistics after exec
+ -dlen <length> - append random data to packets
+ -dhex <hexseq> - append a custom data to packet
+ -dstr <str> - append a custom ASCII data to packets
+ -ttl <num> - set Time To Live, (TTL)
+ -win <num> - set your TCP window siz, default 1024
+ -ackn <num> - set TCP acknowledgment number
+ -off <flag1[/flag2]...,> - set fragmentation OFFset: df,mf,rf
+ -ipopt <hex> - set ip options to packet
+ -badsum - send packets with bodus checksum
+ -adler32 - use adler32 checksum for all SCTP packets
+ -ps, -pa, -py, -pu <ports> - use SYN/ACK/UDP/SCTP ping
+ -pr, -pe, -pi, -pm - use ARP/ICMP ping ECHO/INFO/TIMESTAMP
+ -all-ping - use all ping methods
+ -wait-ping <time> - set your wait time for ping (timeout)
+ -num-ping <num> - set count ping probes
+ -n-ping - skip ping scan, disable ping
+ -xmas, -fin, -psh, -null - use one of these scanning methods
+ -syn, -ack, -window, -maimon - use other TCP methods port scan
+ -init, -cookie, -udp - use init, cookie SCTP, or UDP port scan method
+ -all-scan - using all scan port methods
+ -wait-scan <time> - set your max wait time for scan (timeout)
+ -num-scan <num> - set count scan probes
+ -mtpl-scan <multiplier> - set your multiplier for calc scan timeout
+   Nb: <rtt> * <mult> = timeout
+ -p <ports> - set ports for scan
+   Ex: -p 80; -p 80,443; -p S:40-50,U:3,T:33,10-15
+ -sn, -n-scan - skip port scan, disable port scan
+ -s <ports> - set ports for service, ex: -s http:80-81,ftp:21,21
+ -detal - do not abbreviate service information
+ -dbpath <path> - set your nesca database path
+ -n-db - skip or off nesca database scanning
+ -login <path> - set your logins passwd list
+ -pass <path> - set your pass passwd list
+ -wait-brute <time> - set your max wait time (timeout)
+ -threads-brute <num> - set your number threads
+ -delay-brute <time> - set your special delay
+ -n-brute - skip or off nesca bruteforcing
+ -onlyopen - output information only if there are open ports
+ -v - display all verbose information
+ -html <filepath> - save output in html format
+ -n - no resolv, skip resolution dns names
+ -cfg <path> - set your config file for opts
+ -help - display this menu and exit
 
+ ./nesca4 google.com -p 80,443 -syn -pe -v
+ ./nesca4 -random-ip 1000 google.com -p 80,443 -all-ping -syn -v
+ ./nesca4 _gateway -pr -p 0-500 -syn -v -maxfds 5
+)";
+  putchar(0xa);
   exit(0);
 }
 
