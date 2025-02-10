@@ -1,0 +1,3 @@
+[submodule "libncsnet"]
+	path = libncsnet
+	url = https://github.com/oldteamhost/nesca4.git
