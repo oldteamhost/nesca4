@@ -1,73 +1,37 @@
-CC = gcc
-CXX = g++
-CFLAGS = -g -Wall -O2 -march=native -mtune=native -finline-functions
-LDFLAGS = -pthread
-SRC_DIR = source
-MODULE_DIR = modules
-C_NCSOCK_DIR = ncsock
-C_NCBASE_DIR = ncbase
-BUILD_DIR = build
-INSTALL_DIR = /usr/local/bin
-TARGET = nesca4
-DATA_DIR = /usr/local/share/$(TARGET)
-
-HAVE_HIKVISION := $(shell grep -c "HAVE_HIKVISION 1" config/config.h)
-HAVE_DVR := $(shell grep -c "HAVE_DVR 1" config/config.h)
-
-ifeq ($(HAVE_HIKVISION),1)
-LDFLAGS += -lhcnetsdk
-LDFLAGS += -L$(shell pwd)/library/platform/linux -Wl,-rpath=$(shell pwd)/library/platform/linux
-endif
-
-ifeq ($(HAVE_DVR),1)
-LDFLAGS += -ldhnetsdk -ldhdvr
-LDFLAGS += -L$(shell pwd)/library/platform/linux -Wl,-rpath=$(shell pwd)/library/platform/linux
-endif
-
-SRCS = $(wildcard $(SRC_DIR)/*.cc)
-MODULE_SRCS = $(wildcard $(MODULE_DIR)/*.cc)
-C_NCBASE_SRCS = $(wildcard $(C_NCBASE_DIR)/*.c)
-
-OBJS = $(patsubst $(SRC_DIR)/%.cc,$(BUILD_DIR)/%.o,$(SRCS))
-MODULE_OBJS = $(patsubst $(MODULE_DIR)/%.cc,$(BUILD_DIR)/%.o,$(MODULE_SRCS))
-C_NCBASE_OBJS = $(patsubst $(C_NCBASE_DIR)/%.c,$(BUILD_DIR)/%.o,$(C_NCBASE_SRCS))
+TARGET    = nesca4
+CC        = @CXX@
+CFLAGS    = @CFLAGS@ @OCFLAGS@
+SRCS      = nesca4.cc nescaprint.cc nescadata.cc \
+						nescaengine.cc nescaservices.cc nescafind.cc \
+						nescabrute.cc
+OBJS      = $(SRCS:.cc=.o)
+LIBNCSNET = libncsnet/libncsnet.a
 
 all: $(TARGET)
 
-$(TARGET): $(OBJS) $(MODULE_OBJS) $(C_NCBASE_OBJS) $(C_NCSOCK_DIR)/build/libncsock.a
-	$(CXX) $^ -o $@ $(LDFLAGS)
+$(TARGET): $(OBJS) $(LIBNCSNET)
+	$(CXX) $^ -o $@ $(CFLAGS)
 
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cc
-	$(CXX) $(CFLAGS) -c $< -o $@
+%.o: %.cc
+	$(CXX) -c $< -o $@ $(CFLAGS)
 
-$(BUILD_DIR)/%.o: $(MODULE_DIR)/%.cc
-	$(CXX) $(CFLAGS) -c $< -o $@
+$(LIBNCSNET):
+	cd "libncsnet/";make -j;cd ..
 
-$(BUILD_DIR)/%.o: $(C_NCBASE_DIR)/%.c
-	$(CC) $(CFLAGS) -c $< -o $@
+install:
+	cp nesca4 /usr/local/bin
+	mkdir /usr/local/share/nesca4
+	cp -r resources config /usr/local/share/nesca4
+	chmod 755 /usr/local/bin/nesca4
+	chmod -R 644 /usr/local/share/nesca4
 
-$(C_NCSOCK_DIR)/build/libncsock.a: $(C_NCSOCK_DIR)/Makefile
-	cd $(C_NCSOCK_DIR) && make && cd ..
-
-install-libs:
-	for file in "/usr/lib/libHCCore.so" "/usr/lib/libdhdvr.so" "/usr/lib/libdhnetsdk.so" "/usr/lib/libhcnetsdk.so" "/usr/lib/libhpr.so"; do \
-	if [ -e "$$file" ]; then \
-		echo "File $$file exists. Removing..."; \
-		sudo rm "$$file"; \
-		echo "File $$file removed."; \
-	else \
-		echo "File $$file does not exist."; \
-	fi; \
-	done
-	cp -f $(shell pwd)/library/platform/linux/*.so /usr/lib
+uninstall:
+	rm /usr/local/bin/nesca4
+	rm -r /usr/local/share/nesca4
 
 clean:
-	rm -rf $(BUILD_DIR) $(TARGET) config/config.h config.status config.log autom4te.cache Makefile && cd $(C_NCSOCK_DIR) && make clean && cd ..
+	rm -rf *.o;cd libncsnet;make clean;cd ..;rm $(TARGET)
+	rm -rf config.h config.status config.log autom4te.cache Makefile
 
-print-vars:
-	@echo "HAVE_HIKVISION=$(HAVE_HIKVISION)"
-	@echo "HAVE_DVR=$(HAVE_DVR)"
-	@echo "LDFLAGS=$(LDFLAGS)"
-	@echo "CFLAGS=$(CFLAGS)"
+.PHONY: all clean
 
-.PHONY: all clean distclean install-libs

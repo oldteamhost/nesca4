@@ -1,6 +1,0 @@
-auth=#6E5C67
-title=#F89880
-link=#00FFE5
-ok=#EDDA74
-error=#ff53fd
-debug=#E600FF

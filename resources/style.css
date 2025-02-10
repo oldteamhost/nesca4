@@ -1,0 +1,21 @@
+<style>
+  .title { border: 1px solid #5d5d5d; }
+  body { background-color: #141414; font-family: monospace; font-size: 95%;
+    color: #707070; }
+  a { color: gray; text-decoration: underline; }
+  a:focus { outline-style: dashed; outline-width: 1px; outline-color: red; }
+  hr { border-color: #5d5d5d; }
+  h5 { color: #a1a1a1; }
+  pre { margin: 0; padding: 0; }
+  span { margin: 0; padding: 0; }
+  .log-entry { color: #707070; text-decoration: none; background: black;
+    width: 100%; white-space: nowrap; overflow-x: none; display: inline-block; }
+  .log-entry a { color: MediumSeaGreen; }
+  .log-entry:hover { color: #909090; background: #202020; }
+  details { display: inline-block; }
+  details[open] { display: block; white-space: normal; margin-top: 5px; }
+  summary { color: #a1a1a1;}
+  .log-entry .info { color: GoldenRod; }
+  .log-entry .info_1 { color: SteelBlue; }
+  .log-entry .info_2 { color: Lime; }
+</style>
