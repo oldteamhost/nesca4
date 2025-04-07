@@ -30,99 +30,103 @@
 #include "include/nescabrute.h"
 #include "libncsnet/ncsnet/utils.h"
 
-NESCAPRINT  ncsprint;
-NESCADATA   ncsdata;
-NESCAHTML   ncshtml;
-static int  nesca4(void);
+NESCAPRINT	ncsprint;
+NESCADATA	ncsdata;
+NESCAHTML	ncshtml;
+int		nesca4(void);
 
 /*
  * nesca4.cc
  */
 int main(int argc, char **argv)
 {
-  if (argc<=1)
-    ncsprint.usage(argc, argv);
-  ncsprint.run();
-  ncsdata.opts.opts_init();
-  ncsdata.opts.cfg_apply("resources/config/default.cfg", &ncsdata, &ncsprint);
-  ncsdata.opts.args_apply(argc, argv, &ncsdata, &ncsprint);
-  if (ncsdata.opts.check_cfg_flag()) {
-    ncsdata.opts.cfg_apply(ncsdata.opts.get_cfg_param(), &ncsdata, &ncsprint);
-    ncsdata.opts.args_apply(argc, argv, &ncsdata, &ncsprint);
-  }
-  ncsdata.opts.opts_validate();
-  ncsdata.dev.init(&ncsprint, &ncsdata.opts);
-  ncsdata.rawtargets.load(argc, argv, &ncsdata.opts, &ncsprint, &ncsdata.dev);
-  return nesca4();
+	if (argc<=1)
+		ncsprint.usage(argc, argv);
+
+	ncsprint.run();
+	ncsdata.opts.opts_init();
+	ncsdata.opts.cfg_apply("resources/config/default.cfg", &ncsdata, &ncsprint);
+	ncsdata.opts.args_apply(argc, argv, &ncsdata, &ncsprint);
+
+	if (ncsdata.opts.check_cfg_flag()) {
+		ncsdata.opts.cfg_apply(ncsdata.opts.get_cfg_param(), &ncsdata, &ncsprint);
+		ncsdata.opts.args_apply(argc, argv, &ncsdata, &ncsprint);
+	}
+
+	ncsdata.opts.opts_validate();
+	ncsdata.dev.init(&ncsprint, &ncsdata.opts);
+	ncsdata.rawtargets.load(argc, argv, &ncsdata.opts, &ncsprint, &ncsdata.dev);
+	return nesca4();
 }
 
 int nesca4(void)
 {
-  size_t grouplen, group, groupplus, groupmax;
-  std::vector<std::string> realgroup;
-  u128 i=0, total=0;
+	size_t grouplen, group, groupplus, groupmax;
+	std::vector<std::string> realgroup;
+	u128 i=0, total=0;
 
-  groupplus=ncsdata.opts.get_gplus_param();
-  group=ncsdata.opts.get_gmin_param();
-  groupmax=ncsdata.opts.get_gmax_param();
+	groupplus=ncsdata.opts.get_gplus_param();
+	group=ncsdata.opts.get_gmin_param();
+	groupmax=ncsdata.opts.get_gmax_param();
 
-  ncsdata.rawtargets.load_from_file(group);
-  ncsdata.rawtargets.load_random_ips(group);
-  total=ncsdata.rawtargets.totlen();
+	ncsdata.rawtargets.load_from_file(group);
+	ncsdata.rawtargets.load_random_ips(group);
+	total=ncsdata.rawtargets.totlen();
 
-  gettimeofday(&ncsdata.tstamp_s, NULL);
-  while (i<total) {
-    grouplen=std::min<size_t>(group, total-i);
-    grouplen=std::min<size_t>(grouplen, groupmax);
-    if (ncsdata.opts.check_stats_flag())
-      ncsprint.nescastats(grouplen, total, i);
-    realgroup=ncsdata.rawtargets.unload(grouplen);
-    for (const auto&t:realgroup)
-      ncsdata.add_target(t);
+	gettimeofday(&ncsdata.tstamp_s, NULL);
+	for (;i<total;) {
+		grouplen=std::min<size_t>(group, total-i);
+		grouplen=std::min<size_t>(grouplen, groupmax);
 
-    if (ncsdata.opts.check_stats_flag())
-      std::cout<<"NESCARAWTARGETS unload "<<
-        realgroup.size()<<" targets\n";
+		if (ncsdata.opts.check_stats_flag())
+			ncsprint.nescastats(grouplen, total, i);
+		realgroup=ncsdata.rawtargets.unload(grouplen);
+		for (const auto&t:realgroup)
+			ncsdata.add_target(t);
+		if (ncsdata.opts.check_stats_flag())
+			std::cout<<"NESCARAWTARGETS unload "<<
+				realgroup.size()<<" targets\n";
 
-    /* LOOP */
-    std::atomic<bool> running(true);
-    if (ncsdata.opts.check_stats_flag())
-      running=0;
-    std::thread updater(nescawatting,
-      std::ref(running), i, &ncsdata.dev);
-    nescastatus("PING SCANNING");
-    if (!ncsdata.opts.check_n_ping_flag())
-      _NESCAENGINE_ ping(&ncsdata, 1);
-    else ncsdata.set_all_targets_ok();
-    nescastatus("DNS RESOLUTION");
-    if (!ncsdata.opts.check_n_flag())
-      _NESCARESOLV_(ncsdata.get_oktargets(), &ncsdata);
-    nescastatus("PORTS SCANNING");
-    if (!ncsdata.opts.check_sn_flag())
-      _NESCAENGINE_ scan(&ncsdata, 0);
-    nescastatus("SERVICE SCANNING");
-    NESCAPROCESSING proc(&ncsdata);
-    nescastatus("DATABASE SCANNING");
-    if (!ncsdata.opts.check_n_db_flag())
-      NESCAFIND find(&ncsdata);
-    nescastatus("BRUTEFORCING");
-    if (!ncsdata.opts.check_n_brute_flag())
-      NESCABRUTEFORCE(&ncsdata);
-    running=0;
-    updater.join();
-    ncsprint.PRINTTARGETS(&ncsdata);
-    ncshtml.NHTARGETS(&ncsdata);
-    /* LOOP */
+		/*		LOOP		*/
+		std::atomic<bool> running(true);
+		if (ncsdata.opts.check_stats_flag())
+			running=0;
+		std::thread updater(nescawatting,
+			std::ref(running), i, &ncsdata.dev);
+		nescastatus("PING SCANNING");
+		if (!ncsdata.opts.check_n_ping_flag())
+			_NESCAENGINE_ ping(&ncsdata, 1);
+		else
+			 ncsdata.set_all_targets_ok();
+		nescastatus("DNS RESOLUTION");
+		if (!ncsdata.opts.check_n_flag())
+			_NESCARESOLV_(ncsdata.get_oktargets(), &ncsdata);
+		nescastatus("PORTS SCANNING");
+		if (!ncsdata.opts.check_sn_flag())
+			_NESCAENGINE_ scan(&ncsdata, 0);
+		nescastatus("SERVICE SCANNING");
+		NESCAPROCESSING proc(&ncsdata);
+		nescastatus("DATABASE SCANNING");
+		if (!ncsdata.opts.check_n_db_flag())
+			NESCAFIND find(&ncsdata);
+		nescastatus("BRUTEFORCING");
+		if (!ncsdata.opts.check_n_brute_flag())
+			NESCABRUTEFORCE(&ncsdata);
+		running=0;
+		updater.join();
+		ncsprint.PRINTTARGETS(&ncsdata);
+		ncshtml.NHTARGETS(&ncsdata);
+		/*		LOOP		*/
 
-    i+=grouplen;
-    group+=groupplus;
-    ncsdata.rawtargets.load_from_file(group);
-    ncsdata.rawtargets.load_random_ips(group);
-    total=ncsdata.rawtargets.totlen();
-    ncsdata.clear_targets();
-  }
-  gettimeofday(&ncsdata.tstamp_e, NULL);
+		i+=grouplen;
+		group+=groupplus;
+		ncsdata.rawtargets.load_from_file(group);
+		ncsdata.rawtargets.load_random_ips(group);
+		total=ncsdata.rawtargets.totlen();
+		ncsdata.clear_targets();
+	}
 
-  ncsprint.finish(&ncsdata);
-  return 0;
+	gettimeofday(&ncsdata.tstamp_e, NULL);
+	ncsprint.finish(&ncsdata);
+	return 0;
 }

@@ -22,7 +22,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#pragma once
+#ifndef NESCAPRINT_H
+#define NESCAPRINT_H
+
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -30,68 +32,64 @@
 #include <iostream>
 #include <fstream>
 #include <ctime>
+#include <thread>
+#include <atomic>
+#include <chrono>
 
 #include "../libncsnet/ncsnet/sys/types.h"
 #include "../libncsnet/ncsnet/utils.h"
 #include "../nesca-config.h"
 
 #define DEFAULT_STYLE_PATH \
-  "resources/style.css"
+	"resources/style.css"
 
-class NESCATARGET;
-class NESCADATA;
-struct NESCAPORT;
-class NESCADEVICE;
+class	NESCATARGET;
+class	NESCADATA;
+struct	NESCAPORT;
+class	NESCADEVICE;
 
-u8 strmethod(int m);
+class NESCAPRINT {
+public:
+	void		run(void);
+	void		usage(int argc, char **argv);
+	void		error(const std::string &err);
+	void		warning(const std::string &warn);
+	void		note(const std::string &note);
+	void		finish(NESCADATA *ncsdata);
 
-std::string is_service(NESCAPORT *port);
-std::string portblock(NESCAPORT *port, bool onlyok);
+	void		nescatarget(NESCATARGET *target, bool onlyok, bool cut);
+	void		nescadevice(NESCADEVICE *device);
+	void		nescastats(size_t grouplen, __uint128_t total, __uint128_t i);
+	void		PRINTTARGETS(NESCADATA *ncsdata);
+};
 
-#include <thread>
-#include <atomic>
-#include <chrono>
+class NESCAHTML {
+	size_t		bodyclose_pos=0, headerclose_pos=0, total=0;
+	std::string	path;
+	bool		open=0;
 
-class NESCAPRINT
-{
-  public:
-  void run(void);
-  void usage(int argc, char **argv);
-  void error(const std::string &err);
-  void warning(const std::string &warn);
-  void note(const std::string &note);
-  void finish(NESCADATA *ncsdata);
+	std::string	nh_fmtdate(const std::string &fmt);
+	void		nh_addtobuf(const std::string &txt);
+	void		nh_style(const std::string &filepath);
+	void		nh_headeropen(void);
+	void		nh_headerclose(void);
+	void		nh_bodyopen(NESCADATA *ncsdata);
+	void		nh_bodyclose(void);
+	void		NH_OPEN(NESCADATA *ncsdata);
+	void		NH_ADD(NESCATARGET *target, NESCADATA *ncsdata,
+				bool onlyok, bool cut);
+	void		NH_CLOSE(void);
 
-  void nescatarget(NESCATARGET *target, bool onlyok, bool cut);
-  void nescadevice(NESCADEVICE *device);
-  void nescastats(size_t grouplen, __uint128_t total, __uint128_t i);
-  void PRINTTARGETS(NESCADATA *ncsdata);
+public:
+	void NHTARGETS(NESCADATA *ncsdata);
+	void nh_setpath(const std::string &path);
 };
 
 void nescastatus(const std::string &status);
-
 void nescawatting(std::atomic<bool> &running, __uint128_t i,
-  NESCADEVICE *ncsdev);
+	NESCADEVICE *ncsdev);
+std::string is_service(NESCAPORT *port);
+std::string portblock(NESCAPORT *port, bool onlyok);
+u8 strmethod(int m);
 
-class NESCAHTML
-{
-  size_t bodyclose_pos=0, headerclose_pos=0, total=0;
-  std::string path;
-  bool open=0;
-
-  std::string nh_fmtdate(const std::string &fmt);
-  void nh_addtobuf(const std::string &txt);
-  void nh_style(const std::string &filepath);
-  void nh_headeropen(void);
-  void nh_headerclose(void);
-  void nh_bodyopen(NESCADATA *ncsdata);
-  void nh_bodyclose(void);
-  void NH_OPEN(NESCADATA *ncsdata);
-  void NH_ADD(NESCATARGET *target, NESCADATA *ncsdata,
-    bool onlyok, bool cut);
-  void NH_CLOSE(void);
-
-public:
-  void NHTARGETS(NESCADATA *ncsdata);
-  void nh_setpath(const std::string &path);
-};
+#endif

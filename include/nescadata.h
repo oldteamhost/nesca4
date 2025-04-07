@@ -25,6 +25,18 @@
 #ifndef NESCADATAHDR
 #define NESCADATAHDR
 
+#include "../libncsnet/ncsnet/sys/types.h"
+#include "../libncsnet/ncsnet/cidr.h"
+#include "../libncsnet/ncsnet/hex.h"
+#include "../libncsnet/ncsnet/intf.h"
+#include "../libncsnet/ncsnet/dns.h"
+#include "../libncsnet/ncsnet/ip.h"
+#include "../libncsnet/ncsnet/arp.h"
+#include "../libncsnet/ncsnet/linuxread.h"
+
+/*	for errors	*/
+#include "nescaprint.h"
+
 #include <vector>
 #include <string>
 #include <sstream>
@@ -50,104 +62,93 @@
 #include <getopt.h>
 #include <fstream>
 
-#include "../libncsnet/ncsnet/sys/types.h"
-#include "../libncsnet/ncsnet/cidr.h"
-#include "../libncsnet/ncsnet/hex.h"
-#include "../libncsnet/ncsnet/intf.h"
-#include "../libncsnet/ncsnet/dns.h"
-#include "../libncsnet/ncsnet/ip.h"
-#include "../libncsnet/ncsnet/arp.h"
-#include "../libncsnet/ncsnet/linuxread.h"
+#define IDOPT_HELP		0
+#define IDOPT_IMPORT		1
+#define IDOPT_GMAX		2
+#define IDOPT_GMIN		3
+#define IDOPT_GPLUS		4
+#define IDOPT_PE		5
+#define IDOPT_PI		6
+#define IDOPT_PM		7
+#define IDOPT_PS		8
+#define IDOPT_PA		9
+#define IDOPT_PY		10
+#define IDOPT_PU		11
+#define IDOPT_RADNOM_IP		12
+#define IDOPT_DEV		13
+#define IDOPT_IP4		14
+#define IDOPT_IP6		15
+#define IDOPT_SRC		16
+#define IDOPT_DST		17
+#define IDOPT_DLEN		18
+#define IDOPT_DHEX		19
+#define IDOPT_DSTR		20
+#define IDOPT_TTL		21
+#define IDOPT_OFF		22
+#define IDOPT_IPOPT		23
+#define IDOPT_BADSUM		24
+#define IDOPT_CFG		25
+#define IDOPT_N			26
+#define IDOPT_N_PING		27
+#define IDOPT_WAIT_PING		28
+#define IDOPT_NUM_PING		29
+#define IDOPT_PR		30
+#define IDOPT_ALL_PING		31
+#define IDOPT_SYN		32
+#define IDOPT_P			33
+#define IDOPT_SN		34
+#define IDOPT_XMAS		35
+#define IDOPT_FIN		36
+#define IDOPT_PSH		37
+#define IDOPT_NULL		38
+#define IDOPT_ACK		39
+#define IDOPT_WINDOW		40
+#define IDOPT_MAIMON		41
+#define IDOPT_INIT		42
+#define IDOPT_COOKIE		43
+#define IDOPT_UDP		44
+#define IDOPT_WAIT_SCAN		45
+#define IDOPT_MTPL_SCAN		46
+#define IDOPT_PPS		47
+#define IDOPT_STATS		48
+#define IDOPT_MAXFDS		49
+#define IDOPT_ALL_SCAN		50
+#define IDOPT_NUM_SCAN		51
+#define IDOPT_S			52
+#define IDOPT_DETAL		53
+#define IDOPT_V			54
+#define IDOPT_HTML		55
+#define IDOPT_WIN		56
+#define IDOPT_ACKN		57
+#define IDOPT_DBPATH		58
+#define IDOPT_N_DB		59
+#define IDOPT_N_BRUTE		60
+#define IDOPT_LOGIN		61
+#define IDOPT_PASS		62
+#define IDOPT_WAIT_BRUTE	63
+#define IDOPT_DELAY_BRUTE	64
+#define IDOPT_THREADS_BRUTE	65
+#define IDOPT_ADLER32		66
+#define IDOPT_ONLYOPEN		67
 
-#include "nescaprint.h"
+#define SPLITOPT_DEL		','
 
-#define IDOPT_HELP      0
-#define IDOPT_IMPORT    1
-#define IDOPT_GMAX      2
-#define IDOPT_GMIN      3
-#define IDOPT_GPLUS     4
-#define IDOPT_PE        5
-#define IDOPT_PI        6
-#define IDOPT_PM        7
-#define IDOPT_PS        8
-#define IDOPT_PA        9
-#define IDOPT_PY        10
-#define IDOPT_PU        11
-#define IDOPT_RADNOM_IP 12
-#define IDOPT_DEV       13
-#define IDOPT_IP4       14
-#define IDOPT_IP6       15
-#define IDOPT_SRC       16
-#define IDOPT_DST       17
-#define IDOPT_DLEN      18
-#define IDOPT_DHEX      19
-#define IDOPT_DSTR      20
-#define IDOPT_TTL       21
-#define IDOPT_OFF       22
-#define IDOPT_IPOPT     23
-#define IDOPT_BADSUM    24
-#define IDOPT_CFG       25
-#define IDOPT_N         26
-#define IDOPT_N_PING    27
-#define IDOPT_WAIT_PING 28
-#define IDOPT_NUM_PING  29
-#define IDOPT_PR        30
-#define IDOPT_ALL_PING  31
-#define IDOPT_SYN       32
-#define IDOPT_P         33
-#define IDOPT_SN        34
-#define IDOPT_XMAS      35
-#define IDOPT_FIN       36
-#define IDOPT_PSH       37
-#define IDOPT_NULL      38
-#define IDOPT_ACK       39
-#define IDOPT_WINDOW    40
-#define IDOPT_MAIMON    41
-#define IDOPT_INIT      42
-#define IDOPT_COOKIE    43
-#define IDOPT_UDP       44
-#define IDOPT_WAIT_SCAN 45
-#define IDOPT_MTPL_SCAN 46
-#define IDOPT_PPS       47
-#define IDOPT_STATS     48
-#define IDOPT_MAXFDS    49
-#define IDOPT_ALL_SCAN  50
-#define IDOPT_NUM_SCAN  51
-#define IDOPT_S         52
-#define IDOPT_DETAL     53
-#define IDOPT_V         54
-#define IDOPT_HTML      55
-#define IDOPT_WIN       56
-#define IDOPT_ACKN      57
-#define IDOPT_DBPATH    58
-#define IDOPT_N_DB      59
-#define IDOPT_N_BRUTE   60
-#define IDOPT_LOGIN     61
-#define IDOPT_PASS      62
-#define IDOPT_WAIT_BRUTE 63
-#define IDOPT_DELAY_BRUTE 64
-#define IDOPT_THREADS_BRUTE 65
-#define IDOPT_ADLER32   66
-#define IDOPT_ONLYOPEN  67
+#define OPENCLOSEOPT		'\''
+#define SPECOPT			'\\'
+#define ENDOPT			';'
+#define ASSIGNMENTVAL		'='
+#define INCLUDE_TOKEN		"INCLUDE"
+#define _ERRBUFMAXLEN		1024
 
-#define SPLITOPT_DEL   ','
+#define S_NUM			2
+#define S_HTTP			0
+#define S_FTP			1
 
-#define OPENCLOSEOPT   '\''
-#define SPECOPT        '\\'
-#define ENDOPT         ';'
-#define ASSIGNMENTVAL  '='
-#define INCLUDE_TOKEN  "INCLUDE"
-#define _ERRBUFMAXLEN   1024
+#define DEFAULT_SERVICES_PATH	"resources/nesca-services"
+#define DEFAULT_DATABASE_PATH	"resources/nesca-database"
 
-#define S_NUM           2
-#define S_HTTP          0
-#define S_FTP           1
-
-#define DEFAULT_SERVICES_PATH "resources/nesca-services"
-#define DEFAULT_DATABASE_PATH "resources/nesca-database"
-
-class NESCADATA;
-typedef __uint128_t u128;
+class				NESCADATA;
+typedef __uint128_t		u128;
 
 
 /*
@@ -155,8 +156,8 @@ typedef __uint128_t u128;
  * used to represent rtt.
  */
 struct NESCATIME {
-  struct timeval tstamp1, tstamp2;
-  int type;
+	struct timeval	tstamp1,tstamp2;
+	int		type;
 };
 
 
@@ -166,7 +167,7 @@ struct NESCATIME {
  * etc.
  */
 struct NESCAINFO {
-  std::string info, type;
+	std::string	info,type;
 };
 
 
@@ -176,10 +177,10 @@ struct NESCAINFO {
  * etc.
  */
 struct NESCASERVICE {
-  std::vector<NESCAINFO> info;
-  NESCATIME rtt;
-  int service;
-  bool init;
+	std::vector<NESCAINFO>	info;
+	NESCATIME		rtt;
+	int			service;
+	bool			init;
 };
 
 
@@ -189,8 +190,12 @@ struct NESCASERVICE {
  * protocol (proto), and the port itself.
  */
 struct NESCAPORT {
-  std::vector<NESCASERVICE> services;
-  int state, method, proto, port, num;
+	std::vector<NESCASERVICE>	services;
+	int				state;
+	int				method;
+	int				proto;
+	int				port;
+	int				num;
 };
 
 
@@ -198,7 +203,7 @@ struct NESCAPORT {
  * A structure to represent the result of database detection.
  */
 struct NESCADBRES {
-  std::string info, find;
+	std::string	info,find;
 };
 
 
@@ -208,8 +213,8 @@ struct NESCADBRES {
  */
 struct NESCABRUTEI
 {
-  int service, port;
-  std::string other;
+	int		service,port;
+	std::string	other;
 };
 
 
@@ -223,62 +228,62 @@ struct NESCABRUTEI
  */
 class NESCATARGET
 {
-  std::string               mainip;
-  std::vector<std::string>  ips, dns;
-  std::vector<NESCAPORT>    ports;
-  std::vector<NESCATIME>    rtts;
-  std::vector<NESCADBRES>   dbresults;
-  bool                      ip6, ok=0;
-  std::string               mac; /* from arp ping */
-  std::vector<NESCABRUTEI>  bruteforce;
+	std::string			mainip;
+	std::vector<std::string>	ips, dns;
+	std::vector<NESCAPORT>		ports;
+	std::vector<NESCATIME>		rtts;
+	std::vector<NESCADBRES>		dbresults;
+	bool				ip6, ok=0;
+	std::string			mac;	/* from arp ping */
+	std::vector<NESCABRUTEI>	bruteforce;
 
 public:
-  void add_service(NESCAPORT *port, int service,
-    struct timeval tstamp1, struct timeval tstamp2);
-  void add_info_service(NESCAPORT *port, int service,
-      const std::string &info, const std::string type);
-  NESCASERVICE get_service(NESCAPORT *port, int service);
-  bool check_service(void);
-  bool is_ip6host(void);
-  void add_ip(const std::string &ip);
-  void add_dns(const std::string &dns);
-  void add_mac(const std::string &mac);
-  void add_port(int state, int method, int proto,
-    int port);
-  bool portcompare(NESCAPORT *first, NESCAPORT *second);
-  NESCAPORT get_port(size_t id);
-  NESCAPORT *get_real_port(size_t id);
-  size_t get_num_port(void);
-  std::string get_mac(void);
-  size_t get_num_ip(void);
-  size_t get_num_dns(void);
-  bool openports(void);
-  bool initservices(void);
-  std::string get_ip(size_t id);
-  std::string get_dns(size_t id);
-  std::string get_mainip(void);
-  void add_time(struct timeval tstamp1,
-    struct timeval tstamp2, int type);
-  long long get_time_ns(size_t id);
-  NESCATIME get_time(size_t id);
-  size_t get_num_time(void);
-  size_t get_type_time(size_t id);
-  void set_ok(void);
-  void set_no_ok(void);
-  void set_bruteforce(int service, int port, const std::string &other);
-  NESCABRUTEI get_bruteforce(size_t id);
-  size_t get_num_bruteforce(void);
-  bool isok(void);
-  void removedublports(void);
-  void add_dbres(const std::string &info, const std::string &find);
-  size_t get_num_dbres(void);
-  NESCADBRES get_dbres(size_t id);
+	void		add_service(NESCAPORT *port, int service,
+				struct timeval tstamp1, struct timeval tstamp2);
+	void		add_info_service(NESCAPORT *port, int service,
+				const std::string &info, const std::string type);
+	NESCASERVICE	get_service(NESCAPORT *port, int service);
+	bool		check_service(void);
+	bool		is_ip6host(void);
+	void		add_ip(const std::string &ip);
+	void		add_dns(const std::string &dns);
+	void		add_mac(const std::string &mac);
+	void		add_port(int state, int method, int proto,
+				int port);
+	bool		portcompare(NESCAPORT *first, NESCAPORT *second);
+	NESCAPORT	get_port(size_t id);
+	NESCAPORT	*get_real_port(size_t id);
+	size_t		get_num_port(void);
+	std::string	get_mac(void);
+	size_t		get_num_ip(void);
+	size_t		get_num_dns(void);
+	bool		openports(void);
+	bool		initservices(void);
+	std::string	get_ip(size_t id);
+	std::string	get_dns(size_t id);
+	std::string	get_mainip(void);
+	void		add_time(struct timeval tstamp1,
+				struct timeval tstamp2, int type);
+	long long	get_time_ns(size_t id);
+	NESCATIME	get_time(size_t id);
+	size_t		get_num_time(void);
+	size_t		get_type_time(size_t id);
+	void		set_ok(void);
+	void		set_no_ok(void);
+	void		set_bruteforce(int service, int port, const std::string &other);
+	NESCABRUTEI	get_bruteforce(size_t id);
+	size_t		get_num_bruteforce(void);
+	bool		isok(void);
+	void		removedublports(void);
+	void		add_dbres(const std::string &info, const std::string &find);
+	size_t		get_num_dbres(void);
+	NESCADBRES	get_dbres(size_t id);
 };
 
 struct _cfgopt {
-  int id;
-  std::string name, val;
-  bool nullval;
+	int id;
+	std::string name, val;
+	bool nullval;
 };
 
 
@@ -681,21 +686,21 @@ public:
  */
 class NESCARAWRANGEV4
 {
-  std::array<int,4>  start, end;
-  size_t             last=1, len=0;
-  bool               cidr=0;
+	std::array<int,4>	start, end;
+	size_t			last=1, len=0;
+	bool			cidr=0;
 
-  std::array<int,4>  ip4parse(const std::string& ip);
-  std::string        ip4unparse(const std::array<int,4> &octets);
-  void               init(const std::string &range);
-  void               init_cidr(const std::string &cidr);
-  void               setlen(void);
+	std::array<int,4>	ip4parse(const std::string& ip);
+	std::string		ip4unparse(const std::array<int,4> &octets);
+	void			init(const std::string &range);
+	void			init_cidr(const std::string &cidr);
+	void			setlen(void);
 
 public:
-  NESCARAWRANGEV4(const std::string &txt, bool cidr);
-  std::vector<std::string> exportips(size_t start, size_t num);
-  size_t getlen(void);
-  size_t getlast(void);
+	NESCARAWRANGEV4(const std::string &txt, bool cidr);
+	std::vector<std::string> exportips(size_t start, size_t num);
+	size_t getlen(void);
+	size_t getlast(void);
 };
 
 
@@ -710,22 +715,22 @@ public:
  */
 class NESCARAWRANGEV6
 {
-  std::array<int, 8> start, end;
-  u128               last=1, len=0;
-  bool               cidr=0;
+	std::array<int, 8>	start, end;
+	u128			last=1, len=0;
+	bool			cidr=0;
 
-  std::string        ip6uncompact(const std::string &ipv6);
-  std::array<int, 8> ip6parse(const std::string &ip);
-  std::string        ip6unparse(const std::array<int,8> &octets);
-  void               init(const std::string &range);
-  void               init_cidr(const std::string &cidr);
-  void               setlen(void);
+	std::string		ip6uncompact(const std::string &ipv6);
+	std::array<int, 8>	ip6parse(const std::string &ip);
+	std::string		ip6unparse(const std::array<int,8> &octets);
+	void			init(const std::string &range);
+	void			init_cidr(const std::string &cidr);
+	void			setlen(void);
 
 public:
-  NESCARAWRANGEV6(const std::string &txt, bool cidr);
-  std::vector<std::string> exportips(u128 start, u128 num);
-  u128 getlen(void);
-  u128 getlast(void);
+	NESCARAWRANGEV6(const std::string &txt, bool cidr);
+	std::vector<std::string> exportips(u128 start, u128 num);
+	u128 getlen(void);
+	u128 getlast(void);
 };
 
 
@@ -765,28 +770,31 @@ public:
  */
 class NESCARAWTARGETS
 {
-  size_t lastfileline=0, filelines=0, lastgroup6=0;
-  std::vector<NESCARAWRANGEV6> grouptargets6;
-  bool check_from_file=0, check_randomips=0;
-  std::vector<NESCARAWRANGEV4> grouptargets;
-  size_t lastip4=0, lastip6=0, lastgroup=0;
-  std::map<std::string,std::string> dns;
-  std::vector<std::string> ipv4, ipv6;
-  std::string from_file="";
-  ssize_t randomips=0;
-  NESCADEVICE *ncsdev;
-  NESCAPRINT *ncsprint;
+	size_t	lastfileline=0, filelines=0, lastgroup6=0;
+	size_t	lastip4=0, lastip6=0, lastgroup=0;
+	ssize_t	randomips=0;
 
-  void processing(const std::vector<std::string> &targets);
+	std::map<std::string,std::string>	dns;
+	std::vector<NESCARAWRANGEV6>		grouptargets6;
+	std::vector<NESCARAWRANGEV4>		grouptargets;
+	std::vector<std::string>		ipv4, ipv6;
 
-  public:
-  std::vector<std::string> unload(u128 num);
-  u128 totlen(void);
-  void load(int argc, char **argv, NESCAOPTS *ncsopts,
-      NESCAPRINT *ncsprint, NESCADEVICE *dev);
-  void load_from_file(size_t num);
-  void load_random_ips(size_t num);
-  std::string getdns(std::string ip);
+	bool		check_from_file=0, check_randomips=0;
+	std::string	from_file="";
+	NESCAPRINT	*ncsprint;
+	NESCADEVICE	*ncsdev;
+
+	void processing(const std::vector<std::string> &targets);
+
+public:
+	std::vector<std::string> unload(u128 num);
+
+	void load(int argc, char **argv, NESCAOPTS *ncsopts,
+		NESCAPRINT *ncsprint, NESCADEVICE *dev);
+	void load_from_file(size_t num);
+	void load_random_ips(size_t num);
+	std::string getdns(std::string ip);
+	u128 totlen(void);
 };
 
 
@@ -800,50 +808,50 @@ class NESCARAWTARGETS
  */
 class NESCADEVICE
 {
-  NESCAPRINT  *ncsprint;
-  std::string  device;
-  int          deviceindex;
-  mac_t        srcmac, dstmac;
-  ip4_t        srcip4, gateway4;
-  ip6_t        srcip6, gateway6;
-  bool         ip6=0, ip4=0;
-  long long    send_at=0; /* time need for one sent */
+	NESCAPRINT	*ncsprint;
+	std::string	device;
+	int		deviceindex;
+	mac_t		srcmac, dstmac;
+	ip4_t		srcip4, gateway4;
+	ip6_t		srcip6, gateway6;
+	bool		ip6=0, ip4=0;
+	long long	send_at=0;	/* time need for one sent */
 
-  std::string getfileln(const std::string &path);
-  std::vector<std::string> find_devices(void);
-  bool is_okdevice(const std::string &device, bool err);
-  void init_device(const std::string &device, NESCAOPTS *ncsopts);
-  bool gateway4_at_all_costs(void);
-  bool gateway6_at_all_costs(void);
-  bool srcip6_at_all_costs(void);
-  bool srcip4_at_all_costs(void);
-  bool srcmac_at_all_costs(void);
-  bool dstmac4_at_all_costs(void);
-  void set_send_at(void);
+	std::string getfileln(const std::string &path);
+	std::vector<std::string> find_devices(void);
+	bool is_okdevice(const std::string &device, bool err);
+	void init_device(const std::string &device, NESCAOPTS *ncsopts);
+	bool gateway4_at_all_costs(void);
+	bool gateway6_at_all_costs(void);
+	bool srcip6_at_all_costs(void);
+	bool srcip4_at_all_costs(void);
+	bool srcmac_at_all_costs(void);
+	bool dstmac4_at_all_costs(void);
+	void set_send_at(void);
 
-  /* XXX */
-  bool dstmac6_at_all_costs(void);
+	/*	XXX	*/
+	bool dstmac6_at_all_costs(void);
 
 public:
-  void init(NESCAPRINT *ncsprint=NULL,
-      NESCAOPTS *ncsopts=NULL);
+	void init(NESCAPRINT *ncsprint=NULL,
+		NESCAOPTS *ncsopts=NULL);
 
-  std::string get_device(void);
-  mac_t       get_srcmac(void);
-  ip4_t       get_srcip4(void);
-  ip6_t       get_srcip6(void);
-  mac_t       get_dstmac(void);
-  ip4_t       get_gateway4(void);
-  ip6_t       get_gateway6(void);
-  void        set_srcip4(const std::string &ip4);
-  void        set_srcip6(const std::string &ip6);
-  void        set_srcmac(const std::string &mac);
-  void        set_dstmac(const std::string &mac);
-  void        set_gateway4(const std::string &ip4);
-  void        set_gateway6(const std::string &ip6);
-  bool        check_ipv6(void);
-  bool        check_ipv4(void);
-  long long   get_send_at(void);
+	std::string	get_device(void);
+	mac_t		get_srcmac(void);
+	ip4_t		get_srcip4(void);
+	ip6_t		get_srcip6(void);
+	mac_t		get_dstmac(void);
+	ip4_t		get_gateway4(void);
+	ip6_t		get_gateway6(void);
+	void		set_srcip4(const std::string &ip4);
+	void		set_srcip6(const std::string &ip6);
+	void		set_srcmac(const std::string &mac);
+	void		set_dstmac(const std::string &mac);
+	void		set_gateway4(const std::string &ip4);
+	void		set_gateway6(const std::string &ip6);
+	bool		check_ipv6(void);
+	bool		check_ipv4(void);
+	long long	get_send_at(void);
 };
 
 
@@ -855,30 +863,30 @@ public:
 class NESCADATA
 {
 public:
-  NESCARAWTARGETS           rawtargets;
-  std::vector<NESCATARGET*> targets;
-  NESCAOPTS                 opts;
-  NESCADEVICE               dev;
-  u128                      ok;
-  bool                      tmplast;
-  struct timeval            tstamp_s, tstamp_e;
+	NESCARAWTARGETS			rawtargets;
+	std::vector<NESCATARGET*>	targets;
+	NESCAOPTS			opts;
+	NESCADEVICE			dev;
+	u128				ok;
+	bool				tmplast;
+	struct timeval			tstamp_s, tstamp_e;
 
 
-  void add_target(const std::string &ip);
-  std::vector<NESCATARGET*> get_oktargets(void);
-  void set_all_targets_ok(void);
-  void clear_targets(void);
+	void add_target(const std::string &ip);
+	std::vector<NESCATARGET*> get_oktargets(void);
+	void set_all_targets_ok(void);
+	void clear_targets(void);
 };
 
 
 
 
-/* other utils */
+/*	other utils	*/
 std::string util_bytesconv(size_t bytes);
 std::string util_timediff(const struct timeval& start,
-    const struct timeval& end);
+	const struct timeval& end);
 std::string util_pps(const struct timeval& start,
-    const struct timeval& end, size_t total);
+	const struct timeval& end, size_t total);
 bool isokport(NESCAPORT *p);
 int enservicekey(int service, int port, int id);
 

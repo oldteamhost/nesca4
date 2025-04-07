@@ -32,18 +32,18 @@
 
 #include "nescadata.h"
 
-class NESCAOPTS;
-class NESCATARGET;
-
 /* ubi petere? */
-#define FIND_ALL           -1
-#define FIND_HTTP_REDIRECT  0
-#define FIND_HTTP_TITLE     1
-#define FIND_HTTP_HTML      2
-#define FIND_MAC            3
-#define FIND_DNS            4
-#define FIND_IP             5
-#define FIND_FTP_HELLO      6
+#define FIND_ALL		-1
+#define FIND_HTTP_REDIRECT	0
+#define FIND_HTTP_TITLE		1
+#define FIND_HTTP_HTML		2
+#define FIND_MAC		3
+#define FIND_DNS		4
+#define FIND_IP			5
+#define FIND_FTP_HELLO		6
+
+class	NESCAOPTS;
+class	NESCATARGET;
 
 /*
  * regex:
@@ -52,16 +52,27 @@ class NESCATARGET;
  *   '173', 'GOOOGLE', 0, 5;
  */
 
-struct NESCAFINDLINE { std::string node,info; int find; bool bruteforce,regex;};
-struct NESCAFINDRESULT { std::string info; bool bruteforce, ok;};
+struct NESCAFINDLINE {
+	std::string	node,info;
+	int		find;
+	bool		bruteforce,regex;
+};
+
+struct NESCAFINDRESULT {
+	std::string info;
+	bool bruteforce,ok;
+};
+
 class NESCAFIND {
-  std::string path;
-  NESCAFINDLINE lineget(const std::string &txt);
-  std::vector<NESCAFINDLINE> fileget(void); /* - */
-  NESCAFINDRESULT fileprobe(NESCATARGET *target, const std::string &node, int find);
-  void init(NESCAOPTS *opts);
+	std::string path;
+
+	NESCAFINDLINE			lineget(const std::string &txt);
+	std::vector<NESCAFINDLINE>	fileget(void); /* - */
+	NESCAFINDRESULT			fileprobe(NESCATARGET *target, const std::string &node,
+						 int find);
+	void				init(NESCAOPTS *opts);
 public:
-  NESCAFIND(NESCADATA *ncsdata);
+	NESCAFIND(NESCADATA *ncsdata);
 };
 
 #endif

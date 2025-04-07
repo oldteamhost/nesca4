@@ -22,7 +22,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#pragma once
+#ifndef NESCASERVICE_H
+#define NESCASERVICE_H
+
 #include <future>
 #include <vector>
 #include <string>
@@ -40,57 +42,60 @@
  */
 class NESCAPROCESSINGCORPUS
 {
-  std::vector< std::function<bool(NESCATARGET *, int,
-      long long, NESCADATA *)>> checks, methods;
-  size_t nummethods=0, numchecks=0;
-  bool checksstate=0;
-  void _set_general_(std::function<bool(NESCATARGET *, int,
-      long long, NESCADATA *)> func, bool check)
-  {
-    if (!check) {
-      this->methods.push_back(func);
-      nummethods++;
-      return;
-    }
-    this->checks.push_back(func);
-    numchecks++;
-  }
-  void __exec_check(NESCATARGET *target, int port,
-    long long timeout, NESCADATA *ncsdata, size_t num);
-  void __exec_method(NESCATARGET *target, int port,
-    long long timeout, NESCADATA *ncsdata, size_t num);
+	std::vector< std::function<bool(NESCATARGET *, int,
+		long long, NESCADATA *)>> checks, methods;
+	size_t nummethods=0, numchecks=0;
+	bool checksstate=0;
+
+	void _set_general_(std::function<bool(NESCATARGET *, int,
+		long long, NESCADATA *)> func, bool check)
+	{
+		if (!check) {
+			this->methods.push_back(func);
+			nummethods++;
+			return;
+		}
+		this->checks.push_back(func);
+		numchecks++;
+	}
+	void __exec_check(NESCATARGET *target, int port,
+		long long timeout, NESCADATA *ncsdata, size_t num);
+	void __exec_method(NESCATARGET *target, int port,
+		long long timeout, NESCADATA *ncsdata, size_t num);
+
 public:
-  void setmethod(std::function<bool(NESCATARGET *, int,
-      long long, NESCADATA *)> method) {
-    return _set_general_(method, 0);
-  }
-  void setcheck(std::function<bool(NESCATARGET *, int,
-      long long, NESCADATA *)> method) {
-    return _set_general_(method, 1);
-  }
-  void exec(NESCATARGET *target, int port,
-    long long timeout, NESCADATA *ncsdata);
+	void setmethod(std::function<bool(NESCATARGET *, int,
+			long long, NESCADATA *)> method) {
+		return _set_general_(method, 0);
+	}
+	void setcheck(std::function<bool(NESCATARGET *, int,
+			long long, NESCADATA *)> method) {
+		return _set_general_(method, 1);
+	}
+	void exec(NESCATARGET *target, int port,
+		long long timeout, NESCADATA *ncsdata);
 };
 
 class NESCAPROCESSING
 {
-  std::map<NESCATARGET*, std::vector<int>> targets;
-  std::vector<NESCAPROCESSINGCORPUS> methods;
+	std::map<NESCATARGET*, std::vector<int>>	targets;
+	std::vector<NESCAPROCESSINGCORPUS>		methods;
 
-  void INIT(NESCADATA *ncsdata, int service);
-  void EXECMETHOD(NESCATARGET *target, std::vector<int> ports,
-    NESCADATA *ncsdata);
-  void NULLVARS(void);
-  void EXEC(NESCADATA *ncsdata);
+	void INIT(NESCADATA *ncsdata, int service);
+	void EXECMETHOD(NESCATARGET *target, std::vector<int> ports,
+		NESCADATA *ncsdata);
+	void NULLVARS(void);
+	void EXEC(NESCADATA *ncsdata);
 
 public:
-  NESCAPROCESSING(NESCADATA *ncsdata);
+	NESCAPROCESSING(NESCADATA *ncsdata);
 };
 
 bool http_chk_0(NESCATARGET *target, int port,
-  long long timeout, NESCADATA *ncsdata);
+	long long timeout, NESCADATA *ncsdata);
 bool ftp_chk_0(NESCATARGET *target, int port,
-  long long timeout, NESCADATA *ncsdata);
+	long long timeout, NESCADATA *ncsdata);
 bool http_m_htmlredirtitle(NESCATARGET *target, int port,
-  long long timeout, NESCADATA *ncsdata);
+	long long timeout, NESCADATA *ncsdata);
 
+#endif

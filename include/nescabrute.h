@@ -38,10 +38,9 @@
 #include "../libncsnet/ncsnet/ftp.h"
 #include "../libncsnet/ncsnet/http.h"
 
-#define START_TIMEOUT 1e+9
-
-#define HTTP_BRUTEFORCE      S_HTTP
-#define FTP_BRUTEFORCE       S_FTP
+#define START_TIMEOUT		1e+9
+#define HTTP_BRUTEFORCE		S_HTTP
+#define FTP_BRUTEFORCE		S_FTP
 /*
 #define SMTP_BRUTEFORCE      2
 #define RVI_BRUTEFORCE       3
@@ -49,34 +48,33 @@
 */
 
 class NESCABRUTE {
-  std::string reslogin, respass;
-  long long restimeout, rtt;
-  std::vector<int> fds;
-  bool ok;
+	std::string reslogin, respass;
+	long long restimeout, rtt;
+	std::vector<int> fds;
+	bool ok;
 
-  bool init(size_t threads, const std::string &ip, u16 port,
-      u8 service, long long timeout, std::vector<std::string> login,
-    std::vector<std::string> pass);
-  void newfd(const std::string &ip, u16 port, u8 service,
-      long long timeout);
+	bool init(size_t threads, const std::string &ip, u16 port,
+		u8 service, long long timeout, std::vector<std::string> login,
+		std::vector<std::string> pass);
+	void newfd(const std::string &ip, u16 port, u8 service,
+		long long timeout);
 
-  void probe(int fd, u8 service, const std::string &ip,
-      const std::string &path, const std::string &login,
-      const std::string &pass, std::atomic<bool> *auth);
+	void probe(int fd, u8 service, const std::string &ip,
+		const std::string &path, const std::string &login,
+		const std::string &pass, std::atomic<bool> *auth);
 public:
-  std::string GETRESULTINNESCASTYLE(void);
+	std::string GETRESULTINNESCASTYLE(void);
 
-  NESCABRUTE(size_t threads, const std::string &ip, const std::string &path,
-    u16 port, long long timeout, u8 service, long long delay,
-    std::vector<std::string> login, std::vector<std::string> pass);
-  ~NESCABRUTE(void);
+	NESCABRUTE(size_t threads, const std::string &ip, const std::string &path,
+		u16 port, long long timeout, u8 service, long long delay,
+		std::vector<std::string> login, std::vector<std::string> pass);
+	~NESCABRUTE(void);
 
-  std::string LOGIN(void);
-  std::string PASS(void);
+	std::string LOGIN(void);
+	std::string PASS(void);
 };
 
 void NESCABRUTEFORCE(NESCADATA *ncsdata);
 
 
 #endif
-
