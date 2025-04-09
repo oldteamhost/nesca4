@@ -698,9 +698,9 @@ class NESCARAWRANGEV4
 
 public:
 	NESCARAWRANGEV4(const std::string &txt, bool cidr);
-	std::vector<std::string> exportips(size_t start, size_t num);
-	size_t getlen(void);
-	size_t getlast(void);
+	std::vector<std::string>	exportips(size_t start, size_t num);
+	size_t				getlen(void);
+	size_t				getlast(void);
 };
 
 
@@ -728,9 +728,9 @@ class NESCARAWRANGEV6
 
 public:
 	NESCARAWRANGEV6(const std::string &txt, bool cidr);
-	std::vector<std::string> exportips(u128 start, u128 num);
-	u128 getlen(void);
-	u128 getlast(void);
+	std::vector<std::string>	exportips(u128 start, u128 num);
+	u128				getlen(void);
+	u128				getlast(void);
 };
 
 
@@ -843,14 +843,18 @@ public:
 	mac_t		get_dstmac(void);
 	ip4_t		get_gateway4(void);
 	ip6_t		get_gateway6(void);
+
 	void		set_srcip4(const std::string &ip4);
 	void		set_srcip6(const std::string &ip6);
 	void		set_srcmac(const std::string &mac);
 	void		set_dstmac(const std::string &mac);
 	void		set_gateway4(const std::string &ip4);
 	void		set_gateway6(const std::string &ip6);
+
 	bool		check_ipv6(void);
 	bool		check_ipv4(void);
+
+	/* --- */
 	long long	get_send_at(void);
 };
 

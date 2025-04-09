@@ -1917,11 +1917,15 @@ static void copyvec(const std::vector<T>& source, std::vector<T>& destination)
 void NESCARAWTARGETS::load(int argc, char **argv, NESCAOPTS *ncsopts, NESCAPRINT *ncsprint, NESCADEVICE *ncsdev)
 {
 	std::vector<std::string>	targets;
-	std::string			txt, line;
+	std::string			txt,line;
 	int				i=1;
 	bool				opt=0;
 
 	this->ncsdev=ncsdev;
+
+	/*
+	 * Получаем цели прямо из строчки запуска
+	 */
 	for (;i<argc;++i) {
 		txt=argv[i];
 		if (txt.empty())
@@ -1936,30 +1940,36 @@ void NESCARAWTARGETS::load(int argc, char **argv, NESCAOPTS *ncsopts, NESCAPRINT
 	if (!targets.empty())
 		opt=1;
 
-	check_from_file=ncsopts->check_import_flag();
-	check_randomips=ncsopts->check_random_ip_flag();
-	from_file=ncsopts->get_import_param();
-	randomips=ncsopts->get_random_ip_param();
+	check_from_file		=ncsopts->check_import_flag();
+	from_file		=ncsopts->get_import_param();
+	check_randomips		=ncsopts->check_random_ip_flag();
+	randomips		=ncsopts->get_random_ip_param();
 
+	/*
+	 * Если мы также принимает цели из файла,
+	 * то получаем количество строчек в этом
+	 * файле.
+	 */
 	if (check_from_file) {
 		std::ifstream f(from_file);
-		while (std::getline(f, line))
+		for (;std::getline(f, line);)
 			++filelines;
 		f.close();
 	}
 
 	if (ncsopts->check_v_flag())
 		ncsprint->note(
-				"set source targets from <file="+
-				std::string(((check_from_file)?("1("+
-					std::string(from_file))+")":"0"))+", rand="+
-				std::string(((check_randomips)?("1("+
-					std::to_string(randomips)+")"):"0"))+", arg="+
-				((opt)?("1"):"0")+">"
+			"set source targets from <file="+
+			std::string(((check_from_file)?("1("+
+				std::string(from_file))+")":"0"))+", rand="+
+			std::string(((check_randomips)?("1("+
+				std::to_string(randomips)+")"):"0"))+", arg="+
+			((opt)?("1"):"0")+">"
 		);
 
 	if (targets.empty()&&filelines<=0&&randomips<=0)
 		ncsprint->error("not a single target was specified!");
+
 	processing(targets);
 }
 
@@ -2021,7 +2031,7 @@ static bool is_valid_ipv6(const std::string &txt)
 
 static bool is_valid_cidr4(const std::string &txt)
 {
-	std::string	addr, prfx;
+	std::string	addr,prfx;
 	int		prfxlen=0;
 
 	if (txt.find(".")==std::string::npos||txt.find("/")==std::string::npos)
@@ -2045,7 +2055,7 @@ static bool is_valid_cidr4(const std::string &txt)
 
 static bool is_valid_range4(const std::string &txt)
 {
-	std::string	addr1, addr2;
+	std::string	addr1,addr2;
 	std::size_t	pos=0;
 
 	if ((pos=txt.find("-"))==std::string::npos)
@@ -2065,7 +2075,7 @@ static bool is_valid_range4(const std::string &txt)
 
 static bool is_valid_cidr6(const std::string &txt)
 {
-	std::string	addr, prfx;
+	std::string	addr,prfx;
 	int		prfxlen=0;
 
 	if (txt.find(":")==std::string::npos||txt.find("/")==std::string::npos)
@@ -2088,8 +2098,8 @@ static bool is_valid_cidr6(const std::string &txt)
 
 static bool is_valid_range6(const std::string &txt)
 {
-	std::string addr1, addr2;
-	std::size_t pos=0;
+	std::string	addr1,addr2;
+	std::size_t	pos=0;
 
 	if ((pos=txt.find("-"))==std::string::npos)
 		return 0;
@@ -2111,21 +2121,32 @@ static bool is_valid_range6(const std::string &txt)
  */
 void NESCARAWTARGETS::processing(const std::vector<std::string> &targets)
 {
-	std::string target="";
+	std::string	target="";
+	char		ip4buf[16];
+
 	for (const auto&t:targets) {
 		target=trim(t);
+
+		/*
+		 * Если наш интерфейс не поддерживает
+		 * ipv6 или ipv4 пропускаем.
+		 */
 		if (is_valid_ipv6(target)||is_valid_cidr6(target)
-			||is_valid_range6(target))
+				||is_valid_range6(target))
 			if (!ncsdev->check_ipv6())
 				this->ncsprint->error("your device not support ipv6");
 		if (is_valid_ipv4(target)||is_valid_cidr4(target)
-			||is_valid_range4(target))
+				||is_valid_range4(target))
 			if (!ncsdev->check_ipv4())
 				this->ncsprint->error("your device not support ipv4");
+
+		/* Это ipv4 или ipv6 адрес */
 		if (is_valid_ipv4(target))
 			this->ipv4.push_back(target);
 		else if (is_valid_ipv6(target))
 			this->ipv6.push_back(target);
+
+		/* Это cidr или range, из ipv4 либо ipv6 */
 		else if (is_valid_cidr4(target)) {
 			NESCARAWRANGEV4 r(target, 1);
 			this->grouptargets.push_back(r);
@@ -2142,14 +2163,23 @@ void NESCARAWTARGETS::processing(const std::vector<std::string> &targets)
 			NESCARAWRANGEV6 r(target, 0);
 			this->grouptargets6.push_back(r);
 		}
+
+		/*
+		 * В ином другом случае, похоже наша цель
+		 * это dns имя, и будет считать что оно
+		 * для ipv4.
+		 */
 		else {
-			char ip4buf[16];
+			memset(ip4buf,0,sizeof(ip4buf));
 			if ((ip4_util_strdst(target.c_str(), ip4buf, 16))!=-1) {
+				if (!ncsdev->check_ipv4())
+					this->ncsprint->error("your device not support ipv4");
 				this->ipv4.push_back(ip4buf);
 				this->dns[ip4buf]=target;
 			}
 			else
-				ncsprint->warning("failed resolve \""+target+"\" ("+std::strerror(errno)+")");
+				ncsprint->warning("failed resolve \""+target
+					+"\" ("+std::strerror(errno)+")");
 		}
 	}
 }
@@ -2533,6 +2563,7 @@ u128 NESCARAWRANGEV6::getlast(void)
 void NESCARAWTARGETS::load_from_file(size_t num)
 {
 	std::vector<std::string> tmp;
+
 	if (check_from_file&&lastfileline<=filelines) {
 		if (num>filelines)
 			num=filelines;
@@ -3278,27 +3309,33 @@ void NESCADEVICE::init_device(const std::string &device, NESCAOPTS *ncsopts)
 			this->ncsprint->error("nesca4 could not get device index");
 	}
 
-	/* other */
+	/* set source mac */
 	if (ncsopts->check_src_flag())
 		set_srcmac(ncsopts->get_src_param());
 	else
 		if (!srcmac_at_all_costs())
 			this->ncsprint->error("nesca4 could not get source mac address");
+
+	/* set source ipv4 */
 	if (ncsopts->check_ip4_flag()) {
 		set_srcip4(ncsopts->get_ip4_param());
 		ipv4=1;
 	}
 	else
 		ipv4=srcip4_at_all_costs();
+
+	/* set source ipv6 */
 	if (ncsopts->check_ip6_flag()) {
 		set_srcip6(ncsopts->get_ip6_param());
 		ipv6=1;
 	}
 	else
 		ipv6=srcip6_at_all_costs();
+
 	if (!ipv4&&!ipv6)
 		this->ncsprint->error("nesca4 could not get ipv4 or ipv6 address");
 
+	/* set dest mac */
 	if (!ncsopts->check_dst_flag()) {
 		if (ipv4) {
 			gwipv4=gateway4_at_all_costs();
@@ -3330,7 +3367,7 @@ void NESCADEVICE::init_device(const std::string &device, NESCAOPTS *ncsopts)
 	}
 
 	/* set_send_at() */
-	this->send_at=77090; /* for example*/
+	this->send_at=77090; /* for example */
 }
 
 long long NESCADEVICE::get_send_at(void)
@@ -3554,29 +3591,42 @@ bool NESCADEVICE::is_okdevice(const std::string &device, bool err)
 	std::string	mainpath, flags, mtu;
 	u32		realflags, j, realmtu;
 
-	mainpath="/sys/class/net/"+device;
 	realflags=j=realmtu=0;
+	mainpath="/sys/class/net/"+device;
 
-	flags=getfileln(mainpath+"/flags");
-	if (flags.empty()) {
-		if (err)
-			this->ncsprint->error("not found flags for \""+device+"\"!");
-		return 0;
-	}
+
+	/*
+	 * check mtu on interface
+	 */
 	mtu=getfileln(mainpath+"/mtu");
 	if (mtu.empty()) {
 		if (err)
 			this->ncsprint->error("not found mtu for \""+device+"\"!");
 		return 0;
 	}
+	realmtu=std::stoi(mtu);
+	if (realmtu<576) {
+		if (err)
+			this->ncsprint->error("device \""+device+"\" has too low mtu!");
+		return 0;
+	}
 
+
+	/*
+	 * check flags on interface
+	 */
+	flags=getfileln(mainpath+"/flags");
+	if (flags.empty()) {
+		if (err)
+			this->ncsprint->error("not found flags for \""+device+"\"!");
+		return 0;
+	}
 	if (flags[0]=='0'&&(flags[1]=='x'||flags[1]=='X'))
 		j=2;
 	while(flags[j]!='\0') {
 		realflags=(realflags<<4)|chex_atoh(flags[j]);
 		j++;
 	}
-
 	if (!(realflags&IFF_UP)) {
 		if (err)
 			this->ncsprint->error("device \""+device+"\" is down!");
@@ -3600,13 +3650,6 @@ bool NESCADEVICE::is_okdevice(const std::string &device, bool err)
 	if ((realflags&IFF_NOARP)) {
 		if (err)
 			this->ncsprint->error("device \""+device+"\" is no arp!");
-		return 0;
-	}
-
-	realmtu=std::stoi(mtu);
-	if (realmtu<576) {
-		if (err)
-			this->ncsprint->error("device \""+device+"\" has too low mtu!");
 		return 0;
 	}
 
@@ -3669,13 +3712,15 @@ void NESCADEVICE::set_srcmac(const std::string &mac)
 
 std::vector<std::string> NESCADEVICE::find_devices(void)
 {
-	std::vector<std::string> res;
-	std::string path="/sys/class/net";
+	std::vector<std::string>	res;
+	std::string			path="/sys/class/net";
+
 	if (std::filesystem::exists(path)&&std::filesystem::is_directory(path))
 		for (const auto&entry:std::filesystem::directory_iterator(path))
 			res.push_back(entry.path().filename().string());
 	else
 		this->ncsprint->error("nesca4 couldn't find net interfaces!");
+
 	return res;
 }
 

@@ -56,6 +56,11 @@ int main(int argc, char **argv)
 	return nesca4();
 }
 
+#define UPDATETARGETS					\
+	ncsdata.rawtargets.load_from_file(group);	\
+	ncsdata.rawtargets.load_random_ips(group);	\
+	total=ncsdata.rawtargets.totlen()
+
 int nesca4(void)
 {
 	size_t grouplen, group, groupplus, groupmax;
@@ -66,10 +71,7 @@ int nesca4(void)
 	group=ncsdata.opts.get_gmin_param();
 	groupmax=ncsdata.opts.get_gmax_param();
 
-	ncsdata.rawtargets.load_from_file(group);
-	ncsdata.rawtargets.load_random_ips(group);
-	total=ncsdata.rawtargets.totlen();
-
+	UPDATETARGETS;
 	gettimeofday(&ncsdata.tstamp_s, NULL);
 	for (;i<total;) {
 		grouplen=std::min<size_t>(group, total-i);
@@ -117,9 +119,8 @@ int nesca4(void)
 
 		i+=grouplen;
 		group+=groupplus;
-		ncsdata.rawtargets.load_from_file(group);
-		ncsdata.rawtargets.load_random_ips(group);
-		total=ncsdata.rawtargets.totlen();
+
+		UPDATETARGETS;
 		ncsdata.clear_targets();
 	}
 
