@@ -41,6 +41,7 @@ NESCAFINDLINE NESCAFIND::lineget(const std::string &txt)
 		return {};
 	if (txt[0]=='r'||txt[0]=='R')
 		res.regex=1;
+
 	for (o=str=num=num2=0,arg=1;o<txt.length();o++) {
 		if (txt[o]=='\''&&txt[(o-1)]!='\\') {
 			if (str) {
@@ -72,8 +73,8 @@ NESCAFINDLINE NESCAFIND::lineget(const std::string &txt)
 		if (num2)
 			numres.push_back(txt[o]);
 	}
-	strings.push_back(numres);
 
+	strings.push_back(numres);
 	if (strings.size()<4)
 		return {};
 	for (const auto&s:strings)
@@ -83,7 +84,8 @@ NESCAFINDLINE NESCAFIND::lineget(const std::string &txt)
 	res.node=strings[0];
 	res.info=strings[1];
 	for (numres.clear(),o=0;o<strings[2].length();o++)
-		if (strings[2][o]!=' '&&std::isdigit(strings[2][o]))
+		if (strings[2][o]!=' '&&
+				std::isdigit(strings[2][o]))
 			numres.push_back(strings[2][o]);
 	res.bruteforce=std::stoi(numres);
 	for (numres.clear(),o=0;o<strings[3].length();o++)
@@ -241,6 +243,7 @@ NESCAFINDRESULT NESCAFIND::fileprobe(NESCATARGET *target, const std::string &nod
 
 	if (!f)
 		return {};
+
 	buf<<f.rdbuf();
 	resbuf=buf.str();
 	res.bruteforce=res.ok=0;

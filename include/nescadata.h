@@ -191,11 +191,7 @@ struct NESCASERVICE {
  */
 struct NESCAPORT {
 	std::vector<NESCASERVICE>	services;
-	int				state;
-	int				method;
-	int				proto;
-	int				port;
-	int				num;
+	int				state,method,proto,port,num;
 };
 
 
@@ -242,48 +238,52 @@ public:
 				struct timeval tstamp1, struct timeval tstamp2);
 	void		add_info_service(NESCAPORT *port, int service,
 				const std::string &info, const std::string type);
-	NESCASERVICE	get_service(NESCAPORT *port, int service);
-	bool		check_service(void);
-	bool		is_ip6host(void);
+	void		add_time(struct timeval tstamp1,
+				struct timeval tstamp2, int type);
+	void		add_dbres(const std::string &info, const std::string &find);
 	void		add_ip(const std::string &ip);
 	void		add_dns(const std::string &dns);
 	void		add_mac(const std::string &mac);
 	void		add_port(int state, int method, int proto,
 				int port);
-	bool		portcompare(NESCAPORT *first, NESCAPORT *second);
+
+	NESCASERVICE	get_service(NESCAPORT *port, int service);
 	NESCAPORT	get_port(size_t id);
 	NESCAPORT	*get_real_port(size_t id);
 	size_t		get_num_port(void);
 	std::string	get_mac(void);
 	size_t		get_num_ip(void);
 	size_t		get_num_dns(void);
-	bool		openports(void);
-	bool		initservices(void);
 	std::string	get_ip(size_t id);
 	std::string	get_dns(size_t id);
 	std::string	get_mainip(void);
-	void		add_time(struct timeval tstamp1,
-				struct timeval tstamp2, int type);
 	long long	get_time_ns(size_t id);
 	NESCATIME	get_time(size_t id);
 	size_t		get_num_time(void);
 	size_t		get_type_time(size_t id);
-	void		set_ok(void);
-	void		set_no_ok(void);
-	void		set_bruteforce(int service, int port, const std::string &other);
 	NESCABRUTEI	get_bruteforce(size_t id);
 	size_t		get_num_bruteforce(void);
-	bool		isok(void);
-	void		removedublports(void);
-	void		add_dbres(const std::string &info, const std::string &find);
 	size_t		get_num_dbres(void);
 	NESCADBRES	get_dbres(size_t id);
+
+	void		set_ok(void);
+	void		set_no_ok(void);
+	void		set_bruteforce(int service, int port,
+				const std::string &other);
+
+	bool		check_service(void);
+	bool		is_ip6host(void);
+	bool		portcompare(NESCAPORT *first, NESCAPORT *second);
+	bool		openports(void);
+	bool		initservices(void);
+	bool		isok(void);
+	void		removedublports(void);
 };
 
 struct _cfgopt {
-	int id;
-	std::string name, val;
-	bool nullval;
+	int		id;
+	std::string	name, val;
+	bool		nullval;
 };
 
 
@@ -307,173 +307,173 @@ struct _cfgopt {
  */
 class NESCAOPTS
 {
-  NESCAPRINT *ncsprint;
+	NESCAPRINT *ncsprint;
 
-  std::string import_param;
-  bool import_flag;
+	std::string import_param;
+	bool import_flag;
 
-  size_t gmax_param, gmin_param, gplus_param;
-  bool gmax_flag, gmin_flag, gplus_flag;
+	size_t gmax_param, gmin_param, gplus_param;
+	bool gmax_flag, gmin_flag, gplus_flag;
 
-  std::vector<int> ps_param, pa_param, py_param, pu_param;
-  bool pe_flag, pi_flag, pm_flag, ps_flag, pa_flag, py_flag, pu_flag, pr_flag;
+	std::vector<int> ps_param, pa_param, py_param, pu_param;
+	bool pe_flag, pi_flag, pm_flag, ps_flag, pa_flag, py_flag, pu_flag, pr_flag;
 
-  bool random_ip_flag;
-  size_t random_ip_param;
+	bool random_ip_flag;
+	size_t random_ip_param;
 
-  bool dev_flag, ip4_flag, ip6_flag, src_flag, dst_flag;
-  std::string dev_param, ip4_param, ip6_param, src_param, dst_param;
+	bool dev_flag, ip4_flag, ip6_flag, src_flag, dst_flag;
+	std::string dev_param, ip4_param, ip6_param, src_param, dst_param;
 
-  bool dlen_flag, dhex_flag, dstr_flag;
-  std::string dlen_param, dhex_param, dstr_param;
+	bool dlen_flag, dhex_flag, dstr_flag;
+	std::string dlen_param, dhex_param, dstr_param;
 
-  bool ttl_flag;
-  std::string ttl_param;
+	bool ttl_flag;
+	std::string ttl_param;
 
-  bool off_flag;
-  std::string off_param;
+	bool off_flag;
+	std::string off_param;
 
-  bool dbpath_flag;
-  std::string dbpath_param;
+	bool dbpath_flag;
+	std::string dbpath_param;
 
-  bool ipopt_flag;
-  std::string ipopt_param;
+	bool ipopt_flag;
+	std::string ipopt_param;
 
-  bool win_flag;
-  std::string win_param;
+	bool win_flag;
+	std::string win_param;
 
-  bool ackn_flag;
-  std::string ackn_param;
+	bool ackn_flag;
+	std::string ackn_param;
 
-  bool badsum_flag;
+	bool badsum_flag;
 
-  bool cfg_flag;
-  std::string cfg_param;
+	bool cfg_flag;
+	std::string cfg_param;
 
-  bool login_flag;
-  std::string login_param;
+	bool login_flag;
+	std::string login_param;
 
-  bool pass_flag;
-  std::string pass_param;
+	bool pass_flag;
+	std::string pass_param;
 
-  bool wait_brute_flag;
-  std::string wait_brute_param;
+	bool wait_brute_flag;
+	std::string wait_brute_param;
 
-  bool delay_brute_flag;
-  std::string delay_brute_param;
+	bool delay_brute_flag;
+	std::string delay_brute_param;
 
-  bool n_flag;
+	bool n_flag;
 
-  bool adler32_flag;
+	bool adler32_flag;
 
-  bool n_ping_flag;
+	bool n_ping_flag;
 
-  bool wait_ping_flag;
-  std::string wait_ping_param;
+	bool wait_ping_flag;
+	std::string wait_ping_param;
 
-  bool num_ping_flag;
-  std::string num_ping_param;
+	bool num_ping_flag;
+	std::string num_ping_param;
 
-  bool all_ping_flag;
+	bool all_ping_flag;
 
-  bool syn_flag;
+	bool syn_flag;
 
-  bool p_flag;
-  std::vector<NESCAPORT> p_param;
+	bool p_flag;
+	std::vector<NESCAPORT> p_param;
 
-  bool sn_flag;
+	bool sn_flag;
 
-  bool xmas_flag;
+	bool xmas_flag;
 
-  bool onlyopen_flag;
+	bool onlyopen_flag;
 
-  bool fin_flag;
+	bool fin_flag;
 
-  bool null_flag;
+	bool null_flag;
 
-  bool psh_flag;
+	bool psh_flag;
 
-  bool ack_flag;
+	bool ack_flag;
 
-  bool window_flag;
+	bool window_flag;
 
-  bool maimon_flag;
+	bool maimon_flag;
 
-  bool init_flag;
+	bool init_flag;
 
-  bool cookie_flag;
+	bool cookie_flag;
 
-  bool udp_flag;
+	bool udp_flag;
 
-  bool wait_scan_flag;
-  std::string wait_scan_param;
+	bool wait_scan_flag;
+	std::string wait_scan_param;
 
-  bool mtpl_scan_flag;
-  std::string mtpl_scan_param;
+	bool mtpl_scan_flag;
+	std::string mtpl_scan_param;
 
-  bool pps_flag;
-  std::string pps_param;
+	bool pps_flag;
+	std::string pps_param;
 
-  bool stats_flag;
+	bool stats_flag;
 
-  bool maxfds_flag;
-  std::string maxfds_param;
+	bool maxfds_flag;
+	std::string maxfds_param;
 
-  bool all_scan_flag;
+	bool all_scan_flag;
 
-  bool num_scan_flag;
-  std::string num_scan_param;
+	bool num_scan_flag;
+	std::string num_scan_param;
 
-  bool s_flag;
-  std::vector<NESCAPORT> s_param;
+	bool s_flag;
+	std::vector<NESCAPORT> s_param;
 
-  bool detal_flag;
+	bool detal_flag;
 
-  bool v_flag;
+	bool v_flag;
 
-  bool html_flag;
-  std::string html_param;
+	bool html_flag;
+	std::string html_param;
 
-  bool n_db_flag;
+	bool n_db_flag;
 
-  bool threads_brute_flag;
-  std::string threads_brute_param;
+	bool threads_brute_flag;
+	std::string threads_brute_param;
 
-  bool n_brute_flag;
+	bool n_brute_flag;
 
-  std::vector<_cfgopt> opts;
-  std::string cfgpath;
-  void opts_apply(int rez, std::string val);
-  bool parse_cfgopt(std::string line, struct _cfgopt *res, char *errbuf);
-  bool parse_cfg(std::vector<std::string> file, char *errbuf);
-  bool parse_preproc(std::vector<std::string> file, char *errbuf);
-  bool include_apply(struct _cfgopt *res, char *errbuf);
+	std::vector<_cfgopt> opts;
+	std::string cfgpath;
+	void opts_apply(int rez, std::string val);
+	bool parse_cfgopt(std::string line, struct _cfgopt *res, char *errbuf);
+	bool parse_cfg(std::vector<std::string> file, char *errbuf);
+	bool parse_preproc(std::vector<std::string> file, char *errbuf);
+	bool include_apply(struct _cfgopt *res, char *errbuf);
 
 public:
-  std::string runcmd;
+	std::string runcmd;
 
-  void opts_init(void);
-  void args_apply(int argc, char **argv, NESCADATA *ncsdata, NESCAPRINT *ncsprint);
-  void cfg_apply(const std::string &path, NESCADATA *ncsdata, NESCAPRINT *ncsprint);
-  bool is_requiread_options(const std::string &opt);
-  void opts_validate(void);
+	void opts_init(void);
+	void args_apply(int argc, char **argv, NESCADATA *ncsdata, NESCAPRINT *ncsprint);
+	void cfg_apply(const std::string &path, NESCADATA *ncsdata, NESCAPRINT *ncsprint);
+	bool is_requiread_options(const std::string &opt);
+	void opts_validate(void);
 
-  void        set_import_flag(void);
-  void        set_import_param(const std::string &import_param);
-  std::string get_import_param(void);
-  bool        check_import_flag(void);
-  void        set_gmax_flag(void);
-  void        set_gmin_flag(void);
-  void        set_gplus_flag(void);
-  void        set_gmax_param(size_t gmax_param);
-  void        set_gmin_param(size_t gmin_param);
-  void        set_gplus_param(size_t gplus_param);
-  size_t      get_gmax_param(void);
-  size_t      get_gmin_param(void);
-  size_t      get_gplus_param(void);
-  bool        check_gmax_flag(void);
-  bool        check_gmin_flag(void);
-  bool        check_gplus_flag(void);
+	void        set_import_flag(void);
+	void        set_import_param(const std::string &import_param);
+	std::string get_import_param(void);
+	bool        check_import_flag(void);
+	void        set_gmax_flag(void);
+	void        set_gmin_flag(void);
+	void        set_gplus_flag(void);
+	void        set_gmax_param(size_t gmax_param);
+	void        set_gmin_param(size_t gmin_param);
+	void        set_gplus_param(size_t gplus_param);
+	size_t      get_gmax_param(void);
+	size_t      get_gmin_param(void);
+	size_t      get_gplus_param(void);
+	bool        check_gmax_flag(void);
+	bool        check_gmin_flag(void);
+	bool        check_gplus_flag(void);
   void        set_pe_flag(void);
   void        set_pi_flag(void);
   void        set_pm_flag(void);
@@ -870,7 +870,6 @@ public:
 	u128				ok;
 	bool				tmplast;
 	struct timeval			tstamp_s, tstamp_e;
-
 
 	void add_target(const std::string &ip);
 	std::vector<NESCATARGET*> get_oktargets(void);

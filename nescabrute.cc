@@ -31,7 +31,8 @@
 #include <net/if.h>
 #include <thread>
 
-static std::mutex ls;
+static std::mutex ls;	/* mutex */
+
 inline static void _nanosleep(long nanoseconds)
 {
 	struct timespec ts;
@@ -88,13 +89,15 @@ void NESCABRUTE::newfd(const std::string &ip, u16 port,
 	if (!ok)
 		start=std::chrono::high_resolution_clock::now();
 
-	res=((service==FTP_BRUTEFORCE)?(sock_session(ip.c_str(), port, timeout, temp, BUFSIZ))
+	res=((service==FTP_BRUTEFORCE)?(sock_session(ip.c_str(), port,
+		 timeout, temp, BUFSIZ))
 		:(sock_session(ip.c_str(), port, timeout, NULL, 0)));
 
 	if (!ok)
 		end=std::chrono::high_resolution_clock::now();
 	if (!ok) {
-		duration=std::chrono::duration_cast<std::chrono::nanoseconds>(end-start);
+		duration=std::chrono::duration_cast
+			<std::chrono::nanoseconds>(end-start);
 		rtt=duration.count();
 		ok=1;
 	}
@@ -139,6 +142,7 @@ NESCABRUTE::NESCABRUTE(size_t threads, const std::string &ip, const std::string 
 
 	if (!(init(realthreads, ip, port, service, timeout, login, pass)))
 		return;
+
 	NESCAPOOL pool(realthreads);
 	for (const auto &l:login) {
 		for (const auto &p:pass) {

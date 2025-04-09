@@ -2653,16 +2653,16 @@ writeip6:
 
 void NESCADEVICE::init(NESCAPRINT *ncsprint, NESCAOPTS *ncsopts)
 {
-	std::vector<std::string> devices;
-	std::string index;
+	std::vector<std::string>	devices;
+	std::string			index;
 
 	/* clear */
-	memset(this->srcip4.octet,	 0, 4);
-	memset(this->srcip6.octet,	 0, 16);
-	memset(this->gateway4.octet, 0, 4);
-	memset(this->gateway6.octet, 0, 16);
-	memset(this->srcmac.octet,	 0, 6);
-	memset(this->dstmac.octet,	 0, 6);
+	memset(this->srcip4.octet,	0, 4);
+	memset(this->srcip6.octet,	0, 16);
+	memset(this->gateway4.octet,	0, 4);
+	memset(this->gateway6.octet,	0, 16);
+	memset(this->srcmac.octet,	0, 6);
+	memset(this->dstmac.octet,	0, 6);
 
 	/* device setting */
 	this->ncsprint=ncsprint;
@@ -2675,6 +2675,8 @@ void NESCADEVICE::init(NESCAPRINT *ncsprint, NESCAOPTS *ncsopts)
 	else
 		if (is_okdevice(ncsopts->get_dev_param(), 1))
 			this->device=ncsopts->get_dev_param();
+
+	/* init device */
 	init_device(this->device, ncsopts);
 	if (ncsopts->check_v_flag())
 		ncsprint->nescadevice(this);
@@ -3549,8 +3551,8 @@ std::string NESCADEVICE::getfileln(const std::string &path)
 
 bool NESCADEVICE::is_okdevice(const std::string &device, bool err)
 {
-	std::string mainpath, flags, mtu;
-	u32 realflags, j, realmtu;
+	std::string	mainpath, flags, mtu;
+	u32		realflags, j, realmtu;
 
 	mainpath="/sys/class/net/"+device;
 	realflags=j=realmtu=0;

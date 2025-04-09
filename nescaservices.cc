@@ -312,7 +312,8 @@ void send_http(struct http_request *r, NESCADATA *ncsdata, NESCATARGET *target,
 		http_add_hdr(r, "Host", (target->get_mainip().c_str()));
 
 	gettimeofday(&s, NULL);
-	http_qprc_pkt(target->get_mainip().c_str(), port, timeout, r, &response, resbuf, HTTP_BUFLEN);
+	http_qprc_pkt(target->get_mainip().c_str(), port, timeout, r,
+		 &response, resbuf, HTTP_BUFLEN);
 	res=(char*)resbuf;
 	gettimeofday(&e, NULL);
 
@@ -329,7 +330,8 @@ void send_http(struct http_request *r, NESCADATA *ncsdata, NESCATARGET *target,
 		prepare_redirect(redirect, reshost, respath, HTTP_BUFLEN);
 		http_update_uri(&r->uri, "", "", 0, respath);
 		http_modify_hdr(r, "Host", reshost);
-		http_qprc_pkt(target->get_mainip().c_str(), port, timeout, r, &response, newbuf, HTTP_BUFLEN);
+		http_qprc_pkt(target->get_mainip().c_str(), port, timeout,
+			 r, &response, newbuf, HTTP_BUFLEN);
 		res=std::string((char*)newbuf);
 	}
 	if (!res.empty()) {

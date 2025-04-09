@@ -48,10 +48,10 @@
 */
 
 class NESCABRUTE {
-	std::string reslogin, respass;
-	long long restimeout, rtt;
-	std::vector<int> fds;
-	bool ok;
+	std::string		reslogin, respass;
+	long long		restimeout, rtt;
+	std::vector<int>	fds;
+	bool			ok;
 
 	bool init(size_t threads, const std::string &ip, u16 port,
 		u8 service, long long timeout, std::vector<std::string> login,

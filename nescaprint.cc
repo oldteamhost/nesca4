@@ -36,6 +36,9 @@
 #include <fstream>
 #include <string>
 #include <sys/types.h>
+#include <iomanip>
+
+std::string NESCASTATUS="";	/* nesca status bar */
 
 u8 strmethod(int m)
 {
@@ -85,8 +88,8 @@ u8 strmethod(int m)
 
 std::string is_service(NESCAPORT *port)
 {
-	std::string line, name, portproto, fproto;
-	size_t sp, fport;
+	std::string	line, name, portproto, fproto;
+	size_t		sp, fport;
 
 	std::ifstream f(DEFAULT_SERVICES_PATH);
 	if (!f.is_open())
@@ -96,23 +99,23 @@ std::string is_service(NESCAPORT *port)
 		std::istringstream iss(line);
 		if (iss>>name>>portproto) {
 			sp=portproto.find('/');
-			if (sp!=std::string::npos) {
-				fport=std::stoi(portproto.substr(0, sp));
-				fproto=portproto.substr(sp + 1);
-				if ((int)fport==port->port&&fproto==
-						((port->proto==6)?"tcp"
-						:(port->proto==17)?"udp"
-						:"sctp"))
-					break;
-			}
+			if (sp==std::string::npos)
+				continue;
+			fport=std::stoi(portproto.substr(0, sp));
+			fproto=portproto.substr(sp + 1);
+			if ((int)fport==port->port&&fproto==
+					((port->proto==6)?"tcp"
+					:(port->proto==17)?"udp"
+					:"sctp"))
+				break;
 		}
 
 	}
 
 	f.close();
 	return name;
-
 }
+
 
 std::string portblock(NESCAPORT *port, bool onlyok)
 {
@@ -122,7 +125,6 @@ std::string portblock(NESCAPORT *port, bool onlyok)
 	if (onlyok)
 		if (!isokport(port))
 			return "";
-
 	res+='\'';
 	switch (port->proto) {
 		case PR_TCP:
@@ -202,7 +204,6 @@ std::string portblock(NESCAPORT *port, bool onlyok)
 
 	num=(port->num>1)?"/"+std::to_string(port->num):"";
 	srv=is_service(port);
-
 	res+=std::to_string(port->port)+"/";
 	res+=p+"/";
 	res+=s+"/";
@@ -214,16 +215,21 @@ std::string portblock(NESCAPORT *port, bool onlyok)
 	return res;
 }
 
+
 static std::string cutinfo(const std::string &input, bool yes)
 {
 	std::string res;
+
 	if (input.length()<40||yes)
 		return input;
+
 	res=input;
 	res=res.substr(0,40);
 	res+="...";
+
 	return res;
 }
+
 
 /*
  * Print results, print class NESCATARGET
@@ -246,10 +252,14 @@ void NESCAPRINT::nescatarget(NESCATARGET *target, bool onlyok, bool cut)
 		methodstr.end()), methodstr.end());
 	methodstr+="'";
 	std::cout << "Report nesca4 for ";
+
+	/* ipv4 */
 	if (!target->get_mainip().empty())
 		std::cout << target->get_mainip();
 	else
 		std::cout << "???";
+
+	/* dns results */
 	std::cout << " (";
 	if (target->get_num_dns()>0) {
 		for (i=0;i<target->get_num_dns();i++) {
@@ -261,9 +271,15 @@ void NESCAPRINT::nescatarget(NESCATARGET *target, bool onlyok, bool cut)
 	else
 		std::cout << "???";
 	std::cout << ") ";
+
+	/* mac result */
 	if (!target->get_mac().empty())
 		std::cout << "[" << target->get_mac() << "] ";
+
+	/* methods */
 	std::cout << methodstr << " ";
+
+	/* rtt result */
 	if (target->get_num_time()>0) {
 		for (i=0;i<target->get_num_time();i++) {
 			std::cout << util_timediff(target->get_time(i).tstamp1,
@@ -273,6 +289,8 @@ void NESCAPRINT::nescatarget(NESCATARGET *target, bool onlyok, bool cut)
 		}
 	}
 	putchar('\n');
+
+	/* ports result */
 	if (target->get_num_port()>0) {
 		if (((onlyok&&target->openports())||!onlyok))
 			putchar('\n');
@@ -292,11 +310,13 @@ void NESCAPRINT::nescatarget(NESCATARGET *target, bool onlyok, bool cut)
 		}
 		block.pop_back();
 		if (!block.empty()) {
-			std::cout << "	ports	";
+			std::cout << "  ports  ";
 			std::cout << block;
 		}
 		putchar('\n');
 	}
+
+	/* services result */
 	if (target->check_service()) {
 		for (j=0;j<S_NUM;j++) {
 			for (i=0;i<target->get_num_port();i++) {
@@ -304,32 +324,36 @@ void NESCAPRINT::nescatarget(NESCATARGET *target, bool onlyok, bool cut)
 				if (!tmp.init)
 					continue;
 				for (const auto&s:tmp.info) {
-					std::cout<<"	"<<
+					std::cout<<"  "<<
 						((tmp.service==S_FTP)?"ftp":
 						 (tmp.service==S_HTTP)?"http":
 						 "???")
 						<< "(" << s.type << ")"
-						<< "	";
+						<< "  ";
 					std::cout << cutinfo(s.info, cut);
 					putchar('\n');
 				}
 			}
 		}
 	}
+
+	/* database result */
 	if (target->get_num_dbres()>0) {
 		for (j=0;j<target->get_num_dbres();j++) {
 			NESCADBRES tmp=target->get_dbres(j);
-			std::cout << "	db(" << tmp.find << ")	" <<
+			std::cout << "  db(" << tmp.find << ")  " <<
 				tmp.info << std::endl;;
 		}
 	}
 }
+
 
 void NESCAPRINT::PRINTTARGETS(NESCADATA *ncsdata)
 {
 	if (ncsdata->opts.check_stats_flag())
 		std::cout << "NESCAPRINT for "<<
 			ncsdata->targets.size() << " targets\n";
+
 	for (const auto&t:ncsdata->targets) {
 		if (ncsdata->opts.check_onlyopen_flag()&&!t->openports())
 			continue;
@@ -341,7 +365,7 @@ void NESCAPRINT::PRINTTARGETS(NESCADATA *ncsdata)
 	}
 }
 
-#include <iomanip>
+
 static void print_u128(u128 value)
 {
 	u64 high=value>>64;
@@ -355,6 +379,7 @@ static void print_u128(u128 value)
 		std::cout << low << std::dec;
 }
 
+
 void NESCAPRINT::nescastats(size_t grouplen, __uint128_t total, __uint128_t i)
 {
 	u128	complete;
@@ -365,17 +390,18 @@ void NESCAPRINT::nescastats(size_t grouplen, __uint128_t total, __uint128_t i)
 
 	complete=(i*100)/total;
 	dots=(static_cast<uint64_t>(complete)*10)/100;
+
 	std::cout << "\n -> completed ";
 	print_u128(complete);
 	std::cout << "% targets";
 	std::cout << "\n -> remaining ";
 	print_u128(100-complete);
-
 	std::cout << "% [";
 	for (;dots+1;dots--)
 		putchar('.');
 	std::cout << "]\n\n";
 }
+
 
 void NESCAPRINT::finish(NESCADATA *ncsdata)
 {
@@ -390,28 +416,31 @@ void NESCAPRINT::finish(NESCADATA *ncsdata)
 }
 
 
-
-
-/* NESCA4 STATUS BAR */
-std::string NESCASTATUS="";
 void nescastatus(const std::string &status) {
 	NESCASTATUS=status;
 }
+
+
 static std::string uint128_to_string(__uint128_t value)
 {
 	std::string res;
+
 	if (value==0)
 		return "0";
+
 	while (value > 0) {
 		res.insert(res.begin(),'0'+(value%10));
 		value/=10;
 	}
+
 	return res;
 }
+
+
 static std::string firstline(const std::string& path)
 {
-	std::ifstream file(path);
-	std::string line;
+	std::ifstream	file(path);
+	std::string	line;
 
 	if (!file.is_open())
 		return "";
@@ -420,6 +449,8 @@ static std::string firstline(const std::string& path)
 
 	return "";
 }
+
+
 static size_t ccalc(size_t *a, size_t *b, short issize_t)
 {
 	if (*b>=*a)
@@ -432,6 +463,8 @@ static size_t ccalc(size_t *a, size_t *b, short issize_t)
 			return sizeof(u32)-*a+*b;
 	}
 }
+
+
 static std::string getstatsdevice(NESCADEVICE *ncsdev)
 {
 	static size_t	startrx=SIZE_MAX, starttx=SIZE_MAX;
@@ -453,9 +486,11 @@ static std::string getstatsdevice(NESCADEVICE *ncsdev)
 	startrx=tmprx;
 	starttx=tmptx;
 
-	res=(util_bytesconv(rx)+"	"+util_bytesconv(tx));
+	res=(util_bytesconv(rx)+"  "+util_bytesconv(tx));
 	return res;
 }
+
+
 void nescawatting(std::atomic<bool> &running, __uint128_t i,
 		NESCADEVICE *ncsdev)
 {
@@ -466,8 +501,8 @@ void nescawatting(std::atomic<bool> &running, __uint128_t i,
 	for (;running;) {
 		std::ostringstream oss;
 		oss << symbols[ident] << " PASSED " <<
-			uint128_to_string(i) << "		" <<
-			NESCASTATUS << "		" <<
+			uint128_to_string(i) << "    " <<
+			NESCASTATUS << "    " <<
 			getstatsdevice(ncsdev);
 
 		line=oss.str();
@@ -476,11 +511,9 @@ void nescawatting(std::atomic<bool> &running, __uint128_t i,
 		std::cout << "\r" << std::string(line.size(), ' ') << "\r" << std::flush;
 		ident=(ident+1)%3;
 	}
+
 	std::cout << "\r" << std::string((line.size()), ' ') << "\r" << std::flush;
 }
-/* NESCA4 STATUS BAR */
-
-
 
 
 /*
@@ -488,9 +521,9 @@ void nescawatting(std::atomic<bool> &running, __uint128_t i,
  */
 void NESCAPRINT::nescadevice(NESCADEVICE *device)
 {
-	mac_t mac, dstmac;
-	ip4_t ip4, ip4_g;
-	ip6_t ip6, ip6_g;
+	mac_t	mac,dstmac;
+	ip4_t	ip4,ip4_g;
+	ip6_t	ip6,ip6_g;
 
 	mac=device->get_srcmac();
 	dstmac=device->get_dstmac();
@@ -624,9 +657,9 @@ void NESCAHTML::nh_addtobuf(const std::string &txt)
 
 std::string NESCAHTML::nh_fmtdate(const std::string &fmt)
 {
-	char date[100];
-	std::time_t t;
-	std::tm* now;
+	std::time_t	t;
+	std::tm		*now;
+	char		date[100];
 
 	t=std::time(NULL);
 	now=std::localtime(&t);
@@ -639,12 +672,15 @@ std::string NESCAHTML::nh_fmtdate(const std::string &fmt)
 
 void NESCAHTML::nh_style(const std::string &filepath)
 {
-	std::string respath, line;
+	std::string respath,line;
+
 	respath=(filepath.empty())?
 		DEFAULT_STYLE_PATH:filepath;
+
 	std::ifstream f(respath);
 	while (std::getline(f, line))
 		nh_addtobuf(line);
+
 	f.close();
 }
 
@@ -673,22 +709,25 @@ void NESCAHTML::nh_bodyopen(NESCADATA *ncsdata)
 
 static void remline(const std::string &filename, size_t num)
 {
-	std::string line="";
-	size_t cur=0;
+	std::string	line="";
+	size_t		cur=0;
 
 	std::ifstream infile(filename);
 	if (!infile.is_open())
 		return;
+
 	std::ofstream temp_file("resources/tmp.txt");
 	if (!temp_file.is_open()) {
 		infile.close();
 		return;
 	}
+
 	while (std::getline(infile, line)) {
 		if (cur!=num)
 			temp_file<<line<<'\n';
 		++cur;
 	}
+
 	infile.close();
 	temp_file.close();
 	std::remove(filename.c_str());
@@ -722,9 +761,9 @@ void NESCAHTML::NH_OPEN(NESCADATA *ncsdata)
 
 void NESCAHTML::NH_ADD(NESCATARGET *target, NESCADATA *ncsdata, bool onlyok, bool cut)
 {
-	std::string block, methodstr;
-	size_t i, j;
-	bool details;
+	std::string	block, methodstr;
+	size_t		i, j;
+	bool		details;
 
 	details=0;
 	if (onlyok&&!target->isok())
@@ -840,8 +879,10 @@ void NESCAHTML::NH_CLOSE(void)
 void NESCAHTML::NHTARGETS(NESCADATA *ncsdata)
 {
 	bool onlyoktmp=1;
+
 	if (!ncsdata->opts.check_html_flag())
 		return;
+
 	if (!this->open) {
 		nh_setpath(ncsdata->opts.get_html_param());
 		NH_OPEN(ncsdata);

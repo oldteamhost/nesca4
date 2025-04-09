@@ -36,7 +36,7 @@ static std::mutex stoprecv;
 /*
  * Получает максимально возможное число открытых сокетов, возвращает его.
  */
-static int maxfds(void)
+inline static int maxfds(void)
 {
 	struct rlimit limit;
 	getrlimit(RLIMIT_NOFILE, &limit);
@@ -144,6 +144,7 @@ NESCAPOOL::NESCAPOOL(size_t numthreads) : stop(false)
 		);
 	}
 }
+
 /* Завершает этот пул потоков */
 NESCAPOOL::~NESCAPOOL()
 {
@@ -1021,9 +1022,9 @@ void NESCAINIT::ni_iprobe(NESCAPROBE *probe, NESCATARGET *target,
 void NESCAINIT::ni_icmprobe(NESCAPROBE *probe, NESCATARGET *target,
 		NESCADATA *ncsdata, NESCAMETHOD *ncsmethod)
 {
-	size_t msglen=0, datalen=0;
-	u8 *msg=NULL, *data=NULL;
-	int type=-1;
+	size_t	msglen=0, datalen=0;
+	u8	*msg=NULL, *data=NULL;
+	int	type=-1;
 
 	probe->filter.chk=random_u16();
 	data=get_payload(&ncsdata->opts, &datalen);
@@ -1072,10 +1073,10 @@ void NESCAINIT::ni_icmprobe(NESCAPROBE *probe, NESCATARGET *target,
 void NESCAINIT::ni_arprobe(NESCAPROBE *probe, NESCATARGET *target,
 		NESCADATA *ncsdata, NESCAMETHOD *ncsmethod)
 {
-	mac_t dstmac_arp;
-	u8 *arp_op=NULL;
-	size_t arpoplen;
-	ip4_t tmp;
+	mac_t	dstmac_arp;
+	u8	*arp_op=NULL;
+	size_t	arpoplen;
+	ip4_t	tmp;
 
 	ip4t_pton(target->get_mainip().c_str(), &tmp);
 	mact_fill(&dstmac_arp, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
@@ -1105,12 +1106,12 @@ void NESCAINIT::ni_arprobe(NESCAPROBE *probe, NESCATARGET *target,
 void NESCAINIT::ni_tcprobe(NESCAPROBE *probe, NESCATARGET *target,
 		NESCADATA *ncsdata, NESCAMETHOD *ncsmethod, int port)
 {
-	size_t datalen=0;
-	u8 *data=NULL;
-	u8 flags=0;
-	u16 window=1024;
-	u32 ack=0;
-	ip4_t tmp;
+	size_t	datalen=0;
+	u8	*data=NULL;
+	u8	flags=0;
+	u16	window=1024;
+	u32	ack=0;
+	ip4_t	tmp;
 
 	probe->filter.chk=random_u32();
 	probe->filter.srcport=random_srcport();
@@ -1170,9 +1171,9 @@ void NESCAINIT::ni_tcprobe(NESCAPROBE *probe, NESCATARGET *target,
 void NESCAINIT::ni_udprobe(NESCAPROBE *probe, NESCATARGET *target,
 		NESCADATA *ncsdata, NESCAMETHOD *ncsmethod, int port)
 {
-	size_t datalen=0;
-	u8 *data=NULL;
-	ip4_t tmp;
+	size_t	datalen=0;
+	u8	*data=NULL;
+	ip4_t	tmp;
 
 	data=get_payload(&ncsdata->opts, &datalen);
 	probe->filter.srcport=random_srcport();
@@ -1206,8 +1207,8 @@ void NESCAINIT::ni_udprobe(NESCAPROBE *probe, NESCATARGET *target,
 void NESCAINIT::ni_sctprobe(NESCAPROBE *probe, NESCATARGET *target,
 		NESCADATA *ncsdata, NESCAMETHOD *ncsmethod, int port)
 {
-	u8 *chunk=NULL, *data=NULL;
-	size_t datalen=0, chunklen=0;
+	u8	*chunk=NULL, *data=NULL;
+	size_t	datalen=0, chunklen=0;
 
 	data=get_payload(&ncsdata->opts, &datalen);
 	probe->filter.srcport=random_srcport();
@@ -1268,6 +1269,7 @@ void NESCAINIT::ni_initprobe(NESCATARGET *target, NESCADATA *ncsdata,
 	u16 port=0;
 
 	if (!ncsmethod->ports.empty()) {
+
 		/* Ищем следующий порт в методе. */
 		if (ncsmethod->lastport>ncsmethod->ports.size()-1)
 			ncsmethod->lastport=0;
@@ -1325,11 +1327,10 @@ void NESCAINIT::ni_initres(NESCATARGET *target,
 bool NESCAINIT::NI_INIT(std::vector<NESCATARGET*> targets,
 		NESCADATA *ncsdata, bool ping, size_t max)
 {
-	size_t i, j, k;
-	for (j=this->last_target;j<targets.size();j++,
-			this->last_target=j) {
-		for (k=this->last_method;k<ni_methods.size();k++,
-				this->last_method=k) {
+	size_t i,j,k;
+
+	for (j=this->last_target;j<targets.size();j++,this->last_target=j) {
+		for (k=this->last_method;k<ni_methods.size();k++,this->last_method=k) {
 			for (i=this->last_num;i<=
 					ni_methods[k].numprobes-1/* по идеи сам метод это одна из его проб */;
 					i++,this->last_num=i) {
@@ -1357,8 +1358,8 @@ bool NESCAINIT::NI_INIT(std::vector<NESCATARGET*> targets,
 		}
 		this->last_method=0;
 	}
-	this->last_target=0;
 
+	this->last_target=0;
 	return 1;
 }
 
@@ -1434,8 +1435,8 @@ void NESCASEND::ns_setpps(size_t pps) { this->pps=pps; }
 void NESCASEND::ns_send(eth_t *fd, std::vector<NESCAPROBE*> probes,
 	size_t num)
 {
-	struct timespec delay;
-	size_t i;
+	struct timespec	delay;
+	size_t		i;
 
 	delay.tv_sec=0;
 	delay.tv_nsec=1000000000/this->pps;
@@ -1466,9 +1467,11 @@ void NESCASEND::ns_send(eth_t *fd, std::vector<NESCAPROBE*> probes,
 void NESCASEND::ns_stats(void)
 {
 	double p;
+
 	p=(static_cast<double>(err)/tot)*100;
 	stoprecv.lock();
-	std::cout << "NESCASEND	Sent " << util_bytesconv(sendbytes);
+
+	std::cout << "NESCASEND  Sent " << util_bytesconv(sendbytes);
 	std::cout << " at " << util_timediff(this->tstamp_s,
 		this->tstamp_e);
 	std::cout << " (loss " << p << "%)";
@@ -1476,6 +1479,7 @@ void NESCASEND::ns_stats(void)
 		<< err << " tot=" << tot;
 	std::cout << " > " << util_pps(this->tstamp_s, this->tstamp_e,
 		tot) << std::endl;
+
 	stoprecv.unlock();
 	ok=err=sendbytes=tot=0;
 }
@@ -1514,7 +1518,7 @@ void NESCARECV::nr_stats(void)
 {
 	double p=(static_cast<double>(err)/tot)*100;
 	stoprecv.lock();
-	std::cout << "NESCARECV	Recv " << util_bytesconv(recvbytes);
+	std::cout << "NESCARECV  Recv " << util_bytesconv(recvbytes);
 	std::cout << " at " << util_timediff(this->tstamp_s,
 		this->tstamp_e);
 	std::cout << " (loss " << p << "%)";
