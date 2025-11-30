@@ -5,9 +5,9 @@
   
   Russian: https://github.com/oldteamhost/nesca4/blob/main/RUSSIAN.pdf
 
-```
-The original is written in Russian, and probably contains spelling errors :) Translation by chatgpt.
-```
+
+_The original is written in Russian, and probably contains spelling errors :) Translation by chatgpt._
+
 
 ### For compile use this:
 ```
