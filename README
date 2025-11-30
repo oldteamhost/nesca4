@@ -1,7 +1,0 @@
-for compile use this:
-
-  git clone --recurse-submodules --depth=1 https://github.com/oldteamhost/nesca4
-  cd nesca4
-  ./configure
-  make -j
-
